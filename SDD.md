@@ -79,7 +79,67 @@ Primeiro mod do ecossistema; as decisões abaixo são o padrão a repetir nos pr
   nenhum registro em código, nenhum banco de dados, nenhuma API externa. Reduz a distância entre
   "eu quero adicionar uma skin" e "ela existe no jogo" a zero infraestrutura nova.
 
-## 5. Diretrizes para os próximos mods do ecossistema
+## 5. aurorion-essentials — decisões (fakename)
+
+Segundo mod do ecossistema; primeira feature é o **fakename** (nome exibido trocado em quase todo
+lugar do jogo — chat, morte, conquista, join/leave, nametag, tab list).
+
+### 5.1 Um único ponto de injeção, não uma caçada por mensagem
+
+- **Mixin em `Player#getName()`**, não em cada mensagem individual. Chat, morte, conquista e
+  join/leave em Minecraft vanilla já convergem para `getDisplayName()` (que chama `getName()`)
+  precisamente para permitir esse tipo de override — é o mesmo ponto que mods de nickname
+  (Bukkit, Forge) sempre usaram. Caçar e sobrescrever cada `Component.translatable` individual
+  seria mais mixins, mais superfície de conflito com outros mods do modpack, e ainda deixaria
+  buracos em qualquer mensagem vanilla nova que apareça em atualizações futuras.
+- **`getScoreboardName()` deliberadamente não é tocado.** Scoreboard e seletores de alvo (`@p`,
+  `@a[name=...]`) dependem dele para continuar funcionando com o nome real. Essa fronteira entre
+  "nome exibido" (pode mentir) e "identidade técnica" (nunca mente) é o que sustenta o `/realname`
+  como ferramenta de moderação — reverter a máscara é sempre possível porque a identidade real
+  nunca deixou de existir por baixo.
+
+### 5.2 Rede: só o necessário para o que é renderizado no cliente
+
+- Chat, morte, conquista e tab list já são resolvidos **no servidor** antes de qualquer coisa ser
+  enviada — o `Component` pronto (já com o nome falso) é que trafega, então não precisam de canal
+  próprio.
+- A nametag acima da cabeça é a exceção: o cliente renderiza lendo `getDisplayName()` da própria
+  cópia local da entidade de **cada jogador visível**, não só a do dono da tela — por isso existe
+  um snapshot no login (O(jogadores online), como no `aurorion-talk`) e um delta a cada troca.
+- **Tab list exige refresh explícito.** O nome exibido nela vai embutido no
+  `ClientboundPlayerInfoUpdatePacket` no momento do envio — sobrescrever o método não alcança quem
+  já recebeu o pacote antigo, então trocar/limpar um nome falso reenvia esse pacote (só a ação
+  `UPDATE_DISPLAY_NAME`, só para quem mudou, nunca a tab list inteira).
+
+### 5.3 Validação no servidor (mesmo sendo "só cosmético")
+
+- Nome vazio, texto puro maior que 48 caracteres, ou igual (sem diferenciar maiúsculas) ao nome
+  real ou ao nome falso ativo de outro jogador online — todos rejeitados antes de qualquer
+  escrita. A regra de impersonation é a mesma categoria de decisão da diretriz 5 da seção 7: um
+  nome falso idêntico ao de outro jogador é o vetor mais óbvio de golpe/confusão que dá para
+  cortar sem nenhum custo de complexidade.
+
+### 5.4 Cleanup periódico (itens dropados + orbs de XP)
+
+- **O contador de tick nunca aloca e nunca toca em entidade fora da hora certa.** O
+  `CleanupScheduler` roda a cada tick do servidor, mas o trabalho de "espera" é só um incremento de
+  `long` e duas comparações — o mesmo tipo de garantia de "zero alocação por tick" da seção 2, só
+  que aplicada a uma feature nova em vez do caminho de chat/render do `aurorion-talk`.
+- **O aviso é deliberadamente subutil: actionbar, uma vez por ciclo, nunca chat.** Chat brasileiro
+  de 80 jogadores já é barulhento; um aviso que empilha no histórico ou repete a cada tick de
+  contagem regressiva seria pior que a própria limpeza. Actionbar some sozinho e não interrompe
+  nada.
+- **A limpeza em si roda no máximo 1x por hora, nunca por tick.** Mesmo que remova milhares de
+  entidades de uma vez (pico depois de uma fazenda AFK rodando a hora toda), o custo é O(entidades
+  removidas) concentrado num único tick — infinitamente mais barato que checar isso continuamente.
+  `discard()` (não `remove()`) é o que torna seguro remover durante a própria iteração das
+  entidades da level, sem `ConcurrentModificationException`.
+- **Escopo deliberadamente restrito a itens dropados e orbs de XP** — nunca mobs, veículos, ou
+  qualquer coisa que um jogador colocou de propósito. Igual à meta da seção 2 de nunca interferir
+  fora do escopo próprio: um "cleanup" que remove mais do que isso é fácil de errar e caro de
+  debugar num modpack pesado com dezenas de outros mods manipulando entidades.
+
+## 7. Diretrizes para os próximos mods do ecossistema
 
 Ao adicionar um mod novo neste monorepo, os mesmos princípios se aplicam:
 
@@ -98,7 +158,7 @@ Ao adicionar um mod novo neste monorepo, os mesmos princípios se aplicam:
 6. **Meça contra 80 jogadores, não contra 1.** Um teste local com um único jogador não expõe
    nenhum dos problemas que essas regras existem para evitar.
 
-## 6. Fora de escopo (deliberadamente)
+## 8. Fora de escopo (deliberadamente)
 
 - Suporte a múltiplos servidores públicos / milhares de instalações — este é software para um
   servidor específico, não um mod para a CurseForge competir por downloads.

@@ -19,3 +19,4 @@ rootProject.name = 'aurorion-mod'
 // Cada mod do ecossistema Aurorion e um subprojeto independente.
 // Para adicionar um novo mod: crie a pasta e inclua a linha aqui.
 include 'aurorion-talk'
+include 'aurorion-essentials'

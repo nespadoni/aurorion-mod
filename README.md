@@ -9,6 +9,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Mod | Pasta | O que faz |
 |---|---|---|
 | Aurorion Talk | [aurorion-talk/](aurorion-talk/) | Balões de fala acima dos jogadores; tira as falas do HUD do chat |
+| Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Comandos essenciais de servidor: `/fakename` (troca o nome exibido em todo o jogo) e cleanup periódico de itens/XP no chão |
 
 ## Requisitos
 

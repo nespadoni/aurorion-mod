@@ -1,0 +1,14 @@
+{
+  "commands.aurorion_essentials.fakename.set.success": "Fake name set: %s",
+  "commands.aurorion_essentials.fakename.set.blank": "Fake name can't be blank.",
+  "commands.aurorion_essentials.fakename.set.tooLong": "Fake name is too long (max %s characters).",
+  "commands.aurorion_essentials.fakename.set.impersonation": "That name is already in use by another online player.",
+
+  "commands.aurorion_essentials.fakename.clear.success.self": "Fake name cleared.",
+  "commands.aurorion_essentials.fakename.clear.success.other": "Cleared %s's fake name.",
+
+  "commands.aurorion_essentials.realname.found": "%s is really %s.",
+  "commands.aurorion_essentials.realname.notFound": "No online player is currently using the fake name \"%s\".",
+
+  "aurorion_essentials.cleanup.warning": "Dropped items and XP orbs will be cleared in %s seconds"
+}
