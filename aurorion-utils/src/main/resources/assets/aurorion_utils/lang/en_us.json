@@ -1,0 +1,13 @@
+{
+  "commands.aurorion_utils.abduzir.success": "%s was abducted to %s.",
+  "commands.aurorion_utils.abduzir.alreadyActive": "%s is already in the middle of an abduction.",
+  "commands.aurorion_utils.abduzir.voltar.success": "%s is being returned to where they were abducted from.",
+  "commands.aurorion_utils.abduzir.voltar.noOrigin": "%s has no saved abduction origin.",
+
+  "commands.aurorion_utils.freeze.success": "%s player(s) frozen.",
+  "commands.aurorion_utils.unfreeze.success": "%s player(s) unfrozen.",
+
+  "subtitles.aurorion_utils.abduction_beam": "Abduction beam",
+
+  "entity.aurorion_utils.abduction_beam": "Abduction Beam"
+}

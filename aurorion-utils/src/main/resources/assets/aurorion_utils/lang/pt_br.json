@@ -1,0 +1,13 @@
+{
+  "commands.aurorion_utils.abduzir.success": "%s foi abduzido até %s.",
+  "commands.aurorion_utils.abduzir.alreadyActive": "%s já está no meio de uma abdução.",
+  "commands.aurorion_utils.abduzir.voltar.success": "%s está voltando para onde foi abduzido.",
+  "commands.aurorion_utils.abduzir.voltar.noOrigin": "%s não tem nenhuma origem de abdução salva.",
+
+  "commands.aurorion_utils.freeze.success": "%s jogador(es) congelado(s).",
+  "commands.aurorion_utils.unfreeze.success": "%s jogador(es) descongelado(s).",
+
+  "subtitles.aurorion_utils.abduction_beam": "Feixe de abdução",
+
+  "entity.aurorion_utils.abduction_beam": "Feixe de Abdução"
+}

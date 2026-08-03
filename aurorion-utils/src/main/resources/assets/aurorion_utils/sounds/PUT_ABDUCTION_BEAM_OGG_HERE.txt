@@ -1,0 +1,9 @@
+Solte aqui o arquivo abduction_beam.ogg (formato Ogg Vorbis, como todo som do Minecraft).
+
+O sounds.json (assets/aurorion_utils/sounds.json) ja aponta para
+"aurorion_utils:abduction_beam", que resolve para este arquivo:
+
+  assets/aurorion_utils/sounds/abduction_beam.ogg
+
+Depois de colocar o .ogg aqui, apague este arquivo .txt — ele existe so para o git nao descartar
+a pasta vazia.
