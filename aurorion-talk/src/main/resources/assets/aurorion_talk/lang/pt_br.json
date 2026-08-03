@@ -1,0 +1,30 @@
+{
+  "screen.aurorion_talk.customization": "Personalização do Balão",
+  "screen.aurorion_talk.preferences": "Preferências",
+  "screen.aurorion_talk.select_style": "Selecionar estilo do balão",
+  "screen.aurorion_talk.balloon_color": "Cor do balão",
+  "screen.aurorion_talk.text_color": "Cor do texto",
+  "screen.aurorion_talk.no_decoration": "Nenhum enfeite",
+
+  "options.aurorion_talk.preview.short": "Teste curto",
+  "options.aurorion_talk.preview.long": "Um balão de fala bem mais longo, só para testar a quebra de linha",
+
+  "key.categories.aurorion_talk": "Aurorion Talk",
+  "key.aurorion_talk.open_config": "Personalizar balão de fala",
+
+  "options.aurorion_talk.hidePlayerChat": "Esconder chat dos jogadores",
+  "options.aurorion_talk.hidePlayerChat.tooltip": "As falas dos jogadores saem do HUD e viram apenas balões. Mensagens de sistema, comandos, morte e entrada/saída continuam aparecendo.",
+
+  "options.aurorion_talk.hideOnlyWhenBalloonShown": "Só esconder com balão",
+  "options.aurorion_talk.hideOnlyWhenBalloonShown.tooltip": "Mantém no chat as falas de quem está longe demais para renderizar o balão, para você não perder mensagem.",
+
+  "options.aurorion_talk.showOwnBalloon": "Mostrar meu balão",
+  "options.aurorion_talk.showOwnBalloon.tooltip": "Cria balão acima do seu personagem também. Visível em terceira pessoa.",
+
+  "options.aurorion_talk.balloonAgeSeconds": "Duração do balão",
+  "options.aurorion_talk.maxBalloons": "Balões empilhados",
+  "options.aurorion_talk.maxBalloonWidth": "Largura máxima",
+  "options.aurorion_talk.minBalloonWidth": "Largura mínima",
+  "options.aurorion_talk.heightOffset": "Altura do balão",
+  "options.aurorion_talk.distanceBetweenBalloons": "Espaço entre balões"
+}
