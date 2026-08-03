@@ -1,0 +1,11 @@
+plugins {
+    // Declarado aqui apenas para fixar a versao; cada subprojeto aplica o plugin.
+    id 'net.neoforged.moddev' version '2.0.143' apply false
+}
+
+// Tarefa de conveniencia: builda todos os mods do ecossistema de uma vez.
+tasks.register('buildAll') {
+    group = 'aurorion'
+    description = 'Builda o jar de todos os mods Aurorion.'
+    dependsOn subprojects.collect { "${it.path}:build" }
+}

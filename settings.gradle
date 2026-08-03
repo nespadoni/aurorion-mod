@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven {
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
+        }
+    }
+}
+
+plugins {
+    // Baixa automaticamente um JDK 21 caso a maquina nao tenha um compativel.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+rootProject.name = 'aurorion-mod'
+
+// Cada mod do ecossistema Aurorion e um subprojeto independente.
+// Para adicionar um novo mod: crie a pasta e inclua a linha aqui.
+include 'aurorion-talk'
