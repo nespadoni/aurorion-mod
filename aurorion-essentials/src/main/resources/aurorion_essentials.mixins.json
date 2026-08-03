@@ -4,7 +4,10 @@
   "package": "com.aurorion.essentials.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "PlayerNameMixin"
+    "PlayerNameMixin",
+    "JoinLeaveMessageMixin",
+    "AdvancementAnnounceMixin",
+    "WhisperCommandMixin"
   ],
   "client": [],
   "injectors": {

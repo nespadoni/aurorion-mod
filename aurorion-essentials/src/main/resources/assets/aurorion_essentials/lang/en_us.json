@@ -10,5 +10,14 @@
   "commands.aurorion_essentials.realname.found": "%s is really %s.",
   "commands.aurorion_essentials.realname.notFound": "No online player is currently using the fake name \"%s\".",
 
+  "commands.aurorion_essentials.ajuda.sent": "Help request sent to %s online admin(s).",
+  "commands.aurorion_essentials.ajuda.noOp": "No admin is online right now. Please ask for help on our Discord.",
+  "commands.aurorion_essentials.ajuda.notify.header": "Help request",
+  "commands.aurorion_essentials.ajuda.notify.player": "Player:",
+  "commands.aurorion_essentials.ajuda.notify.fakename": "Fake name:",
+  "commands.aurorion_essentials.ajuda.notify.fakename.none": "none",
+  "commands.aurorion_essentials.ajuda.notify.description": "Description:",
+  "commands.aurorion_essentials.ajuda.notify.location": "Location:",
+
   "aurorion_essentials.cleanup.warning": "Dropped items and XP orbs will be cleared in %s seconds"
 }

@@ -1,6 +1,7 @@
 package com.aurorion.essentials;
 
 import com.aurorion.essentials.cleanup.CleanupConfig;
+import com.aurorion.essentials.privacy.PrivacyConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -20,5 +21,6 @@ public class AurorionEssentials {
 
     public AurorionEssentials(ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, CleanupConfig.SPEC);
+        container.registerConfig(ModConfig.Type.SERVER, PrivacyConfig.SPEC, MOD_ID + "-privacy.toml");
     }
 }
