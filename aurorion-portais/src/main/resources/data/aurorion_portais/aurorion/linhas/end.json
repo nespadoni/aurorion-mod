@@ -1,0 +1,29 @@
+{
+  "name": { "text": "Linha do Vazio" },
+  "description": { "text": "Linha semanal com destino ao End." },
+  "color": "#C39BFF",
+
+  "dimensions": ["minecraft:the_end"],
+
+  "station": {
+    "dimension": "minecraft:overworld",
+    "pos": [0, 64, 0],
+    "name": { "text": "Estação Central" }
+  },
+  "arrival": {
+    "dimension": "minecraft:the_end",
+    "pos": [100, 50, 0],
+    "name": { "text": "Plataforma de Obsidiana" }
+  },
+
+  "schedule": {
+    "timezone": "America/Sao_Paulo",
+    "weekly": [
+      { "days": ["sunday"], "at": "21:00" }
+    ],
+    "openMinutes": 15,
+    "warnMinutesBefore": [30, 5]
+  },
+
+  "order": 1
+}

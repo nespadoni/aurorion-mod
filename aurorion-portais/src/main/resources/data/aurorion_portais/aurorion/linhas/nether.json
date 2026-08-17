@@ -1,0 +1,29 @@
+{
+  "name": { "text": "Expresso Ígneo" },
+  "description": { "text": "Linha semanal com destino ao Nether." },
+  "color": "#FF5555",
+
+  "dimensions": ["minecraft:the_nether"],
+
+  "station": {
+    "dimension": "minecraft:overworld",
+    "pos": [0, 64, 0],
+    "name": { "text": "Estação Central" }
+  },
+  "arrival": {
+    "dimension": "minecraft:the_nether",
+    "pos": [0, 64, 0],
+    "name": { "text": "Plataforma Ígnea" }
+  },
+
+  "schedule": {
+    "timezone": "America/Sao_Paulo",
+    "weekly": [
+      { "days": ["saturday"], "at": "20:00" }
+    ],
+    "openMinutes": 10,
+    "warnMinutesBefore": [60, 15, 5, 1]
+  },
+
+  "order": 0
+}

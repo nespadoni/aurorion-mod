@@ -41,7 +41,7 @@ neoForge {
 
     runs {
         // Sem loadedMods explicito: o default de um run e "todos os mods
-        // declarados neste projeto", que aqui ja sao os cinco.
+        // declarados neste projeto", que aqui ja sao todos os do ecossistema.
         client {
             client()
             programArgument '--username'

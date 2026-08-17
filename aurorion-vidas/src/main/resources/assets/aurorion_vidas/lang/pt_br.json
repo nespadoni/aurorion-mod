@@ -1,0 +1,18 @@
+{
+  "aurorion_vidas.perdeu": "Você perdeu uma vida. Restam %s de %s.",
+  "aurorion_vidas.perdeu.anuncio": "%s perdeu uma vida (%s/%s).",
+
+  "aurorion_vidas.exilado": "Suas vidas acabaram. Você foi exilado.",
+  "aurorion_vidas.exilado.anuncio": "%s perdeu a última vida e foi exilado.",
+  "aurorion_vidas.exilado.preso": "Você está exilado. Nenhum trem leva você de volta.",
+
+  "commands.aurorion_vidas.self": "Você tem %s de %s vidas.",
+  "commands.aurorion_vidas.self.exilado": "Você está exilado — sem vidas restantes.",
+  "commands.aurorion_vidas.view": "%s: %s de %s vidas.",
+  "commands.aurorion_vidas.definido": "%s agora tem %s de %s vidas.",
+
+  "commands.aurorion_vidas.exilio.definido": "Ponto de exílio definido em %s, %s, %s.",
+  "commands.aurorion_vidas.exilio.atual": "Exílio: %s em %s, %s, %s.",
+  "commands.aurorion_vidas.exilio.automatico": "Exílio: %s, em ponto ainda não definido (será escolhido no primeiro exílio). Use /vidas exilio aqui.",
+  "commands.aurorion_vidas.exilio.dimensao_errada": "Você precisa estar em %s para marcar o ponto de exílio."
+}

@@ -1,0 +1,127 @@
+// Convencao unica de todos os mods Aurorion.
+//
+// Antes disso, os build.gradle dos subprojetos eram byte-identicos: 95 linhas copiadas N vezes, com
+// o risco silencioso de um mod ficar para tras numa mudanca (release do Java, versao do Parchment,
+// argumento de run) sem ninguem notar. Agora existe um lugar so para mudar.
+//
+// Uso, no build.gradle do mod:
+//
+//     apply from: "$rootDir/gradle/aurorion-mod.gradle"
+//
+// e o resto vem de gradle.properties (mod_id, mod_name, mod_version, mod_description) mais os
+// valores compartilhados no gradle.properties da raiz.
+
+apply plugin: 'java'
+apply plugin: 'net.neoforged.moddev'
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = "${mod_id}-neoforge-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+// Todo mod depende do aurorion-core, menos ele proprio.
+def coreProject = project.name == 'aurorion-core' ? null : project(':aurorion-core')
+if (coreProject != null) {
+    // Lemos o sourceSet do core em tempo de configuracao, entao ele precisa estar avaliado antes.
+    evaluationDependsOn(coreProject.path)
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+
+        configureEach {
+            gameDirectory = project.file("run/${it.name}")
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        // O core entra como mod declarado (e nao so no classpath) para que o runClient/runServer de
+        // um mod sozinho tenha a biblioteca carregada — senao o FML recusa a dependencia obrigatoria.
+        if (coreProject != null) {
+            create('aurorion_core') {
+                sourceSet coreProject.sourceSets.main
+            }
+        }
+        create(project.mod_id) {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Anotacoes @Nullable/@NotNull: so em tempo de compilacao, nao vao para o jar.
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+
+    if (coreProject != null) {
+        // O diretorio de saida, e nao project(':aurorion-core') (jar): com o jar, o FML acharia o
+        // core duas vezes — uma pelo classpath e outra pelo diretorio anunciado em -Dfml.modFolders.
+        // Mesma razao explicada no aurorion-runs.
+        implementation coreProject.sourceSets.main.output
+    }
+}
+
+// Substitui os ${placeholders} do neoforge.mods.toml pelos valores do gradle.properties
+var replaceProperties = [
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        neo_version            : neo_version,
+        neo_version_range      : neo_version_range,
+        loader_version_range   : loader_version_range,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+        mod_authors            : mod_authors,
+        mod_description        : mod_description,
+]
+
+tasks.named('processResources', ProcessResources).configure {
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : mod_authors,
+                'Specification-Version' : '1',
+                'Implementation-Title'  : mod_name,
+                'Implementation-Version': mod_version,
+                'Implementation-Vendor' : mod_authors,
+        ])
+    }
+}

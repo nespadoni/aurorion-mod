@@ -1,0 +1,30 @@
+{
+  "aurorion_portais.aviso.chamada": "» The %s train departs in %s. Get ready to board!",
+  "aurorion_portais.aviso.chamada.estacao": "» The %s train departs in %s. Be at %s to board!",
+  "aurorion_portais.aviso.embarque": "» %s — now boarding! The passage stays open for %s.",
+  "aurorion_portais.aviso.partiu": "» %s has departed. The passage is closed — whoever stayed, stays.",
+  "aurorion_portais.aviso.contagem": "%s departs in %ss — run for the portal!",
+
+  "aurorion_portais.barrado.entrada": "The passage to %s is closed.",
+  "aurorion_portais.barrado.saida": "You are stuck in %s until the next train.",
+  "aurorion_portais.barrado.proximo": "Next departure: %s (in %s).",
+
+  "commands.aurorion_portais.vazio": "No lines configured.",
+  "commands.aurorion_portais.cabecalho": "== Timetable ==",
+  "commands.aurorion_portais.linha.aberta": "● %s — OPEN, closes in %s",
+  "commands.aurorion_portais.linha.fechada": "○ %s — next departure %s (in %s)",
+  "commands.aurorion_portais.linha.sem_horario": "○ %s — no scheduled departures",
+  "commands.aurorion_portais.linha.estacao": "| Station: %s",
+  "commands.aurorion_portais.linha.desconhecida": "Unknown line: %s",
+  "commands.aurorion_portais.abrir": "Line %s opened manually for %s minute(s).",
+  "commands.aurorion_portais.fechar": "Line %s closed.",
+  "commands.aurorion_portais.fechar.ja_fechada": "Line %s was already closed.",
+
+  "commands.aurorion_portais.passe.dado": "Pass granted to %s for %s (%s use(s)).",
+  "commands.aurorion_portais.passe.nenhum": "%s has no passes.",
+  "commands.aurorion_portais.passe.entrada": "%s: pass for %s (%s)",
+  "commands.aurorion_portais.passe.entrada.temporario": "%s: pass for %s (%s, expires in %s)",
+  "commands.aurorion_portais.passe.usos": "%s use(s)",
+  "commands.aurorion_portais.passe.usos.ilimitado": "unlimited uses",
+  "commands.aurorion_portais.passe.tirado": "%s: %s pass(es) removed."
+}

@@ -24,4 +24,5 @@ public final class FakeNameEvents {
             FakeNameManager.onPlayerLeave(player);
         }
     }
+
 }

@@ -32,6 +32,50 @@ Concretas, para poder julgar uma decisão de design contra elas:
   modpack onde qualquer peça pode precisar ser desligada isoladamente para isolar um bug.
 - Ver [README.md](README.md) para comandos e estrutura de pastas.
 
+### 3.1 Uma exceção à independência: `aurorion-core`
+
+A regra acima vale entre **mods**, não entre mod e biblioteca. `aurorion-core` é obrigatório para
+todos os outros e **não** pode ser desligado.
+
+A troca foi feita de olhos abertos, contra uma duplicação que já tinha custo real: os sete
+`build.gradle` eram byte-idênticos (665 linhas copiadas), quatro mods repetiam o mesmo esqueleto de
+`SavedData`, e — o pior caso — o mesmo algoritmo de "achar um lugar seguro para colocar o jogador"
+existia escrito **duas vezes**, em `aurorion-portais` e `aurorion-vidas`. Duas cópias de uma
+checagem de segurança são duas chances de consertar só uma quando o bug aparecer.
+
+O critério para algo entrar no core é estreito de propósito: **já estava duplicado**. Utilidade que
+só um mod usa fica no mod, senão a biblioteca vira depósito de código especulativo — que é o modo
+clássico de uma camada compartilhada piorar a manutenção em vez de melhorar.
+
+O que **não** entrou, e por quê: um helper para registrar pacotes de rede eliminaria ~14 linhas,
+mas obrigaria a criar o lambda que referencia classe de cliente durante o registro, que roda também
+no servidor dedicado. Hoje esse lambda só nasce depois da checagem de `Dist`. Trocar 14 linhas por
+um risco de derrubar o servidor dedicado é péssimo negócio.
+
+**Uma abstração que exige disciplina de quem chama não é uma abstração.** Duas classes do core
+nasceram violando isso e foram corrigidas:
+
+- `SavedDataAccess` pedia que cada mod chamasse `invalidate()` num listener de `ServerStoppedEvent`.
+  Dois dos quatro mods não tinham esse listener e passaram a precisar de um — o bug mudou de lugar
+  em vez de sumir. Hoje são duas travas independentes de quem usa: o core zera todos os caches ao
+  parar o servidor, **e** o cache guarda de qual `MinecraftServer` veio, então o dado nunca cruza de
+  um mundo para outro nem que o evento falhe.
+- `DerivedConfig` substituiu um cache que dependia de um listener de `ModConfigEvent` — uma classe
+  inteira no `aurorion-portais`, apagada. O gatilho passou a ser o próprio dado: guarda-se o valor
+  cru junto com o convertido e compara-se. Sem evento para esquecer, sem ordem de inicialização
+  para acertar, e editar o arquivo com o servidor no ar aplica na leitura seguinte.
+
+O teste ao adicionar algo ao core é esse: *o que acontece se quem usar esquecer da parte dele?* Se a
+resposta for "quebra silenciosamente", o desenho está errado.
+
+### 3.2 Convenção de build em um lugar só
+
+Os `build.gradle` dos mods têm **uma linha**: `apply from: "$rootDir/gradle/aurorion-mod.gradle"`.
+O problema que isso resolve não é o volume de texto — é que sete cópias significam sete lugares para
+esquecer numa mudança de versão de Java, de Parchment ou de argumento de run, e o esquecimento é
+silencioso. Adicionar um mod ao ecossistema agora é criar a pasta, escrever `gradle.properties` e
+incluir uma linha no `settings.gradle`.
+
 ## 4. aurorion-talk — decisões de performance
 
 Primeiro mod do ecossistema; as decisões abaixo são o padrão a repetir nos próximos.
@@ -230,7 +274,179 @@ Ao adicionar um mod novo neste monorepo, os mesmos princípios se aplicam:
 6. **Meça contra 80 jogadores, não contra 1.** Um teste local com um único jogador não expõe
    nenhum dos problemas que essas regras existem para evitar.
 
-## 8. Fora de escopo (deliberadamente)
+## 8. aurorion-portais — controle de acesso às dimensões
+
+Primeiro mod escrito já sob as diretrizes da §7, e o primeiro cuja mecânica principal é uma
+**restrição** e não uma adição. A regra do servidor: **toda dimensão exceto o overworld fica
+trancada**, e só abre em janelas agendadas — os "trens" — ou por decisão explícita da staff.
+
+### 8.1 Negar por padrão, com lista de exceções — nunca lista de alvos
+
+- A config declara `freeDimensions` (só o overworld) e trata **todo o resto** como controlado. O
+  inverso — listar as dimensões a trancar — parece equivalente e não é: num modpack pesado, cada mod
+  novo instalado traria uma dimensão que **nasceria aberta sem ninguém notar**. Aqui ela nasce
+  trancada, e o custo do engano é alguém reclamar que não consegue entrar, não um buraco silencioso.
+- Consequência direta: "funciona com dimensão de mod" não exigiu uma linha de código por mod, nem
+  uma lista de portais conhecidos para manter. Não há integração com mod nenhum.
+- O preço honesto dessa escolha é que um mod que use dimensão própria para mecânica interna (uma
+  mina, um minigame) precisa entrar em `freeDimensions` na mão. É para isso que existe `logDenials`:
+  ligar, tentar, ler o log, whitelistar.
+
+### 8.2 Um funil só para "trocar de dimensão"
+
+- **Toda** a regra vive em `EntityTravelToDimensionEvent`, que o NeoForge dispara no topo de
+  `ServerPlayer#changeDimension`. Portal do Nether, portal do End, `/tp` entre dimensões e teleporte
+  de mod que use a maquinaria vanilla passam todos por ali. Caçar cada bloco de portal seria mais
+  superfície de conflito e deixaria buraco em toda dimensão nova do modpack — mesmo raciocínio da
+  §5.1 (um ponto de injeção, não uma caçada).
+- Só jogador é barrado. Mob, item e projétil continuam viajando: ampliar isso mexeria em mecânica de
+  mod de terceiro sem pedido (§2, nunca interferir fora do escopo próprio).
+
+### 8.3 O mixin de portal é otimização, não regra
+
+- `Entity#canUsePortal` é interceptado para barrar a travessia **antes** de o vanilla calcular o
+  destino. O motivo é concreto: `NetherPortalBlock#getPortalDestination` varre o destino atrás de um
+  portal existente e, não achando, **escava um portal novo** — tudo isso antes do
+  `changeDimension` que o evento cancelaria. Sem o mixin, cada jogador encostando num portal fechado
+  custaria uma busca pesada e deixaria um portal órfão no Nether, multiplicado pela população online.
+- Ele é otimização e não regra porque **errar nele nunca libera nada**: `canUsePortal` só conhece a
+  origem, então responde a uma pergunta mais fraca ("existe alguma viagem possível agora?"), e o
+  evento da §8.2 continua sendo a palavra final. Por isso tem chave própria (`blockPortalsEarly`) —
+  desligá-la deixa o servidor mais caro, nunca mais permissivo.
+- Devolver `false` ali é um caminho que o vanilla já sabe tratar (é o mesmo de um jogador morto ou de
+  carona): o contador do portal só decai, sem estado inconsistente. Diretriz 2 da §7 aplicada.
+
+### 8.4 A simetria entrada/saída *é* a mecânica
+
+- Sair de uma dimensão controlada exige a mesma janela que entrar nela. Não é um detalhe de
+  implementação: se só a entrada fosse controlada, voltar ao overworld (que é livre) seria sempre
+  permitido e a aventura não teria risco nenhum. É essa simetria que faz quem perdeu a hora do trem
+  ficar do lado de dentro.
+- **Morrer não é bilhete de volta.** Sem isso a mecânica teria uma porta dos fundos óbvia: quem
+  perdeu o trem se joga na lava e reaparece no spawn do mundo de graça. `PlayerRespawnPositionEvent`
+  redireciona o respawn para dentro da própria dimensão.
+- **Nenhuma exceção embutida** — nem a do End. O portal de retorno depois do dragão passa pelo mesmo
+  evento, com `isFromEndFight()`, e é deliberadamente tratado como qualquer outro respawn: o jogador
+  vê os créditos e acorda no End. Um mod cuja regra é "eu decido quem sai" não pode ter uma rota de
+  saída que o próprio mod concede sozinho.
+- O respawn tem ordem de preferência declarada: estação de desembarque do datapack → vão seguro na
+  coluna onde morreu → spawn da dimensão. A primeira é a única que o servidor *sabe* que é boa,
+  porque quem construiu a estação garantiu — por isso vale sempre declará-la.
+
+### 8.5 Relógio: `long` comparado por segundo, calendário só nas transições
+
+- Um tick de espera — o estado de 99,99% do tempo — custa **duas comparações de `long`** por linha e
+  mais nada. Toda a aritmética de calendário (`ZonedDateTime`, que aloca) acontece só quando uma
+  janela fecha e a próxima precisa ser descoberta: algumas vezes por semana. Mesma garantia do
+  `CleanupScheduler` da §5.4, aplicada a um agendador bem mais complexo.
+- O cursor de avisos só anda para frente. É o que garante que um servidor que travou um minuto volte
+  **pulando** os avisos vencidos, em vez de despejá-los em rajada no chat de 90 pessoas.
+- **Tempo real com fuso explícito, não tempo de jogo.** "Sábado às 20:00" precisa cair no sábado às
+  20:00 da comunidade; o dia do Minecraft dura 20 minutos e para com `doDaylightCycle false`. O fuso
+  fica no datapack porque o padrão da JVM é o do provedor de hospedagem, que quase nunca é o dos
+  jogadores.
+- `anyOpen` é um `boolean` mantido nas transições, não uma varredura por consulta: é a pergunta que a
+  checagem de portal faz no caminho quente.
+
+### 8.6 Horário é conteúdo; regra de servidor é config
+
+- Nome da linha, dimensões, dias, horários, duração da janela e estações vivem em
+  `data/<ns>/aurorion/linhas/*.json`. Mudar o dia da partida no meio da temporada é editar arquivo e
+  dar `/reload`, sem rebuild de jar e sem derrubar o servidor — diretriz 4 da §7, igual às casas do
+  Ato 2.
+- A config guarda o que é **regra**: quem escapa, o que é livre, como o servidor avisa. `enforce` é o
+  botão de emergência — libera tudo na hora, sem apagar linha nem passe, para quando um conflito de
+  modpack aparecer no meio do horário de pico.
+
+### 8.7 O passe é o encaixe do item que ainda não existe
+
+- `TransitPass` (dimensão + validade + usos) já existe e já é gravado por UUID, mesmo sem nenhum item
+  que o conceda. O item de "abrir portal" planejado só vai precisar chamar `PassData#grant` — sem
+  saber nada sobre horário, linha ou relógio.
+- Vale nos dois sentidos de propósito: o passe que tira alguém do Nether é o mesmo que põe. É o único
+  jeito de ele funcionar como **resgate**, que é o caso de uso que importa para quem perdeu o trem.
+
+## 9. aurorion-vidas — vidas limitadas e exílio
+
+Cada jogador tem um número fixo de vidas; cada morte gasta uma; zerar leva ao **exílio** numa
+dimensão da qual não se sai sozinho. O exílio só tem peso porque o `aurorion-portais` mantém o
+Nether trancado — e é justamente aí que está a decisão de design que importa.
+
+### 9.1 Dois mods que dependem um do outro sem se conhecerem
+
+Não há import, nem dependência declarada, entre `aurorion-vidas` e `aurorion-portais`. Eles se
+coordenam por **eventos do vanilla**, cada um agindo pelo seu próprio motivo:
+
+- **A ida para o exílio** usa `PlayerRespawnPositionEvent`, que não passa por `changeDimension`. O
+  portão do outro mod nem chega a ser consultado — a ida simplesmente não é uma "viagem". Isso
+  evitou ter que abrir no `aurorion-portais` uma exceção de "teleporte de sistema", que seria
+  exatamente o tipo de buraco que a §8.4 diz que ele não pode ter.
+- **A volta** é vetada por um listener de `EntityTravelToDimensionEvent` do próprio
+  `aurorion-vidas`. Os dois mods cancelam o mesmo evento sem saber um do outro: o `portais` porque a
+  janela está fechada, o `vidas` porque a pessoa está exilada.
+
+Consequência prática: cada um funciona sozinho. Sem o `portais`, o exílio continua acontecendo — só
+fica mais fraco, porque o exilado sai pelo primeiro portal que achar.
+
+### 9.2 Prioridade de evento como árbitro, não uma checagem cruzada
+
+Os dois mods têm listener em `PlayerRespawnPositionEvent`: o `portais` para prender quem morreu
+dentro de dimensão trancada, o `vidas` para exilar quem zerou. Quando os dois se aplicam (morrer no
+End sem vidas), quem decide é a **prioridade**: o `vidas` roda em `LOW` e sobrescreve.
+
+A alternativa seria um dos dois perguntar ao outro o que fazer — que é o acoplamento que a §6.1 já
+tinha rejeitado no par aeonita/ato2. Prioridade de evento é um mecanismo que o próprio loader
+oferece para exatamente isto: a regra mais específica fala por último.
+
+O listener de morte também é `LOW`, por outro motivo: qualquer mod que **cancele** a morte
+(ressurreição, totem custom) age primeiro e o nosso nem é chamado — `@SubscribeEvent` não entrega
+evento já cancelado. Cobrar vida de uma morte que não aconteceu seria o bug mais caro possível num
+sistema de vidas limitadas.
+
+### 9.3 Quem nunca morreu não ocupa espaço
+
+Jogador sem entrada no mapa **é** um jogador com vidas cheias — a leitura devolve o máximo da
+config. Num mundo com anos de histórico, o arquivo cresce com o número de pessoas que perderam vida,
+não com o total de visitantes. Mesma família de decisão da §4.3 (snapshot é O(jogadores online),
+nunca O(histórico do mundo)).
+
+O **ponto** de exílio, por outro lado, mora no save e não na config: é uma coordenada de mundo, tem
+que acompanhar o que foi construído e sumir junto quando o mundo for trocado. Config que guarda
+coordenada envelhece mal. Quando ninguém marcou um ponto, o mod procura um lugar seguro uma vez,
+**grava** o resultado e avisa no log — assim todos os exilados chegam no mesmo lugar, o que também é
+melhor de jogo: a chegada vira um lugar reconhecível em vez de gente espalhada pelo Nether.
+
+### 9.4 HUD: ancorado no vanilla, não em pixels
+
+A fileira de vidas é uma camada registrada **acima de `FOOD_LEVEL`**, e usa o mesmo par de
+referências que o vanilla usa para empilhar o canto direito (`guiWidth()/2 + 91` e `Gui#rightHeight`),
+incrementando `rightHeight` ao terminar. É isso que faz a fileira acompanhar a barra de fome quando
+algo entra ou sai da pilha — montar num cavalo, bolhas de ar — em vez de sobrepor.
+
+Entrar no grupo `playerHealthComponents` (onde o `FOOD_LEVEL` vive) dá de graça dois comportamentos
+certos, sem uma linha de código: some em criativo/espectador junto com vida e fome, e some com o HUD
+escondido no F1.
+
+Custo por frame: nenhuma alocação e no máximo `maxLives` blits de 9×9 — e **nada** enquanto o
+servidor não tiver informado as vidas (§2, zero alocação no caminho quente do cliente).
+
+### 9.5 Rede: o único mod do ecossistema sem snapshot de login
+
+`aurorion-talk` e `aurorion-essentials` precisam de snapshot no login porque o cliente renderiza
+coisas de **outros** jogadores (balão, nametag). Aqui não: ninguém desenha a vida de outra pessoa.
+O payload é dois inteiros, só para o dono da tela — O(1) de verdade, que nem cresce com a população.
+
+O máximo viaja junto com o valor em vez de ser lido da config no cliente: config de servidor não
+existe no cliente, e um cliente que adivinhasse o máximo desenharia a quantidade errada de ícones. E
+`max = 0` é o estado "o servidor ainda não falou" — o HUD não desenha nada em vez de chutar.
+
+### 9.6 A arte é dado, não código
+
+Os ícones são sprites de GUI (`textures/gui/sprites/hud/`). Trocar a arte é substituir dois PNG —
+dá para fazer por resource pack, sem tocar no jar e sem recompilar. Diretriz 4 da §7 aplicada ao
+HUD: comportamento é código, aparência não deveria exigir build.
+
+## 10. Fora de escopo (deliberadamente)
 
 - Suporte a múltiplos servidores públicos / milhares de instalações — este é software para um
   servidor específico, não um mod para a CurseForge competir por downloads.

@@ -23,7 +23,7 @@ public final class Ato2ServerEvents {
     /** Casas sao datapack: recarregam junto com receitas e loot tables, no start e em cada /reload. */
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {
-        event.addListener(new HouseCatalog());
+        event.addListener(HouseCatalog.listener());
     }
 
     /**
@@ -53,7 +53,12 @@ public final class Ato2ServerEvents {
         PendingSelections.forget(event.getEntity().getUUID());
     }
 
-    /** Servidor integrado: sem isso, uma sessao deixaria pendencias visiveis para a proxima. */
+    /**
+     * Servidor integrado: sem isso, uma sessao deixaria pendencias visiveis para a proxima.
+     *
+     * <p>O {@code HouseData} nao aparece aqui de proposito — quem solta o cache dele e o
+     * {@code aurorion-core}, para nenhum mod precisar lembrar disso.
+     */
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         PendingSelections.clear();

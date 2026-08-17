@@ -1,0 +1,15 @@
+{
+  "aurorion_core.tempo.dias": "%sd",
+  "aurorion_core.tempo.horas": "%sh",
+  "aurorion_core.tempo.minutos": "%smin",
+  "aurorion_core.tempo.segundos": "%ss",
+
+  "aurorion_core.horario": "%s, %s",
+  "aurorion_core.dia.monday": "segunda-feira",
+  "aurorion_core.dia.tuesday": "terça-feira",
+  "aurorion_core.dia.wednesday": "quarta-feira",
+  "aurorion_core.dia.thursday": "quinta-feira",
+  "aurorion_core.dia.friday": "sexta-feira",
+  "aurorion_core.dia.saturday": "sábado",
+  "aurorion_core.dia.sunday": "domingo"
+}

@@ -1,0 +1,30 @@
+{
+  "aurorion_portais.aviso.chamada": "» O trem da linha %s parte em %s. Prepare-se para embarcar!",
+  "aurorion_portais.aviso.chamada.estacao": "» O trem da linha %s parte em %s. Esteja na %s para embarcar!",
+  "aurorion_portais.aviso.embarque": "» %s — embarque liberado! A passagem fica aberta pelos próximos %s.",
+  "aurorion_portais.aviso.partiu": "» %s partiu. A passagem está fechada — quem ficou, ficou.",
+  "aurorion_portais.aviso.contagem": "%s parte em %ss — corra para o portal!",
+
+  "aurorion_portais.barrado.entrada": "A passagem para %s está fechada.",
+  "aurorion_portais.barrado.saida": "Você está preso em %s até o próximo trem.",
+  "aurorion_portais.barrado.proximo": "Próxima partida: %s (em %s).",
+
+  "commands.aurorion_portais.vazio": "Nenhuma linha configurada.",
+  "commands.aurorion_portais.cabecalho": "== Quadro de horários ==",
+  "commands.aurorion_portais.linha.aberta": "● %s — ABERTA, fecha em %s",
+  "commands.aurorion_portais.linha.fechada": "○ %s — próxima partida %s (em %s)",
+  "commands.aurorion_portais.linha.sem_horario": "○ %s — sem partidas agendadas",
+  "commands.aurorion_portais.linha.estacao": "| Estação: %s",
+  "commands.aurorion_portais.linha.desconhecida": "Linha desconhecida: %s",
+  "commands.aurorion_portais.abrir": "Linha %s aberta manualmente por %s minuto(s).",
+  "commands.aurorion_portais.fechar": "Linha %s fechada.",
+  "commands.aurorion_portais.fechar.ja_fechada": "A linha %s já estava fechada.",
+
+  "commands.aurorion_portais.passe.dado": "Passe concedido a %s para %s (%s uso(s)).",
+  "commands.aurorion_portais.passe.nenhum": "%s não tem nenhum passe.",
+  "commands.aurorion_portais.passe.entrada": "%s: passe para %s (%s)",
+  "commands.aurorion_portais.passe.entrada.temporario": "%s: passe para %s (%s, expira em %s)",
+  "commands.aurorion_portais.passe.usos": "%s uso(s)",
+  "commands.aurorion_portais.passe.usos.ilimitado": "usos ilimitados",
+  "commands.aurorion_portais.passe.tirado": "%s: %s passe(s) removido(s)."
+}

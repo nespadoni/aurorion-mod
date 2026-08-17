@@ -16,13 +16,19 @@ plugins {
 
 rootProject.name = 'aurorion-mod'
 
+// Biblioteca compartilhada: nao adiciona nada ao jogo, mas todos os mods abaixo dependem dela.
+include 'aurorion-core'
+
 // Cada mod do ecossistema Aurorion e um subprojeto independente.
-// Para adicionar um novo mod: crie a pasta e inclua a linha aqui.
+// Para adicionar um novo mod: crie a pasta com um build.gradle de uma linha
+// (apply from: "$rootDir/gradle/aurorion-mod.gradle") e inclua a linha aqui.
 include 'aurorion-talk'
 include 'aurorion-essentials'
 include 'aurorion-utils'
 include 'aurorion-aeonita'
 include 'aurorion-ato2'
+include 'aurorion-portais'
+include 'aurorion-vidas'
 
 // Nao e um mod: sobe um client/servidor com todos os mods acima de uma vez.
 include 'aurorion-runs'

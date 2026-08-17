@@ -8,11 +8,14 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 
 | Mod | Pasta | O que faz |
 |---|---|---|
+| Aurorion Core | [aurorion-core/](aurorion-core/) | **Biblioteca**: não adiciona nada ao jogo, mas todos os outros dependem dela |
 | Aurorion Talk | [aurorion-talk/](aurorion-talk/) | Balões de fala acima dos jogadores; tira as falas do HUD do chat |
 | Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Comandos essenciais de servidor: `/fakename` (troca o nome exibido em todo o jogo) e cleanup periódico de itens/XP no chão |
 | Aurorion Utils | [aurorion-utils/](aurorion-utils/) | Utilitários diversos: `/abduzir` (puxa um jogador com uma animação de feixe de luz, com opção de trazer de volta) |
 | Aurorion Aeonita | [aurorion-aeonita/](aurorion-aeonita/) | **Conteúdo**: itens e blocos de Aeonita, luz dinâmica e o Altar de Seleção |
 | Aurorion Ato 2 | [aurorion-ato2/](aurorion-ato2/) | **Mecânica do Ato 2**: escolha de casa no altar, com as casas definidas por datapack |
+| Aurorion Portais | [aurorion-portais/](aurorion-portais/) | Tranca todas as dimensões menos o overworld; o acesso abre em janelas agendadas por datapack (os "trens"), com avisos automáticos |
+| Aurorion Vidas | [aurorion-vidas/](aurorion-vidas/) | Vidas limitadas por jogador, contador no HUD acima da fome, e exílio no Nether para quem zerar |
 
 ### Conteúdo x mecânica de ato
 
@@ -53,7 +56,7 @@ inteiro.
 
 [aurorion-runs/](aurorion-runs/) não é um mod: é um subprojeto que só existe para rodar o jogo. Ele
 declara um mod por subprojeto apontando para o `sourceSet` do dono, então `:aurorion-runs:runClient`
-sobe um cliente com os cinco mods carregados direto das classes compiladas — sem gerar `.jar` e sem
+sobe um cliente com todos os mods carregados direto das classes compiladas — sem gerar `.jar` e sem
 copiar nada para uma pasta `mods/`. O Gradle recompila o que mudou antes de abrir o jogo, e no
 desligamento os `run/` de cada mod continuam separados do `run/` do agregador.
 
@@ -89,11 +92,31 @@ esperando lock do primeiro.
 Para adicionar um terceiro jogador, copie o bloco `client2` em
 [aurorion-runs/build.gradle](aurorion-runs/build.gradle) trocando o nome do run e o `--username`.
 
+## A biblioteca compartilhada
+
+[aurorion-core/](aurorion-core/) não adiciona nada ao jogo: não registra item, bloco, comando nem
+evento. Ela existe porque vários mods estavam repetindo o mesmo código — acesso a `SavedData`,
+leitura/escrita de mapas por UUID, busca de lugar seguro para teleporte e formatação de tempo.
+
+**Ela precisa estar sempre no pack.** É a contrapartida assumida: os mods continuam podendo ser
+ligados e desligados um a um, o core não. Ver [SDD §3.1](SDD.md) para o porquê da troca.
+
+O critério para algo entrar no core é estreito: **já estava duplicado**. Utilidade que só um mod usa
+fica no mod — senão a biblioteca vira depósito de código especulativo, que é como uma camada
+compartilhada piora a manutenção em vez de melhorar.
+
 ## Adicionando um mod novo ao ecossistema
 
-1. Crie a pasta `aurorion-<nome>/` copiando `build.gradle` e `gradle.properties` do `aurorion-talk`
-2. Ajuste `mod_id`, `mod_name`, `mod_version`, `mod_description`
+1. Crie a pasta `aurorion-<nome>/` com um `build.gradle` de **uma linha**:
+   ```gradle
+   apply from: "$rootDir/gradle/aurorion-mod.gradle"
+   ```
+2. Crie o `gradle.properties` com `mod_id`, `mod_name`, `mod_version`, `mod_description`
 3. Adicione `include 'aurorion-<nome>'` no [settings.gradle](settings.gradle)
+
+Toda a configuração de build (toolchain, runs, Parchment, manifest, dependência do core) vem de
+[gradle/aurorion-mod.gradle](gradle/aurorion-mod.gradle). Um lugar só para mudar — antes eram sete
+arquivos byte-idênticos, e sete chances de esquecer um numa atualização.
 
 O `aurorion-runs` e o `buildAll` pegam o mod novo sozinhos — os dois derivam a lista de
 `subprojects`, não têm nome de mod escrito à mão.

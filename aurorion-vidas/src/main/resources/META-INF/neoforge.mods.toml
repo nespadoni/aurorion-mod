@@ -1,0 +1,43 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+# A regra inteira e do servidor; o cliente so desenha o contador no HUD. O canal de rede e
+# registrado como optional(), entao um cliente sem o mod entra e joga normalmente — apenas nao ve
+# os coracoes de vida.
+displayTest = "IGNORE_ALL_VERSION"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# Nao ha dependencia declarada com o aurorion_portais, e isso e deliberado: os dois se coordenam
+# por eventos do vanilla, sem um importar classe do outro. O exilio entra pelo respawn (que nao
+# passa por changeDimension, entao o portao nem e consultado) e a saida e vetada por um listener
+# proprio de EntityTravelToDimensionEvent. Cada um funciona sozinho.
+
+# Biblioteca compartilhada do ecossistema. Obrigatoria: sem ela este mod nao carrega.
+# Ordering BEFORE garante que o core ja esteja pronto quando este mod inicializar.
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "BEFORE"
+side = "BOTH"
