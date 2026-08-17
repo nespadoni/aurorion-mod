@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "aurorion_aeonita:block/aeonita_block_yellow"
+  }
+}

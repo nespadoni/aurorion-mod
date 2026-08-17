@@ -43,12 +43,19 @@ public class AbductionBeamEntity extends Entity {
             SynchedEntityData.defineId(AbductionBeamEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_COLOR =
             SynchedEntityData.defineId(AbductionBeamEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_Y =
+            SynchedEntityData.defineId(AbductionBeamEntity.class, EntityDataSerializers.FLOAT);
 
     /** O quanto mais forte empurra alguem colado na borda do raio de repulsao, por tick. */
     private static final double PUSH_STRENGTH = 0.12;
 
     @Nullable
     private UUID targetPlayerId;
+
+    private double lerpX;
+    private double lerpY;
+    private double lerpZ;
+    private int lerpSteps;
 
     public AbductionBeamEntity(EntityType<? extends AbductionBeamEntity> type, Level level) {
         super(type, level);
@@ -61,20 +68,57 @@ public class AbductionBeamEntity extends Entity {
         builder.define(DATA_PROGRESS, 0.0F);
         builder.define(DATA_RADIUS, 1.5F);
         builder.define(DATA_COLOR, 0xFFFFFF);
-    }
-
-    /** Passageiro fica exatamente na posicao da ancora, sem flutuar acima dela. */
-    @Override
-    public double getPassengersRidingOffset() {
-        return 0.0;
+        builder.define(DATA_GROUND_Y, 0.0F);
     }
 
     @Override
     public void tick() {
         super.tick();
+
+        if (level().isClientSide) {
+            stepTowardsServerPosition();
+            return;
+        }
         if (!(level() instanceof ServerLevel serverLevel) || targetPlayerId == null) return;
 
         pushAwayBystanders(serverLevel);
+    }
+
+    /**
+     * Mesma tecnica do minecart: o cliente caminha ate a posicao que o servidor mandou em alguns
+     * passos, em vez de saltar direto pra ela (que e o que {@link Entity#lerpTo} faz por padrao).
+     * A subida e movida pelo servidor tick a tick e o passageiro so acompanha o veiculo, entao sem
+     * esse amortecimento qualquer irregularidade na chegada dos pacotes vira tranco na tela de quem
+     * esta sendo abduzido.
+     */
+    private void stepTowardsServerPosition() {
+        if (lerpSteps <= 0) return;
+
+        lerpPositionAndRotationStep(lerpSteps, lerpX, lerpY, lerpZ, getYRot(), getXRot());
+        lerpSteps--;
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.lerpX = x;
+        this.lerpY = y;
+        this.lerpZ = z;
+        this.lerpSteps = steps;
+    }
+
+    @Override
+    public double lerpTargetX() {
+        return lerpSteps > 0 ? lerpX : getX();
+    }
+
+    @Override
+    public double lerpTargetY() {
+        return lerpSteps > 0 ? lerpY : getY();
+    }
+
+    @Override
+    public double lerpTargetZ() {
+        return lerpSteps > 0 ? lerpZ : getZ();
     }
 
     /**
@@ -108,11 +152,15 @@ public class AbductionBeamEntity extends Entity {
     /**
      * O feixe visual sobe bem alem da hitbox real (que fica pequena, so pra nao interferir com
      * nada) — sem isso o cliente poderia cortar o feixe da tela quando a base sai do frustum mas
-     * o topo, la em cima, continua visivel.
+     * o topo, la em cima, continua visivel. Tambem desce: durante a subida a entidade se afasta do
+     * chao, mas o feixe continua ancorado la embaixo (ver {@code AbductionBeamRenderer}).
      */
     @Override
     public AABB getBoundingBoxForCulling() {
-        return getBoundingBox().expandTowards(0.0, 320.0, 0.0).inflate(2.0);
+        return getBoundingBox()
+                .expandTowards(0.0, 320.0, 0.0)
+                .expandTowards(0.0, -320.0, 0.0)
+                .inflate(2.0);
     }
 
     public void setTargetPlayer(UUID targetPlayerId) {
@@ -149,6 +197,19 @@ public class AbductionBeamEntity extends Entity {
 
     public int getColor() {
         return entityData.get(DATA_COLOR);
+    }
+
+    /**
+     * Altura do chao de onde a abducao comecou. Sincronizado uma unica vez, no spawn: com ele o
+     * cliente deduz sozinho o quanto o feixe ja subiu ({@code getY() - groundY}) e mantem a base
+     * plantada no chao durante a subida, sem precisar de nenhum dado novo por tick.
+     */
+    public void setGroundY(float groundY) {
+        entityData.set(DATA_GROUND_Y, groundY);
+    }
+
+    public float getGroundY() {
+        return entityData.get(DATA_GROUND_Y);
     }
 
     @Override

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": { "item": "aurorion_aeonita:aeonita_ingot_blue" }
+  },
+  "result": {
+    "id": "aurorion_aeonita:aeonita_block_blue",
+    "count": 1
+  }
+}

@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.blockentity.BeaconRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 /**
  * Reaproveita {@link BeaconRenderer#renderBeaconBeam} — o mesmo metodo publico que o jogo usa
@@ -20,6 +21,11 @@ import net.minecraft.resources.ResourceLocation;
  * contrario: a base do feixe sobe (offset vertical crescente, altura desenhada encolhendo) ate
  * ele sumir e a entidade se descartar — usamos o proprio parametro {@code yOffset} de
  * {@code renderBeaconBeam} pra isso, sem geometria nova.</p>
+ *
+ * <p>Durante a subida a entidade se afasta do chao, mas o feixe nao: a matriz e rebaixada de volta
+ * ate {@link AbductionBeamEntity#getGroundY()} antes de desenhar. Sem isso o feixe subiria junto
+ * com o abduzido e a coluna de luz descolaria do chao — pouco visivel numa subida de 6 blocos,
+ * obvio numa de dezenas.</p>
  */
 public class AbductionBeamRenderer extends EntityRenderer<AbductionBeamEntity> {
     private static final ResourceLocation BEAM_TEXTURE =
@@ -48,9 +54,17 @@ public class AbductionBeamRenderer extends EntityRenderer<AbductionBeamEntity> {
         }
 
         if (height > 0) {
+            // Y interpolado, nao o do tick: a matriz ja veio posicionada no Y interpolado da
+            // entidade, entao usar getY() cru aqui faria a base do feixe tremer a cada tick.
+            double renderY = Mth.lerp(partialTick, entity.yOld, entity.getY());
+            double ascended = Math.max(0.0, renderY - entity.getGroundY());
+
+            poseStack.pushPose();
+            poseStack.translate(0.0, -ascended, 0.0);
             BeaconRenderer.renderBeaconBeam(poseStack, buffer, BEAM_TEXTURE, partialTick, 1.0F,
                     entity.level().getGameTime(), yOffset, height, entity.getColor(),
                     entity.getRadius(), entity.getRadius() * 1.2F);
+            poseStack.popPose();
         }
 
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);

@@ -37,11 +37,22 @@ monorepo é NeoForge single-loader, decisão final registrada em [SDD.md §3](..
 ## Comandos deste monorepo
 
 ```bash
-./gradlew :aurorion-talk:runClient     # abre o cliente com o mod
+./gradlew :aurorion-runs:runClient     # cliente com TODOS os mods de uma vez
+./gradlew :aurorion-runs:runClient2    # segundo cliente (teste de 2 jogadores)
+./gradlew :aurorion-talk:runClient     # cliente com um mod so
 ./gradlew :aurorion-talk:runServer     # servidor dedicado de teste
 ./gradlew :aurorion-talk:build         # jar em aurorion-talk/build/libs/
 ./gradlew buildAll                     # todos os mods do ecossistema
 ```
+
+`aurorion-runs` nao e um mod: e um subprojeto so de execucao que declara um mod por subprojeto
+apontando para o `sourceSet` do dono. Serve para testar a interacao entre os mods (ex.: altar do
+`aurorion-aeonita` + escolha de casa do `aurorion-ato2`) sem buildar jar nenhum.
+
+Mecanica que envolve dois jogadores (balao de fala, `/abduzir`, `/fakename`, sussurro, escolha de
+casa) se testa com `runServer` + `runClient` (Dev1) + `runClient2` (Dev2), os tres conectando em
+`localhost`. Os `--username` tem que ser diferentes: em offline-mode o UUID vem do nome, entao
+nome igual = mesmo jogador e o segundo cliente chuta o primeiro.
 
 ## Referências (da skill global — só o que se aplica aqui)
 

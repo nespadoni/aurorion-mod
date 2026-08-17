@@ -1,0 +1,93 @@
+// Projeto so de execucao: nao registra mod nenhum e nao vira jar de release.
+// Existe para subir UM client (ou servidor) com todos os mods do ecossistema
+// carregados de uma vez, lendo direto as classes compiladas de cada subprojeto
+// -- sem buildar jar e sem copiar nada para uma pasta mods/.
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev'
+}
+
+// Os mods do ecossistema sao todos os subprojetos menos este. Um mod novo
+// incluido no settings.gradle da raiz entra aqui sozinho.
+def modProjects = rootProject.subprojects.findAll { it != project }
+
+// Abaixo lemos sourceSets e mod_id dos outros subprojetos em tempo de
+// configuracao, entao eles precisam estar avaliados antes deste projeto
+// (a ordem alfabetica sozinha nao garante isso).
+modProjects.each { evaluationDependsOn(it.path) }
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
+
+    // Um mod declarado por subprojeto, apontando para o sourceSet do dono.
+    // O MDG aceita sourceSet de outro projeto: ele descobre o projeto dono
+    // varrendo rootProject.allprojects (RunUtils.findSourceSetProject).
+    mods { modContainer ->
+        modProjects.each { modProject ->
+            modContainer.create(modProject.property('mod_id')) { mod ->
+                mod.sourceSet modProject.sourceSets.main
+            }
+        }
+    }
+
+    runs {
+        // Sem loadedMods explicito: o default de um run e "todos os mods
+        // declarados neste projeto", que aqui ja sao os cinco.
+        client {
+            client()
+            programArgument '--username'
+            programArgument 'Dev1'
+        }
+        // Segundo cliente, para testar o que so acontece entre dois jogadores:
+        // balao de fala, /abduzir, /fakename, sussurro, escolha de casa no altar.
+        //
+        // O --username diferente nao e cosmetico: o servidor de dev roda em
+        // offline-mode e deriva o UUID do nome, entao dois clientes com o mesmo
+        // nome sao o MESMO jogador -- o segundo a conectar chuta o primeiro.
+        client2 {
+            client()
+            programArgument '--username'
+            programArgument 'Dev2'
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+
+        configureEach {
+            // Um diretorio por run: client, client2 e server nao dividem mundo,
+            // options.txt nem log. Sem isso os dois clientes brigam pelos mesmos
+            // arquivos de config.
+            gameDirectory = project.file("run/${it.name}")
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Entram no classpath do run os diretorios de saida (classes + resources
+    // ja processados) de cada mod, e nao o jar via project(':aurorion-x').
+    // Com o jar, o FML acharia cada mod duas vezes: uma pelo jar do classpath
+    // e outra pelo diretorio anunciado em -Dfml.modFolders.
+    modProjects.each { modProject ->
+        implementation modProject.sourceSets.main.output
+    }
+}
+
+// Nada aqui e publicavel; o jar vazio deste projeto so atrapalharia.
+tasks.named('jar', Jar).configure {
+    enabled = false
+}

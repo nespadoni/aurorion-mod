@@ -4,6 +4,8 @@
   "commands.aurorion_utils.abduzir.voltar.success": "%s is being returned to where they were abducted from.",
   "commands.aurorion_utils.abduzir.voltar.noOrigin": "%s has no saved abduction origin.",
 
+  "argument.aurorion_utils.cor.invalid": "Unknown beam color: %s (use a name from the list or an RRGGBB hex)",
+
   "commands.aurorion_utils.freeze.success": "%s player(s) frozen.",
   "commands.aurorion_utils.unfreeze.success": "%s player(s) unfrozen.",
 

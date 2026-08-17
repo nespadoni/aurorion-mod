@@ -13,14 +13,12 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Desenha os baloes acima de um jogador.
@@ -39,6 +37,12 @@ public final class BalloonRenderer {
 
     /** Baloes sempre legiveis, mesmo numa caverna escura. */
     private static final int LIGHT = LightTexture.FULL_BRIGHT;
+
+    /** Uma mensagem viva, ja com o deslocamento vertical do empilhamento resolvido. */
+    @FunctionalInterface
+    private interface MessagePass {
+        void accept(BalloonMessage message, int stackOffset, boolean isNewest);
+    }
 
     private BalloonRenderer() {
     }
@@ -63,43 +67,60 @@ public final class BalloonRenderer {
         poseStack.scale(-0.025F, -0.025F, 0.025F);
 
         Matrix4f pose = poseStack.last().pose();
-        VertexConsumer balloonConsumer = buffer.getBuffer(RenderType.text(style.skin()));
 
-        int stackOffset = 0;
-        int previousHeight = 0;
-
-        // Da mais recente (colada na cabeca) para a mais antiga (empilhando para cima).
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            BalloonMessage message = messages.get(i);
-            if (message.expiresAtTick() <= gameTime) continue;
-
-            int lineCount = message.lineCount();
+        // Uma passada por textura, nunca intercaladas. O VertexConsumer que o MultiBufferSource
+        // devolve morre assim que outro RenderType pede o buffer compartilhado — BufferSource#getBuffer
+        // fecha o batch anterior — entao segurar a referencia por cima de um getBuffer alheio estoura
+        // "Not building!". De quebra, cada textura sai num draw call so para todos os baloes do jogador.
+        VertexConsumer frames = buffer.getBuffer(RenderType.text(style.skin()));
+        forEachLiveMessage(messages, gameTime, gap, (message, stackOffset, isNewest) -> {
             int width = Mth.clamp(message.widestLine(), minWidth, maxWidth);
             if (width % 2 == 0) width--; // largura impar centraliza a setinha certinho
 
-            if (previousHeight != 0) stackOffset += LINE_HEIGHT * previousHeight + gap;
-            previousHeight = lineCount;
-
-            boolean isNewest = stackOffset == 0;
             BalloonNineSlice.emit(
-                    (x, y, w, h, u, v, uw, vh) -> quad(balloonConsumer, pose, tint, x, y, w, h, u, v, uw, vh),
-                    width, lineCount, stackOffset, isNewest
+                    (x, y, w, h, u, v, uw, vh) -> quad(frames, pose, tint, x, y, w, h, u, v, uw, vh),
+                    width, message.lineCount(), stackOffset, isNewest
             );
+        });
 
-            if (style.hasDecoration()) {
-                drawDecoration(buffer, pose, style.decoration(), lineCount, stackOffset);
-            }
-
-            drawText(font, buffer, pose, message.lines(), textColor, stackOffset);
+        if (style.hasDecoration()) {
+            VertexConsumer decorations = buffer.getBuffer(RenderType.text(style.decoration().orElseThrow()));
+            forEachLiveMessage(messages, gameTime, gap, (message, stackOffset, isNewest) ->
+                    drawDecoration(decorations, pose, message.lineCount(), stackOffset));
         }
+
+        forEachLiveMessage(messages, gameTime, gap, (message, stackOffset, isNewest) ->
+                drawText(font, buffer, pose, message.lines(), textColor, stackOffset));
 
         poseStack.popPose();
     }
 
-    private static void drawDecoration(MultiBufferSource buffer, Matrix4f pose, Optional<ResourceLocation> decoration,
-                                       int lineCount, int stackOffset) {
+    /**
+     * Percorre as mensagens ainda vivas, da mais recente (colada na cabeca) para a mais antiga
+     * (empilhando para cima), entregando o deslocamento vertical ja acumulado.
+     *
+     * <p>O empilhamento mora aqui e so aqui: as passadas de balao, enfeite e texto tem que concordar
+     * pixel a pixel, e recalcular a conta em tres lugares e como elas desalinhariam.</p>
+     */
+    private static void forEachLiveMessage(List<BalloonMessage> messages, long gameTime, int gap, MessagePass pass) {
+        int stackOffset = 0;
+        int previousHeight = 0;
+        boolean isNewest = true;
+
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            BalloonMessage message = messages.get(i);
+            if (message.expiresAtTick() <= gameTime) continue;
+
+            if (previousHeight != 0) stackOffset += LINE_HEIGHT * previousHeight + gap;
+            previousHeight = message.lineCount();
+
+            pass.accept(message, stackOffset, isNewest);
+            isNewest = false;
+        }
+    }
+
+    private static void drawDecoration(VertexConsumer vc, Matrix4f pose, int lineCount, int stackOffset) {
         int top = BalloonNineSlice.top(lineCount, stackOffset);
-        VertexConsumer vc = buffer.getBuffer(RenderType.text(decoration.orElseThrow()));
 
         // Sem tingimento: o enfeite tem cor propria e ficaria lavado pelo tint do balao.
         quadFullSheet(vc, pose, 0xFFFFFFFF, -DECORATION_SIZE / 2, top - DECORATION_SIZE + 4, DECORATION_SIZE, DECORATION_SIZE);

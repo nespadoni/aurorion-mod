@@ -17,7 +17,6 @@ public final class AbductionConfig {
     public static final ModConfigSpec.IntValue RETRACT_DURATION_TICKS;
     public static final ModConfigSpec.DoubleValue BEAM_RADIUS;
     public static final ModConfigSpec.ConfigValue<String> BEAM_COLOR_RGB;
-    public static final ModConfigSpec.IntValue INVISIBILITY_DURATION_TICKS;
 
     public static final ModConfigSpec SPEC;
 
@@ -38,9 +37,11 @@ public final class AbductionConfig {
         ASCENT_HEIGHT_BLOCKS = BUILDER
                 .comment(
                         "Quantos blocos o jogador sobe dentro do feixe antes do teleporte de fato.",
-                        "Se houver um teto solido antes dessa altura, a subida para um pouco abaixo dele."
+                        "Se houver um teto solido antes dessa altura, a subida para um pouco abaixo dele",
+                        "-- entao debaixo de um telhado a subida e sempre curta, por mais alto que este",
+                        "valor esteja."
                 )
-                .defineInRange("ascentHeightBlocks", 6, 1, 64);
+                .defineInRange("ascentHeightBlocks", 40, 1, 320);
 
         ASCENT_DURATION_TICKS = BUILDER
                 .comment("Duracao da subida, em ticks (20 ticks = 1 segundo).")
@@ -58,12 +59,13 @@ public final class AbductionConfig {
                 .defineInRange("beamRadius", 1.5, 0.5, 8.0);
 
         BEAM_COLOR_RGB = BUILDER
-                .comment("Cor do feixe em hexadecimal RRGGBB (sem #), tingida sobre a textura do beam.")
+                .comment(
+                        "Cor padrao do feixe, usada quando /abduzir e chamado sem o argumento <cor>.",
+                        "Aceita hexadecimal RRGGBB (com ou sem #) ou um nome da paleta do comando:",
+                        "roxo, lilas, magenta, rosa, vermelho, carmesim, laranja, dourado, amarelo,",
+                        "lima, verde, turquesa, ciano, azul, anil, cinza, branco."
+                )
                 .define("beamColorRgb", "9B30FF");
-
-        INVISIBILITY_DURATION_TICKS = BUILDER
-                .comment("Quanto tempo o jogador fica invisivel logo apos o teleporte real, em ticks.")
-                .defineInRange("invisibilityDurationTicks", 60, 0, 6000);
 
         BUILDER.pop();
 

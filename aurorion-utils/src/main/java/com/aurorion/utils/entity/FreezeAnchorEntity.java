@@ -37,11 +37,6 @@ public class FreezeAnchorEntity extends Entity {
     }
 
     @Override
-    public double getPassengersRidingOffset() {
-        return 0.0;
-    }
-
-    @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         // noSave() de proposito — nunca persiste em disco.
     }

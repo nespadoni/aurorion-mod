@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "aurorion_aeonita:aeonita_block_yellow",
+    "aurorion_aeonita:aeonita_block_blue",
+    "aurorion_aeonita:aeonita_block_red",
+    "aurorion_aeonita:selection_altar"
+  ]
+}

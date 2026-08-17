@@ -1,0 +1,12 @@
+{
+  "itemGroup.aurorion_aeonita": "Aurorion — Aeonita",
+
+  "item.aurorion_aeonita.aeonita_ingot_yellow": "Yellow Aeonita Ingot",
+  "item.aurorion_aeonita.aeonita_ingot_blue": "Blue Aeonita Ingot",
+  "item.aurorion_aeonita.aeonita_ingot_red": "Red Aeonita Ingot",
+
+  "block.aurorion_aeonita.aeonita_block_yellow": "Block of Yellow Aeonita",
+  "block.aurorion_aeonita.aeonita_block_blue": "Block of Blue Aeonita",
+  "block.aurorion_aeonita.aeonita_block_red": "Block of Red Aeonita",
+  "block.aurorion_aeonita.selection_altar": "Selection Altar"
+}

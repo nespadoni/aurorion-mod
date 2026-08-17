@@ -1,0 +1,32 @@
+{
+  "gui.aurorion_ato2.house.title": "Choose Your House",
+  "gui.aurorion_ato2.house.title_locked": "Your House",
+  "gui.aurorion_ato2.house.subtitle": "This choice is final. Select a house and confirm.",
+  "gui.aurorion_ato2.house.subtitle_locked": "You already chose. Only staff can undo it.",
+  "gui.aurorion_ato2.house.confirm": "Confirm",
+  "gui.aurorion_ato2.house.sending": "Sealing your choice...",
+  "gui.aurorion_ato2.house.your_house": "Your house",
+  "gui.aurorion_ato2.house.members": "%1$s/%2$s members",
+
+  "aurorion_ato2.house.no_houses": "No houses are defined on this server. Tell the staff.",
+  "aurorion_ato2.house.chosen": "You now belong to %s.",
+  "aurorion_ato2.house.announce": "%1$s was welcomed by %2$s.",
+  "aurorion_ato2.house.error.unknown": "That house does not exist.",
+  "aurorion_ato2.house.error.not_at_altar": "You must stand before the altar to choose.",
+  "aurorion_ato2.house.error.already_chosen": "You already have a house. The choice is final.",
+  "aurorion_ato2.house.error.full": "That house is full. Pick another one.",
+
+  "commands.aurorion_ato2.casa.none": "You have no house yet. Find a Selection Altar.",
+  "commands.aurorion_ato2.casa.self": "Your house: %s",
+  "commands.aurorion_ato2.casa.missing": "Your house ('%s') no longer exists in the datapacks. Tell the staff.",
+  "commands.aurorion_ato2.casa.empty": "No houses defined in the datapacks.",
+  "commands.aurorion_ato2.casa.list.entry": "%1$s (%2$s) — %3$s member(s)",
+  "commands.aurorion_ato2.casa.list.entry.capped": "%1$s (%2$s) — %3$s/%4$s member(s)",
+  "commands.aurorion_ato2.casa.view.none": "%s has no house.",
+  "commands.aurorion_ato2.casa.view.house": "%1$s belongs to %2$s.",
+  "commands.aurorion_ato2.casa.view.missing": "%1$s is recorded as '%2$s', which no longer exists in the datapacks.",
+  "commands.aurorion_ato2.casa.unknown": "Unknown house: '%s'.",
+  "commands.aurorion_ato2.casa.set": "%1$s now belongs to %2$s.",
+  "commands.aurorion_ato2.casa.clear": "%s no longer belongs to any house.",
+  "commands.aurorion_ato2.casa.clear.none": "%s had no house already."
+}

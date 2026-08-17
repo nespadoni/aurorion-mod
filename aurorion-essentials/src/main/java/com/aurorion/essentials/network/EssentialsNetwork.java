@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-@EventBusSubscriber(modid = AurorionEssentials.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = AurorionEssentials.MOD_ID)
 public final class EssentialsNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload. */
     private static final String PROTOCOL_VERSION = "1";

@@ -53,6 +53,12 @@ Primeiro mod do ecossistema; as decisões abaixo são o padrão a repetir nos pr
 - **Quads vão direto para o `MultiBufferSource` da cena** (`VertexConsumer.addVertex` batelado),
   sem instanciar `GuiGraphics` novo por frame nem usar `RenderSystem.polygonOffset` em modo
   imediato. Em batch, o custo por balão extra é quase só os vértices em si.
+- **Uma passada por textura, nunca intercaladas** (`BalloonRenderer`: balão → enfeite → texto, cada
+  uma varrendo todas as mensagens). `BufferSource#getBuffer` fecha o batch anterior sempre que outro
+  `RenderType` pede o buffer compartilhado, então um `VertexConsumer` guardado por cima de um
+  `getBuffer` alheio vira referência morta e estoura `IllegalStateException: Not building!`. Separar
+  as passadas é o que torna verdadeiro o "custo por balão extra é quase só os vértices": todos os
+  balões do jogador saem em um draw call por textura, em vez de um por mensagem.
 - Mensagens vencidas são podadas no render (`aurorion_talk$pruneBalloons`), então um jogador fora
   da tela nunca custa nada — sem tick agendado, sem timer, sem trabalho até alguém olhar para ele.
 - A geometria nine-slice do balão (`BalloonNineSlice`) é pura matemática, sem estado e sem
@@ -138,6 +144,72 @@ lugar do jogo — chat, morte, conquista, join/leave, nametag, tab list).
   qualquer coisa que um jogador colocou de propósito. Igual à meta da seção 2 de nunca interferir
   fora do escopo próprio: um "cleanup" que remove mais do que isso é fácil de errar e caro de
   debugar num modpack pesado com dezenas de outros mods manipulando entidades.
+
+## 6. Conteúdo x mecânica de ato — `aurorion-aeonita` e `aurorion-ato2`
+
+Os dois primeiros mods do ecossistema que existem em par: um registra conteúdo, o outro dá
+comportamento a esse conteúdo durante um ato específico da história.
+
+### 6.1 A fronteira: quem registra item/bloco, e quem só tem comportamento
+
+- **Só o mod de conteúdo (`aurorion-aeonita`) registra item e bloco. Mod de ato nunca.** O motivo é
+  operacional, não estético: um mod de ato é feito para ser **removido** quando o ato acaba. Se o
+  Altar de Seleção fosse registrado pelo `aurorion-ato2`, tirar o Ato 2 do modpack apagaria todos os
+  altares já construídos no mundo e todo item dele no inventário de 80 jogadores. Registrando no mod
+  de conteúdo, remover o ato custa só a mecânica.
+- **O acoplamento entre os dois é uma tag de bloco, nunca um import.** O `aurorion-ato2` pergunta "o
+  bloco clicado está em `aurorion_ato2:house_altars`?", e a entrada do altar nessa tag é
+  `"required": false`. Consequência direta da seção 3 (cada mod ativável/desativável isoladamente):
+  desligar um dos dois não impede o outro de carregar. Consequência de brinde: qualquer bloco do
+  modpack vira altar por datapack, e o Ato 3 reaproveita o mesmo altar sem tocar em código do Ato 2.
+
+### 6.2 Luz dinâmica (`aurorion-aeonita`) — a única parte que custa frame time
+
+- **Roda por tick de cliente, então segue a regra de zero alocação da seção 2.** Colecões são campos
+  reaproveitados (`fastutil` com chave `int` — sem boxing de `Integer` por entidade por tick), a
+  posição é calculada num `MutableBlockPos` reaproveitado, e a varredura de entidades que sumiram —
+  a única parte que aloca um iterador — só roda quando existe de fato entrada a remover, detectado
+  por uma comparação de tamanhos que é válida porque o conjunto "visto" é sempre subconjunto do
+  "ativo".
+- **O custo que sobra é inerente à técnica e não foi escondido:** cada mudança de posição é um
+  `setBlock` no nível do cliente, que refaz iluminação do chunk. Não dá para otimizar sem trocar de
+  técnica. Por isso a feature tem chave de desligar própria (`aurorion_aeonita-client.toml`) — num
+  modpack pesado, é o primeiro item a sacrificar por FPS, e desligá-la não tira nenhum item nem
+  bloco do jogo.
+- **Quais itens acendem é dado (tag), não código.** Diretriz 4 da seção 7 aplicada: incluir o
+  cristal de outro mod do modpack na luz dinâmica é editar um JSON, não recompilar.
+
+### 6.3 Escolha de casa (`aurorion-ato2`)
+
+- **Custo total da feature: um evento de clique, um pacote de ida, um de volta.** Não há ticker,
+  timer nem varredura de jogadores em lugar nenhum — a escolha é um evento raro (uma vez por
+  jogador, na vida do personagem). Até o prazo da tela aberta é um `long` comparado no momento em
+  que a escolha chega, não uma contagem regressiva: uma pendência vencida não custa nada até alguém
+  tentar usá-la.
+- **Nada trafega no login — nem snapshot.** O catálogo inteiro de casas vai junto com o pacote que
+  abre a tela: O(casas), e só quando alguém clica num altar. Isso é mais barato que o padrão de
+  snapshot-no-login do `aurorion-talk` e do `aurorion-essentials`, e é o que permite as casas serem
+  datapack — o cliente não precisa ter os JSONs, não dá `/reload` junto e não tem como ficar
+  dessincronizado do servidor.
+- **Casa é conteúdo, então é datapack, não enum Java nem config.** Nome, cor, ícone, descrição e
+  lotação vivem em `data/<ns>/aurorion/houses/*.json`. Trocar o nome de uma casa no meio do ato é
+  editar arquivo e dar `/reload`, sem rebuild de jar e sem derrubar o servidor. Diretriz 4 de novo.
+  Config (`allowRechoose`, `announceInChat`) é para **regra de servidor**, que é comportamento.
+- **O id que vem do cliente passa por três validações antes de virar escrita.** Existe no catálogo?
+  O jogador estava mesmo diante de um altar — mesma dimensão, menos de 8 blocos, dentro do prazo, e
+  o bloco ainda está na tag? A casa ainda cabe mais gente? A permissão é gasta *antes* das outras
+  checagens: uma tela aberta vale exatamente uma tentativa, certa ou errada, senão daria para varrer
+  ids até achar casa com vaga. Diretriz 5 da seção 7, aplicada a algo que hoje parece só narrativo.
+- **A lotação é reconferida na confirmação, não só na abertura da tela.** Com 80 jogadores entrando
+  no ato ao mesmo tempo, duas pessoas disputando a última vaga é cenário real, não hipótese. É por
+  isso que existe um pacote de veredito: fechar a tela no clique e torcer deixaria quem perdeu a
+  corrida achando que entrou.
+- **Casa removida do datapack não apaga o registro do jogador.** O id continua gravado e cada
+  leitura trata "casa desconhecida" explicitamente. Alguém editando JSON com o servidor no ar não
+  pode custar o histórico de ninguém — mesma fronteira do `getScoreboardName()` na seção 5.1: o dado
+  de identidade nunca mente, mesmo quando a apresentação não consegue ser resolvida.
+- **A tela quebra texto e monta os `ItemStack` dos ícones uma vez, na abertura.** Mesma lição da
+  seção 4.2 — refazer `Font#split` a 60 fps é o gargalo clássico deste tipo de GUI.
 
 ## 7. Diretrizes para os próximos mods do ecossistema
 

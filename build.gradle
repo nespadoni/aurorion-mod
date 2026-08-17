@@ -4,8 +4,9 @@ plugins {
 }
 
 // Tarefa de conveniencia: builda todos os mods do ecossistema de uma vez.
+// 'aurorion-runs' fica de fora: e um projeto de execucao, nao gera jar.
 tasks.register('buildAll') {
     group = 'aurorion'
     description = 'Builda o jar de todos os mods Aurorion.'
-    dependsOn subprojects.collect { "${it.path}:build" }
+    dependsOn subprojects.findAll { it.name != 'aurorion-runs' }.collect { "${it.path}:build" }
 }

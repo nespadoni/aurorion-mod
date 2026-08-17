@@ -87,27 +87,29 @@ public class StylePickerScreen extends Screen {
     /** Botao quadrado que desenha uma miniatura da textura, ou um "X" para a opcao "nenhum". */
     private Button iconButton(int x, int y, Optional<ResourceLocation> texture, boolean selected,
                               Button.OnPress onPress, Component name) {
-        return new Button(x, y, CELL - 4, CELL - 4, name, onPress, Button.DEFAULT_NARRATION) {
-            @Override
-            protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-                graphics.fill(getX(), getY(), getX() + width, getY() + height,
-                        selected ? 0xFF3A3A44 : 0xFF202024);
+        return Button.builder(name, onPress)
+                .bounds(x, y, CELL - 4, CELL - 4)
+                .build(builder -> new Button(builder) {
+                    @Override
+                    protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+                        graphics.fill(getX(), getY(), getX() + width, getY() + height,
+                                selected ? 0xFF3A3A44 : 0xFF202024);
 
-                int iconX = getX() + (width - ICON) / 2;
-                int iconY = getY() + (height - ICON) / 2;
+                        int iconX = getX() + (width - ICON) / 2;
+                        int iconY = getY() + (height - ICON) / 2;
 
-                texture.ifPresentOrElse(
-                        id -> graphics.blit(id, iconX, iconY, 0, 0, ICON, ICON, ICON, ICON),
-                        () -> graphics.drawCenteredString(font, "-", getX() + width / 2, getY() + height / 2 - 4, 0xA0A0A0)
-                );
+                        texture.ifPresentOrElse(
+                                id -> graphics.blit(id, iconX, iconY, 0, 0, ICON, ICON, ICON, ICON),
+                                () -> graphics.drawCenteredString(font, "-", getX() + width / 2, getY() + height / 2 - 4, 0xA0A0A0)
+                        );
 
-                if (selected) {
-                    graphics.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
-                } else if (isHoveredOrFocused()) {
-                    graphics.renderOutline(getX(), getY(), width, height, 0x80FFFFFF);
-                }
-            }
-        };
+                        if (selected) {
+                            graphics.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
+                        } else if (isHoveredOrFocused()) {
+                            graphics.renderOutline(getX(), getY(), width, height, 0x80FFFFFF);
+                        }
+                    }
+                });
     }
 
     private void selectSkin(ResourceLocation skin) {

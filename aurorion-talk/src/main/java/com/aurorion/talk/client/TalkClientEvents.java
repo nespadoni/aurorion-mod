@@ -27,7 +27,7 @@ public final class TalkClientEvents {
     private TalkClientEvents() {
     }
 
-    @EventBusSubscriber(modid = AurorionTalk.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = AurorionTalk.MOD_ID, value = Dist.CLIENT)
     public static final class ModBus {
         private ModBus() {
         }

@@ -1,0 +1,37 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# Dependencia deliberadamente OPCIONAL, nao obrigatoria: o Altar de Selecao mora no mod de conteudo,
+# mas este mod nunca referencia a classe dele — casa pela tag aurorion_ato2:house_altars, e a entrada
+# do altar na tag e marcada "required: false". Assim da para desligar um dos dois no servidor sem o
+# outro deixar de carregar (SDD §3: cada mod ativavel/desativavel isoladamente), e qualquer bloco
+# pode virar altar so entrando na tag.
+[[dependencies.${mod_id}]]
+modId = "aurorion_aeonita"
+type = "optional"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"

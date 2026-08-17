@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "aurorion_aeonita:aeonita_block_red" }
+  ],
+  "result": {
+    "id": "aurorion_aeonita:aeonita_ingot_red",
+    "count": 9
+  }
+}

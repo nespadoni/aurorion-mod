@@ -15,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * vez chama {@code getName()}). Sobrescrever so aqui vale para o jogo inteiro, em vez de precisar
  * cacar e sobrescrever cada mensagem individualmente.
  *
- * <p>{@code getTabListDisplayName()} e um metodo separado (nao chama {@code getName()}) usado na
- * hora de montar o pacote da tab list, entao precisa do proprio override.</p>
+ * <p>{@code getTabListDisplayName()} nao existe em {@code Player} — so em {@code ServerPlayer} —
+ * entao tem override proprio em {@link TabListNameMixin}.</p>
  *
  * <p>O que <b>nao</b> passa por aqui, de proposito: {@code getScoreboardName()} (usado por
  * scoreboard e seletores de alvo como {@code @p}) continua devolvendo o nome real — sem isso,
@@ -28,12 +28,6 @@ public abstract class PlayerNameMixin {
 
     @Inject(method = "getName", at = @At("HEAD"), cancellable = true)
     private void aurorion_essentials$fakeGetName(CallbackInfoReturnable<Component> cir) {
-        Component fakeName = FakeNameRegistry.getDisplayName(((Player) (Object) this).getUUID());
-        if (fakeName != null) cir.setReturnValue(fakeName);
-    }
-
-    @Inject(method = "getTabListDisplayName", at = @At("HEAD"), cancellable = true)
-    private void aurorion_essentials$fakeTabListName(CallbackInfoReturnable<Component> cir) {
         Component fakeName = FakeNameRegistry.getDisplayName(((Player) (Object) this).getUUID());
         if (fakeName != null) cir.setReturnValue(fakeName);
     }

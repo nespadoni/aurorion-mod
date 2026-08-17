@@ -4,6 +4,8 @@
   "commands.aurorion_utils.abduzir.voltar.success": "%s está voltando para onde foi abduzido.",
   "commands.aurorion_utils.abduzir.voltar.noOrigin": "%s não tem nenhuma origem de abdução salva.",
 
+  "argument.aurorion_utils.cor.invalid": "Cor de feixe inválida: %s (use um nome da lista ou um hexadecimal RRGGBB)",
+
   "commands.aurorion_utils.freeze.success": "%s jogador(es) congelado(s).",
   "commands.aurorion_utils.unfreeze.success": "%s jogador(es) descongelado(s).",
 

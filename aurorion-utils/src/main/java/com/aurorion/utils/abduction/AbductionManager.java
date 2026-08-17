@@ -15,6 +15,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,29 +53,34 @@ public final class AbductionManager {
         return ACTIVE.containsKey(playerId);
     }
 
-    /** {@code /abduzir <alvo> [destino]} — destino default e quem executou o comando. */
-    public static Result startAbduction(ServerPlayer target, ServerPlayer destinationSource) {
+    /**
+     * {@code /abduzir <alvo> [destino] [cor]} — destino default e quem executou o comando.
+     *
+     * @param beamColor RGB escolhido no comando, ou {@code null} pra usar o da config.
+     */
+    public static Result startAbduction(ServerPlayer target, ServerPlayer destinationSource, @Nullable Integer beamColor) {
         if (isActive(target.getUUID())) return Result.ALREADY_ACTIVE;
 
         TeleportSpot origin = TeleportSpot.of(target);
         AbductionOriginData.get(target.getServer()).set(target.getUUID(), origin);
 
-        begin(target, origin, TeleportSpot.of(destinationSource), false);
+        begin(target, origin, TeleportSpot.of(destinationSource), false, beamColor);
         return Result.OK;
     }
 
-    /** {@code /abduzir voltar <alvo>} — leva de volta pra ultima origem salva. */
-    public static Result startReturn(ServerPlayer target) {
+    /** {@code /abduzir voltar <alvo> [cor]} — leva de volta pra ultima origem salva. */
+    public static Result startReturn(ServerPlayer target, @Nullable Integer beamColor) {
         if (isActive(target.getUUID())) return Result.ALREADY_ACTIVE;
 
         TeleportSpot savedOrigin = AbductionOriginData.get(target.getServer()).get(target.getUUID());
         if (savedOrigin == null) return Result.NO_SAVED_ORIGIN;
 
-        begin(target, TeleportSpot.of(target), savedOrigin, true);
+        begin(target, TeleportSpot.of(target), savedOrigin, true, beamColor);
         return Result.OK;
     }
 
-    private static void begin(ServerPlayer target, TeleportSpot startSpot, TeleportSpot destination, boolean returnTrip) {
+    private static void begin(ServerPlayer target, TeleportSpot startSpot, TeleportSpot destination,
+                              boolean returnTrip, @Nullable Integer beamColor) {
         MinecraftServer server = target.getServer();
         ServerLevel level = target.serverLevel();
 
@@ -83,13 +89,14 @@ public final class AbductionManager {
         int ascentTicks = AbductionConfig.ASCENT_DURATION_TICKS.get();
         int retractTicks = AbductionConfig.RETRACT_DURATION_TICKS.get();
         float radius = AbductionConfig.BEAM_RADIUS.get().floatValue();
-        int color = parseColor(AbductionConfig.BEAM_COLOR_RGB.get());
+        int color = beamColor != null ? beamColor : configColor();
 
         AbductionBeamEntity beam = new AbductionBeamEntity(ModEntities.ABDUCTION_BEAM.get(), level);
         beam.setPos(target.getX(), target.getY(), target.getZ());
         beam.setTargetPlayer(target.getUUID());
         beam.setRadius(radius);
         beam.setColor(color);
+        beam.setGroundY((float) target.getY());
         beam.setPhase(AbductionBeamEntity.PHASE_HOLD);
         level.addFreshEntity(beam);
 
@@ -116,12 +123,10 @@ public final class AbductionManager {
         return Math.max(1, Math.min(configuredHeight, clearance));
     }
 
-    private static int parseColor(String hex) {
-        try {
-            return Integer.parseInt(hex, 16) & 0xFFFFFF;
-        } catch (NumberFormatException e) {
-            return 0xFFFFFF;
-        }
+    /** Aceita os mesmos valores do argumento {@code <cor>} do comando — nome da paleta ou hex. */
+    private static int configColor() {
+        Integer parsed = BeamColor.parse(AbductionConfig.BEAM_COLOR_RGB.get());
+        return parsed != null ? parsed : BeamColor.ROXO.rgb();
     }
 
     /** Chamado uma vez por tick do servidor por {@link AbductionTicker}. */
@@ -188,14 +193,9 @@ public final class AbductionManager {
         ServerLevel destLevel = server.getLevel(destination.dimension());
         if (destLevel != null) {
             target.teleportTo(destLevel, destination.x(), destination.y(), destination.z(),
-                    Set.of(), destination.yaw(), destination.pitch(), true);
+                    Set.of(), destination.yaw(), destination.pitch());
         }
         target.setDeltaMovement(Vec3.ZERO);
-
-        int invisTicks = AbductionConfig.INVISIBILITY_DURATION_TICKS.get();
-        if (invisTicks > 0) {
-            target.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, invisTicks, 0, false, false));
-        }
 
         if (abduction.returnTrip) {
             AbductionOriginData.get(server).clear(abduction.targetId);

@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.minecraft.server.level.ServerPlayer;
 
-@EventBusSubscriber(modid = AurorionTalk.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = AurorionTalk.MOD_ID)
 public final class TalkNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload. */
     private static final String PROTOCOL_VERSION = "1";
