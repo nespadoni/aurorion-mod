@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -89,9 +90,17 @@ public class LivesData extends SavedData {
 
     /** @return o valor efetivamente gravado, ja limitado ao intervalo valido. */
     public int setLives(UUID player, int value) {
-        int clamped = Math.clamp(value, 0, LivesConfig.MAX_LIVES.get());
-        lives.put(player, clamped);
-        setDirty();
+        int max = LivesConfig.MAX_LIVES.get();
+        int clamped = Math.clamp(value, 0, max);
+
+        // Vida cheia e representada pela ausencia da entrada. Alem de manter o save proporcional a
+        // quem perdeu vida, isso faz um aumento futuro de maxLives valer automaticamente para quem
+        // ja tinha sido restaurado ao maximo anterior.
+        Integer previous = clamped == max ? lives.remove(player) : lives.put(player, clamped);
+        Integer current = clamped == max ? null : clamped;
+        if (!Objects.equals(previous, current)) {
+            setDirty();
+        }
         return clamped;
     }
 

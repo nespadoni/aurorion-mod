@@ -36,7 +36,9 @@ public class ChatListenerMixin {
                                             Component decoratedServerContent, GameProfile gameProfile,
                                             boolean onlyShowSecureChat, Instant timestamp,
                                             CallbackInfoReturnable<Boolean> cir) {
-        IncomingChat.handle(chatMessage.sender(), chatMessage.signedContent());
+        // signedContent() e o texto cru assinado. O servidor pode ter enviado unsignedContent com
+        // decoracao ou moderacao; o balao deve mostrar o mesmo corpo que o pipeline vanilla aceitou.
+        IncomingChat.handle(chatMessage.sender(), chatMessage.decoratedContent().getString());
     }
 
     /** Chat entregue como mensagem de sistema (No Chat Reports, plugins de chat). */

@@ -1,5 +1,6 @@
 package com.aurorion.utils.abduction;
 
+import com.aurorion.utils.AurorionUtils;
 import com.aurorion.utils.config.AbductionConfig;
 import com.aurorion.utils.entity.AbductionBeamEntity;
 import com.aurorion.utils.entity.ModEntities;
@@ -18,9 +19,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,16 +40,21 @@ public final class AbductionManager {
     public enum Result {
         OK,
         ALREADY_ACTIVE,
-        NO_SAVED_ORIGIN
+        NO_SAVED_ORIGIN,
+        DESTINATION_UNAVAILABLE
     }
 
-    private static final Map<UUID, ActiveAbduction> ACTIVE = new HashMap<>();
+    /** Lista reaproveitada: iteracao por indice nao cria iterator/snapshot em todo tick. */
+    private static final List<ActiveAbduction> ACTIVE = new ArrayList<>();
 
     private AbductionManager() {
     }
 
     public static boolean isActive(UUID playerId) {
-        return ACTIVE.containsKey(playerId);
+        for (int i = 0; i < ACTIVE.size(); i++) {
+            if (ACTIVE.get(i).targetId.equals(playerId)) return true;
+        }
+        return false;
     }
 
     /**
@@ -74,6 +78,7 @@ public final class AbductionManager {
 
         TeleportSpot savedOrigin = AbductionOriginData.get(target.getServer()).get(target.getUUID());
         if (savedOrigin == null) return Result.NO_SAVED_ORIGIN;
+        if (target.getServer().getLevel(savedOrigin.dimension()) == null) return Result.DESTINATION_UNAVAILABLE;
 
         begin(target, TeleportSpot.of(target), savedOrigin, true, beamColor);
         return Result.OK;
@@ -108,7 +113,7 @@ public final class AbductionManager {
 
         ActiveAbduction abduction = new ActiveAbduction(target.getUUID(), beam, startSpot, destination,
                 returnTrip, holdTicks, ascentTicks, retractTicks, ascentHeight, server.getTickCount());
-        ACTIVE.put(target.getUUID(), abduction);
+        ACTIVE.add(abduction);
     }
 
     /** Raycast pra cima a partir do jogador, pra subida nunca enfiar ninguem dentro de um teto. */
@@ -133,21 +138,22 @@ public final class AbductionManager {
     static void tickAll(MinecraftServer server) {
         if (ACTIVE.isEmpty()) return;
 
-        List<ActiveAbduction> snapshot = new ArrayList<>(ACTIVE.values());
-        for (ActiveAbduction abduction : snapshot) {
-            switch (abduction.phase) {
+        for (int i = ACTIVE.size() - 1; i >= 0; i--) {
+            ActiveAbduction abduction = ACTIVE.get(i);
+            boolean finished = switch (abduction.phase) {
                 case HOLD -> tickHold(server, abduction);
                 case ASCEND -> tickAscend(server, abduction);
                 case RETRACT -> tickRetract(server, abduction);
-            }
+            };
+            if (finished) ACTIVE.remove(i);
         }
     }
 
-    private static void tickHold(MinecraftServer server, ActiveAbduction abduction) {
+    private static boolean tickHold(MinecraftServer server, ActiveAbduction abduction) {
         ServerPlayer target = server.getPlayerList().getPlayer(abduction.targetId);
         if (target == null) {
             abort(abduction);
-            return;
+            return true;
         }
 
         if (server.getTickCount() - abduction.phaseStartTick >= abduction.holdTicks) {
@@ -155,13 +161,14 @@ public final class AbductionManager {
             abduction.phaseStartTick = server.getTickCount();
             abduction.beam.setPhase(AbductionBeamEntity.PHASE_ASCEND);
         }
+        return false;
     }
 
-    private static void tickAscend(MinecraftServer server, ActiveAbduction abduction) {
+    private static boolean tickAscend(MinecraftServer server, ActiveAbduction abduction) {
         ServerPlayer target = server.getPlayerList().getPlayer(abduction.targetId);
         if (target == null) {
             abort(abduction);
-            return;
+            return true;
         }
 
         int elapsed = server.getTickCount() - abduction.phaseStartTick;
@@ -171,30 +178,38 @@ public final class AbductionManager {
         abduction.beam.setPos(abduction.startSpot.x(), newY, abduction.startSpot.z());
 
         if (progress >= 1.0F) {
-            completeTeleport(server, target, abduction);
+            return !completeTeleport(server, target, abduction);
         }
+        return false;
     }
 
-    private static void tickRetract(MinecraftServer server, ActiveAbduction abduction) {
+    private static boolean tickRetract(MinecraftServer server, ActiveAbduction abduction) {
         int elapsed = server.getTickCount() - abduction.phaseStartTick;
         float progress = Mth.clamp((float) elapsed / abduction.retractTicks, 0.0F, 1.0F);
         abduction.beam.setProgress(progress);
 
         if (progress >= 1.0F) {
             abduction.beam.discard();
-            ACTIVE.remove(abduction.targetId);
+            return true;
         }
+        return false;
     }
 
-    private static void completeTeleport(MinecraftServer server, ServerPlayer target, ActiveAbduction abduction) {
+    /** @return true se o teleporte aconteceu e a retracao pode comecar. */
+    private static boolean completeTeleport(MinecraftServer server, ServerPlayer target, ActiveAbduction abduction) {
         target.stopRiding();
 
         TeleportSpot destination = abduction.destination;
         ServerLevel destLevel = server.getLevel(destination.dimension());
-        if (destLevel != null) {
-            target.teleportTo(destLevel, destination.x(), destination.y(), destination.z(),
-                    Set.of(), destination.yaw(), destination.pitch());
+        if (destLevel == null) {
+            AurorionUtils.LOGGER.error("Abducao de {} cancelada: dimensao de destino '{}' nao esta carregada.",
+                    target.getGameProfile().getName(), destination.dimension().location());
+            abduction.beam.discard();
+            return false;
         }
+
+        target.teleportTo(destLevel, destination.x(), destination.y(), destination.z(),
+                Set.of(), destination.yaw(), destination.pitch());
         target.setDeltaMovement(Vec3.ZERO);
 
         if (abduction.returnTrip) {
@@ -204,11 +219,19 @@ public final class AbductionManager {
         abduction.phase = ActiveAbduction.Phase.RETRACT;
         abduction.phaseStartTick = server.getTickCount();
         abduction.beam.setPhase(AbductionBeamEntity.PHASE_RETRACT);
+        return true;
     }
 
     /** Alvo desconectou no meio de HOLD/ASCEND — nao ha pra onde puxar, so limpa o feixe. */
     private static void abort(ActiveAbduction abduction) {
         abduction.beam.discard();
-        ACTIVE.remove(abduction.targetId);
+    }
+
+    /** Solta entidades e referencias ao desligar o servidor integrado/dedicado. */
+    public static void clear() {
+        for (int i = 0; i < ACTIVE.size(); i++) {
+            ACTIVE.get(i).beam.discard();
+        }
+        ACTIVE.clear();
     }
 }

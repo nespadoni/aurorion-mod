@@ -4,6 +4,7 @@ import com.aurorion.portais.AurorionPortais;
 import com.aurorion.portais.config.TransitConfig;
 import com.aurorion.portais.line.LineCatalog;
 import com.aurorion.portais.pass.PassData;
+import com.aurorion.portais.pass.PendingPassConsumptions;
 import com.aurorion.portais.runtime.DenyNotifier;
 import com.aurorion.portais.runtime.RespawnAnchor;
 import com.aurorion.portais.runtime.TransitClock;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
@@ -38,6 +40,9 @@ public final class PortaisServerEvents {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         TransitClock.tick(event.getServer());
+        // PlayerChangedDimensionEvent e sincrono com a viagem. O que sobrou aqui foi cancelado
+        // depois da nossa autorizacao e nao pode vazar para outra tentativa.
+        PendingPassConsumptions.clear();
     }
 
     /**
@@ -51,23 +56,36 @@ public final class PortaisServerEvents {
      * <p>So jogador e barrado. Mob, item e projetil continuam viajando: o escopo do mod e o transito
      * de pessoas, e ampliar isso mexeria em mecanica de mod de terceiro sem pedido (SDD §2).
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onTravelToDimension(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
         ResourceKey<Level> from = player.level().dimension();
         ResourceKey<Level> to = event.getDimension();
+        PendingPassConsumptions.forget(player.getUUID());
 
         TransitGate.Verdict verdict = TransitGate.check(player, from, to);
         if (verdict.allowed()) {
             if (verdict.reason() == TransitGate.Reason.PASS && verdict.dimension() != null) {
-                PassData.get(player.server).consume(player.getUUID(), verdict.dimension(), System.currentTimeMillis());
+                PendingPassConsumptions.authorize(player.getUUID(), from, to, verdict.dimension());
             }
             return;
         }
 
         event.setCanceled(true);
         DenyNotifier.notify(player, verdict.dimension(), verdict.reason() == TransitGate.Reason.LOCKED_EXIT);
+    }
+
+    /** O passe so e debitado depois que o NeoForge confirma a troca de dimensao. */
+    @SubscribeEvent
+    public static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+
+        ResourceKey<Level> passDimension = PendingPassConsumptions.complete(
+                player.getUUID(), event.getFrom(), event.getTo());
+        if (passDimension != null) {
+            PassData.get(player.server).consume(player.getUUID(), passDimension, System.currentTimeMillis());
+        }
     }
 
     /**
@@ -116,6 +134,7 @@ public final class PortaisServerEvents {
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         DenyNotifier.forget(event.getEntity().getUUID());
+        PendingPassConsumptions.forget(event.getEntity().getUUID());
     }
 
     /**
@@ -128,5 +147,6 @@ public final class PortaisServerEvents {
     public static void onServerStopped(ServerStoppedEvent event) {
         TransitClock.clear();
         DenyNotifier.clear();
+        PendingPassConsumptions.clear();
     }
 }

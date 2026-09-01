@@ -77,6 +77,8 @@ repositories {
 dependencies {
     // Anotacoes @Nullable/@NotNull: so em tempo de compilacao, nao vao para o jar.
     compileOnly 'org.jetbrains:annotations:24.1.0'
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 
     if (coreProject != null) {
         // O diretorio de saida, e nao project(':aurorion-core') (jar): com o jar, o FML acharia o
@@ -85,6 +87,11 @@ dependencies {
         implementation coreProject.sourceSets.main.output
     }
 }
+
+// ModDev adiciona Minecraft/NeoForge diretamente aos classpaths de main; os source sets de teste
+// precisam herdar esses classpaths para testar tipos que fazem parte da API do jogo.
+configurations.testCompileClasspath.extendsFrom(configurations.compileClasspath)
+configurations.testRuntimeClasspath.extendsFrom(configurations.runtimeClasspath)
 
 // Substitui os ${placeholders} do neoforge.mods.toml pelos valores do gradle.properties
 var replaceProperties = [
@@ -111,6 +118,10 @@ tasks.named('processResources', ProcessResources).configure {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = 21
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 tasks.named('jar', Jar).configure {

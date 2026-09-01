@@ -365,6 +365,10 @@ trancada**, e só abre em janelas agendadas — os "trens" — ou por decisão e
   saber nada sobre horário, linha ou relógio.
 - Vale nos dois sentidos de propósito: o passe que tira alguém do Nether é o mesmo que põe. É o único
   jeito de ele funcionar como **resgate**, que é o caso de uso que importa para quem perdeu o trem.
+- **Autorizar não é consumir.** `EntityTravelToDimensionEvent` ainda pode ser cancelado por outro mod
+  depois que o passe foi validado; por isso a autorização dura só até o fim do tick e o uso é debitado
+  apenas em `PlayerChangedDimensionEvent`, quando a troca correspondente já aconteceu. Viagem
+  cancelada nunca gasta passe nem deixa estado pendente para uma viagem futura.
 
 ## 9. aurorion-vidas — vidas limitadas e exílio
 

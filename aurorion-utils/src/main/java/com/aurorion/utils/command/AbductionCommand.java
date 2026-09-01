@@ -106,6 +106,11 @@ public final class AbductionCommand {
                         Component.translatable("commands.aurorion_utils.abduzir.voltar.noOrigin", target.getName()));
                 return 0;
             }
+            case DESTINATION_UNAVAILABLE -> {
+                context.getSource().sendFailure(Component.translatable(
+                        "commands.aurorion_utils.abduzir.voltar.destinationUnavailable", target.getName()));
+                return 0;
+            }
             default -> {
                 context.getSource().sendSuccess(() -> Component.translatable(
                         "commands.aurorion_utils.abduzir.voltar.success", target.getName()), true);

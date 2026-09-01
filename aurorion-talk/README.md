@@ -61,13 +61,10 @@ bordas esticadas de 1px, setinha 7x4 em (18,6).
 
 ## Status
 
-Escrito contra NeoForge 21.1 e as APIs foram conferidas contra o jar real do NeoForge 21.1.248
-(`ModConfigSpec`, `PayloadRegistrar`, `PacketDistributor`, `RegisterClientReloadListenersEvent`
-etc.), mas **ainda não compilado** — o ambiente onde foi escrito não alcança o CDN de bibliotecas
-da Mojang. As áreas de maior risco de erro de compilação são as classes de GUI (`Screen`,
-`AbstractSliderButton`, `Button`, `GuiGraphics`), que não puderam ser conferidas contra bytecode
-real. Primeira coisa a fazer numa máquina com rede liberada:
+Compilado e testado contra Minecraft 1.21.1 + NeoForge 21.1.248. O build do monorepo e o boot do
+servidor dedicado carregando todos os mods fazem parte da verificação; a geometria nine-slice tem
+testes unitários. Mudanças visuais ainda devem passar por um smoke test no cliente:
 
 ```bash
-./gradlew :aurorion-talk:runClient
+./gradlew :aurorion-runs:runClient
 ```

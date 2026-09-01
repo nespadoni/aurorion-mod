@@ -140,20 +140,16 @@ public class HouseSelectionScreen extends Screen {
         PacketDistributor.sendToServer(new ChooseHousePayload(selected));
     }
 
-    /** Veredito do servidor. Sucesso fecha a tela; recusa devolve o controle para tentar outra casa. */
-    public void onResult(boolean success, Component message) {
-        if (success) {
-            if (this.minecraft != null && this.minecraft.player != null) {
-                // Actionbar, nao chat: com anuncio ligado o chat ja vai receber a mesma noticia.
-                this.minecraft.player.displayClientMessage(message, true);
-            }
-            onClose();
-            return;
+    /**
+     * Veredito do servidor. Uma tela aberta vale exatamente uma tentativa, portanto qualquer
+     * resposta fecha a tela; para tentar novamente o jogador precisa clicar no altar de novo.
+     */
+    public void onResult(boolean ignoredSuccess, Component message) {
+        if (this.minecraft != null && this.minecraft.player != null) {
+            // Actionbar, nao chat: com anuncio ligado o chat ja pode receber a mesma noticia.
+            this.minecraft.player.displayClientMessage(message, true);
         }
-
-        awaiting = false;
-        feedback = message;
-        setInteractive(true);
+        onClose();
     }
 
     private void setInteractive(boolean interactive) {

@@ -6,6 +6,7 @@ build/
 # Runs do dev (mundos, logs, configs de teste)
 run/
 */run/
+*/logs/
 
 # IDE
 .idea/

@@ -27,10 +27,10 @@ ordering = "NONE"
 side = "BOTH"
 
 # Biblioteca compartilhada do ecossistema. Obrigatoria: sem ela este mod nao carrega.
-# Ordering BEFORE garante que o core ja esteja pronto quando este mod inicializar.
+# Ordering AFTER garante que o core ja esteja pronto quando este mod inicializar.
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
 versionRange = "[0.1.0,)"
-ordering = "BEFORE"
+ordering = "AFTER"
 side = "BOTH"

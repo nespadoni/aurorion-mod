@@ -3,6 +3,7 @@
   "commands.aurorion_utils.abduzir.alreadyActive": "%s já está no meio de uma abdução.",
   "commands.aurorion_utils.abduzir.voltar.success": "%s está voltando para onde foi abduzido.",
   "commands.aurorion_utils.abduzir.voltar.noOrigin": "%s não tem nenhuma origem de abdução salva.",
+  "commands.aurorion_utils.abduzir.voltar.destinationUnavailable": "A dimensão de origem salva de %s não está disponível.",
 
   "argument.aurorion_utils.cor.invalid": "Cor de feixe inválida: %s (use um nome da lista ou um hexadecimal RRGGBB)",
 

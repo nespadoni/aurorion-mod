@@ -1,9 +1,12 @@
 package com.aurorion.core.level;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -150,13 +153,21 @@ public final class SafeSpot {
     }
 
     private static boolean solidFloor(ServerLevel level, ChunkAccess chunk, BlockPos pos) {
-        // O teste de fluido no proprio chao e o que descarta ficar de pe "em cima" de lava.
-        return !chunk.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+        BlockState state = chunk.getBlockState(pos);
+        VoxelShape shape = state.getCollisionShape(level, pos);
+
+        // Cercas e muros passam de Y=1 e invadem a caixa do jogador no bloco de cima. "Tem
+        // colisao" sozinho nao basta para considera-los piso seguro.
+        return !shape.isEmpty()
+                && shape.max(Direction.Axis.Y) <= 1.0D
+                && !state.is(CoreLevelTags.UNSAFE_TELEPORT)
                 && chunk.getFluidState(pos).isEmpty();
     }
 
     private static boolean isClear(ServerLevel level, ChunkAccess chunk, BlockPos pos) {
-        return chunk.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+        BlockState state = chunk.getBlockState(pos);
+        return !state.is(CoreLevelTags.UNSAFE_TELEPORT)
+                && state.getCollisionShape(level, pos).isEmpty()
                 && chunk.getFluidState(pos).isEmpty();
     }
 }

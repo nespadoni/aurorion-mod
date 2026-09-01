@@ -3,6 +3,7 @@
   "commands.aurorion_utils.abduzir.alreadyActive": "%s is already in the middle of an abduction.",
   "commands.aurorion_utils.abduzir.voltar.success": "%s is being returned to where they were abducted from.",
   "commands.aurorion_utils.abduzir.voltar.noOrigin": "%s has no saved abduction origin.",
+  "commands.aurorion_utils.abduzir.voltar.destinationUnavailable": "%s's saved origin dimension is unavailable.",
 
   "argument.aurorion_utils.cor.invalid": "Unknown beam color: %s (use a name from the list or an RRGGBB hex)",
 

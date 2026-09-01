@@ -38,11 +38,31 @@ public final class BalloonRenderer {
     /** Baloes sempre legiveis, mesmo numa caverna escura. */
     private static final int LIGHT = LightTexture.FULL_BRIGHT;
 
-    /** Uma mensagem viva, ja com o deslocamento vertical do empilhamento resolvido. */
-    @FunctionalInterface
-    private interface MessagePass {
-        void accept(BalloonMessage message, int stackOffset, boolean isNewest);
+    private enum Pass {
+        FRAME,
+        DECORATION,
+        TEXT
     }
+
+    /** Consumer unico reaproveitado no render thread; evita uma lambda capturante por balao/frame. */
+    private static final class FrameBoxConsumer implements BalloonNineSlice.BoxConsumer {
+        private VertexConsumer vertices;
+        private Matrix4f pose;
+        private int tint;
+
+        void prepare(VertexConsumer vertices, Matrix4f pose, int tint) {
+            this.vertices = vertices;
+            this.pose = pose;
+            this.tint = tint;
+        }
+
+        @Override
+        public void box(int x, int y, int w, int h, int u, int v, int uw, int vh) {
+            quad(vertices, pose, tint, x, y, w, h, u, v, uw, vh);
+        }
+    }
+
+    private static final FrameBoxConsumer FRAME_BOXES = new FrameBoxConsumer();
 
     private BalloonRenderer() {
     }
@@ -73,24 +93,17 @@ public final class BalloonRenderer {
         // fecha o batch anterior — entao segurar a referencia por cima de um getBuffer alheio estoura
         // "Not building!". De quebra, cada textura sai num draw call so para todos os baloes do jogador.
         VertexConsumer frames = buffer.getBuffer(RenderType.text(style.skin()));
-        forEachLiveMessage(messages, gameTime, gap, (message, stackOffset, isNewest) -> {
-            int width = Mth.clamp(message.widestLine(), minWidth, maxWidth);
-            if (width % 2 == 0) width--; // largura impar centraliza a setinha certinho
-
-            BalloonNineSlice.emit(
-                    (x, y, w, h, u, v, uw, vh) -> quad(frames, pose, tint, x, y, w, h, u, v, uw, vh),
-                    width, message.lineCount(), stackOffset, isNewest
-            );
-        });
+        FRAME_BOXES.prepare(frames, pose, tint);
+        renderPass(Pass.FRAME, messages, gameTime, gap, frames, pose, minWidth, maxWidth, font, buffer, textColor);
 
         if (style.hasDecoration()) {
             VertexConsumer decorations = buffer.getBuffer(RenderType.text(style.decoration().orElseThrow()));
-            forEachLiveMessage(messages, gameTime, gap, (message, stackOffset, isNewest) ->
-                    drawDecoration(decorations, pose, message.lineCount(), stackOffset));
+            renderPass(Pass.DECORATION, messages, gameTime, gap, decorations, pose,
+                    minWidth, maxWidth, font, buffer, textColor);
         }
 
-        forEachLiveMessage(messages, gameTime, gap, (message, stackOffset, isNewest) ->
-                drawText(font, buffer, pose, message.lines(), textColor, stackOffset));
+        renderPass(Pass.TEXT, messages, gameTime, gap, frames, pose,
+                minWidth, maxWidth, font, buffer, textColor);
 
         poseStack.popPose();
     }
@@ -102,7 +115,9 @@ public final class BalloonRenderer {
      * <p>O empilhamento mora aqui e so aqui: as passadas de balao, enfeite e texto tem que concordar
      * pixel a pixel, e recalcular a conta em tres lugares e como elas desalinhariam.</p>
      */
-    private static void forEachLiveMessage(List<BalloonMessage> messages, long gameTime, int gap, MessagePass pass) {
+    private static void renderPass(Pass pass, List<BalloonMessage> messages, long gameTime, int gap,
+                                   VertexConsumer vertices, Matrix4f pose, int minWidth, int maxWidth,
+                                   Font font, MultiBufferSource buffer, int textColor) {
         int stackOffset = 0;
         int previousHeight = 0;
         boolean isNewest = true;
@@ -114,7 +129,15 @@ public final class BalloonRenderer {
             if (previousHeight != 0) stackOffset += LINE_HEIGHT * previousHeight + gap;
             previousHeight = message.lineCount();
 
-            pass.accept(message, stackOffset, isNewest);
+            switch (pass) {
+                case FRAME -> {
+                    int width = Mth.clamp(message.widestLine(), minWidth, maxWidth);
+                    if (width % 2 == 0) width--; // largura impar centraliza a setinha certinho
+                    BalloonNineSlice.emit(FRAME_BOXES, width, message.lineCount(), stackOffset, isNewest);
+                }
+                case DECORATION -> drawDecoration(vertices, pose, message.lineCount(), stackOffset);
+                case TEXT -> drawText(font, buffer, pose, message.lines(), textColor, stackOffset);
+            }
             isNewest = false;
         }
     }

@@ -12,7 +12,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -128,12 +127,16 @@ public class AbductionBeamEntity extends Entity {
      */
     private void pushAwayBystanders(ServerLevel serverLevel) {
         float radius = getRadius();
-        AABB pushZone = getBoundingBox().inflate(radius + 1.0, 4.0, radius + 1.0);
+        double minY = getY() - 4.0;
+        double maxY = getY() + getBbHeight() + 4.0;
 
-        List<ServerPlayer> nearby = serverLevel.getEntitiesOfClass(ServerPlayer.class, pushZone,
-                player -> !player.getUUID().equals(targetPlayerId));
+        // serverLevel.players() e a lista viva ja mantida pelo servidor. Varre no maximo os ~80
+        // jogadores online desta dimensao e evita a List temporaria de getEntitiesOfClass por tick.
+        for (ServerPlayer player : serverLevel.players()) {
+            if (player.getUUID().equals(targetPlayerId)) continue;
+            AABB playerBox = player.getBoundingBox();
+            if (playerBox.maxY < minY || playerBox.minY > maxY) continue;
 
-        for (ServerPlayer player : nearby) {
             double dx = player.getX() - getX();
             double dz = player.getZ() - getZ();
             double distSq = dx * dx + dz * dz;
