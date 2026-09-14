@@ -51,5 +51,7 @@
   "aurorion_limbo.vinculo.proprio": "The Bond does not work on yourself.",
   "aurorion_limbo.vinculo.nao_exilado": "That person is not exiled.",
   "aurorion_limbo.subtitle.musica": "Something distant",
-  "aurorion_limbo.subtitle.ambiente": "The Limbo breathes"
+  "aurorion_limbo.subtitle.ambiente": "The Limbo breathes",
+  "aurorion_limbo.finale.dead": "You are dead.",
+  "aurorion_limbo.finale.preview": "Preview — Esc to leave"
 }

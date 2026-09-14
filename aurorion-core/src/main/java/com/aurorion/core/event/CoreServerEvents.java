@@ -29,6 +29,13 @@ public final class CoreServerEvents {
     }
 
     @SubscribeEvent
+    public static void onLogin(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            com.aurorion.core.character.CharacterData.get(player.server).current(player.getUUID());
+        }
+    }
+
+    @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         SavedDataAccess.invalidateAll();
     }

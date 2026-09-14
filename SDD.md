@@ -889,6 +889,38 @@ O terror sonoro combina o `mood_sound` vanilla do bioma com uma ocorrência espa
 saída; não há busca de blocos, spawn artificial nem pacote por tick. Monstros reais continuam vindo
 da tabela de spawn normal do bioma e do limite global do servidor.
 
+### 12.9 Morte definitiva: conta, personagem e apresentação
+
+O prazo vencido passa a encerrar o personagem. O Core mantém um UUID de personagem distinto do
+UUID autenticado da conta e uma marca terminal de morte. Vidas consulta essa identidade, sem
+depender de Limbo: conceder vidas depois do vencimento não reabre o personagem. Não existe banimento.
+
+O estado terminal é gravado antes da apresentação. O epílogo pendente tem o ID do personagem,
+uma cópia limitada do conteúdo e o progresso de visualização. Login retoma esse progresso;
+terminar remove o epílogo pendente, conservando a identidade morta. Registros vencidos antigos
+são convertidos na varredura ou no login. Resgate e prazo não podem reabrir a identidade.
+
+O servidor mantém apenas sessões de visualização online na nova varredura de um segundo.
+Mortos concluídos saem do mapa de exilados e não entram no trabalho periódico. A consulta de
+bloqueio nos pacotes de movimento/inventário é O(1), na thread do servidor, depois do despacho
+vanilla; o estado persistente nunca é acessado na thread de rede.
+
+A música começa junto com o fechamento dos olhos, depois da morte confirmada pelo servidor.
+Um relógio local chegando a zero não inicia a cena; resgate ainda é permitido até o vencimento
+autoritativo. A cena envia um
+snapshot, com correção esparsa por minuto. Rolagem, câmera e áudio são locais; quebra de linhas
+ocorre na abertura ou resize. A câmera sobe sem teleportar a entidade ou gerar chunks no servidor.
+O OGG usa streaming, repetição e fade; texto e som podem mudar sem reconstruir a apresentação.
+
+A morte cinematográfica não chama o respawn vanilla. Espectador, veto a comandos/dano/gamemode/
+viagem e bloqueio de pacotes de movimento/inventário mantêm a regra mesmo se a tela for fechada.
+Após os créditos, o servidor conta 60 segundos e desconecta, sem aguardar confirmação do cliente.
+
+Criar outro personagem permanece uma operação futura: arquivar a identidade anterior, zerar
+progressão vanilla e dos mods e só então publicar a identidade nova. Remover uma flag ou apenas
+devolver vidas não substitui essa operação. Detalhes e configuração:
+[aurorion-limbo/MORTE-DEFINITIVA.md](aurorion-limbo/MORTE-DEFINITIVA.md).
+
 ## 13. Fora de escopo (deliberadamente)
 
 - Suporte a múltiplos servidores públicos / milhares de instalações — este é software para um

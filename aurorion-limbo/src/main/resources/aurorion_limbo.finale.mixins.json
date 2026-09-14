@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.aurorion.limbo.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "FinaleConnectionMixin"
+  ],
+  "client": [
+    "FinaleCameraMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

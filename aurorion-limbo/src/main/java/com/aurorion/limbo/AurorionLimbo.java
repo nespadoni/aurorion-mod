@@ -28,7 +28,7 @@ import org.slf4j.Logger;
  *       caminhar o bastante revela uma saida. Ela existe para que nenhum jogador fique refem da boa
  *       vontade alheia — e fica registrada, porque sair por ela significa que o servidor inteiro
  *       deixou a pessoa la.</li>
- *   <li><b>O prazo vencer.</b> O registro fica vencido, aguardando decisao da staff.</li>
+ *   <li><b>O prazo vencer.</b> O personagem morre definitivamente e assiste ao epilogo antes da desconexao.</li>
  * </ol>
  *
  * <h2>Por que a auditoria nao e um detalhe</h2>
@@ -52,6 +52,8 @@ public class AurorionLimbo {
 
     public AurorionLimbo(IEventBus modEventBus, ModContainer container) {
         AurorionConfigs.register(container, ModConfig.Type.SERVER, LimboConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER,
+                com.aurorion.limbo.config.FinaleConfig.SPEC, "finale");
 
         // Conteudo do resgate: um item e uma entidade temporaria. O Oraculo nao entra aqui de
         // proposito — ele e uma tag num mob que ja existe, e nao um registro novo.

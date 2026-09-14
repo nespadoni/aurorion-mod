@@ -48,3 +48,10 @@ O arquivo entra no jar sem modificação, e a licença completa viaja junto em
 
 A OFL **não** contamina o resto do repositório: ela vale para o arquivo da fonte, não para o código
 que a referencia. A licença do projeto continua sendo a LGPL-3.0 por causa do `aurorion-talk`.
+
+## Faixa de teste do epílogo do Limbo
+
+`aurorion-limbo/src/main/resources/assets/aurorion_limbo/sounds/finale.ogg` é a cópia sem
+modificações do arquivo `OMORI-Final-Duet-_TubeRipper.click_.ogg` fornecido pelo usuário para
+desenvolvimento. É um recurso provisório, substituível por resource pack; não é uma composição
+original do Aurorion e a licença LGPL do código não atribui uma licença a essa gravação.

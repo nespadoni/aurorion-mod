@@ -51,5 +51,7 @@
   "aurorion_limbo.vinculo.proprio": "O Vínculo não funciona em você mesmo.",
   "aurorion_limbo.vinculo.nao_exilado": "Essa pessoa não está exilada.",
   "aurorion_limbo.subtitle.musica": "Um som distante",
-  "aurorion_limbo.subtitle.ambiente": "O Limbo respira"
+  "aurorion_limbo.subtitle.ambiente": "O Limbo respira",
+  "aurorion_limbo.finale.dead": "Você está morto.",
+  "aurorion_limbo.finale.preview": "Prévia — Esc para sair"
 }

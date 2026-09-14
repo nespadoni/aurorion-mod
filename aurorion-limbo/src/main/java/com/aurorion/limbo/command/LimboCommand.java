@@ -80,6 +80,12 @@ public final class LimboCommand {
         event.getDispatcher().register(Commands.literal("limbo")
                 .requires(source -> source.hasPermission(STAFF_LEVEL))
                 .executes(LimboCommand::report)
+                .then(Commands.literal("finale")
+                        .then(Commands.literal("previa").executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            com.aurorion.limbo.finale.FinaleManager.preview(player);
+                            return 1;
+                        })))
                 .then(Commands.literal("relatorio")
                         .executes(LimboCommand::report))
                 .then(Commands.literal("esquecidos")
@@ -123,6 +129,7 @@ public final class LimboCommand {
             StringBuilder line = new StringBuilder("exilado")
                     .append(" nome=").append(record.lastName())
                     .append(" uuid=").append(id)
+                    .append(" personagem=").append(com.aurorion.core.character.CharacterData.get(server).current(id).id())
                     .append(" online=").append(player != null ? "sim" : "nao")
                     .append(" vidas=").append(LivesManager.livesOf(server, id))
                     .append(" retorno_pendente=").append(LivesManager.isExiled(server, id) ? "nao" : "sim")
@@ -146,6 +153,12 @@ public final class LimboCommand {
             String text = line.toString();
             source.sendSuccess(() -> literal(text), false);
         }
+        com.aurorion.core.character.CharacterData.get(server).characters().forEach((account, character) -> {
+            if (!character.dead()) return;
+            source.sendSuccess(() -> literal("personagem uuid=" + account
+                    + " personagem=" + character.id() + " estado=morto morto_em=" + character.diedAt()
+                    + " epilogo_pendente=" + (com.aurorion.limbo.finale.FinaleData.get(server).record(account) != null ? "sim" : "nao")), false);
+        });
         return active.size();
     }
 
@@ -201,7 +214,7 @@ public final class LimboCommand {
         return changed;
     }
 
-    /** Ajuste de prazo na mao. Zero vence na proxima varredura. */
+    /** Ajuste de prazo na mao. Zero encerra o personagem imediatamente. */
     private static int setDeadline(CommandContext<CommandSourceStack> context, int hours)
             throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
@@ -216,7 +229,10 @@ public final class LimboCommand {
                 continue;
             }
 
-            LimboManager.setDeadline(source.getServer(), profile.getId(), hours * 60L * 60L * 1000L);
+            if (!LimboManager.setDeadline(source.getServer(), profile.getId(), hours * 60L * 60L * 1000L)) {
+                source.sendFailure(literal("sem efeito motivo=personagem_morto_ou_prazo_vencido"));
+                continue;
+            }
             changed++;
 
             source.sendSuccess(() -> literal("prazo ajustado nome=" + profile.getName()

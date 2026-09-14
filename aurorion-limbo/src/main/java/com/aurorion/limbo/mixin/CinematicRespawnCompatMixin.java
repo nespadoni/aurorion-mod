@@ -65,7 +65,7 @@ public abstract class CinematicRespawnCompatMixin {
     }
 
     private static boolean aurorionLimbo$isFinalDeath(Minecraft minecraft) {
-        return ClientLives.known() && ClientLives.lives() <= 0
+        return com.aurorion.limbo.client.ClientFinale.cinematic() || ClientLives.known() && ClientLives.lives() <= 0
                 && minecraft.player != null && minecraft.player.isDeadOrDying();
     }
 

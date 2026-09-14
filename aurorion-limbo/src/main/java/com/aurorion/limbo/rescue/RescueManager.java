@@ -78,12 +78,15 @@ public final class RescueManager {
         Map<UUID, ExileRecord> active = LimboData.get(server).active();
         List<ExileInfo> out = new ArrayList<>(active.size());
 
-        active.forEach((id, record) -> out.add(new ExileInfo(
+        active.forEach((id, record) -> {
+            if (record.remainingMillis() <= 0 || com.aurorion.core.character.CharacterData.get(server).isDead(id)) return;
+            out.add(new ExileInfo(
                 id,
                 record.lastName(),
                 record.remainingMillis(),
                 record.rescueAttempted(),
-                server.getPlayerList().getPlayer(id) != null)));
+                server.getPlayerList().getPlayer(id) != null));
+        });
 
         // Prazo mais curto primeiro: quem esta mais perto de sumir aparece no topo.
         out.sort((a, b) -> Long.compare(a.remainingMillis(), b.remainingMillis()));
@@ -106,7 +109,8 @@ public final class RescueManager {
         if (LivesManager.isExiled(server, rescuerId)) return Refusal.RESCUER_EXILED;
 
         ExileRecord record = LimboData.get(server).record(target);
-        if (record == null || !LivesManager.isExiled(server, target)) return Refusal.NOT_EXILED;
+        if (record == null || record.remainingMillis() <= 0 || !LivesManager.isExiled(server, target)
+                || com.aurorion.core.character.CharacterData.get(server).isDead(target)) return Refusal.NOT_EXILED;
 
         int cost = LimboConfig.RESCUE_LIFE_COST.get();
         if (LivesManager.livesOf(server, rescuerId) < LimboConfig.minLivesToRescue()) {
@@ -227,6 +231,11 @@ public final class RescueManager {
     public static boolean completeRescue(ServerPlayer rescuer, ServerPlayer exiled, ItemStack stack) {
         MinecraftServer server = rescuer.server;
         UUID exiledId = exiled.getUUID();
+
+        ExileRecord eligible = LimboData.get(server).record(exiledId);
+        if (eligible == null || eligible.remainingMillis() <= 0
+                || com.aurorion.limbo.finale.FinaleManager.isDead(exiled)
+                || com.aurorion.limbo.finale.FinaleManager.isDead(rescuer)) return false;
 
         if (rescuer.getUUID().equals(exiledId)) {
             rescuer.displayClientMessage(LimboText.bondSelf(), true);

@@ -162,9 +162,25 @@ public class LimboGameTests {
 
             LivesManager.addLives(server, first.getUUID(), 1);
             LimboManager.sweep(server);
-            helper.assertTrue(first.level() == server.overworld() && LivesManager.livesOf(server, first.getUUID()) == 2,
-                    "Resgate pela staff retorna ao overworld com duas vidas");
-            helper.assertTrue(!data.isTracked(first.getUUID()), "Resgate fecha o registro");
+            helper.assertTrue(first.level() == limbo && LivesManager.livesOf(server, first.getUUID()) == 0,
+                    "Vidas concedidas depois do vencimento nao reabrem o personagem");
+            helper.assertTrue(com.aurorion.core.character.CharacterData.get(server).isDead(first.getUUID())
+                            && first.isSpectator(),
+                    "Morte definitiva persiste na identidade e isola o jogador no servidor");
+            helper.assertTrue(!data.isTracked(first.getUUID()), "Morto sai da varredura dos exilados");
+            helper.assertTrue(!LimboManager.setDeadline(server, first.getUUID(), 48 * 3_600_000L),
+                    "Ajuste de prazo nao revive um personagem morto");
+            helper.assertTrue(com.aurorion.limbo.finale.FinaleData.get(server).record(first.getUUID()) != null,
+                    "Epilogo pendente fica salvo ate a pessoa terminar de assistir");
+            helper.assertTrue(!LimboManager.returnToOverworld(first),
+                    "Personagem morto nao atravessa nem por teleporte de resgate");
+
+            // O outro personagem ainda pode ser resgatado normalmente, antes do vencimento.
+            enter(second, limbo, 40);
+            LivesManager.addLives(server, second.getUUID(), 1);
+            LimboManager.sweep(server);
+            helper.assertTrue(second.level() == server.overworld() && LivesManager.livesOf(server, second.getUUID()) == 2,
+                    "Resgate pela staff dentro do prazo retorna ao overworld com duas vidas");
 
             enter(second, limbo, 40);
             UUID offlineId = second.getUUID();

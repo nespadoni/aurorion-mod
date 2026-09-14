@@ -1,6 +1,7 @@
 package com.aurorion.vidas.lives;
 
 import com.aurorion.core.config.DerivedConfig;
+import com.aurorion.core.character.CharacterData;
 import com.aurorion.vidas.AurorionVidas;
 import com.aurorion.vidas.config.LivesConfig;
 import com.aurorion.vidas.network.SyncLivesPayload;
@@ -52,11 +53,11 @@ public final class LivesManager {
     // --- Consulta ------------------------------------------------------------------------------
 
     public static int livesOf(MinecraftServer server, UUID player) {
-        return LivesData.get(server).livesOf(player);
+        return CharacterData.get(server).isDead(player) ? 0 : LivesData.get(server).livesOf(player);
     }
 
     public static boolean isExiled(MinecraftServer server, UUID player) {
-        return LivesData.get(server).isExiled(player);
+        return livesOf(server, player) <= 0;
     }
 
     public static int maxLives() {
@@ -143,12 +144,14 @@ public final class LivesManager {
 
     /** @return o valor gravado depois do ajuste. */
     public static int setLives(MinecraftServer server, UUID player, int value) {
+        if (CharacterData.get(server).isDead(player)) value = 0;
         int result = LivesData.get(server).setLives(player, value);
         syncIfOnline(server, player, result);
         return result;
     }
 
     public static int addLives(MinecraftServer server, UUID player, int delta) {
+        if (CharacterData.get(server).isDead(player)) return setLives(server, player, 0);
         LivesData data = LivesData.get(server);
         int result = data.setLives(player, data.livesOf(player) + delta);
         syncIfOnline(server, player, result);
@@ -168,7 +171,7 @@ public final class LivesManager {
 
     /** O jogador so recebe o proprio numero: o payload e O(1), nunca O(jogadores) (SDD §7.3). */
     public static void sync(ServerPlayer player) {
-        sync(player, LivesData.get(player.server).livesOf(player.getUUID()));
+        sync(player, livesOf(player.server, player.getUUID()));
     }
 
     private static void sync(ServerPlayer player, int lives) {

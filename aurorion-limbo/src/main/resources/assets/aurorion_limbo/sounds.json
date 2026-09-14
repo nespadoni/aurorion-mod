@@ -70,5 +70,13 @@
         "type": "event"
       }
     ]
+  },
+  "finale": {
+    "sounds": [
+      {
+        "name": "aurorion_limbo:finale",
+        "stream": true
+      }
+    ]
   }
 }

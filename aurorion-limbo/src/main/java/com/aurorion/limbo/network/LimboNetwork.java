@@ -25,6 +25,9 @@ public final class LimboNetwork {
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1").optional();
+        registrar.playToClient(FinalePayload.TYPE, FinalePayload.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> com.aurorion.limbo.client.ClientFinale.accept(payload));
+        });
         registrar.playToClient(LimboNoticePayload.TYPE, LimboNoticePayload.STREAM_CODEC, (payload, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> ClientLimbo.notice(payload));
         });

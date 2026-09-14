@@ -45,6 +45,8 @@ public final class LimboSounds {
     /** Ruidos esparsos — o que faz o silencio ficar desconfortavel em vez de so silencioso. */
     public static final DeferredHolder<SoundEvent, SoundEvent> AMBIENT_LIMBO = register("ambient.limbo");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> FINALE = register("finale");
+
     private LimboSounds() {
     }
 

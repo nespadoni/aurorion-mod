@@ -97,8 +97,8 @@ public final class ExileRecord {
      * Define o restante direto, para o ajuste manual da staff.
      *
      * <p>Separado do {@link #drain} de proposito: o drain nao mexe em quem ja venceu (ele so consome
-     * tempo de quem ainda tem), e e exatamente o registro vencido que a staff mais precisa poder
-     * reabrir — foi o caso em que ela vai querer dar mais tempo a alguem.
+     * tempo de quem ainda tem). O manager aceita ajustes apenas antes do vencimento;
+     * uma identidade morta nunca pode ser reaberta por este contador.
      */
     public void setRemaining(long millis) {
         remainingMillis = Math.max(0L, millis);

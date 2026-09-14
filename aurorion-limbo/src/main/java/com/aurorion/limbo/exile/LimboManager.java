@@ -1,6 +1,8 @@
 package com.aurorion.limbo.exile;
 
 import com.aurorion.core.level.SafeSpot;
+import com.aurorion.core.character.CharacterData;
+import com.aurorion.limbo.finale.FinaleManager;
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.environment.LimboHaunt;
@@ -36,8 +38,8 @@ import java.util.UUID;
  * um estado proprio. Uma segunda fonte de verdade sobre "esta exilado?" seria a garantia de que as
  * duas discordariam um dia, no pior momento possivel.
  *
- * <p>A consequencia pratica e boa: {@code /vidas dar} continua funcionando como resgate sem saber que
- * este mod existe. A varredura percebe que a pessoa deixou de estar exilada e fecha o registro.
+ * <p>{@code /vidas dar} funciona como resgate antes do vencimento. A identidade terminal do core
+ * prevalece depois da morte definitiva: conceder vidas nunca cria outro personagem.
  *
  * <h2>Custo</h2>
  *
@@ -88,7 +90,7 @@ public final class LimboManager {
         MinecraftServer server = player.server;
         UUID id = player.getUUID();
 
-        if (!LivesManager.isExiled(server, id)) return;
+        if (CharacterData.get(server).isDead(id) || !LivesManager.isExiled(server, id)) return;
 
         LimboData data = LimboData.get(server);
         ExileRecord existing = data.record(id);
@@ -107,6 +109,15 @@ public final class LimboManager {
             narrator().announceFall(server, record.lastName(), LimboConfig.ANNOUNCE_NAMES.get());
         }
         AuditLog.record(server, event(AuditEvent.Type.QUEDA, id, record, 0, server, ""));
+    }
+
+    /** Resolve legacy expired records before a login can receive gameplay packets. */
+    public static void expireIfDue(ServerPlayer player) {
+        LimboData data = LimboData.get(player.server);
+        ExileRecord record = data.record(player.getUUID());
+        if (record == null || record.remainingMillis() > 0) return;
+        expire(player.server, player.getUUID(), record, player);
+        data.close(player.getUUID());
     }
 
     // --- Varredura -----------------------------------------------------------------------------
@@ -130,11 +141,20 @@ public final class LimboManager {
         // sair viram lista e sao aplicadas depois.
         List<UUID> rescued = null;
         List<UUID> crossed = null;
+        List<UUID> expired = null;
 
         for (Map.Entry<UUID, ExileRecord> entry : active.entrySet()) {
             UUID id = entry.getKey();
             ExileRecord record = entry.getValue();
             ServerPlayer player = server.getPlayerList().getPlayer(id);
+
+            // Terminal identity wins over later life grants, including migrated expired saves.
+            if (CharacterData.get(server).isDead(id) || record.remainingMillis() <= 0) {
+                expire(server, id, record, player);
+                if (expired == null) expired = new ArrayList<>(2);
+                expired.add(id);
+                continue;
+            }
 
             if (!LivesManager.isExiled(server, id)) {
                 if (rescued == null) rescued = new ArrayList<>(2);
@@ -146,19 +166,15 @@ public final class LimboManager {
                 updateName(data, record, player);
             }
 
-            // Prazo vencido continua no mapa de proposito: fechar o registro faria o proximo login
-            // abrir outro, com prazo cheio, e a pessoa cairia num ciclo sem saida. Ela fica listada
-            // como vencida ate a staff decidir — que e justamente a decisao que ainda nao foi tomada.
             data.drain(record, elapsed);
-            if (record.reportExpiration()) {
+            if (record.remainingMillis() <= 0) {
                 expire(server, id, record, player);
+                if (expired == null) expired = new ArrayList<>(2);
+                expired.add(id);
+                continue;
             }
-            // Antes dos desvios abaixo de proposito: quem venceu o prazo, quem saiu da dimensao e
-            // quem acabou de voltar tambem precisam de painel certo — e sao justamente os casos que
-            // um sync colocado so no fim do laco nunca alcancaria.
+            // Fora da dimensao ou durante respawn tambem precisa receber o estado do painel.
             syncIfChanged(player, record, server);
-
-            if (record.remainingMillis() <= 0L) continue;
 
             if (player == null || !player.isAlive()) continue;
             if (player.level().dimension() != dimension()) continue;
@@ -174,6 +190,7 @@ public final class LimboManager {
             syncIfChanged(player, record, server);
         }
 
+        if (expired != null) expired.forEach(data::close);
         if (rescued != null) {
             for (UUID id : rescued) {
                 rescued(server, id, data);
@@ -359,19 +376,21 @@ public final class LimboManager {
     }
 
     private static void expire(MinecraftServer server, UUID id, ExileRecord record, @Nullable ServerPlayer player) {
+        boolean newlyDead = !CharacterData.get(server).isDead(id);
+        FinaleManager.expire(server, id);
         ForgottenDoor.erase(server, record);
         record.disarm();
-        if (player != null) {
-            narrator().expired(player);
-        }
+        record.reportExpiration();
         LimboData.get(server).setDirty();
-        AuditLog.record(server, event(AuditEvent.Type.PRAZO_VENCIDO, id, record, 0, server, ""));
+        if (newlyDead) AuditLog.record(server, event(AuditEvent.Type.PRAZO_VENCIDO, id, record, 0, server,
+                "morte_definitiva personagem=" + CharacterData.get(server).current(id).id()));
     }
 
     /** Alguem tentou buscar esta pessoa — desliga a Porta do Esquecido para ela. */
     public static boolean markRescueAttempt(MinecraftServer server, UUID target) {
         ExileRecord record = LimboData.get(server).record(target);
-        if (record == null || record.rescueAttempted()) return false;
+        if (record == null || record.remainingMillis() <= 0 || record.rescueAttempted()
+                || CharacterData.get(server).isDead(target)) return false;
 
         ForgottenDoor.erase(server, record);
         record.markRescueAttempted();
@@ -383,20 +402,26 @@ public final class LimboManager {
     public static boolean setDeadline(MinecraftServer server, UUID id, long millis) {
         LimboData data = LimboData.get(server);
         ExileRecord record = data.record(id);
-        if (record == null) return false;
+        if (record == null || CharacterData.get(server).isDead(id) || record.remainingMillis() <= 0) return false;
         long window = LimboConfig.DOOR_WINDOW_HOURS.get() * 3_600_000L;
         if (millis <= 0 || millis > window) {
             ForgottenDoor.erase(server, record);
             record.disarm();
         }
         record.setRemaining(millis);
+        record.invalidateSync();
         data.setDirty();
         AuditLog.record(server, event(AuditEvent.Type.PRAZO_AJUSTADO, id, record, 0, server, ""));
+        if (record.remainingMillis() <= 0) {
+            expire(server, id, record, server.getPlayerList().getPlayer(id));
+            data.close(id);
+        }
         return true;
     }
 
     /** Publico porque o resgate por Vinculo tambem tira gente do Limbo, e tem que sair pela mesma porta. */
     public static boolean returnToOverworld(ServerPlayer player) {
+        if (FinaleManager.isDead(player)) return false;
         ServerLevel overworld = player.server.overworld();
         BlockPos landing = SafeSpot.aroundColumn(overworld, overworld.getSharedSpawnPos(), 8,
                 overworld.getMaxBuildHeight() - 2);

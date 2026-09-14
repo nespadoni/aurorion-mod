@@ -148,7 +148,8 @@ Todos são staff (nível 2).
 | `/limbo esquecidos` | Quem já saiu sozinho, e quantas vezes |
 | `/limbo auditoria [linhas]` | Últimas linhas do log, mais novas primeiro |
 | `/limbo tentativa <jogador>` | Marca que alguém tentou resgatar — desliga a Porta para essa pessoa |
-| `/limbo prazo <jogador> <horas>` | Ajusta o prazo na mão. Zero vence na próxima varredura |
+| `/limbo prazo <jogador> <horas>` | Ajusta o prazo antes do vencimento. **Zero mata o personagem imediatamente** |
+| `/limbo finale previa` | Prévia local com música junto ao fechamento dos olhos; não mata nem desconecta; Esc fecha durante a cena |
 
 ## Config
 
@@ -349,6 +350,13 @@ Testes: `src/test/` (21 unitários, sem servidor) e `src/gameTest/` (um servidor
 jogadores simulados, o ciclo inteiro). Rodam com `:aurorion-limbo:test` e
 `:aurorion-limbo:runGameTestServer`.
 
+## Morte definitiva
+
+O prazo vencido agora encerra o personagem, com música, subida de câmera, fechamento dos olhos,
+epílogo em rolagem e desconexão um minuto após “Você está morto.”. A conta não é banida.
+Configuração, identidade de personagem e roteiro de validação estão em
+[MORTE-DEFINITIVA.md](MORTE-DEFINITIVA.md).
+
 ## O que ainda não existe
 
 Deliberado, para não construir em cima de decisão não tomada:
@@ -356,9 +364,7 @@ Deliberado, para não construir em cima de decisão não tomada:
 - **O ritual de resgate** (a porta de 15 min, a Âncora de Vínculo). Hoje o resgate é `/vidas dar`, e o
   gancho `markRescueAttempt` já está pronto esperando por ele.
 - **O Oráculo** (ADM) e os Faróis — a economia de informação sobre quem está onde.
-- **A escada de consequências** depois do prazo vencer. Hoje o prazo vencido **registra e para**: a
-  pessoa fica listada como vencida até a staff decidir. É de propósito — qual é a consequência ainda é
-  uma das decisões em aberto, e um registro que espera é melhor que um castigo chutado.
+- **Criação de outro personagem e reset completo da progressão**. A morte definitiva e o bloqueio já existem; o fluxo de criação ainda será implementado. Ver [morte definitiva](MORTE-DEFINITIVA.md).
 
 E uma coisa que não é decisão, é só verificação que falta:
 

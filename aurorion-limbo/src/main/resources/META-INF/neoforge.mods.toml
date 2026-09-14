@@ -49,6 +49,9 @@ ordering = "AFTER"
 side = "BOTH"
 
 [[mixins]]
+config = "aurorion_limbo.finale.mixins.json"
+
+[[mixins]]
 config = "aurorion_limbo.cinematic_respawn.mixins.json"
 requiredMods = ["cinematic_respawn"]
 

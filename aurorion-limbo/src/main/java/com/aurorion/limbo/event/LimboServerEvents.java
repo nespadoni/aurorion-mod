@@ -10,6 +10,7 @@ import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
 import com.aurorion.limbo.exile.LimboSpawn;
+import com.aurorion.limbo.finale.FinaleManager;
 import com.aurorion.limbo.network.LimboNetwork;
 import com.aurorion.limbo.report.DiscordSink;
 import com.aurorion.vidas.lives.LivesManager;
@@ -75,10 +76,12 @@ public final class LimboServerEvents {
      * na mao, e quem simplesmente deslogou no Limbo. Sem isto, essas pessoas ficariam sem prazo e sem
      * registro — sem saida e invisiveis para a staff ao mesmo tempo.
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
+        LimboManager.expireIfDue(player);
+        if (FinaleManager.resume(player)) return;
         LimboManager.openIfNeeded(player);
         PlayerReviveCompat.clearIfExiled(player);
         LimboEnvironment.reconcile(player);
@@ -90,6 +93,7 @@ public final class LimboServerEvents {
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             LimboEnvironment.disconnect(player);
+            FinaleManager.logout(player);
         }
     }
 
@@ -107,6 +111,7 @@ public final class LimboServerEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRespawnPosition(PlayerRespawnPositionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (FinaleManager.isDead(player)) return;
         if (!LivesManager.isExiled(player.server, player.getUUID())) return;
 
         ServerLevel limbo = player.server.getLevel(LimboManager.dimension());
@@ -124,6 +129,7 @@ public final class LimboServerEvents {
     @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            if (FinaleManager.resume(player)) return;
             LimboManager.openIfNeeded(player);
             PlayerReviveCompat.clearIfExiled(player);
             LimboEnvironment.reconcile(player);
@@ -247,6 +253,7 @@ public final class LimboServerEvents {
         if (++counter < SWEEP_TICKS) return;
 
         counter = 0;
+        FinaleManager.sweep(event.getServer());
         LimboEnvironment.tick(event.getServer());
         LimboManager.sweep(event.getServer());
         if (++cleanupCounter >= 60) {
@@ -279,6 +286,7 @@ public final class LimboServerEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onTravelToDimension(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (FinaleManager.isDead(player)) { event.setCanceled(true); return; }
         if (!ForgottenDoor.consumeAuthorization(player, event.getDimension())) return;
 
         if (event.isCanceled()) {
@@ -286,6 +294,28 @@ public final class LimboServerEvents {
             AurorionLimbo.LOGGER.debug("Porta do Esquecido destravou a saida de {}",
                     player.getGameProfile().getName());
         }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onTerminalDamage(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && FinaleManager.isDead(player)) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onTerminalDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && FinaleManager.isDead(player)) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onGameMode(PlayerEvent.PlayerChangeGameModeEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && FinaleManager.isDead(player)
+                && event.getNewGameMode() != net.minecraft.world.level.GameType.SPECTATOR) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onCommand(net.neoforged.neoforge.event.CommandEvent event) {
+        if (event.getParseResults().getContext().getSource().getEntity() instanceof ServerPlayer player
+                && FinaleManager.isDead(player)) event.setCanceled(true);
     }
 
     /**
@@ -298,6 +328,7 @@ public final class LimboServerEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         LimboManager.reset();
+        FinaleManager.reset();
         AdmCompat.reset();
         LimboEnvironment.reset();
         DiscordSink.shutdown();
