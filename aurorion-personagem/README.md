@@ -30,22 +30,63 @@ caixa, então `Álda Verrine` e `alda verrine` são o mesmo nome.
 | Situação | O que acontece |
 |---|---|
 | Conta sem personagem nomeado, vivo | Só ganha um nome. **Nada é apagado**: inventário, casa, vidas e progressão continuam |
-| Conta com personagem morto em definitivo | Troca de identidade: reset completo antes de o personagem novo existir |
+| Conta com personagem morto em definitivo | Troca de identidade: apagamento total antes de o personagem novo existir |
 
 A diferença importa para instalar o mod num servidor que já está rodando: a população existente é
 nomeada sem perder nada.
 
-## O reset
+## Morrer não dá direito a recomeçar
 
-Só acontece na troca depois da morte. O que é apagado:
+Quem morre em definitivo **não** entra e cria outro personagem sozinho. A conta continua válida e
+sem banimento, mas a tela de criação só aparece depois de `/personagem liberar <jogador>`.
 
-- **Vanilla**: inventário, baú do Fim, grade de criação, XP, efeitos, fome, vida, ar, ponto de
-  renascimento, avanços, estatísticas, receitas conhecidas, tags de jogador, placar e time.
-- **Aurorion**: vidas, casa/veredito/pontos do Etéreo, passes de viagem, nome exibido, registro e
-  memória do Limbo, epílogo pendente, estilo de balão de fala e origem de abdução.
+Sem isso, a morte definitiva viraria um contratempo de dois minutos — morre, cria outro, segue. A
+liberação vale por **uma** história: publicar a identidade nova a consome, e a próxima morte precisa
+de outra conversa com a staff.
+
+Enquanto não estiver liberada, a conta é recusada no login com a explicação, configurável em
+`semAutorizacao`.
+
+## O apagamento
+
+Só acontece na troca depois da morte, e é literalmente **apagar a playerdata**:
+
+- `playerdata/<uuid>.dat`, mais o `.dat_old` e o `.dat_new` que o vanilla deixa para trás;
+- `stats/<uuid>.json`;
+- `advancements/<uuid>.json`;
+- e o que cada mod Aurorion guarda fora desses arquivos, via `CharacterResetEvent`: vidas,
+  casa e pontos do Etéreo, passes de viagem, nome exibido, registro e memória do Limbo, rito
+  pendente, estilo de balão e origem de abdução.
+
+### Por que apagar arquivo em vez de zerar campo
+
+A primeira versão limpava item por item: inventário, XP, avanços, estatísticas, e um trecho para
+cada mod do ecossistema. Isso funcionava para o que **conhecíamos** — e deixava passar todo o resto.
+Num modpack pesado, a maior parte da progressão de um jogador não está em lugar nenhum que este mod
+possa listar: está dentro do próprio `playerdata/<uuid>.dat`, em NBT persistente e em data
+attachments que cada mod grava do seu jeito.
+
+Apagar o arquivo inverte o padrão: passa a ser "não sobrevive", e o que precisa sobreviver é que tem
+de ser dito em voz alta.
 
 Nada de OP, whitelist, banimento ou UUID de autenticação é tocado: isso é da pessoa, não do
 personagem.
+
+### Por que a pessoa é desconectada
+
+Com o dono online, o arquivo no disco é uma **cópia velha**: o `ServerPlayer` em memória é a verdade
+e reescreve o arquivo no logout. Apagar naquele momento devolveria tudo alguns segundos depois.
+
+Então a troca não acontece no clique:
+
+1. o clique **reserva** a identidade e grava o diário com `fsync`;
+2. a conta é desconectada com a explicação (`apagando`, na config);
+3. fora do jogo, a varredura apaga os arquivos e dispara `CharacterResetEvent`;
+4. só então a identidade é publicada, e o diário gravado de novo;
+5. no login seguinte o personagem novo é apresentado — nome exibido, saudação, spawn do mundo.
+
+Fica mais lento e mais cerimonioso que um reset instantâneo, e essa é a ideia: começar outra vida
+custa uma autorização e uma reconexão, não um clique.
 
 ### Por que outros mods entram sozinhos
 
@@ -61,39 +102,36 @@ public static void onReset(CharacterResetEvent event) {
 }
 ```
 
-Todo handler precisa ser **idempotente**: um reset interrompido é repetido no login seguinte.
+O evento é disparado com o dono **offline**, então `event.player()` pode ser `null`. Todo handler
+precisa ser **idempotente**: uma troca interrompida é repetida na varredura seguinte.
 
 ### Mods de terceiros
 
-Progressão de mods de fora do repositório **não é apagada automaticamente** — o reset alcança o que
-o vanilla guarda e o que os mods Aurorion guardam. Para quests, magia, dinheiro e pesquisas de
-outros mods, o caminho é um listener de `CharacterResetEvent` numa camada de compatibilidade, ou um
-comando desses mods chamado por função de datapack. Muitos guardam por UUID de conta e vão
-sobreviver à troca se ninguém apagar.
+Agora a maior parte é alcançada de graça: tudo que um mod guarda no NBT do jogador ou num data
+attachment vai junto com o arquivo. O que **não** vai é o que o mod guarda fora dele — `SavedData`
+próprio, arquivo por jogador numa pasta do mod, tabela num banco. Para esses o caminho continua
+sendo um listener de `CharacterResetEvent` numa camada de compatibilidade.
 
 ## A transação
 
 Trocar de personagem tem um ponto de não-retorno: entre "apagar a história antiga" e "publicar a
 identidade nova" existe um instante em que uma queda de energia deixaria a conta sem nenhuma das
-duas. Por isso a troca é uma transação com diário:
+duas. Por isso a troca é uma transação com diário, na ordem descrita acima.
 
-1. a identidade nova é **reservada** e gravada em disco (com `fsync`) antes de qualquer coisa ser
-   apagada;
-2. o reset roda — vanilla aqui, mods no `CharacterResetEvent`;
-3. só então a identidade é publicada, e o diário gravado de novo.
+Cair em qualquer ponto deixa a reserva no disco e a conta ainda morta — que é exatamente o estado de
+onde a varredura seguinte retoma. O que não acontece é a pessoa voltar viva com metade das coisas da
+vida anterior.
 
-Cair no meio deixa a reserva no disco e a conta ainda morta — que é exatamente o estado de onde o
-próximo login retoma. O que não acontece é a pessoa voltar viva com metade das coisas da vida
-anterior.
-
-O diário fica em `data/aurorion_core_characters.dat`, no mundo.
+O diário fica em `data/aurorion_core_characters.dat`, no mundo, junto com a lista de contas
+liberadas pela staff e de identidades publicadas que ainda não foram apresentadas ao dono.
 
 ## Comandos
 
 | Comando | Quem usa | O que faz |
 |---|---|---|
 | `/personagem criar <Nome> <Sobrenome>` | qualquer um, só quando retido | Responde a pergunta do nome |
-| `/personagem continuar` | qualquer um, só quando retido | Retoma uma criação interrompida (o nome já está reservado) |
+| `/personagem liberar <jogador>` | staff | Libera **uma** criação para quem morreu em definitivo |
+| `/personagem revogar <jogador>` | staff | Cancela uma liberação ainda não usada |
 | `/personagem ver [jogador]` | staff para terceiros | Identidade, ID do personagem, datas e reserva pendente |
 | `/personagem renomear <jogador> <Nome> <Sobrenome>` | staff | Corrige a grafia; mantém ID, progressão e a marca de morte |
 | `/personagem cancelar <jogador>` | staff | Devolve o nome de uma reserva travada. **Não ressuscita ninguém** |
@@ -116,8 +154,9 @@ recebeu no pacote, então trocar uma frase não exige resource pack nem atualiza
 | `regra` | texto | Linha de regra abaixo dos campos |
 | `saudacao` | "%s abriu os olhos…" | Anúncio no chat; `%s` vira o nome completo |
 | `primeirasPalavras` | 2 linhas | Mensagens só para quem acabou de nascer |
+| `semAutorizacao` | texto | Tela de desconexão de quem morreu e ainda não foi liberado |
+| `apagando` | texto | Tela de desconexão entre reservar o nome e nascer; `%s` vira o nome escolhido |
 | `cobrarDeQuemJaJoga` | `true` | `false` pergunta **só** a quem vai criar outro personagem depois da morte |
-| `nascerNoSpawn` | `true` | `false` faz o personagem novo acordar onde o anterior morreu |
 
 ## Verificação
 
@@ -131,5 +170,8 @@ No jogo, com um mundo descartável, vale conferir:
 - fechar a tela na força não devolve o jogo;
 - cliente sem o mod recebe as instruções no chat e consegue responder pelo comando;
 - dois jogadores não conseguem registrar o mesmo nome, nem o nome de um personagem morto;
-- depois da morte definitiva, reconectar abre a criação e o personagem novo nasce sem nada;
-- desligar o servidor no meio da criação e voltar retoma pelo `/personagem continuar`.
+- depois da morte definitiva, reconectar **sem liberação** é recusado com a explicação;
+- com `/personagem liberar`, a tela aparece, e confirmar desconecta com o aviso de apagamento;
+- reconectando, o personagem novo nasce sem inventário, sem avanços e sem estatísticas — e vale
+  conferir também o que os mods do pack guardavam para aquela conta;
+- desligar o servidor entre a reserva e o nascimento e voltar: a varredura termina a troca sozinha.

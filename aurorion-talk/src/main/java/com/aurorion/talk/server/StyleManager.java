@@ -26,7 +26,11 @@ public final class StyleManager {
      *
      * <p>O cliente e quem decide o proprio estilo — nao ha permissao a checar — mas o
      * <em>conteudo</em> nunca e confiavel: um cliente modificado poderia mandar qualquer caminho de
-     * textura ou qualquer cor, entao validamos a forma antes de aceitar.</p>
+     * textura, entao validamos a forma antes de aceitar.</p>
+     *
+     * <p>Cor e caso a parte. Qualquer cor e valida, mas a legibilidade da fala e do servidor: o
+     * texto e <b>corrigido</b> aqui se nao contrastar com o balao. Recusar seria pior — a tela do
+     * cliente ficaria sem resposta, e um cliente modificado continuaria mandando fala ilegivel.</p>
      */
     public static void requestStyle(ServerPlayer sender, BalloonStyle style) {
         if (!style.isWellFormed()) {
@@ -34,7 +38,7 @@ public final class StyleManager {
             return;
         }
 
-        setStyle(sender.getServer(), sender.getUUID(), style);
+        setStyle(sender.getServer(), sender.getUUID(), style.normalized());
     }
 
     /** Aplica (ou limpa, com {@code style == null}) e faz broadcast. */

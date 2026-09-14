@@ -76,11 +76,15 @@ antes do vencimento. `/limbo prazo <jogador> 0` encerra o personagem imediatamen
 
 ## Depois da morte: criar outro personagem
 
-Quem termina o epílogo é desconectado com a conta válida e sem banimento. A reconexão passa a ser
-atendida pelo [aurorion-personagem](../aurorion-personagem/README.md): a pessoa entra, é retida em
-espectador e escolhe nome e sobrenome do próximo personagem. O reset — vanilla e de todos os mods do
-ecossistema — roda antes de a identidade nova existir, e a conta só volta a jogar depois que ele
-termina.
+Quem termina o epílogo é desconectado com a conta válida e sem banimento. A partir daí quem atende é
+o [aurorion-personagem](../aurorion-personagem/README.md) — mas **não automaticamente**: enquanto a
+staff não rodar `/personagem liberar <jogador>`, a reconexão é recusada com a explicação. Morrer não
+dá direito a recomeçar.
+
+Liberada, a pessoa entra, é retida em espectador e escolhe nome e sobrenome do próximo personagem.
+Confirmar desconecta de novo: a história anterior é apagada com a conta fora do jogo — `playerdata`,
+`stats`, `advancements` e o que cada mod do ecossistema guarda — e a identidade nova só é publicada
+depois disso. O personagem novo nasce no login seguinte.
 
 Com esse mod instalado, o Limbo deixa de recusar a conexão de quem já assistiu ao epílogo: existe
 para onde mandar essa conta. Sem ele, a recusa no login continua sendo a resposta, porque não existe.

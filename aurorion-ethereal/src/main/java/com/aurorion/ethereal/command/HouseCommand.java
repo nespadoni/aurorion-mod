@@ -1,8 +1,6 @@
 package com.aurorion.ethereal.command;
 
-import com.aurorion.core.text.TimeFormat;
 import com.aurorion.ethereal.AurorionEthereal;
-import com.aurorion.ethereal.ceremony.CeremonyData;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
 import com.aurorion.ethereal.house.House;
 import com.aurorion.ethereal.house.HouseCatalog;
@@ -14,7 +12,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
@@ -26,8 +23,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * {@code /casa} — mostra a sua casa. Para o jogador comum, e so isso: quem vincula e a cerimonia no
@@ -69,22 +64,13 @@ public final class HouseCommand {
                                 .executes(HouseCommand::clear)))
                 .then(Commands.literal("cerimonia")
                         .requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("iniciar")
-                                .then(Commands.argument("jogador", EntityArgument.player())
-                                        .executes(HouseCommand::ceremonyStart)))
-                        .then(Commands.literal("confirmar")
-                                .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
-                                        .then(Commands.argument("casa", ResourceLocationArgument.id())
-                                                .suggests(HOUSE_SUGGESTIONS)
-                                                .executes(HouseCommand::ceremonyConfirm))))
-                        .then(Commands.literal("ver")
-                                .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
-                                        .executes(HouseCommand::ceremonyView)))
                         .then(Commands.literal("cancelar")
                                 .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
                                         .executes(HouseCommand::ceremonyCancel)))
-                        .then(Commands.literal("pendentes")
-                                .executes(HouseCommand::ceremonyPending))));
+                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                .then(Commands.argument("casa", ResourceLocationArgument.id())
+                                        .suggests(HOUSE_SUGGESTIONS)
+                                        .executes(HouseCommand::ceremony)))));
     }
 
     // --- Consulta ------------------------------------------------------------------------------
@@ -196,114 +182,60 @@ public final class HouseCommand {
     // --- Cerimonia -----------------------------------------------------------------------------
 
     /**
-     * Comeca uma cerimonia conduzida: quem digitou passa a receber cada resposta ao vivo e o veredito
-     * no fim. E o caminho do evento ao vivo; o do dia a dia e o jogador clicar no altar sozinho.
+     * Define a casa e toca o Rito de Vinculacao.
+     *
+     * <p>Substituiu {@code iniciar}, {@code confirmar}, {@code ver} e {@code pendentes}. Aqueles
+     * quatro existiam para conduzir um questionario e decidir em cima do resultado dele; sem as
+     * perguntas, sobrou o que a staff sempre quis fazer numa linha so — dizer de qual casa a pessoa e.
+     *
+     * <p>A diferenca para {@code /casa definir} e a cena: {@code definir} grava em silencio, util
+     * para corrigir engano; {@code cerimonia} grava e apresenta.
      */
-    private static int ceremonyStart(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "jogador");
-        ServerPlayer conductor = context.getSource().getPlayer();
-
-        Component failure = switch (CeremonyManager.start(target, conductor)) {
-            case OK -> null;
-            case NO_QUESTIONS -> Component.translatable("commands.aurorion_ethereal.cerimonia.no_questions");
-            case NO_HOUSES -> Component.translatable("commands.aurorion_ethereal.casa.empty");
-            case ALREADY_RUNNING -> Component.translatable("commands.aurorion_ethereal.cerimonia.already_running", target.getGameProfile().getName());
-            case AWAITING_VERDICT -> Component.translatable("commands.aurorion_ethereal.cerimonia.awaiting", target.getGameProfile().getName());
-            case ALREADY_BOUND -> Component.translatable("commands.aurorion_ethereal.cerimonia.already_bound", target.getGameProfile().getName());
-        };
-
-        if (failure != null) {
-            context.getSource().sendFailure(failure);
-            return 0;
-        }
-
-        context.getSource().sendSuccess(() -> Component.translatable(
-                "commands.aurorion_ethereal.cerimonia.started", target.getGameProfile().getName()), true);
-        return 1;
-    }
-
-    private static int ceremonyConfirm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int ceremony(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         MinecraftServer server = context.getSource().getServer();
         ResourceLocation houseId = ResourceLocationArgument.getId(context, "casa");
         Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, "jogador");
-        int confirmed = 0;
+        int bound = 0;
 
         for (GameProfile profile : profiles) {
-            switch (CeremonyManager.confirm(server, profile.getId(), houseId)) {
-                case OK -> {
-                    confirmed++;
-                    House house = HouseCatalog.get(houseId);
-                    context.getSource().sendSuccess(() -> Component.translatable(
-                            "commands.aurorion_ethereal.cerimonia.confirmed",
-                            profile.getName(),
-                            house == null ? Component.literal(houseId.toString()) : house.coloredName()), true);
-                }
-                case NO_VERDICT -> context.getSource().sendFailure(Component.translatable(
-                        "commands.aurorion_ethereal.cerimonia.no_verdict", profile.getName()));
+            switch (CeremonyManager.bind(server, profile.getId(), houseId)) {
+                case OK, QUEUED -> bound++;
                 case UNKNOWN_HOUSE -> context.getSource().sendFailure(Component.translatable(
                         "commands.aurorion_ethereal.casa.unknown", houseId.toString()));
+                case ALREADY_RUNNING -> context.getSource().sendFailure(Component.translatable(
+                        "commands.aurorion_ethereal.cerimonia.already_running", profile.getName()));
             }
         }
-        return confirmed;
+
+        if (bound == 0) return 0;
+
+        House house = HouseCatalog.get(houseId);
+        int total = bound;
+        context.getSource().sendSuccess(() -> Component.translatable(
+                "commands.aurorion_ethereal.cerimonia.bound", total,
+                house == null ? Component.literal(houseId.toString()) : house.coloredName()), true);
+        return bound;
     }
 
-    /** Reenvia o veredito completo, com os botoes — para quem entrou depois de a cerimonia terminar. */
-    private static int ceremonyView(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        MinecraftServer server = context.getSource().getServer();
-        int shown = 0;
-
-        for (GameProfile profile : GameProfileArgument.getGameProfiles(context, "jogador")) {
-            boolean sent = CeremonyManager.sendVerdict(server,
-                    line -> context.getSource().sendSuccess(() -> line, false), profile.getId());
-            if (sent) {
-                shown++;
-            } else {
-                context.getSource().sendFailure(Component.translatable(
-                        "commands.aurorion_ethereal.cerimonia.no_verdict", profile.getName()));
-            }
-        }
-        return shown;
-    }
-
+    /** Tira da fila um rito que ainda nao tocou, ou corta um que esta acontecendo. */
     private static int ceremonyCancel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         MinecraftServer server = context.getSource().getServer();
+        Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, "jogador");
         int cancelled = 0;
 
-        for (GameProfile profile : GameProfileArgument.getGameProfiles(context, "jogador")) {
-            if (CeremonyManager.cancel(server, profile.getId())) {
-                cancelled++;
-                context.getSource().sendSuccess(() -> Component.translatable(
-                        "commands.aurorion_ethereal.cerimonia.cancelled", profile.getName()), true);
-            } else {
-                context.getSource().sendFailure(Component.translatable(
-                        "commands.aurorion_ethereal.cerimonia.nothing", profile.getName()));
-            }
+        for (GameProfile profile : profiles) {
+            if (CeremonyManager.cancel(server, profile.getId())) cancelled++;
         }
-        return cancelled;
-    }
 
-    private static int ceremonyPending(CommandContext<CommandSourceStack> context) {
-        MinecraftServer server = context.getSource().getServer();
-        var pending = CeremonyManager.pending(server);
-
-        if (pending.isEmpty()) {
-            context.getSource().sendSuccess(() ->
-                    Component.translatable("commands.aurorion_ethereal.cerimonia.pending.empty"), false);
+        if (cancelled == 0) {
+            context.getSource().sendFailure(
+                    Component.translatable("commands.aurorion_ethereal.cerimonia.nothing_to_cancel"));
             return 0;
         }
 
-        long now = System.currentTimeMillis();
-        for (Map.Entry<UUID, CeremonyData.Verdict> entry : pending) {
-            CeremonyData.Verdict verdict = entry.getValue();
-            House suggested = verdict.suggested() == null ? null : HouseCatalog.get(verdict.suggested());
-
-            context.getSource().sendSuccess(() -> Component.translatable(
-                    "commands.aurorion_ethereal.cerimonia.pending.entry",
-                    verdict.playerName(),
-                    suggested == null ? Component.translatable("commands.aurorion_ethereal.cerimonia.pending.no_suggestion")
-                            : suggested.coloredName(),
-                    TimeFormat.duration(Math.max(0, now - verdict.finishedAt()))), false);
-        }
-        return pending.size();
+        int total = cancelled;
+        context.getSource().sendSuccess(() -> Component.translatable(
+                "commands.aurorion_ethereal.cerimonia.cancelled", total), true);
+        return cancelled;
     }
 }

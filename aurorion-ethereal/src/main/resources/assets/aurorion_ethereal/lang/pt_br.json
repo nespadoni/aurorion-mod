@@ -1,7 +1,6 @@
 {
   "itemGroup.aurorion_ethereal": "Aurorion — Ethereal",
   "block.aurorion_ethereal.aeonic_projector": "Projetor Aeônico",
-
   "gui.aurorion_ethereal.house.title": "As Casas de Ethereal",
   "gui.aurorion_ethereal.house.title_locked": "Sua Casa",
   "gui.aurorion_ethereal.house.subtitle": "A escolha é definitiva. Selecione uma casa e confirme.",
@@ -10,15 +9,10 @@
   "gui.aurorion_ethereal.house.sending": "Selando a escolha...",
   "gui.aurorion_ethereal.house.your_house": "Sua casa",
   "gui.aurorion_ethereal.house.members": "%1$s/%2$s membros",
-
-  "gui.aurorion_ethereal.ceremony.title": "Cerimônia de Vinculação",
-  "gui.aurorion_ethereal.ceremony.subtitle": "Responda com sinceridade. A Magia não julga respostas bonitas.",
-
   "gui.aurorion_ethereal.reveal.title": "Revelação",
   "gui.aurorion_ethereal.reveal.recognized": "A Magia te reconhece...",
   "gui.aurorion_ethereal.reveal.you_are": "Você é da",
   "gui.aurorion_ethereal.reveal.accept": "Que assim seja.",
-
   "gui.aurorion_ethereal.mode.top_houses": "Casas mais pontuadas",
   "gui.aurorion_ethereal.mode.worst_houses": "Casas menos pontuadas",
   "gui.aurorion_ethereal.mode.top_players": "Alunos com mais pontos",
@@ -26,7 +20,6 @@
   "gui.aurorion_ethereal.mode.missions": "Maiores completadores de missões",
   "gui.aurorion_ethereal.mode.deaths": "Alunos com mais mortes",
   "gui.aurorion_ethereal.mode.duel_wins": "Maiores duelistas",
-
   "gui.aurorion_ethereal.projector.title": "PROJETOR AEÔNICO",
   "gui.aurorion_ethereal.projector.subtitle": "Selecione a estatística a exibir",
   "gui.aurorion_ethereal.projector.size": "TAMANHO DO PAINEL",
@@ -34,7 +27,6 @@
   "gui.aurorion_ethereal.projector.height": "Altura: %s blocos",
   "gui.aurorion_ethereal.projector.confirm": "✓  Confirmar",
   "gui.aurorion_ethereal.projector.empty": "Sem dados ainda.",
-
   "aurorion_ethereal.board.line.top_houses": "%1$s. %2$s  %3$s pts",
   "aurorion_ethereal.board.line.worst_houses": "%1$s. %2$s  %3$s pts",
   "aurorion_ethereal.board.line.top_players": "%1$s. %2$s  %3$s pts",
@@ -42,7 +34,6 @@
   "aurorion_ethereal.board.line.missions": "%1$s. %2$s  %3$s missões",
   "aurorion_ethereal.board.line.deaths": "%1$s. %2$s  %3$s mortes",
   "aurorion_ethereal.board.line.duel_wins": "%1$s. %2$s  %3$s vitórias",
-
   "aurorion_ethereal.house.no_houses": "Nenhuma casa foi definida neste servidor. Avise a staff.",
   "aurorion_ethereal.house.chosen": "Você agora pertence à %s.",
   "aurorion_ethereal.house.announce": "%1$s foi acolhido pela %2$s.",
@@ -50,22 +41,8 @@
   "aurorion_ethereal.house.error.not_at_altar": "Você precisa estar diante do altar para escolher.",
   "aurorion_ethereal.house.error.already_chosen": "Você já tem uma casa. A escolha é definitiva.",
   "aurorion_ethereal.house.error.full": "Essa casa já está lotada. Escolha outra.",
-
-  "aurorion_ethereal.ceremony.error.awaiting": "Sua cerimônia já terminou. Aguarde a decisão do Conselho Arcano.",
-  "aurorion_ethereal.ceremony.error.no_questions": "A Cerimônia de Vinculação não tem perguntas configuradas. Avise a staff.",
-  "aurorion_ethereal.ceremony.finished.player": "A Cerimônia de Vinculação terminou. Aguarde a decisão do Conselho Arcano.",
-  "aurorion_ethereal.ceremony.cancelled.player": "Sua Cerimônia de Vinculação foi encerrada pelo Conselho.",
-  "aurorion_ethereal.ceremony.relay.started": "%s iniciou a Cerimônia de Vinculação.",
-  "aurorion_ethereal.ceremony.relay.answer": "%1$s respondeu: %2$s → %3$s",
-  "aurorion_ethereal.ceremony.verdict.header": "Cerimônia concluída — %s",
-  "aurorion_ethereal.ceremony.verdict.answers": "Respostas:",
-  "aurorion_ethereal.ceremony.verdict.tally": "Contagem:",
-  "aurorion_ethereal.ceremony.verdict.decide": "Decisão do Conselho:",
-  "aurorion_ethereal.ceremony.verdict.button_hover": "Vincular %2$s à %1$s",
-
   "aurorion_ethereal.projector.error.permission": "Apenas a staff pode configurar este projetor.",
   "aurorion_ethereal.pontos.received": "%s pontos no seu nome.",
-
   "commands.aurorion_ethereal.casa.none": "Você ainda não tem casa. Procure um Altar de Seleção.",
   "commands.aurorion_ethereal.casa.self": "Sua casa: %s",
   "commands.aurorion_ethereal.casa.missing": "Sua casa ('%s') não existe mais nos datapacks. Avise a staff.",
@@ -79,22 +56,12 @@
   "commands.aurorion_ethereal.casa.set": "%1$s agora pertence à %2$s.",
   "commands.aurorion_ethereal.casa.clear": "%s não pertence mais a nenhuma casa.",
   "commands.aurorion_ethereal.casa.clear.none": "%s já não tinha casa.",
-
-  "commands.aurorion_ethereal.cerimonia.started": "Cerimônia iniciada para %s. As respostas chegarão aqui.",
-  "commands.aurorion_ethereal.cerimonia.no_questions": "Nenhuma pergunta definida nos datapacks.",
-  "commands.aurorion_ethereal.cerimonia.already_running": "%s já está no meio de uma cerimônia.",
-  "commands.aurorion_ethereal.cerimonia.awaiting": "A cerimônia de %s já terminou e espera decisão.",
-  "commands.aurorion_ethereal.cerimonia.already_bound": "%s já tem casa.",
-  "commands.aurorion_ethereal.cerimonia.confirmed": "%1$s foi vinculado à %2$s.",
-  "commands.aurorion_ethereal.cerimonia.no_verdict": "Não há cerimônia concluída de %s esperando decisão.",
-  "commands.aurorion_ethereal.cerimonia.cancelled": "Cerimônia de %s encerrada.",
-  "commands.aurorion_ethereal.cerimonia.nothing": "%s não tinha cerimônia em andamento nem veredito parado.",
-  "commands.aurorion_ethereal.cerimonia.pending.empty": "Nenhuma cerimônia esperando decisão.",
-  "commands.aurorion_ethereal.cerimonia.pending.entry": "%1$s — sugestão: %2$s (há %3$s)",
-  "commands.aurorion_ethereal.cerimonia.pending.no_suggestion": "nenhuma",
-
+  "commands.aurorion_ethereal.cerimonia.already_running": "%s já está no meio de um rito.",
+  "commands.aurorion_ethereal.cerimonia.cancelled": "%s rito(s) cancelado(s).",
   "commands.aurorion_ethereal.pontos.header": "Pontuação das Casas (bônus + alunos)",
   "commands.aurorion_ethereal.pontos.casa": "%1$s pontos de bônus para %2$s — total da casa: %3$s",
   "commands.aurorion_ethereal.pontos.aluno": "%1$s pontos para %2$s — total: %3$s",
-  "commands.aurorion_ethereal.pontos.missao": "Missão concluída registrada para %s."
+  "commands.aurorion_ethereal.pontos.missao": "Missão concluída registrada para %s.",
+  "commands.aurorion_ethereal.cerimonia.bound": "%1$s pessoa(s) vinculada(s) à %2$s.",
+  "commands.aurorion_ethereal.cerimonia.nothing_to_cancel": "Não havia rito em andamento nem na fila."
 }

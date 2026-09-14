@@ -117,6 +117,55 @@ class CharacterDataTest {
         assertNull(data.abandonReplacement(account));
     }
 
+    /** Morrer nao da direito a recomecar: sem a staff, a reserva nem chega a ser aberta. */
+    @Test void deathDoesNotEntitleARestart() {
+        var data = new CharacterData();
+        UUID account = UUID.randomUUID();
+        data.current(account);
+        data.markDead(account);
+
+        assertFalse(data.isAuthorized(account));
+        assertThrows(IllegalStateException.class,
+                () -> data.beginReplacement(account, "conta", new CharacterName("Brun", "Solaz")));
+
+        assertTrue(data.authorize(account));
+        assertFalse(data.authorize(account), "liberar duas vezes nao acumula");
+        var transaction = data.beginReplacement(account, "conta", new CharacterName("Brun", "Solaz"));
+
+        var restored = CharacterData.load(data.save(new CompoundTag(), null), null);
+        assertTrue(restored.isAuthorized(account), "a liberacao sobrevive a um reinicio no meio da troca");
+
+        restored.finishReplacement(account, transaction.next().id());
+        assertFalse(restored.isAuthorized(account), "a liberacao vale por uma historia so");
+    }
+
+    /** A identidade e publicada com o dono offline; a apresentacao fica marcada para o proximo login. */
+    @Test void publishingLeavesTheOwnerToBeGreetedOnce() {
+        var data = new CharacterData();
+        UUID account = UUID.randomUUID();
+        data.current(account);
+        data.markDead(account);
+        data.authorize(account);
+        var transaction = data.beginReplacement(account, "conta", new CharacterName("Brun", "Solaz"));
+        data.finishReplacement(account, transaction.next().id());
+
+        var restored = CharacterData.load(data.save(new CompoundTag(), null), null);
+        assertTrue(restored.takeNewborn(account));
+        assertFalse(restored.takeNewborn(account), "apresentar acontece uma vez so");
+    }
+
+    @Test void staffCanTakeTheAuthorizationBack() {
+        var data = new CharacterData();
+        UUID account = UUID.randomUUID();
+        data.current(account);
+        data.markDead(account);
+
+        assertFalse(data.revokeAuthorization(account));
+        data.authorize(account);
+        assertTrue(data.revokeAuthorization(account));
+        assertFalse(data.isAuthorized(account));
+    }
+
     @Test void renamingReleasesThePreviousName() {
         var data = new CharacterData();
         UUID account = UUID.randomUUID();

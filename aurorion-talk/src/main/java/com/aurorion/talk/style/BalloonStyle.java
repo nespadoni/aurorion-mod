@@ -63,13 +63,30 @@ public record BalloonStyle(
 
     /**
      * Verifica se este estilo pode ter vindo da GUI. Roda no servidor, em cima do que o cliente
-     * mandou — sem isso um cliente modificado escolheria qualquer caminho de textura e qualquer cor.
+     * mandou — sem isso um cliente modificado escolheria qualquer caminho de textura.
+     *
+     * <p>Textura e conferida contra a lista do que existe; <b>cor nao</b>, porque agora qualquer cor
+     * e valida. O que a cor precisa passar e legibilidade, e isso e {@link #normalized()} — corrigir
+     * e melhor que recusar, ja que uma recusa aqui viraria "o botao nao faz nada" na tela de quem
+     * escolheu um roxo escuro demais.
      */
     public boolean isWellFormed() {
         if (!BalloonTextures.isSkin(skin)) return false;
         if (decoration.isPresent() && !BalloonTextures.isDecoration(decoration.get())) return false;
 
-        return BalloonPalette.isBalloonColor(color) && BalloonPalette.isTextColor(textColor);
+        return BalloonPalette.isColor(color) && BalloonPalette.isColor(textColor);
+    }
+
+    /**
+     * O mesmo estilo, com o texto empurrado ate dar para ler sobre o balao.
+     *
+     * <p>Chamado no servidor, antes de gravar: a garantia de que a fala de todo mundo e legivel nao
+     * pode depender da GUI, que e do cliente e pode ser trocada. Se ja estiver legivel, devolve
+     * {@code this} — o caso comum nao aloca.
+     */
+    public BalloonStyle normalized() {
+        int readable = BalloonPalette.readableText(color, textColor);
+        return readable == textColor ? this : withTextColor(readable);
     }
 
     public CompoundTag save() {

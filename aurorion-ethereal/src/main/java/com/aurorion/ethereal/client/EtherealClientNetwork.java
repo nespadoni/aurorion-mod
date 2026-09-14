@@ -1,15 +1,11 @@
 package com.aurorion.ethereal.client;
 
-import com.aurorion.ethereal.client.gui.CeremonyScreen;
-import com.aurorion.ethereal.client.gui.HouseRevealScreen;
 import com.aurorion.ethereal.client.gui.HouseSelectionScreen;
 import com.aurorion.ethereal.client.gui.ProjectorConfigScreen;
-import com.aurorion.ethereal.network.CeremonyClosedPayload;
 import com.aurorion.ethereal.network.HouseChoiceResultPayload;
-import com.aurorion.ethereal.network.OpenCeremonyPayload;
 import com.aurorion.ethereal.network.OpenHouseSelectionPayload;
 import com.aurorion.ethereal.network.OpenProjectorConfigPayload;
-import com.aurorion.ethereal.network.RevealHousePayload;
+import com.aurorion.ethereal.network.RitePayload;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -46,34 +42,15 @@ public final class EtherealClientNetwork {
         });
     }
 
-    public static void openCeremony(OpenCeremonyPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> Minecraft.getInstance().setScreen(
-                new CeremonyScreen(payload.questions(), payload.startAt())));
-    }
-
-    public static void ceremonyClosed(CeremonyClosedPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            Minecraft minecraft = Minecraft.getInstance();
-
-            if (minecraft.screen instanceof CeremonyScreen screen) {
-                screen.close(payload.message());
-                return;
-            }
-            if (minecraft.player != null) {
-                minecraft.player.displayClientMessage(payload.message(), false);
-            }
-        });
-    }
-
     /**
-     * A revelacao entra por cima de qualquer coisa que esteja aberta.
+     * Um rito comecando ou terminando por perto.
      *
-     * <p>Ela pode chegar horas depois das perguntas — inclusive no login seguinte, se a staff decidiu
-     * com o jogador offline. Nao existe tela "esperando" para ela substituir.
+     * <p>Nao abre tela nenhuma, e essa e a diferenca para a revelacao antiga: a cena acontece no
+     * mundo, e uma tela modal cobriria justamente o que ha para ver. O cliente so guarda o estado —
+     * quem desenha sao {@link RiteRenderer} e {@link RiteOverlay}.
      */
-    public static void reveal(RevealHousePayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> Minecraft.getInstance().setScreen(
-                new HouseRevealScreen(payload.houseName(), payload.motto(), payload.color())));
+    public static void rite(RitePayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> RiteClient.accept(payload));
     }
 
     public static void openProjectorConfig(OpenProjectorConfigPayload payload, IPayloadContext context) {

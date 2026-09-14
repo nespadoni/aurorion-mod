@@ -5,26 +5,22 @@
   "screen.aurorion_talk.balloon_color": "Bubble color",
   "screen.aurorion_talk.text_color": "Text color",
   "screen.aurorion_talk.no_decoration": "No decoration",
-
   "options.aurorion_talk.preview.short": "Short test",
   "options.aurorion_talk.preview.long": "A long speech bubble for test purposes, to check the line wrap",
-
   "key.categories.aurorion_talk": "Aurorion Talk",
   "key.aurorion_talk.open_config": "Customize speech bubble",
-
   "options.aurorion_talk.hidePlayerChat": "Hide player chat",
   "options.aurorion_talk.hidePlayerChat.tooltip": "Player messages leave the chat HUD and become balloons only. System messages, command output, deaths and join/leave still show up.",
-
   "options.aurorion_talk.hideOnlyWhenBalloonShown": "Only hide with balloon",
   "options.aurorion_talk.hideOnlyWhenBalloonShown.tooltip": "Keeps messages in chat when the sender is too far away to render a balloon, so nothing is lost.",
-
   "options.aurorion_talk.showOwnBalloon": "Show my balloon",
   "options.aurorion_talk.showOwnBalloon.tooltip": "Also create a balloon above your own character. Visible in third person.",
-
   "options.aurorion_talk.balloonAgeSeconds": "Balloon duration",
   "options.aurorion_talk.maxBalloons": "Stacked balloons",
   "options.aurorion_talk.maxBalloonWidth": "Max width",
   "options.aurorion_talk.minBalloonWidth": "Min width",
   "options.aurorion_talk.heightOffset": "Balloon height",
-  "options.aurorion_talk.distanceBetweenBalloons": "Balloon spacing"
+  "options.aurorion_talk.distanceBetweenBalloons": "Balloon spacing",
+  "screen.aurorion_talk.hex": "Hex colour",
+  "screen.aurorion_talk.low_contrast": "Low contrast — the text will be lightened or darkened so it stays readable."
 }

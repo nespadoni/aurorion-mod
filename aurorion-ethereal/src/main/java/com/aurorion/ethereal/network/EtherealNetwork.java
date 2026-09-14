@@ -2,7 +2,6 @@ package com.aurorion.ethereal.network;
 
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
-import com.aurorion.ethereal.ceremony.CeremonyManager;
 import com.aurorion.ethereal.client.EtherealClientNetwork;
 import com.aurorion.ethereal.house.HouseManager;
 import com.aurorion.ethereal.ranking.BoardMode;
@@ -48,23 +47,18 @@ public final class EtherealNetwork {
                 EtherealNetwork::handleOpenSelection);
         registrar.playToClient(HouseChoiceResultPayload.TYPE, HouseChoiceResultPayload.STREAM_CODEC,
                 EtherealNetwork::handleChoiceResult);
-        registrar.playToClient(OpenCeremonyPayload.TYPE, OpenCeremonyPayload.STREAM_CODEC,
-                EtherealNetwork::handleOpenCeremony);
-        registrar.playToClient(CeremonyClosedPayload.TYPE, CeremonyClosedPayload.STREAM_CODEC,
-                EtherealNetwork::handleCeremonyClosed);
-        registrar.playToClient(RevealHousePayload.TYPE, RevealHousePayload.STREAM_CODEC,
-                EtherealNetwork::handleReveal);
+        registrar.playToClient(RitePayload.TYPE, RitePayload.STREAM_CODEC,
+                EtherealNetwork::handleRite);
         registrar.playToClient(OpenProjectorConfigPayload.TYPE, OpenProjectorConfigPayload.STREAM_CODEC,
                 EtherealNetwork::handleOpenProjectorConfig);
 
         registrar.playToServer(ChooseHousePayload.TYPE, ChooseHousePayload.STREAM_CODEC, EtherealNetwork::handleChoose);
-        registrar.playToServer(CeremonyAnswerPayload.TYPE, CeremonyAnswerPayload.STREAM_CODEC, EtherealNetwork::handleAnswer);
         registrar.playToServer(SaveProjectorConfigPayload.TYPE, SaveProjectorConfigPayload.STREAM_CODEC, EtherealNetwork::handleSaveProjector);
     }
 
     // --- Ponta cliente --------------------------------------------------------------------------
     //
-    // Seis metodos quase iguais, e nao um helper que receba `EtherealClientNetwork::algumaCoisa`.
+    // Quatro metodos quase iguais, e nao um helper que receba `EtherealClientNetwork::algumaCoisa`.
     // A repeticao e o ponto: montar aquele method reference aconteceria no *registro*, que roda
     // tambem no servidor dedicado, e criar o handle exige resolver a classe de cliente — que la nao
     // existe. Aqui a referencia mora dentro do corpo do metodo, depois do teste de Dist, entao ela
@@ -82,19 +76,9 @@ public final class EtherealNetwork {
         EtherealClientNetwork.choiceResult(payload, context);
     }
 
-    private static void handleOpenCeremony(OpenCeremonyPayload payload, IPayloadContext context) {
+    private static void handleRite(RitePayload payload, IPayloadContext context) {
         if (FMLEnvironment.dist != Dist.CLIENT) return;
-        EtherealClientNetwork.openCeremony(payload, context);
-    }
-
-    private static void handleCeremonyClosed(CeremonyClosedPayload payload, IPayloadContext context) {
-        if (FMLEnvironment.dist != Dist.CLIENT) return;
-        EtherealClientNetwork.ceremonyClosed(payload, context);
-    }
-
-    private static void handleReveal(RevealHousePayload payload, IPayloadContext context) {
-        if (FMLEnvironment.dist != Dist.CLIENT) return;
-        EtherealClientNetwork.reveal(payload, context);
+        EtherealClientNetwork.rite(payload, context);
     }
 
     private static void handleOpenProjectorConfig(OpenProjectorConfigPayload payload, IPayloadContext context) {
@@ -108,11 +92,6 @@ public final class EtherealNetwork {
     private static void handleChoose(ChooseHousePayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
         context.enqueueWork(() -> HouseManager.choose(player, payload.house()));
-    }
-
-    private static void handleAnswer(CeremonyAnswerPayload payload, IPayloadContext context) {
-        if (!(context.player() instanceof ServerPlayer player)) return;
-        context.enqueueWork(() -> CeremonyManager.answer(player, payload.question(), payload.option()));
     }
 
     // --- Projetor Aeonico ------------------------------------------------------------------------

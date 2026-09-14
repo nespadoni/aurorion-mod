@@ -6,8 +6,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  * Config do lado servidor, gravada em {@code config/aurorion_ethereal-server.toml}.
  *
  * <p>O que <em>nao</em> esta aqui e tao proposital quanto o que esta: nome, cor, lema, icone e
- * lotacao de casa nao sao config, sao datapack ({@link com.aurorion.ethereal.house.House}); as
- * perguntas da cerimonia idem ({@link com.aurorion.ethereal.ceremony.CeremonyQuestion}). Config e
+ * lotacao de casa nao sao config, sao datapack ({@link com.aurorion.ethereal.house.House}). Config e
  * para regra de servidor; conteudo e para dado.
  */
 public final class EtherealConfig {
@@ -23,14 +22,13 @@ public final class EtherealConfig {
     static {
         BUILDER.comment(
                 "Casas de Ethereal. As casas em si (nome, lema, cor, icone, lotacao) sao definidas em",
-                "data/<namespace>/aurorion/houses/*.json de um datapack, e as perguntas da cerimonia em",
-                "data/<namespace>/aurorion/ceremony_questions/*.json — nao aqui."
+                "data/<namespace>/aurorion/houses/*.json de um datapack — nao aqui."
         ).push("houses");
 
         CEREMONY_REQUIRED = BUILDER
                 .comment(
-                        "Verdadeiro (padrao) = clicar no altar abre a Cerimonia de Vinculacao, e quem decide a",
-                        "casa no fim e a staff (/casa cerimonia confirmar). O jogador nunca escolhe sozinho.",
+                        "Verdadeiro (padrao) = quem define a casa e a staff, com /casa cerimonia <jogador> <casa>,",
+                        "e o altar serve so para consultar a propria casa. O jogador nunca escolhe sozinho.",
                         "Falso = o altar volta a abrir a grade de casas e o jogador escolhe na hora. E a saida",
                         "para quando nao houver staff para conduzir as cerimonias."
                 )

@@ -932,18 +932,55 @@ um cliente sem o mod responder. A tela do cliente é cortesia — ela reabre soz
 devolve o jogo. A varredura do portão roda uma vez por segundo sobre a lista de jogadores, sem
 alocar, e é ela que pega quem passou a dever um personagem no meio da sessão.
 
-A troca de identidade é uma transação com diário persistido: reserva gravada com `fsync` antes de
-qualquer apagamento, reset, publicação, segundo `fsync`. Queda no meio deixa reserva no disco e conta
-morta — o estado de retomada, com handlers escritos para serem idempotentes. Falha de IO desfaz a
-publicação em vez de reportar sucesso que o disco não viu.
+Morrer não dá direito a recomeçar: a reserva exige uma autorização de staff, gravada no diário e
+consumida ao publicar a identidade. Sem isso a morte definitiva seria um contratempo de dois minutos.
+
+Apagar a história anterior é apagar `playerdata`, `stats` e `advancements` da conta, e não zerar
+campo a campo. Zerar o que se conhece é, por construção, deixar intacto o que se desconhece — e num
+modpack pesado a maior parte da progressão está em NBT persistente e data attachments dentro do
+próprio arquivo do jogador. Apagar inverte o padrão para "não sobrevive".
+
+Isso exige a conta **offline**: com o dono online o arquivo em disco é cópia velha que o logout
+reescreve. Então a troca é uma transação com diário em quatro tempos — reserva com `fsync`,
+desconexão, apagamento mais evento de reset, publicação com segundo `fsync` — e quem a conduz é a
+varredura de um segundo, não o clique. Queda em qualquer ponto deixa reserva no disco e conta morta,
+que é o estado de retomada, com todos os passos escritos para serem idempotentes.
 
 O criador não conhece nenhum outro mod do ecossistema: ele dispara um evento e cada mod apaga o que é
 seu, ao lado dos dados que escreveu. É a mesma regra do §9.2 aplicada a dado em vez de evento — quem
-é dono decide. Progressão de mod de terceiro não é alcançada por isso e precisa de listener próprio.
+é dono decide. O evento roda com o dono offline. Progressão que um mod guarde **fora** do arquivo do
+jogador continua precisando de listener próprio.
 
-A política de quem é barrado vem do criador para o Core por predicado, e não o contrário: ela depende
-de config de servidor que o Core não lê, e duplicá-la nos dois seria a mesma decisão escrita duas
-vezes. Detalhes: [aurorion-personagem/README.md](aurorion-personagem/README.md).
+A política de quem é barrado mora no criador, e não no Core: ela depende de config de servidor que o
+Core não lê. O Core guarda só o que os outros mods precisam perguntar — se existe criador instalado,
+qual raiz de comando deixar passar para um morto, e quais contas estão no meio de outra cena e não
+podem ser interrompidas por uma pergunta de nome.
+Detalhes: [aurorion-personagem/README.md](aurorion-personagem/README.md).
+
+### 12.11 Rito de Vinculação: a cena no lugar do questionário
+
+A Cerimônia de Vinculação era um questionário de oito perguntas com contagem por casa e uma fila de
+vereditos. Ele decidia uma coisa já decidida fora do jogo, e cobrava oito telas de leitura antes do
+único instante memorável. As perguntas saíram; o instante virou treze segundos em quatro tempos.
+
+A divisão é por onde cada coisa precisa ser desenhada. **Luz e partículas são do servidor**, porque
+um rito que só o dono enxerga é uma tela, não uma cerimônia — todo mundo num raio de 32 blocos
+assiste. **Símbolo, nome e lema são do cliente**, porque são imagem e texto que dependem da câmera de
+quem olha, e chegam em **dois pacotes** (início e fim) com o cliente contando os próprios ticks: a
+animação inteira sai de um inteiro por rito, e não de um pacote por quadro.
+
+O símbolo é renderizado dentro do `RenderPlayerEvent`, e não num estágio solto do mundo: a pilha de
+matrizes já vem no pé do jogador e o `partialTick` vem junto, o que elimina a chance de o símbolo
+atrasar um quadro em relação ao corpo quando a pessoa corre. O texto não usa tela modal — modal
+cobriria exatamente o que há para ver.
+
+A casa é gravada **antes** da cena. Apresentação não pode desfazer decisão de staff: cair a conexão
+ou reiniciar o servidor no meio não desfaz nada, e um rito definido com o dono offline espera o
+login dele.
+
+Este é o único laço por tick do mod, e ele sai na primeira linha enquanto não houver rito — o estado
+do servidor quase o tempo inteiro. Com um rito em andamento são no máximo seis chamadas de partícula
+por tick. Um personagem passa por isso uma vez na vida (§7.1).
 
 ## 13. Fora de escopo (deliberadamente)
 

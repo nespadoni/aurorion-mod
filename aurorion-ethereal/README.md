@@ -46,63 +46,55 @@ recolorir, trocar o lema ou botar limite de membros é editar arquivo e dar `/re
 
 ## A Cerimônia de Vinculação
 
-O jogador clica com o botão direito num **Altar de Seleção**. Em vez de escolher a casa, ele
-**responde**: uma pergunta por vez, alternativas como botões. Quando termina, ele vê só
-
-> *A Cerimônia de Vinculação terminou. Aguarde a decisão do Conselho Arcano.*
-
-A staff recebe o veredito — as respostas, a contagem por casa e a sugestão — com **um botão por
-casa**. Clicar vincula o jogador e dispara a **revelação**: tela animada com a cor da casa, o nome, o
-lema e partículas em volta do jogador no mundo.
+A staff define a casa, e o mundo assiste:
 
 ```
-jogador clica no altar
-   -> responde as perguntas
-       -> veredito gravado em disco + avisado à staff
-           -> /casa cerimonia confirmar <jogador> <casa>
-               -> revelação animada + anúncio no chat
+/casa cerimonia <jogador> <casa>
+   -> a casa é gravada na hora
+       -> o Rito de Vinculação toca (13 s), para quem passa e para quem está por perto
+           -> anúncio no chat no fim
 ```
 
-Detalhes que importam na operação:
+### O Rito, em quatro tempos
 
-- **O veredito sobrevive a restart.** Alguém termina às três da manhã; a decisão sai no dia seguinte.
-  `/casa cerimonia pendentes` lista o que está esperando.
-- **Jogador offline não perde a revelação.** Confirmar com ele fora deixa a revelação na fila; ela
-  toca no próximo login dele.
-- **Fechar a tela no meio não tranca ninguém.** Clicar no altar de novo devolve o jogador à pergunta
-  em que o servidor diz que ele parou.
-- **O jogador nunca vê qual casa cada alternativa puxa.** Esse vínculo não sai do servidor — se
-  saísse, a cerimônia viraria um menu.
-
-### As perguntas também são datapack
-
-```json
-// data/<namespace>/aurorion/ceremony_questions/2_poder.json
-{
-  "order": 2,
-  "weight": 1,
-  "question": "O que é poder para você?",
-  "options": [
-    { "text": "Compreender", "house": "aurorion_ethereal:nyx" },
-    { "text": "Adaptar",     "house": "aurorion_ethereal:venthra" }
-  ]
-}
-```
-
-| campo | obrigatório | o que faz |
+| Fase | Duração | O que se vê |
 |---|---|---|
-| `question` | sim | o enunciado |
-| `options` | sim | de 2 a 8 alternativas, cada uma com `text` e a `house` que ela sugere |
-| `weight` | não | quanto a resposta pesa na contagem. Padrão `1`; a pergunta final do jar usa `2` |
-| `order` | não | ordem em que as perguntas são feitas |
+| Convocação | 3 s | um anel de runas se fecha em volta da pessoa; nada ainda tem cor de casa |
+| Reunião | 3 s | a luz converge de fora para dentro do peito e cresce |
+| Revelação | 1 s | estouro nas cores da casa; o **símbolo** aparece girando acima da cabeça |
+| Coroação | 6 s | a coluna de luz se sustenta sob o símbolo, e some junto com ele |
 
-As oito perguntas que vêm no jar têm a ordem das alternativas **embaralhada de propósito** — se a
-opção da Ignivar fosse sempre a primeira, a cerimônia seria decorada em uma tarde.
+Quem está passando pelo rito fica parado e intocável durante a cena, e vê o **nome** e o **lema** da
+casa surgirem por cima do HUD. Não há tela modal: a cena boa acontece no mundo, e uma tela cobriria
+justamente o que há para ver.
+
+O **símbolo** é o `icon` da casa — o mesmo item do card do altar — renderizado no mundo, com
+brilho próprio, chegando com um estalo de escala.
+
+### Detalhes que importam na operação
+
+- **Luz e partículas são do servidor**, então todo mundo num raio de 32 blocos assiste. Um rito que
+  só o dono enxergasse não seria um rito, seria uma tela.
+- **Dois pacotes por rito**, um no início e um no fim. O cliente conta os próprios ticks; treze
+  segundos de animação custam à rede o mesmo que dois cliques.
+- **A casa é gravada antes da cena**, não no fim dela. Sair no meio, cair a conexão ou reiniciar o
+  servidor não desfaz uma decisão da staff.
+- **Jogador offline não perde o rito.** Definir com ele fora deixa o rito na fila; ele toca no
+  próximo login.
+- **O altar não decide mais nada.** Ele é onde se consulta a própria casa — e, com
+  `ceremonyRequired=false`, onde o jogador escolhe sozinho, para quando não houver staff conduzindo.
+
+### O que saiu daqui
+
+Havia um questionário de oito perguntas em datapack, com contagem de pontos por casa, uma fila de
+vereditos esperando decisão e quatro subcomandos de staff em volta disso. Tudo aquilo existia para
+**sugerir** uma casa que, na prática, já era decidida fora do jogo — e cobrava oito telas de leitura
+antes do único instante de que as pessoas lembram depois. As perguntas saíram; o instante ficou, e
+agora dura treze segundos.
 
 O teste [`ShippedDatapackTest`](src/test/java/com/aurorion/ethereal/ceremony/ShippedDatapackTest.java)
-valida esses arquivos no build: id de casa que não existe, casa inalcançável por nenhuma resposta,
-cor repetida e ordem duplicada quebram a compilação em vez de aparecerem no meio de uma cerimônia ao
-vivo.
+valida os JSON das casas no build: cor repetida, ordem duplicada e casa sem `icon` quebram a
+compilação em vez de aparecerem no meio de um rito ao vivo.
 
 ### Que bloco é um altar
 
@@ -160,11 +152,8 @@ travar a atualização do pack inteiro.
 /casa definir <jogador> <casa>    -> atribui, ignorando cerimonia e lotacao          (nivel 2)
 /casa limpar <jogador>            -> tira da casa                                    (nivel 2)
 
-/casa cerimonia iniciar <jogador>            -> conduz uma cerimonia (evento ao vivo) (nivel 2)
-/casa cerimonia confirmar <jogador> <casa>   -> decide a casa e dispara a revelacao   (nivel 2)
-/casa cerimonia ver <jogador>                -> reenvia o veredito com os botoes      (nivel 2)
-/casa cerimonia cancelar <jogador>           -> encerra sem vincular                  (nivel 2)
-/casa cerimonia pendentes                    -> o que esta esperando decisao          (nivel 2)
+/casa cerimonia <jogador> <casa>             -> define a casa e toca o Rito           (nivel 2)
+/casa cerimonia cancelar <jogador>           -> corta o rito, ou tira ele da fila     (nivel 2)
 
 /pontos ver                       -> pontuacao de todas as casas                     (nivel 2)
 /pontos aluno <jogador> <qtd>     -> ponto do aluno (conta no total da casa dele)     (nivel 2)
@@ -172,11 +161,13 @@ travar a atualização do pack inteiro.
 /pontos missao <jogador>          -> registra uma missao concluida                    (nivel 2)
 ```
 
-O jogador comum só tem `/casa` (consulta). Quem vincula é a cerimônia — o ritual seria decorativo se
-desse para pular ele digitando.
+O jogador comum só tem `/casa` (consulta). Quem vincula é a staff.
 
-`ver`, `definir`, `limpar`, `confirmar` e todo o `/pontos` aceitam jogador offline: tudo é gravado
-por UUID. Confirmar o veredito de quem respondeu ontem e já deslogou é o caso normal, não a exceção.
+A diferença entre `definir` e `cerimonia` é a cena: `definir` grava em silêncio, útil para corrigir
+engano; `cerimonia` grava e apresenta.
+
+Tudo aceita jogador offline, porque tudo é gravado por UUID. Definir a casa de quem não está online é
+o caso normal num servidor de 80 pessoas, não a exceção — o rito espera o login.
 
 ## Configuração
 

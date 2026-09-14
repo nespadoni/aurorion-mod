@@ -64,6 +64,46 @@ public final class BalloonRenderer {
 
     private static final FrameBoxConsumer FRAME_BOXES = new FrameBoxConsumer();
 
+    /**
+     * Config lida uma vez por tick, e nao uma vez por jogador por quadro.
+     *
+     * <p>Cinco leituras vezes oitenta jogadores vezes sessenta quadros sao vinte e quatro mil
+     * chamadas por segundo para buscar cinco numeros que nao mudam dentro do mesmo tick. Config so
+     * muda em {@code /reload}, entao o tick e a granularidade certa.
+     */
+    private static final class Tuning {
+        private long tick = Long.MIN_VALUE;
+        private int minWidth;
+        private int maxWidth;
+        private int gap;
+        private double heightOffset;
+
+        void refresh(long gameTime) {
+            if (tick == gameTime) return;
+            tick = gameTime;
+            minWidth = TalkConfig.MIN_BALLOON_WIDTH.get();
+            maxWidth = TalkConfig.MAX_BALLOON_WIDTH.get();
+            gap = TalkConfig.DISTANCE_BETWEEN_BALLOONS.get();
+            heightOffset = TalkConfig.HEIGHT_OFFSET.get();
+        }
+    }
+
+    private static final Tuning TUNING = new Tuning();
+
+    /**
+     * O yaw da camera e o mesmo para todos os baloes de um quadro, mas o render e chamado uma vez por
+     * jogador. Guardar o ultimo quaternion visto troca dois {@code atan2} por quatro comparacoes de
+     * float — e a camera parada (o caso de quem esta lendo uma conversa) nunca recalcula.
+     *
+     * <p>Comparacao por valor, e nao por identidade: o dispatcher devolve sempre a <b>mesma</b>
+     * instancia, alterada no lugar a cada quadro.
+     */
+    private static float lastYawX;
+    private static float lastYawY;
+    private static float lastYawZ;
+    private static float lastYawW;
+    private static float lastYaw;
+
     private BalloonRenderer() {
     }
 
@@ -76,14 +116,15 @@ public final class BalloonRenderer {
         int tint = 0xFF000000 | style.color();
         int textColor = 0xFF000000 | style.textColor();
 
-        int minWidth = TalkConfig.MIN_BALLOON_WIDTH.get();
-        int maxWidth = TalkConfig.MAX_BALLOON_WIDTH.get();
-        int gap = TalkConfig.DISTANCE_BETWEEN_BALLOONS.get();
+        TUNING.refresh(gameTime);
+        int minWidth = TUNING.minWidth;
+        int maxWidth = TUNING.maxWidth;
+        int gap = TUNING.gap;
 
         poseStack.pushPose();
-        poseStack.translate(0.0, player.getBbHeight() + TalkConfig.HEIGHT_OFFSET.get(), 0.0);
+        poseStack.translate(0.0, player.getBbHeight() + TUNING.heightOffset, 0.0);
         // Billboard so no eixo Y: o balao acompanha a camera mas nunca tomba.
-        poseStack.mulPose(Axis.YP.rotationDegrees(cameraYawDegrees(dispatcher.cameraOrientation()) + 180.0F));
+        poseStack.mulPose(Axis.YP.rotationDegrees(cachedCameraYaw(dispatcher.cameraOrientation()) + 180.0F));
         poseStack.scale(-0.025F, -0.025F, 0.025F);
 
         Matrix4f pose = poseStack.last().pose();
@@ -153,7 +194,10 @@ public final class BalloonRenderer {
                                  List<FormattedCharSequence> lines, int color, int stackOffset) {
         int y = -(LINE_HEIGHT * lines.size() - 10) - stackOffset;
 
-        for (FormattedCharSequence line : lines) {
+        // Indice, e nao for-each: o iterador seria uma alocacao por balao por quadro, justamente o
+        // que o resto desta classe evita.
+        for (int i = 0; i < lines.size(); i++) {
+            FormattedCharSequence line = lines.get(i);
             // POLYGON_OFFSET puxa o texto para frente do balao sem depender da orientacao da camera.
             font.drawInBatch(line, -font.width(line) / 2.0F + 1.0F, y, color, false, pose, buffer,
                     Font.DisplayMode.POLYGON_OFFSET, 0, LIGHT);
@@ -180,6 +224,20 @@ public final class BalloonRenderer {
         vc.addVertex(pose, x, y + h, 0.0F).setColor(argb).setUv(u0, v1).setLight(LIGHT);
         vc.addVertex(pose, x + w, y + h, 0.0F).setColor(argb).setUv(u1, v1).setLight(LIGHT);
         vc.addVertex(pose, x + w, y, 0.0F).setColor(argb).setUv(u1, v0).setLight(LIGHT);
+    }
+
+    private static float cachedCameraYaw(Quaternionf orientation) {
+        if (orientation.x() == lastYawX && orientation.y() == lastYawY
+                && orientation.z() == lastYawZ && orientation.w() == lastYawW) {
+            return lastYaw;
+        }
+
+        lastYawX = orientation.x();
+        lastYawY = orientation.y();
+        lastYawZ = orientation.z();
+        lastYawW = orientation.w();
+        lastYaw = cameraYawDegrees(orientation);
+        return lastYaw;
     }
 
     /** Yaw da camera em graus, extraido do quaternion de orientacao. */

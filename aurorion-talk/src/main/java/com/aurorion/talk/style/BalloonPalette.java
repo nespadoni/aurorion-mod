@@ -1,83 +1,151 @@
 package com.aurorion.talk.style;
 
 /**
- * Paletas fixas oferecidas na GUI, na ordem em que aparecem.
+ * Cores de balao: uma grade para escolher rapido e liberdade total para quem quer a cor exata.
  *
- * <p>Fixas de proposito: seletor RGB livre deixaria alguem escolher balao preto com texto preto, e
- * no fim todo mundo precisa conseguir ler a fala dos outros. As cores de balao sao claras e as de
- * texto sao escuras justamente para o contraste nunca quebrar.</p>
+ * <h2>O que mudou, e por que</h2>
+ *
+ * <p>Antes existiam duas listas fechadas — dezesseis tons pastel de balao e dezesseis tons escuros
+ * de texto — e {@code isWellFormed} recusava qualquer cor fora delas. A razao era boa: ninguem pode
+ * escolher balao preto com texto preto, porque no fim <b>todo mundo precisa conseguir ler a fala dos
+ * outros</b>. O preco e que ficava impossivel usar a cor da sua casa, a cor do seu clã, ou qualquer
+ * cor viva — as paletas eram lavadas justamente para o contraste nunca quebrar por acidente.
+ *
+ * <p>A proibicao virou correcao: qualquer cor e aceita, e o <b>texto</b> e empurrado para perto do
+ * preto ou do branco ate passar do contraste minimo ({@link #readableText}). A garantia continua de
+ * pe, sem cobrar dela a vivacidade da paleta inteira.
+ *
+ * <h2>A conta do contraste</h2>
+ *
+ * <p>Nao e "a media dos canais": o olho humano enxerga verde muito mais do que azul, e uma media
+ * simples diria que {@code #0000FF} e {@code #00FF00} sao igualmente escuros. A conta e a luminancia
+ * relativa da WCAG, com os canais linearizados antes de pesar. E a mesma que navegador e ferramenta
+ * de acessibilidade usam, entao o resultado bate com o que qualquer verificador de contraste diria.
+ *
+ * <p>O limite e 3,0, e nao os 4,5 de texto corrido: a fala do balao e curta, grande e desenhada com
+ * sombra. Exigir 4,5 achataria escolha demais para resolver um problema que nao existe nesse tamanho.
  */
 public final class BalloonPalette {
-    /** Tons claros — vao multiplicados na textura do balao. */
-    public static final int[] BALLOON_COLORS = {
-            0xFFFFFF, // branco
-            0xD5D5D5, // cinza claro
-            0x9C9C9C, // cinza
-            0x3C3C42, // grafite
-            0xFFB3B3, // vermelho
-            0xFFC79B, // laranja
-            0xFFE08A, // dourado
-            0xF3F5A0, // amarelo
-            0xC3F0A8, // verde claro
-            0xB8F0C0, // verde
-            0xA8EFE4, // agua
-            0xB3D4FF, // azul claro
-            0x9BB0F5, // azul
-            0xD9BBFF, // roxo
-            0xFFB3D9, // rosa
-            0xF0C9A8, // areia
-    };
+    /** Abaixo disto o texto e reescrito. Ver o javadoc da classe para por que nao e 4,5. */
+    public static final double MIN_CONTRAST = 3.0D;
 
-    /** Tons escuros (mais branco, para balao grafite). */
-    public static final int[] TEXT_COLORS = {
-            0x141414, // quase preto
-            0x3D3D3D, // grafite
-            0x6B6B6B, // cinza
-            0xF5F5F5, // branco
-            0x5C1414, // vinho
-            0x5C3314, // marrom
-            0x4D3600, // bronze
-            0x44470A, // oliva
-            0x1F4214, // musgo
-            0x14421F, // verde escuro
-            0x0F3D3D, // petroleo
-            0x142B5C, // marinho
-            0x14205C, // azul escuro
-            0x33144D, // roxo escuro
-            0x5C1F3D, // vinho rosado
-            0x4D3314, // terra
-    };
+    /** Largura da grade na GUI. As tres faixas abaixo tem esse tamanho cada. */
+    public static final int COLUMNS = 10;
 
-    /** Cor de texto sugerida ao trocar a cor do balao, na mesma ordem de {@link #BALLOON_COLORS}. */
-    private static final int[] SUGGESTED = {
-            0x141414, 0x141414, 0x141414, 0xF5F5F5,
-            0x5C1414, 0x5C3314, 0x4D3600, 0x44470A,
-            0x1F4214, 0x14421F, 0x0F3D3D, 0x142B5C,
-            0x14205C, 0x33144D, 0x5C1F3D, 0x4D3314,
+    /**
+     * A grade, em tres faixas de dez: neutros, vivos e profundos.
+     *
+     * <p>Serve para balao e para texto — nao ha mais duas listas, porque nao ha mais duas regras. O
+     * que impede a combinacao ilegivel e {@link #readableText}, nao a lista.
+     */
+    public static final int[] GRID = {
+            // Neutros
+            0xFFFFFF, 0xE4E4E7, 0xC2C2CA, 0x9A9AA5, 0x71717A,
+            0x52525B, 0x3F3F46, 0x27272A, 0x18181B, 0x09090B,
+            // Vivos
+            0xFF3B30, 0xFF7A18, 0xFFB800, 0xFFE94A, 0x9BE80C,
+            0x22D964, 0x00D6C2, 0x21B4FF, 0x3B6BFF, 0x8B5CFF,
+            // Profundos
+            0xC81FA8, 0xFF4FA3, 0x8C1008, 0x8C4A00, 0x6E7A00,
+            0x1F6B2E, 0x006B6E, 0x00478C, 0x2B1C8C, 0x6B0A6B,
     };
 
     private BalloonPalette() {
     }
 
-    public static int suggestedTextColor(int balloonColor) {
-        for (int i = 0; i < BALLOON_COLORS.length; i++) {
-            if (BALLOON_COLORS[i] == balloonColor) return SUGGESTED[i];
+    // --- Leitura garantida ----------------------------------------------------------------------
+
+    /**
+     * A cor de texto mais proxima da pedida que ainda da para ler sobre {@code balloon}.
+     *
+     * <p>Empurra a cor escolhida para o preto (fundo claro) ou para o branco (fundo escuro) em passos
+     * de 12%, preservando o matiz o quanto der. Trocar direto por preto ou branco seria mais simples
+     * e jogaria fora a escolha da pessoa num caso em que ela quase acertou.
+     *
+     * <p>Converge sempre: vinte e quatro passos de 0,88 chegam a 4,6% do valor original, e preto sobre
+     * qualquer fundo claro — ou branco sobre qualquer fundo escuro — passa com folga.
+     */
+    public static int readableText(int balloon, int text) {
+        if (contrast(balloon, text) >= MIN_CONTRAST) return text;
+
+        boolean towardBlack = luminance(balloon) > 0.18D;
+        int result = text;
+
+        for (int step = 0; step < 24 && contrast(balloon, result) < MIN_CONTRAST; step++) {
+            result = towardBlack ? scale(result, 0.88F) : lift(result, 0.88F);
         }
-        return 0x141414;
+        return result;
     }
 
-    public static boolean isBalloonColor(int color) {
-        return contains(BALLOON_COLORS, color);
+    /** true quando a combinacao passa como esta — a GUI usa para avisar antes de o servidor corrigir. */
+    public static boolean readable(int balloon, int text) {
+        return contrast(balloon, text) >= MIN_CONTRAST;
     }
 
-    public static boolean isTextColor(int color) {
-        return contains(TEXT_COLORS, color);
+    /** O preto ou o branco, o que for mais legivel. E o palpite ao trocar a cor do balao. */
+    public static int suggestedTextColor(int balloon) {
+        return luminance(balloon) > 0.18D ? 0x18181B : 0xFFFFFF;
     }
 
-    private static boolean contains(int[] palette, int color) {
-        for (int candidate : palette) {
-            if (candidate == color) return true;
+    public static boolean isColor(int color) {
+        return color >= 0x000000 && color <= 0xFFFFFF;
+    }
+
+    // --- Conta ----------------------------------------------------------------------------------
+
+    /** Razao de contraste da WCAG: 1,0 e a mesma cor, 21,0 e preto contra branco. */
+    public static double contrast(int first, int second) {
+        double a = luminance(first);
+        double b = luminance(second);
+        double lighter = Math.max(a, b);
+        double darker = Math.min(a, b);
+
+        return (lighter + 0.05D) / (darker + 0.05D);
+    }
+
+    public static double luminance(int color) {
+        return 0.2126D * linear(color >> 16 & 0xFF)
+                + 0.7152D * linear(color >> 8 & 0xFF)
+                + 0.0722D * linear(color & 0xFF);
+    }
+
+    /** Desfaz o gamma sRGB. Sem isto, o peso dos canais seria aplicado sobre o numero errado. */
+    private static double linear(int channel) {
+        double value = channel / 255.0D;
+        return value <= 0.04045D ? value / 12.92D : Math.pow((value + 0.055D) / 1.055D, 2.4D);
+    }
+
+    private static int scale(int color, float factor) {
+        return pack(Math.round((color >> 16 & 0xFF) * factor),
+                Math.round((color >> 8 & 0xFF) * factor),
+                Math.round((color & 0xFF) * factor));
+    }
+
+    private static int lift(int color, float factor) {
+        return pack(255 - Math.round((255 - (color >> 16 & 0xFF)) * factor),
+                255 - Math.round((255 - (color >> 8 & 0xFF)) * factor),
+                255 - Math.round((255 - (color & 0xFF)) * factor));
+    }
+
+    private static int pack(int red, int green, int blue) {
+        return Math.clamp(red, 0, 255) << 16 | Math.clamp(green, 0, 255) << 8 | Math.clamp(blue, 0, 255);
+    }
+
+    // --- Texto hexadecimal ----------------------------------------------------------------------
+
+    /** @return a cor, ou -1 se o texto nao for um hex de seis digitos (com ou sem "#"). */
+    public static int parseHex(String raw) {
+        String hex = raw.startsWith("#") ? raw.substring(1) : raw;
+        if (hex.length() != 6) return -1;
+
+        try {
+            return Integer.parseInt(hex, 16);
+        } catch (NumberFormatException notHex) {
+            return -1;
         }
-        return false;
+    }
+
+    public static String toHex(int color) {
+        return String.format(java.util.Locale.ROOT, "#%06X", color & 0xFFFFFF);
     }
 }

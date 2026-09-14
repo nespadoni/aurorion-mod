@@ -4,7 +4,6 @@ import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.EtherealTags;
 import com.aurorion.ethereal.block.AeonicProjectorBlock;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
-import com.aurorion.ethereal.ceremony.CeremonyCatalog;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
 import com.aurorion.ethereal.config.EtherealConfig;
 import com.aurorion.ethereal.house.HouseCatalog;
@@ -39,7 +38,6 @@ public final class EtherealServerEvents {
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(HouseCatalog.listener());
-        event.addListener(CeremonyCatalog.listener());
     }
 
     /**
@@ -105,28 +103,16 @@ public final class EtherealServerEvents {
     /**
      * Clique no altar.
      *
-     * <p>Com a cerimonia ligada (o padrao), o altar <em>inicia as perguntas</em>. Quem ja tem casa
-     * cai na tela de leitura — e assim que se consulta a propria casa no altar.
+     * <p>O altar nao decide mais nada: quem define a casa e a staff, por {@code /casa cerimonia}. Ele
+     * e onde se <b>consulta</b> a propria casa — e, com {@code ceremonyRequired} desligado, onde o
+     * jogador escolhe sozinho, para quando nao houver staff conduzindo.
      */
     private static void openAltar(ServerPlayer player, BlockPos pos) {
-        if (!EtherealConfig.CEREMONY_REQUIRED.get()) {
-            HouseManager.openSelection(player, pos, false);
-            return;
-        }
+        if (CeremonyManager.isRunning(player.getUUID())) return;
 
-        switch (CeremonyManager.start(player, null)) {
-            case OK -> {
-            }
-            case ALREADY_BOUND -> HouseManager.openSelection(player, pos, true);
-            // Fechou a tela no meio: o altar devolve ele a pergunta em que parou, em vez de recusar.
-            case ALREADY_RUNNING -> CeremonyManager.resume(player);
-            case AWAITING_VERDICT -> player.displayClientMessage(
-                    Component.translatable("aurorion_ethereal.ceremony.error.awaiting"), true);
-            case NO_QUESTIONS -> player.displayClientMessage(
-                    Component.translatable("aurorion_ethereal.ceremony.error.no_questions"), true);
-            case NO_HOUSES -> player.displayClientMessage(
-                    Component.translatable("aurorion_ethereal.house.no_houses"), true);
-        }
+        boolean locked = EtherealConfig.CEREMONY_REQUIRED.get()
+                || HouseManager.houseIdOf(player.server, player.getUUID()) != null;
+        HouseManager.openSelection(player, pos, locked);
     }
 
     @SubscribeEvent
@@ -138,9 +124,9 @@ public final class EtherealServerEvents {
         BoardService.refresh(player.server, BoardMode.TOP_PLAYERS, BoardMode.WORST_PLAYERS,
                 BoardMode.MISSIONS, BoardMode.DEATHS, BoardMode.DUEL_WINS);
 
-        // Uma casa confirmada com ele offline: a revelacao acontece agora, e nao vira um anuncio de
-        // chat que ele nunca viu.
-        CeremonyManager.playPendingReveal(player);
+        // Uma casa definida com ele offline: o rito acontece agora, e nao vira um anuncio de chat
+        // que ele nunca viu.
+        CeremonyManager.playPending(player);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -170,6 +156,15 @@ public final class EtherealServerEvents {
      * <p>Os {@code SavedData} nao aparecem aqui de proposito — quem solta o cache deles e o
      * {@code aurorion-core}, para nenhum mod precisar lembrar disso (SDD §3.1).
      */
+    /**
+     * O unico laco por tick do mod, e ele sai na primeira linha enquanto nao houver rito nenhum —
+     * que e o estado do servidor quase o tempo inteiro. Ver {@link com.aurorion.ethereal.ceremony.BindingRite}.
+     */
+    @SubscribeEvent
+    public static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        com.aurorion.ethereal.ceremony.BindingRite.tick(event.getServer());
+    }
+
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         PendingSelections.clear();
