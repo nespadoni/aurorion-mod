@@ -1,0 +1,16 @@
+{
+  "_comment": [
+    "Relevo, cavernas e recursos seguem o perfil do Overworld; o bioma e a superficie sao do Limbo.",
+    "Features so rodam na criacao do chunk, portanto ruinas construidas depois permanecem intactas.",
+    "Pre-gere a area jogavel com Chunky: este gerador e muito mais caro que o flat antigo."
+  ],
+  "type": "aurorion_limbo:limbo",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "aurorion_limbo:limbo_forest"
+    },
+    "settings": "aurorion_limbo:limbo"
+  }
+}

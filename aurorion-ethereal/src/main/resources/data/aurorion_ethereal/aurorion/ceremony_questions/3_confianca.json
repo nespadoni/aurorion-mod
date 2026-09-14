@@ -1,0 +1,11 @@
+{
+  "order": 3,
+  "question": "Você confia mais em:",
+  "options": [
+    { "text": "Algo além de você", "house": "aurorion_ethereal:aetheris" },
+    { "text": "Sua mente",         "house": "aurorion_ethereal:nyx" },
+    { "text": "Seus valores",      "house": "aurorion_ethereal:sylvara" },
+    { "text": "Seu instinto",      "house": "aurorion_ethereal:venthra" },
+    { "text": "Sua força",         "house": "aurorion_ethereal:ignivar" }
+  ]
+}

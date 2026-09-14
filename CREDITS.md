@@ -29,3 +29,22 @@ O que **não** veio do original e foi escrito para o Aurorion:
 - Distribuir o `.jar` (CurseForge, Modrinth, ou só passar para os jogadores) obriga a
   disponibilizar o código-fonte correspondente e manter os avisos de copyright.
 - Mudanças relevantes devem ficar registradas — é para isso que serve este arquivo.
+
+## Cinzel (fonte do `aurorion-limbo`)
+
+`assets/aurorion_limbo/font/cinzel.ttf` é a [Cinzel](https://github.com/NDISCOVER/Cinzel),
+**Copyright 2020 The Cinzel Project Authors**, licenciada sob a **SIL Open Font License 1.1**.
+O arquivo entra no jar sem modificação, e a licença completa viaja junto em
+`assets/aurorion_limbo/font/OFL-Cinzel.txt`.
+
+### O que a OFL exige de nós
+
+- Manter o aviso de copyright e a cópia da licença junto do arquivo da fonte — é por isso que o
+  `OFL-Cinzel.txt` está dentro do jar, e não só aqui.
+- **Não vender a fonte isolada.** Distribuir junto de um software, como fazemos, é expressamente
+  permitido.
+- Se um dia a fonte for modificada, a versão modificada não pode usar o nome reservado "Cinzel" —
+  renomeie o arquivo e a entrada do `font/limbo.json` antes de mexer nos glifos.
+
+A OFL **não** contamina o resto do repositório: ela vale para o arquivo da fonte, não para o código
+que a referencia. A licença do projeto continua sendo a LGPL-3.0 por causa do `aurorion-talk`.

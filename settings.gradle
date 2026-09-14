@@ -26,9 +26,11 @@ include 'aurorion-talk'
 include 'aurorion-essentials'
 include 'aurorion-utils'
 include 'aurorion-aeonita'
-include 'aurorion-ato2'
+include 'aurorion-ethereal'
 include 'aurorion-portais'
+include 'aurorion-mundos'
 include 'aurorion-vidas'
+include 'aurorion-limbo'
 
 // Nao e um mod: sobe um client/servidor com todos os mods acima de uma vez.
 include 'aurorion-runs'

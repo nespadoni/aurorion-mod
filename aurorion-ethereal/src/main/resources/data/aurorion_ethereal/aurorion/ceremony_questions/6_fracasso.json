@@ -1,0 +1,11 @@
+{
+  "order": 6,
+  "question": "Quando tudo dá errado:",
+  "options": [
+    { "text": "Entendimento resolve", "house": "aurorion_ethereal:nyx" },
+    { "text": "Aceitação resolve",    "house": "aurorion_ethereal:aetheris" },
+    { "text": "Mudança resolve",      "house": "aurorion_ethereal:venthra" },
+    { "text": "Força resolve",        "house": "aurorion_ethereal:ignivar" },
+    { "text": "Paciência resolve",    "house": "aurorion_ethereal:sylvara" }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "aurorion_limbo.queda": "You lost your last life. The Limbo took you in.",
+  "aurorion_limbo.queda.publico": "A bond broke in Aurorion.",
+  "aurorion_limbo.queda.publico.nome": "%s lost their last life and fell into the Limbo.",
+
+  "aurorion_limbo.chegada": "The Limbo. %s left.",
+  "aurorion_limbo.prazo": "%s left.",
+  "aurorion_limbo.vencido": "Your time ran out. Nobody came.",
+
+  "aurorion_limbo.coleira": "The Limbo will not let you go any further.",
+
+  "aurorion_limbo.porta.janela": "The edges of the Limbo gave way. Walk.",
+  "aurorion_limbo.porta.apareceu": "Something opened at %s %s %s.",
+  "aurorion_limbo.porta.saiu": "You crossed alone. Nobody came for you.",
+  "aurorion_limbo.porta.saiu.repetido": "You crossed alone again — %s times so far.",
+
+  "aurorion_limbo.resgatado": "Someone came for you.",
+
+  "aurorion_limbo.title.queda": "The last life",
+  "aurorion_limbo.title.chegada": "You woke up",
+  "aurorion_limbo.title.prazo": "Time is running",
+  "aurorion_limbo.title.coleira": "This far",
+  "aurorion_limbo.title.janela": "The Limbo opens",
+  "aurorion_limbo.title.porta": "A way out",
+  "aurorion_limbo.title.saida": "Forgotten",
+  "aurorion_limbo.title.resgate": "Rescued",
+  "aurorion_limbo.title.vencido": "Time up",
+  "aurorion_limbo.title.publico": "A bond broke",
+
+  "aurorion_limbo.ui.eyebrow": "AURORION",
+  "aurorion_limbo.ui.name": "The Limbo",
+  "aurorion_limbo.ui.remaining": "Time remaining",
+  "aurorion_limbo.ui.waiting": "Waiting for rescue",
+  "aurorion_limbo.ui.walking": "The edges gave way",
+  "aurorion_limbo.ui.door": "The Door is open",
+  "aurorion_limbo.ui.expired": "Time expired"
+}

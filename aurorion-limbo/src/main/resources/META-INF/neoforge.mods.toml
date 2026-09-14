@@ -1,0 +1,61 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+# A regra inteira e do servidor. O cliente so recebe texto (chat ou Immersive Messages) e anda
+# dentro de uma dimensao declarada por datapack — nada disso exige o mod no cliente.
+displayTest = "IGNORE_ALL_VERSION"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# Biblioteca compartilhada do ecossistema.
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# A unica dependencia dura entre dois mods de conteudo do ecossistema, e ela e assumida: o Limbo e a
+# segunda metade do exilio. Quem decide que alguem esta exilado e o aurorion_vidas; este mod cuida do
+# lugar, do prazo e do registro. Um "Limbo" sem sistema de vidas nao teria quem colocar dentro.
+#
+# A direcao e unica: o aurorion_vidas nao sabe que este mod existe e continua funcionando sem ele —
+# nesse caso o exilio volta a ser o Nether sem prazo, que e o comportamento que ele ja tinha.
+[[dependencies.${mod_id}]]
+modId = "aurorion_vidas"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "aurorion_limbo.cinematic_respawn.mixins.json"
+requiredMods = ["cinematic_respawn"]
+
+[[mixins]]
+config = "aurorion_limbo.playerrevive.mixins.json"
+requiredMods = ["playerrevive"]
+
+# O Immersive Messages e opcional de proposito, e nao aparece aqui nem como optional: o mod nunca
+# importa uma classe dele. Ver LimboNarrator — se estiver no pack, as mensagens saem por ele; se nao,
+# saem por chat. Declarar a dependencia obrigaria o pack a te-lo para o Limbo carregar.

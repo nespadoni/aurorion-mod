@@ -1,0 +1,25 @@
+{
+  "aurorion_mundos.portal.sem_destino": "Não há portal do outro lado. Avise a staff.",
+
+  "aurorion_mundos.comando.nao_gerenciada": "Essa dimensão não é gerenciada pelo Aurorion Mundos. Para o overworld, o Nether ou uma dimensão de mod, use /worldborder.",
+
+  "aurorion_mundos.comando.lista.vazio": "Nenhum mundo declarado. Adicione um seed em config/aurorion_mundos-server.toml.",
+  "aurorion_mundos.comando.lista.cabecalho": "Mundos do Aurorion — dimensão, seed, barreira, geração em runtime:",
+  "aurorion_mundos.comando.lista.linha": "  %s — seed %s, barreira %s, %s",
+  "aurorion_mundos.comando.lista.ausente": "dimensão não existe",
+  "aurorion_mundos.comando.geracao.ligada": "gera em runtime",
+  "aurorion_mundos.comando.geracao.desligada": "não gera em runtime",
+
+  "aurorion_mundos.comando.ligacoes.vazio": "Nenhuma ligação de portal configurada.",
+  "aurorion_mundos.comando.ligacoes.cabecalho": "Ligações de portal — origem, destino, raio de busca:",
+  "aurorion_mundos.comando.ligacoes.linha": "  %s → %s (raio %s)%s",
+
+  "aurorion_mundos.comando.borda.ver": "%s: barreira de %s blocos, centrada em %s.",
+  "aurorion_mundos.comando.borda.set": "Barreira de %s definida para %s blocos.",
+  "aurorion_mundos.comando.borda.lerp": "Barreira de %s indo para %s blocos ao longo de %s segundos.",
+  "aurorion_mundos.comando.borda.centro": "Centro da barreira de %s movido para %s.",
+  "aurorion_mundos.comando.borda.aviso_distancia": "Aviso da barreira de %s: %s blocos.",
+  "aurorion_mundos.comando.borda.aviso_tempo": "Aviso da barreira de %s: %s segundos.",
+  "aurorion_mundos.comando.borda.dano": "Dano da barreira de %s: %s por bloco.",
+  "aurorion_mundos.comando.borda.zona": "Zona segura da barreira de %s: %s blocos."
+}

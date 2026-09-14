@@ -1,0 +1,8 @@
+{
+  "from": "minecraft:overworld",
+  "to": "aurorion_mundos:mundo_dois",
+
+  "area": { "center": [2000, 0], "radius": 128 },
+
+  "order": 0
+}

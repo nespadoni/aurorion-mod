@@ -13,22 +13,45 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Comandos essenciais de servidor: `/fakename` (troca o nome exibido em todo o jogo) e cleanup periódico de itens/XP no chão |
 | Aurorion Utils | [aurorion-utils/](aurorion-utils/) | Utilitários diversos: `/abduzir` (puxa um jogador com uma animação de feixe de luz, com opção de trazer de volta) |
 | Aurorion Aeonita | [aurorion-aeonita/](aurorion-aeonita/) | **Conteúdo**: itens e blocos de Aeonita, luz dinâmica e o Altar de Seleção |
-| Aurorion Ato 2 | [aurorion-ato2/](aurorion-ato2/) | **Mecânica do Ato 2**: escolha de casa no altar, com as casas definidas por datapack |
+| Aurorion Ethereal | [aurorion-ethereal/](aurorion-ethereal/) | **O mod central**: as cinco casas por datapack, a Cerimônia de Vinculação no altar com revelação animada, e o Projetor Aeônico com os rankings |
 | Aurorion Portais | [aurorion-portais/](aurorion-portais/) | Tranca todas as dimensões menos o overworld; o acesso abre em janelas agendadas por datapack (os "trens"), com avisos automáticos |
+| Aurorion Mundos | [aurorion-mundos/](aurorion-mundos/) | Mais de um overworld: mesmo gerador e mesmos mods de worldgen, mas com seed própria, barreira própria e portais de obsidiana com destino declarado em datapack |
 | Aurorion Vidas | [aurorion-vidas/](aurorion-vidas/) | Vidas limitadas por jogador, contador no HUD acima da fome, e exílio no Nether para quem zerar |
+| Aurorion Limbo | [aurorion-limbo/](aurorion-limbo/) | A dimensão de exílio e o **prazo** que corre nela; a Porta do Esquecido para quem ninguém foi buscar, e a auditoria que a staff lê por RCON ou webhook |
 
-### Conteúdo x mecânica de ato
+### Conteúdo x comportamento
 
-A separação entre os dois últimos é deliberada e vale para todo ato futuro:
+`aurorion-aeonita` é **conteúdo**: registra item e bloco, e por isso fica no modpack enquanto esses
+objetos existirem no mundo. O Altar de Seleção mora nele mesmo sendo usado só pelo
+`aurorion-ethereal` — um bloco muda de dono uma vez, quando é criado; movê-lo depois orfanaria todos
+os altares já construídos.
 
-- **Mod de conteúdo** (`aurorion-aeonita`) é o único que registra item e bloco. Fica no modpack para
-  sempre, porque desligá-lo apagaria coisa do inventário dos jogadores e do mundo.
-- **Mod de ato** (`aurorion-ato2`, e os próximos) só tem comportamento. Sai do modpack quando o ato
-  acaba, sem levar nada junto.
+O acoplamento entre os dois é uma **tag**, nunca um import: o Ethereal pergunta "esse bloco está em
+`aurorion_ethereal:house_altars`?", não "esse bloco é o `SelectionAltarBlock`?". Por isso os dois
+podem ser ligados e desligados independentemente, e qualquer bloco do modpack vira altar por
+datapack.
 
-O acoplamento entre os dois é uma **tag**, nunca um import: o Ato 2 pergunta "esse bloco está em
-`aurorion_ato2:house_altars`?", não "esse bloco é o `SelectionAltarBlock`?". Por isso os dois podem
-ser ligados e desligados independentemente, e um ato futuro pode reaproveitar o mesmo altar.
+> **Histórico**: `aurorion-ethereal` é a fusão de `aurorion-ato2` (casas) com `aurorion-placares`
+> (placares). Os dois eram o mesmo dado visto de dois ângulos — o total de uma casa é a soma dos
+> pontos dos membros dela — e separados o placar tratava "casa" como texto livre digitado na GUI. O
+> Projetor Aeônico que ficou no lugar dele veio do mod original do servidor. Ver [SDD §6.0](SDD.md).
+
+### A segunda exceção à independência: `aurorion-limbo` → `aurorion-vidas`
+
+Além do core, existe **uma** dependência declarada entre dois mods de conteúdo, e ela é assumida: o
+`aurorion-limbo` é a segunda metade do exílio. Um "Limbo" sem sistema de vidas não tem quem colocar
+dentro.
+
+A direção é única e continua assim: o `aurorion-vidas` não sabe que o Limbo existe e continua
+funcionando sem ele — nesse caso o exílio volta a ser o Nether sem prazo, que é o comportamento que
+ele já tinha.
+
+Isso **não** é o acoplamento que a [SDD §9.1](SDD.md) rejeita no par `vidas`/`portais`. Lá são dois
+sistemas independentes que por acaso se cruzam, e por isso se coordenam por evento. Aqui a
+dependência é real, e declará-la é mais honesto que simulá-la com eventos.
+
+Mods de terceiros continuam sem nenhuma dependência dura: o Limbo fala com o Immersive Messages por
+uma ponte que some sozinha quando ele não está no pack.
 
 ## Requisitos
 
@@ -69,8 +92,9 @@ Para rodar só um subconjunto, use o `runClient` do próprio mod, ou fixe a list
 
 ### Testando mecânica de dois jogadores
 
-Balão de fala, `/abduzir`, `/fakename`, sussurro e escolha de casa no altar só dá para testar de
-verdade com dois jogadores. Em três terminais:
+Balão de fala, `/abduzir`, `/fakename`, sussurro e a Cerimônia de Vinculação no altar só dá para
+testar de verdade com dois jogadores — a cerimônia porque o veredito é lido por outra pessoa. Em três
+terminais:
 
 ```bash
 ./gradlew :aurorion-runs:runServer     # 1. sobe o servidor e deixa rodando

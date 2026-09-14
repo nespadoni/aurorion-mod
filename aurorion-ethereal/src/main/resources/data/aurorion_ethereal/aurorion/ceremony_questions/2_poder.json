@@ -1,0 +1,11 @@
+{
+  "order": 2,
+  "question": "O que é poder para você?",
+  "options": [
+    { "text": "Compreender", "house": "aurorion_ethereal:nyx" },
+    { "text": "Adaptar",     "house": "aurorion_ethereal:venthra" },
+    { "text": "Transcender", "house": "aurorion_ethereal:aetheris" },
+    { "text": "Dominar",     "house": "aurorion_ethereal:ignivar" },
+    { "text": "Proteger",    "house": "aurorion_ethereal:sylvara" }
+  ]
+}

@@ -1,0 +1,100 @@
+apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// O Limbo e a segunda metade do exilio, entao ele compila contra o aurorion-vidas.
+//
+// Por que isto NAO e a mesma coisa que o acoplamento que a SDD §9.1 rejeita: la, vidas e portais
+// sao dois sistemas independentes que por acaso se cruzam, e por isso se coordenam por evento. Aqui
+// o Limbo nao tem sentido nenhum sozinho — um "Limbo" sem sistema de vidas nao tem quem colocar
+// dentro. A dependencia e real, e declara-la e mais honesto que simula-la.
+//
+// A direcao e unica e permanece assim: limbo -> vidas, nunca o contrario. O aurorion-vidas continua
+// compilando, rodando e sendo util sem o Limbo existir.
+evaluationDependsOn(':aurorion-vidas')
+
+neoForge {
+    mods {
+        create('aurorion_vidas') {
+            sourceSet project(':aurorion-vidas').sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    implementation project(':aurorion-vidas').sourceSets.main.output
+
+    // Permite validar a compatibilidade opcional contra o jar real sem versionar binario no repo.
+    // Uso: -PcinematicRespawnJar=C:/caminho/cinematic_respawn.jar
+    if (providers.gradleProperty('cinematicRespawnJar').isPresent()) {
+        runtimeOnly files(providers.gradleProperty('cinematicRespawnJar').get())
+    }
+
+    // PlayerRevive depende do CreativeCore. Ambos entram apenas nos runs que informarem os jars;
+    // a distribuicao do Limbo continua sem embutir nem exigir essas dependencias opcionais.
+    if (providers.gradleProperty('playerReviveJar').isPresent()) {
+        runtimeOnly files(providers.gradleProperty('playerReviveJar').get())
+    }
+    if (providers.gradleProperty('creativeCoreJar').isPresent()) {
+        runtimeOnly files(providers.gradleProperty('creativeCoreJar').get())
+    }
+}
+
+// Testes de integracao em um mundo descartavel, sem classes de teste no jar distribuido.
+sourceSets { gameTest }
+configurations.gameTestImplementation.extendsFrom(configurations.implementation)
+configurations.gameTestCompileOnly.extendsFrom(configurations.compileOnly)
+configurations.gameTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+evaluationDependsOn(':aurorion-portais')
+
+neoForge {
+    addModdingDependenciesTo sourceSets.gameTest
+    mods {
+        create('aurorion_limbo_tests') { sourceSet sourceSets.gameTest }
+        create('aurorion_portais') { sourceSet project(':aurorion-portais').sourceSets.main }
+    }
+    runs {
+        // Os runs normais deste mod continuam usando so limbo, vidas e core.
+        client { loadedMods = [mods.aurorion_limbo, mods.aurorion_vidas, mods.aurorion_core] }
+        server { loadedMods = [mods.aurorion_limbo, mods.aurorion_vidas, mods.aurorion_core] }
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gameTest
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'aurorion_limbo_tests'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+}
+
+dependencies {
+    gameTestImplementation sourceSets.main.output
+    gameTestImplementation project(':aurorion-portais').sourceSets.main.output
+}
+
+// O GameTestServer 1.21.1 usa apenas as dimensoes do preset flat. Mantemos o tipo real do Limbo,
+// mas trocamos seu worldgen por uma camada previsivel: o teste valida regras, nao ruido aleatorio.
+tasks.named('processGameTestResources', ProcessResources) {
+    def dimensionJson = file('src/main/resources/data/aurorion_limbo/dimension/limbo.json')
+    inputs.file(dimensionJson)
+    doLast {
+        def limbo = new groovy.json.JsonSlurper().parse(dimensionJson)
+        limbo.generator = [
+            type: 'minecraft:flat', settings: [biome: 'minecraft:the_void', lakes: false,
+            features: false, structure_overrides: [], layers: [
+                [block: 'minecraft:bedrock', height: 1],
+                [block: 'minecraft:blackstone', height: 3],
+                [block: 'minecraft:polished_blackstone', height: 1]
+            ]]
+        ]
+        def preset = [dimensions: [
+            'minecraft:overworld': [type: 'minecraft:overworld', generator: [
+                type: 'minecraft:flat', settings: [biome: 'minecraft:plains', lakes: false,
+                features: false, structure_overrides: [], layers: [
+                    [block: 'minecraft:bedrock', height: 1], [block: 'minecraft:stone', height: 3]
+                ]]
+            ]],
+            'aurorion_limbo:limbo': limbo
+        ]]
+        def target = new File(destinationDir, 'data/minecraft/worldgen/world_preset/flat.json')
+        target.parentFile.mkdirs()
+        target.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(preset)), 'UTF-8')
+    }
+}

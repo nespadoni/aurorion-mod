@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AGA",
+    "ONO",
+    "CCC"
+  ],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "G": { "item": "minecraft:tinted_glass" },
+    "O": { "item": "minecraft:crying_obsidian" },
+    "N": { "item": "minecraft:nether_star" },
+    "C": { "item": "minecraft:copper_block" }
+  },
+  "result": { "id": "aurorion_ethereal:aeonic_projector", "count": 1 }
+}

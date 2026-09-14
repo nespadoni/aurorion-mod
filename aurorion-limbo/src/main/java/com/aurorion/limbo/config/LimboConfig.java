@@ -1,0 +1,165 @@
+package com.aurorion.limbo.config;
+
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+/**
+ * Config do lado servidor, em {@code config/aurorion_limbo-server.toml}.
+ *
+ * <p>Aqui mora <b>regra</b>: quanto tempo, quantos blocos, quem avisa quem. Coordenada nenhuma mora
+ * aqui — o ponto de chegada do Limbo continua sendo do {@code aurorion_vidas}
+ * ({@code /vidas exilio aqui}), pelo mesmo motivo de sempre: config que guarda coordenada nao
+ * acompanha o que foi construido e nao some quando o mundo e trocado.
+ */
+public final class LimboConfig {
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+
+    public static final ModConfigSpec.IntValue DEADLINE_HOURS;
+    public static final ModConfigSpec.IntValue LIVES_ON_RESCUE;
+
+    public static final ModConfigSpec.IntValue DOOR_WINDOW_HOURS;
+    public static final ModConfigSpec.IntValue DOOR_WALK_MIN;
+    public static final ModConfigSpec.IntValue DOOR_WALK_MAX;
+    public static final ModConfigSpec.ConfigValue<String> DOOR_FRAME_BLOCK;
+    public static final ModConfigSpec.IntValue LEASH_RADIUS;
+
+    public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
+    public static final ModConfigSpec.BooleanValue ANNOUNCE_NAMES;
+
+    public static final ModConfigSpec.ConfigValue<String> WEBHOOK_URL;
+    public static final ModConfigSpec.BooleanValue AUDIT_TO_LOG;
+
+    public static final ModConfigSpec SPEC;
+
+    static {
+        BUILDER.comment("O prazo do exilio.").push("prazo");
+
+        DEADLINE_HOURS = BUILDER
+                .comment(
+                        "Horas de RELOGIO REAL que alguem tem no Limbo antes do prazo vencer.",
+                        "Real, e nao tempo de jogo: quem resgata sao as outras pessoas, e elas vivem no fuso",
+                        "delas. O exilado estar offline nao diminui a chance dele — so atrapalha a propria",
+                        "caminhada, que e assunto da secao 'porta'.",
+                        "48h e o minimo que atravessa um dia de trabalho ou de escola de todo mundo envolvido.",
+                        "Com 24h, quem cai na terca de manha depende da casa inteira estar online na terca a",
+                        "noite, e a mecanica passa a punir horario de vida em vez de jogo.",
+                        "Tempo com o servidor desligado NAO conta — ver LimboManager#tick."
+                )
+                .defineInRange("horasDePrazo", 48, 1, 24 * 14);
+
+        LIVES_ON_RESCUE = BUILDER
+                .comment(
+                        "Quantas vidas a pessoa tem ao ser resgatada por alguem.",
+                        "Tem que ser maior que o da Porta do Esquecido, senao ninguem prefere ser resgatado."
+                )
+                .defineInRange("vidasAoSerResgatado", 2, 1, 20);
+
+        BUILDER.pop();
+        BUILDER.comment(
+                "A Porta do Esquecido: a saida de quem ninguem foi buscar.",
+                "Ela so existe para que nenhum jogador fique refem da boa vontade alheia. Uma casa rival",
+                "nao pode matar alguem em definitivo simplesmente nao aparecendo."
+        ).push("porta");
+
+        DOOR_WINDOW_HOURS = BUILDER
+                .comment(
+                        "Nas ultimas N horas do prazo a Porta passa a poder aparecer.",
+                        "Antes disso ela nao existe, e e isso que da tempo para o resgate ser tentado: se a",
+                        "Porta valesse desde o primeiro minuto, ninguem esperaria por ninguem."
+                )
+                .defineInRange("janelaEmHoras", 5, 1, 24);
+
+        DOOR_WALK_MIN = BUILDER
+                .comment(
+                        "Distancia minima, em blocos, a caminhar dentro da janela antes da Porta aparecer.",
+                        "A distancia exata e sorteada UMA VEZ entre o minimo e o maximo, quando a janela abre,",
+                        "e fica guardada. Do lado de dentro isso e indistinguivel de 'uma certa chance a cada",
+                        "tanto', que era a ideia original — mas do lado do servidor tem tres vantagens:",
+                        "nao roda sorteio por tick, a caminhada nunca e desperdicada por azar, e o jogador que",
+                        "andou o combinado SEMPRE encontra a saida.",
+                        "A distancia vem da estatistica que o vanilla ja mantem (andar + correr + agachado), entao",
+                        "medir isso nao custa um listener de tick."
+                )
+                .defineInRange("blocosMinimo", 1000, 1, 100_000);
+
+        DOOR_WALK_MAX = BUILDER
+                .comment("Teto do sorteio. Se ficar abaixo do minimo, o minimo vence.")
+                .defineInRange("blocosMaximo", 2000, 1, 100_000);
+
+        DOOR_FRAME_BLOCK = BUILDER
+                .comment("Bloco da moldura da Porta quando ela aparece. So aparencia; a saida e a proximidade.")
+                .define("blocoDaMoldura", "minecraft:crying_obsidian");
+
+        LEASH_RADIUS = BUILDER
+                .comment(
+                        "Enquanto a Porta NAO esta armada, o exilado nao se afasta mais que isto do ponto de",
+                        "chegada — e empurrado de volta. Serve ao resgate: uma busca de 15 minutos precisa de",
+                        "uma area, nao de um mundo infinito.",
+                        "Quando a janela da Porta abre, a coleira cai sozinha. E o momento em que o Limbo deixa",
+                        "de ser uma sala de espera e vira um lugar para vagar procurando saida.",
+                        "Zero desliga a coleira."
+                )
+                .defineInRange("raioDaColeira", 300, 0, 100_000);
+
+        BUILDER.pop();
+        BUILDER.comment("O que o servidor conta, e para quem.").push("avisos");
+
+        ANNOUNCE_FALL = BUILDER
+                .comment("Anuncia para o servidor inteiro quando alguem cai no Limbo.")
+                .define("anunciarQueda", true);
+
+        ANNOUNCE_NAMES = BUILDER
+                .comment(
+                        "Se o anuncio publico diz o NOME de quem caiu.",
+                        "Falso (padrao) e a versao com RP: o servidor sabe que um vinculo se rompeu, nao de quem.",
+                        "Descobrir o nome passa a ser assunto da casa da pessoa e do Oraculo. Com 80 jogadores o",
+                        "sumico de alguem passa despercebido sozinho, entao alguma pista precisa existir — mas",
+                        "gritar o nome mata a investigacao inteira.",
+                        "Verdadeiro e mais simples e mais direto, se o servidor nao quiser esse RP."
+                )
+                .define("anunciarNomes", false);
+
+        BUILDER.pop();
+        BUILDER.comment(
+                "Registro para a staff.",
+                "Tudo que acontece no Limbo vira uma linha em <mundo>/aurorion_limbo/auditoria.jsonl,",
+                "sempre, independente destas opcoes. O arquivo e a fonte da verdade; o que esta aqui e",
+                "so como ele chega ate voce."
+        ).push("auditoria");
+
+        WEBHOOK_URL = BUILDER
+                .comment(
+                        "Webhook (Discord ou outro) que recebe um POST a cada evento do Limbo. Vazio desliga.",
+                        "",
+                        "POR QUE WEBHOOK E NAO RCON: RCON e de mao unica e a mao e a de fora — um cliente se",
+                        "conecta no servidor e manda comando. O servidor nao abre conexao RCON com ninguem, entao",
+                        "'avisar o Discord na hora que alguem saiu' nao e uma coisa que RCON saiba fazer.",
+                        "",
+                        "As duas metades, entao:",
+                        "  - EMPURRAR o evento na hora  -> este webhook.",
+                        "  - PUXAR o estado quando quiser -> seu bot roda /limbo relatorio por RCON. A saida e",
+                        "    texto estavel em chave=valor, feita para ser parseada.",
+                        "Da para usar so uma das duas. Um bot que ja fala RCON e que so precisa de um painel",
+                        "'quem esta no Limbo agora' nao precisa de webhook nenhum.",
+                        "",
+                        "O envio e assincrono e descartavel: nunca bloqueia o tick, e um webhook fora do ar vira",
+                        "aviso no log, nunca lag no servidor."
+                )
+                .define("webhookUrl", "");
+
+        AUDIT_TO_LOG = BUILDER
+                .comment("Repete cada evento da auditoria no log do servidor, para quem prefere ler pelo console.")
+                .define("tambemNoLog", true);
+
+        BUILDER.pop();
+
+        SPEC = BUILDER.build();
+    }
+
+    private LimboConfig() {
+    }
+
+    /** O sorteio da Porta so faz sentido com o teto acima do piso; a config nao garante isso sozinha. */
+    public static int walkMax() {
+        return Math.max(DOOR_WALK_MIN.get(), DOOR_WALK_MAX.get());
+    }
+}

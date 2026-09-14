@@ -1,0 +1,147 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Projetor Aeonico — modelo original do aurorionsmp",
+	"ambientocclusion": false,
+	"gui_light": "front",
+	"textures": {
+		"0": "aurorion_ethereal:block/aeonic_projector",
+		"particle": "aurorion_ethereal:block/aeonic_projector"
+	},
+	"elements": [
+		{
+			"name": "base_main",
+			"from": [2, 0, 2],
+			"to": [14, 2, 14],
+			"faces": {
+				"north": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"east": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"south": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"west": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"up": {"uv": [0, 0, 8, 8], "texture": "#0"},
+				"down": {"uv": [0, 10, 8, 12], "texture": "#0"}
+			}
+		},
+		{
+			"name": "base_upper_plate",
+			"from": [3, 2, 3],
+			"to": [13, 3, 13],
+			"faces": {
+				"north": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"east": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"south": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"west": {"uv": [0, 8, 8, 10], "texture": "#0"},
+				"up": {"uv": [0, 0, 8, 8], "texture": "#0"},
+				"down": {"uv": [0, 10, 8, 12], "texture": "#0"}
+			}
+		},
+		{
+			"name": "core_crystal",
+			"from": [6.5, 3, 6.5],
+			"to": [9.5, 6, 9.5],
+			"rotation": {"angle": 45, "axis": "y", "origin": [8, 4.5, 8]},
+			"faces": {
+				"north": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"east": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"south": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"west": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"up": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"down": {"uv": [8, 8, 12, 12], "texture": "#0"}
+			}
+		},
+		{
+			"name": "hologram_panel_front",
+			"from": [3, 6, 7.95],
+			"to": [13, 15, 8.05],
+			"shade": false,
+			"faces": {
+				"north": {"uv": [8, 0, 16, 8], "texture": "#0"},
+				"south": {"uv": [8, 0, 16, 8], "texture": "#0"}
+			}
+		},
+		{
+			"name": "hologram_panel_cross",
+			"from": [7.95, 6, 3],
+			"to": [8.05, 15, 13],
+			"shade": false,
+			"faces": {
+				"east": {"uv": [8, 0, 16, 8], "texture": "#0"},
+				"west": {"uv": [8, 0, 16, 8], "texture": "#0"}
+			}
+		},
+		{
+			"name": "floating_data_1",
+			"from": [4.5, 9, 6.8],
+			"to": [5.5, 10, 7.2],
+			"shade": false,
+			"faces": {
+				"north": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"south": {"uv": [8, 8, 12, 12], "texture": "#0"}
+			}
+		},
+		{
+			"name": "floating_data_2",
+			"from": [10.5, 11, 8.8],
+			"to": [11.5, 12, 9.2],
+			"shade": false,
+			"faces": {
+				"north": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"south": {"uv": [8, 8, 12, 12], "texture": "#0"}
+			}
+		},
+		{
+			"name": "rear_energy_rod",
+			"from": [7.25, 3, 12.5],
+			"to": [8.75, 8, 14],
+			"faces": {
+				"north": {"uv": [12, 8, 16, 16], "texture": "#0"},
+				"east": {"uv": [12, 8, 16, 16], "texture": "#0"},
+				"south": {"uv": [12, 8, 16, 16], "texture": "#0"},
+				"west": {"uv": [12, 8, 16, 16], "texture": "#0"},
+				"up": {"uv": [8, 8, 12, 12], "texture": "#0"},
+				"down": {"uv": [8, 8, 12, 12], "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [55, 0, 0],
+			"translation": [0, 1.75, 2.75],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [55, 0, 0],
+			"translation": [0, 1.75, 2.75],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"firstperson_righthand": {
+			"rotation": [25, -35, 0],
+			"translation": [0, 1.5, 0],
+			"scale": [0.75, 0.75, 0.75]
+		},
+		"firstperson_lefthand": {
+			"rotation": [25, 35, 0],
+			"translation": [0, 1.5, 0],
+			"scale": [0.75, 0.75, 0.75]
+		},
+		"ground": {
+			"translation": [0, 5.25, 0]
+		},
+		"gui": {
+			"rotation": [30, -135, 0],
+			"scale": [0.78, 0.78, 0.78]
+		},
+		"fixed": {
+			"rotation": [0, -180, 0],
+			"scale": [0.9, 0.9, 0.9]
+		}
+	},
+	"groups": [
+		{
+			"name": "projetor_aeonico",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [0, 1, 2, 3, 4, 5, 6, 7]
+		}
+	]
+}

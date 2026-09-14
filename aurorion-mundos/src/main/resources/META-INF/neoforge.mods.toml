@@ -1,0 +1,39 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+# Mod de servidor. As dimensoes em si sao datapack, e o cliente recebe tudo por pacote do vanilla
+# (dimensao no login, barreira no InitializeBorderPacket) — nao ha tela, render nem payload proprio.
+displayTest = "IGNORE_ALL_VERSION"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# Biblioteca compartilhada do ecossistema. Obrigatoria: sem ela este mod nao carrega.
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "${mod_id}.mixins.json"

@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "O Limbo e conteudo, e por isso mora em datapack: trocar o gerador, a altura ou o ceu nao",
+    "deveria exigir rebuild de jar (diretriz 4 da SDD §7).",
+    "",
+    "bed_works e respawn_anchor_works sao falsos porque as duas coisas explodem nesse estado — e",
+    "explodir e uma saida. Quem esta no Limbo nao tem rota de saida propria por design.",
+    "natural=false tira bussola e relogio: a bussola apontaria para um spawn que nao existe aqui.",
+    "fixed_time trava a noite; com effects do End o ceu vira campo de estrelas parado, sem sol nem",
+    "lua passando — que e o que faz o lugar nao ter nocao de tempo."
+  ],
+  "ultrawarm": false,
+  "natural": false,
+  "coordinate_scale": 1.0,
+  "has_skylight": false,
+  "has_ceiling": false,
+  "ambient_light": 0.0,
+  "fixed_time": 18000,
+  "monster_spawn_light_level": 0,
+  "monster_spawn_block_light_limit": 0,
+  "piglin_safe": false,
+  "bed_works": false,
+  "respawn_anchor_works": false,
+  "has_raids": false,
+  "logical_height": 256,
+  "min_y": 0,
+  "height": 256,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "effects": "minecraft:the_end"
+}

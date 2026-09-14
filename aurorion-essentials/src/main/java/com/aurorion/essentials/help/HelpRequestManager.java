@@ -8,6 +8,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Locale;
+
 /**
  * Monta e distribui o aviso de {@code /ajuda}: nome real, fakename, descricao e localizacao de
  * quem pediu socorro, mandado direto para quem tem OP (nivel 2+) online. Devolve quantos
@@ -44,7 +46,10 @@ public final class HelpRequestManager {
                         .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
 
         BlockPos pos = sender.blockPosition();
-        String location = String.format("%s (%d, %d, %d)", dimensionName(sender), pos.getX(), pos.getY(), pos.getZ());
+        // Locale.ROOT: a coordenada e um numero de jogo, nao um numero formatado para leitura. Sem
+        // ele, um servidor com locale de digitos nao-arabicos escreveria a posicao em outro alfabeto.
+        String location = String.format(Locale.ROOT, "%s (%d, %d, %d)",
+                dimensionName(sender), pos.getX(), pos.getY(), pos.getZ());
 
         return Component.translatable("commands.aurorion_essentials.ajuda.notify.header")
                 .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)

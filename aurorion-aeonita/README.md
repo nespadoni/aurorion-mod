@@ -71,6 +71,12 @@ config/      AeonitaClientConfig
 - **O custo que sobra é inerente ao truque**: cada mudança de posição é um `setBlock`, que refaz
   iluminação do chunk. Não dá para otimizar isso sem trocar de técnica; dá para desligar, e é o que
   a config existe para permitir.
+- **Os bits do `setBlock` são o mínimo**: `UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE`, e não
+  `Block.UPDATE_ALL` (que é `UPDATE_NEIGHBORS | UPDATE_CLIENTS`). O bit de vizinhos não tem o que
+  fazer num bloco que só existe na cópia local do mundo: ele mandava os blocos em volta reagirem, e a
+  cascata de `updateShape` podia deixar vizinho desenhado errado até o chunk recarregar. A iluminação
+  continua correta — quem a recalcula é o motor de luz, chamado pelo próprio `setBlockState` quando a
+  emissão muda.
 - **O que acende é dado, não código.** Tag de item em vez de `stack.is(A) || stack.is(B) ||
   stack.is(C)` — [SDD §7](../SDD.md), diretriz 4.
 - **`SelectionAltarBlock` não sabe o que é uma casa.** Ele é um bloco decorativo com forma própria e
@@ -91,8 +97,10 @@ primeira execução:
 
 - Se os três elementos do modelo do altar batem com a `VoxelShape` de `SelectionAltarBlock`
   (silhueta e colisão desenhadas separadamente, é o típico de sair desalinhado).
-- Se a luz dinâmica ainda funciona com `Block.UPDATE_ALL` no `setBlock` do cliente — comportamento
-  herdado do protótipo original, mantido de propósito por já ter sido testado assim.
+- **Se a luz dinâmica ainda acende com os bits novos do `setBlock`.** O protótipo original usava
+  `Block.UPDATE_ALL` e era assim que tinha sido testado; hoje são `UPDATE_CLIENTS |
+  UPDATE_KNOWN_SHAPE`. A leitura do `Level#setBlock` do 1.21.1 diz que a iluminação não depende
+  desses bits, mas isso **não foi confirmado em jogo** — se a luz parar de aparecer, é aqui.
 
 ```bash
 ./gradlew :aurorion-aeonita:runClient

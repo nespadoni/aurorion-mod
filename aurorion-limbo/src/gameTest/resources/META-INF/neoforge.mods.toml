@@ -1,0 +1,7 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="LGPL-3.0-or-later"
+[[mods]]
+modId="aurorion_limbo_tests"
+version="1.0.0"
+displayName="Aurorion Limbo integration tests"

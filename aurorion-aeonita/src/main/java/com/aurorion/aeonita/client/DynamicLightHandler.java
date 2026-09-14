@@ -55,6 +55,20 @@ public final class DynamicLightHandler {
 
     private static final BlockPos.MutableBlockPos SCRATCH = new BlockPos.MutableBlockPos();
 
+    /**
+     * O minimo que faz a luz falsa aparecer: marca a secao para redesenho e nada mais.
+     *
+     * <p>Era {@code Block.UPDATE_ALL}, que e {@code UPDATE_NEIGHBORS | UPDATE_CLIENTS} — e o bit de
+     * vizinhos nao tem o que fazer aqui. A luz aparece e some varias vezes por segundo debaixo de
+     * quem anda com um item aceso; cada troca mandava os blocos em volta reagirem a um bloco que so
+     * existe na copia local do mundo, e a cascata de {@code updateShape} podia ate deixar vizinho
+     * desenhado errado ate o proximo carregamento do chunk.
+     *
+     * <p>A iluminacao continua sendo recalculada: quem faz isso e o motor de luz, chamado pelo
+     * proprio {@code setBlockState} quando a emissao muda, sem depender destes bits.
+     */
+    private static final int LIGHT_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+
     @Nullable
     private static ClientLevel lastLevel;
 
@@ -106,7 +120,7 @@ public final class DynamicLightHandler {
 
             if (level.getBlockState(target).isAir()) {
                 BlockPos placed = target.immutable();
-                level.setBlock(placed, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, lightLevel), Block.UPDATE_ALL);
+                level.setBlock(placed, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, lightLevel), LIGHT_FLAGS);
                 ACTIVE.put(id, placed);
                 SEEN.add(id);
             } else {
@@ -163,7 +177,7 @@ public final class DynamicLightHandler {
 
     private static void clearLight(ClientLevel level, BlockPos pos) {
         if (level.getBlockState(pos).is(Blocks.LIGHT)) {
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), LIGHT_FLAGS);
         }
     }
 }

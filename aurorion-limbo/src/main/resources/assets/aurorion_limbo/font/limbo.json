@@ -1,0 +1,23 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "aurorion_limbo:cinzel.ttf",
+      "size": 11,
+      "oversample": 2,
+      "shift": [0, 0]
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:include/space"
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:include/default"
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:include/unifont"
+    }
+  ]
+}

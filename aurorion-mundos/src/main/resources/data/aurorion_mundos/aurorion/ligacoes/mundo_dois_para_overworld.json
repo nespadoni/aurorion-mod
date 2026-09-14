@@ -1,0 +1,6 @@
+{
+  "from": "aurorion_mundos:mundo_dois",
+  "to": "minecraft:overworld",
+
+  "order": 0
+}
