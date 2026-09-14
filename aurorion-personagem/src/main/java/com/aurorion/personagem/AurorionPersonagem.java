@@ -3,7 +3,6 @@ package com.aurorion.personagem;
 import com.aurorion.core.character.CharacterGate;
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.personagem.config.CreationConfig;
-import com.aurorion.personagem.creation.CreationManager;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -57,6 +56,6 @@ public class AurorionPersonagem {
 
         // A partir daqui o core passa a barrar login sem personagem, e o aurorion_limbo para de
         // desconectar quem terminou o epilogo: existe para onde mandar essa pessoa.
-        CharacterGate.enableCreation(CreationManager::needsCreation);
+        CharacterGate.enableCreation();
     }
 }

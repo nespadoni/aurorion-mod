@@ -74,20 +74,26 @@ Registros antigos do Limbo cujo prazo já estava vencido também passam a repres
 definitiva na primeira varredura ou no login. Ajustes de prazo e resgates são aceitos somente
 antes do vencimento. `/limbo prazo <jogador> 0` encerra o personagem imediatamente.
 
-## Próxima etapa: criação de personagem
+## Depois da morte: criar outro personagem
 
-O fluxo de criação de outro personagem **ainda não está implementado**. Ele deverá:
+Quem termina o epílogo é desconectado com a conta válida e sem banimento. A reconexão passa a ser
+atendida pelo [aurorion-personagem](../aurorion-personagem/README.md): a pessoa entra, é retida em
+espectador e escolhe nome e sobrenome do próximo personagem. O reset — vanilla e de todos os mods do
+ecossistema — roda antes de a identidade nova existir, e a conta só volta a jogar depois que ele
+termina.
 
-1. Conferir que a conta está sem personagem vivo.
-2. Arquivar a identidade encerrada e preparar um novo UUID de personagem.
-3. Limpar inventários normal e Ender, XP, efeitos, spawn, avanços e estatísticas, além de
-   vidas, casa, nome de RP, permissões de viagem, histórico de personagem e progressão dos mods do pack.
-4. Instalar o estado inicial e liberar o novo personagem somente depois de todo o reset terminar.
+Com esse mod instalado, o Limbo deixa de recusar a conexão de quem já assistiu ao epílogo: existe
+para onde mandar essa conta. Sem ele, a recusa no login continua sendo a resposta, porque não existe.
+Quem está no meio do epílogo nunca vê a tela de criação — o Limbo avisa o `CharacterGate` que aquela
+conta está ocupada.
+
+O único comando que um morto pode rodar é `/personagem`, e é por isso que ele existe: um cliente sem
+o mod só tem o chat para responder a pergunta do nome.
 
 A conta e as permissões de moderação continuam vinculadas ao UUID de autenticação.
 Progressão de personagem deve ser vinculada ao ID de personagem ou participar do reset.
-A versão atual não oferece um comando que apenas remova a marca de morto: isso permitiria
-voltar com o inventário, a casa e a progressão da história anterior.
+Não há comando que apenas remova a marca de morto: isso permitiria voltar com o inventário, a casa e
+a progressão da história anterior.
 
 ## Verificação posterior
 

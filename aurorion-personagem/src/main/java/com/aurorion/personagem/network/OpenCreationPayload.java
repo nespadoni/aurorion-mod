@@ -11,11 +11,10 @@ import net.minecraft.resources.ResourceLocation;
  * <p>O texto viaja junto de proposito: a tela nao guarda copia da config nem le chave de traducao do
  * cliente. Editar o TOML do servidor muda o que a proxima pessoa le, sem que ninguem atualize nada.
  *
- * @param reserved nome ja reservado por uma criacao que ficou pela metade — string vazia no caso
- *                 normal. A tela mostra esse nome travado: a identidade ja foi escrita no diario,
- *                 e escolher outro nome agora deixaria a reserva antiga orfa.
+ * @param replacement true quando a conta esta comecando outra historia depois de uma morte
+ *                    definitiva; muda so o texto de abertura, nunca a regra.
  */
-public record OpenCreationPayload(boolean replacement, String title, String intro, String rules, String reserved)
+public record OpenCreationPayload(boolean replacement, String title, String intro, String rules)
         implements CustomPacketPayload {
     public static final Type<OpenCreationPayload> TYPE =
             new Type<>(ResourceLocation.parse("aurorion_personagem:open_creation"));
@@ -26,10 +25,8 @@ public record OpenCreationPayload(boolean replacement, String title, String intr
                 buf.writeUtf(payload.title, 128);
                 buf.writeUtf(payload.intro, 512);
                 buf.writeUtf(payload.rules, 512);
-                buf.writeUtf(payload.reserved, 64);
             },
-            buf -> new OpenCreationPayload(buf.readBoolean(), buf.readUtf(128), buf.readUtf(512),
-                    buf.readUtf(512), buf.readUtf(64)));
+            buf -> new OpenCreationPayload(buf.readBoolean(), buf.readUtf(128), buf.readUtf(512), buf.readUtf(512)));
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

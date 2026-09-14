@@ -71,6 +71,7 @@ class CharacterDataTest {
         data.nameLiving(account, new CharacterName("Alda", "Verrine"));
         UUID first = data.current(account).id();
         data.markDead(account);
+        data.authorize(account);
 
         var transaction = data.beginReplacement(account, "conta", new CharacterName("Brun", "Solaz"));
         var restored = CharacterData.load(data.save(new CompoundTag(), null), null);
@@ -95,6 +96,7 @@ class CharacterDataTest {
         UUID account = UUID.randomUUID();
         data.current(account);
         data.markDead(account);
+        data.authorize(account);
         data.beginReplacement(account, "conta", new CharacterName("Brun", "Solaz"));
 
         assertThrows(IllegalStateException.class, () -> data.finishReplacement(account, UUID.randomUUID()));
@@ -105,6 +107,7 @@ class CharacterDataTest {
         UUID account = UUID.randomUUID();
         data.current(account);
         data.markDead(account);
+        data.authorize(account);
         data.beginReplacement(account, "conta", new CharacterName("Brun", "Solaz"));
 
         assertNotNull(data.abandonReplacement(account));

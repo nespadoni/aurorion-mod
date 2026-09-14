@@ -53,8 +53,14 @@ public final class PersonagemCommand {
                         .then(Commands.argument("nome", StringArgumentType.string())
                                 .then(Commands.argument("sobrenome", StringArgumentType.string())
                                         .executes(PersonagemCommand::create))))
-                .then(Commands.literal("continuar")
-                        .executes(PersonagemCommand::resume))
+                .then(Commands.literal("liberar")
+                        .requires(source -> source.hasPermission(STAFF_LEVEL))
+                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                .executes(PersonagemCommand::authorize)))
+                .then(Commands.literal("revogar")
+                        .requires(source -> source.hasPermission(STAFF_LEVEL))
+                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                .executes(PersonagemCommand::revoke)))
                 .then(Commands.literal("ver")
                         .executes(context -> show(context, context.getSource().getPlayerOrException().getUUID(),
                                 context.getSource().getPlayerOrException().getGameProfile().getName()))
@@ -84,16 +90,43 @@ public final class PersonagemCommand {
         return 1;
     }
 
-    /** Retoma uma reserva interrompida. O nome ja esta escrito no diario; nao ha o que digitar. */
-    private static int resume(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        CharacterData.Pending pending = CharacterData.get(player.server).pending(player.getUUID());
+    /**
+     * Abre a porta para outra historia. E a unica forma de sair de uma morte definitiva.
+     *
+     * <p>Vale por <b>uma</b> historia: publicar a identidade nova consome a autorizacao, entao a
+     * proxima morte precisa de outra conversa com a staff. Sem isto, morrer seria um contratempo de
+     * dois minutos em vez de um fim.
+     */
+    private static int authorize(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        GameProfile profile = single(context);
+        CharacterData data = CharacterData.get(context.getSource().getServer());
 
-        if (pending == null) {
-            context.getSource().sendFailure(Component.literal("Não há criação pela metade nesta conta."));
+        if (!data.isDead(profile.getId())) {
+            context.getSource().sendFailure(
+                    Component.literal(profile.getName() + " não tem personagem morto para substituir."));
             return 0;
         }
-        CreationManager.submit(player, pending.next().firstName(), pending.next().lastName());
+
+        if (!data.authorize(profile.getId())) {
+            context.getSource().sendFailure(Component.literal(profile.getName() + " já estava liberado."));
+            return 0;
+        }
+
+        context.getSource().sendSuccess(() -> Component.literal(profile.getName()
+                + " pode criar outro personagem. A tela aparece no próximo login."), true);
+        return 1;
+    }
+
+    private static int revoke(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        GameProfile profile = single(context);
+
+        if (!CharacterData.get(context.getSource().getServer()).revokeAuthorization(profile.getId())) {
+            context.getSource().sendFailure(Component.literal(profile.getName() + " não estava liberado."));
+            return 0;
+        }
+
+        context.getSource().sendSuccess(() ->
+                Component.literal("Liberação de " + profile.getName() + " cancelada."), true);
         return 1;
     }
 
@@ -113,10 +146,13 @@ public final class PersonagemCommand {
                 .append("\nid: ").append(character.id())
                 .append("\ncriado: ").append(WHEN.format(Instant.ofEpochMilli(character.createdAt())));
 
-        if (character.dead()) line.append("\nmorreu: ").append(WHEN.format(Instant.ofEpochMilli(character.diedAt())));
+        if (character.dead()) {
+            line.append("\nmorreu: ").append(WHEN.format(Instant.ofEpochMilli(character.diedAt())))
+                    .append("\nliberado pela staff: ").append(data.isAuthorized(account) ? "sim" : "não");
+        }
 
         CharacterData.Pending pending = data.pending(account);
-        if (pending != null) line.append("\nreserva pendente: ").append(pending.next().fullName());
+        if (pending != null) line.append("\ntroca em andamento: ").append(pending.next().fullName());
 
         String text = line.toString();
         context.getSource().sendSuccess(() -> Component.literal(text), false);

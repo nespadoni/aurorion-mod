@@ -13,7 +13,8 @@ public record CharacterName(String firstName, String lastName) {
         firstName = normalize(firstName);
         lastName = normalize(lastName);
         if (!validPart(firstName) || !validPart(lastName) || firstName.length() + lastName.length() + 1 > FULL_LIMIT)
-            throw new IllegalArgumentException("Informe nome e sobrenome com letras, ate 48 caracteres no total.");
+            throw new IllegalArgumentException(
+                    "Informe nome e sobrenome: só letras, de 2 a 24 caracteres cada, até 48 no total.");
     }
     private static String normalize(String value) {
         return Normalizer.normalize(value.strip(), Normalizer.Form.NFC).replaceAll(" +", " ");

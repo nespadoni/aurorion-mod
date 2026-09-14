@@ -44,6 +44,35 @@ public final class PlayerMapNbt {
     }
 
     /**
+     * O mesmo formato, para quando o valor nao existe e a pergunta e so "esta na lista?".
+     *
+     * <p>Grava entradas com apenas o UUID, e nao um {@code IntArray} solto por jogador, para que um
+     * conjunto e um mapa sejam lidos pelo mesmo olho — e para que acrescentar um valor depois nao
+     * quebre o arquivo de quem ja gravou.
+     */
+    public static ListTag writeSet(java.util.Set<UUID> players) {
+        ListTag list = new ListTag();
+
+        for (UUID player : players) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID(KEY_PLAYER, player);
+            list.add(entry);
+        }
+        return list;
+    }
+
+    public static void readSet(CompoundTag tag, String listKey, java.util.Set<UUID> out) {
+        ListTag list = tag.getList(listKey, Tag.TAG_COMPOUND);
+
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag entry = list.getCompound(i);
+            if (entry.hasUUID(KEY_PLAYER)) {
+                out.add(entry.getUUID(KEY_PLAYER));
+            }
+        }
+    }
+
+    /**
      * Le as entradas para dentro de {@code out}.
      *
      * @param reader devolve o valor da entrada, ou {@code null} para descartar essa linha — e assim

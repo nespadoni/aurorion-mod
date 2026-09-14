@@ -10,42 +10,34 @@ import java.util.function.Predicate;
  * Existe um criador de personagens neste servidor?
  *
  * <p>O core sabe <b>o que</b> e um personagem; quem decide <b>quando</b> cobrar um e o mod que
- * instala a tela de criacao. Enquanto ninguem instalar, este portao nao barra ninguem por falta de
- * nome — os outros mods do ecossistema continuam funcionando sozinhos, como sempre.
+ * instala a tela de criacao — e a politica dele depende de config que o core nao le. Por isso aqui
+ * nao mora regra nenhuma: mora so o que os outros mods precisam perguntar para nao atrapalhar.
  *
- * <p>A politica vem de fora de proposito: ela depende de config de servidor que o core nao le. Sem
- * isso, ou o core teria que conhecer a config do criador, ou a mesma decisao ficaria escrita nos dois.
+ * <p>Sem criador instalado, tudo aqui responde "nao" e o ecossistema segue como sempre.
  */
 public final class CharacterGate {
     /** Raiz de comando do criador. Regras terminais em outros mods precisam deixar ela passar. */
     public static final String COMMAND = "personagem";
 
-    private static Predicate<ServerPlayer> onboarding;
+    private static boolean creationEnabled;
 
     /**
      * Quem esta no meio de outra cena e nao pode ser interrompido por uma pergunta de nome.
      *
      * <p>Sao poucas e registradas na carga do mod; a lista e percorrida por indice para nao alocar
-     * iterador em caminho chamado a cada login.
+     * iterador num caminho chamado a cada login e a cada segundo.
      */
     private static final List<Predicate<ServerPlayer>> BUSY = new CopyOnWriteArrayList<>();
 
     private CharacterGate() {
     }
 
-    /** @param policy quem ainda deve um personagem; consultada na thread do servidor. */
-    public static void enableCreation(Predicate<ServerPlayer> policy) {
-        onboarding = policy;
+    public static void enableCreation() {
+        creationEnabled = true;
     }
 
     public static boolean creationEnabled() {
-        return onboarding != null;
-    }
-
-    /** True enquanto esta conta deve um personagem: nada de jogar ate ela responder. */
-    public static boolean blocks(ServerPlayer player) {
-        if (CharacterData.get(player.server).isDead(player.getUUID())) return true;
-        return onboarding != null && onboarding.test(player);
+        return creationEnabled;
     }
 
     /**
@@ -68,6 +60,6 @@ public final class CharacterGate {
 
     /** Um morto ainda pode falar com o criador; todo o resto continua recusado. */
     public static boolean allowsCommand(String rootLiteral) {
-        return onboarding != null && COMMAND.equals(rootLiteral);
+        return creationEnabled && COMMAND.equals(rootLiteral);
     }
 }

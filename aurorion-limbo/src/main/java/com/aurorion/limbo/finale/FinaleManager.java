@@ -131,8 +131,8 @@ public final class FinaleManager {
     }
 
     public static Component disconnectReason() {
-        return Component.literal("Você está morto.\nA história deste personagem chegou ao fim.\n"
-                + "Sua conta não foi banida. Para voltar a jogar, será necessário criar um novo personagem.");
+        return Component.literal("Você está morto.\nA história deste personagem chegou ao fim.\n\n"
+                + "Sua conta não foi banida. Para começar outra história, fale com a staff.");
     }
 
     public static void send(ServerPlayer player, FinalePayload payload) {

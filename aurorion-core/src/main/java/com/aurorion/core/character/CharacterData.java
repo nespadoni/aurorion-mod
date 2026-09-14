@@ -10,7 +10,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /** Account authentication, character identity and reset journal have different lifetimes. */
@@ -29,6 +31,10 @@ public final class CharacterData extends SavedData {
     private final Map<UUID, Archived> history = new HashMap<>();
     private final Map<UUID, Pending> pending = new HashMap<>();
     private final Map<String, UUID> names = new HashMap<>();
+    /** Contas que a staff liberou para comecar outra historia. Consumida ao publicar a identidade. */
+    private final Set<UUID> authorized = new HashSet<>();
+    /** Identidades publicadas que ainda nao foram apresentadas ao dono — ele estava offline. */
+    private final Set<UUID> newborn = new HashSet<>();
 
     public static CharacterData get(MinecraftServer server) { return ACCESS.get(server); }
     @Nullable public Character find(UUID account) { return current.get(account); }
@@ -59,6 +65,42 @@ public final class CharacterData extends SavedData {
     public Map<UUID, Archived> history() { return Collections.unmodifiableMap(history); }
     @Nullable public Pending pending(UUID account) { return pending.get(account); }
     public Map<UUID, Pending> pendingResets() { return Collections.unmodifiableMap(pending); }
+
+    // --- Autorizacao da staff -------------------------------------------------------------------
+
+    /**
+     * Morrer nao da direito a recomecar: alguem precisa abrir a porta.
+     *
+     * <p>Sem isto, a morte definitiva viraria uma inconveniencia de dois minutos — morre, cria outro,
+     * segue. A conta continua valida e sem banimento; o que ela nao tem e permissao automatica para
+     * comecar outra historia.
+     */
+    public boolean authorize(UUID account) {
+        if (!authorized.add(account)) return false;
+        setDirty();
+        return true;
+    }
+
+    public boolean revokeAuthorization(UUID account) {
+        if (!authorized.remove(account)) return false;
+        setDirty();
+        return true;
+    }
+
+    public boolean isAuthorized(UUID account) { return authorized.contains(account); }
+    public Set<UUID> authorizations() { return Collections.unmodifiableSet(authorized); }
+
+    /**
+     * A identidade nova existe, mas o dono ainda nao foi apresentado a ela.
+     *
+     * <p>Publicar acontece com a pessoa <b>offline</b> — e o unico momento em que da para apagar o
+     * arquivo dela. A saudacao, o nome exibido e o resto da apresentacao esperam aqui ate o login.
+     */
+    public boolean takeNewborn(UUID account) {
+        if (!newborn.remove(account)) return false;
+        setDirty();
+        return true;
+    }
 
     /** Naming an existing living, unnamed character preserves its ID and progression. */
     public Character nameLiving(UUID account, CharacterName name) {
@@ -97,7 +139,8 @@ public final class CharacterData extends SavedData {
     /** Reserve an identity; this does not revive the account or remove its old character. */
     public Pending beginReplacement(UUID account, String accountName, CharacterName name) {
         Character before = current.get(account);
-        if (before == null || !before.dead() || pending.containsKey(account) || !nameAvailable(name))
+        if (before == null || !before.dead() || pending.containsKey(account) || !nameAvailable(name)
+                || !authorized.contains(account))
             throw new IllegalStateException("Replacement is not eligible");
         Character next = new Character(UUID.randomUUID(), System.currentTimeMillis(), 0, name.firstName(), name.lastName());
         Pending transaction = new Pending(account, before.id(), next, accountName);
@@ -117,6 +160,9 @@ public final class CharacterData extends SavedData {
         history.put(before.id(), new Archived(account, before));
         current.put(account, transaction.next());
         pending.remove(account);
+        // A autorizacao valia por uma historia. A proxima morte precisa de outra.
+        authorized.remove(account);
+        newborn.add(account);
         setDirty();
         return transaction.next();
     }
@@ -135,8 +181,12 @@ public final class CharacterData extends SavedData {
 
     /** Restore the journal if committing to disk failed, keeping the account closed. */
     public void restorePending(Pending transaction, Character previous) {
-        current.put(transaction.account(), previous);
-        pending.put(transaction.account(), transaction);
+        UUID account = transaction.account();
+        current.put(account, previous);
+        pending.put(account, transaction);
+        history.remove(previous.id());
+        newborn.remove(account);
+        authorized.add(account);
         setDirty();
     }
 
@@ -146,6 +196,8 @@ public final class CharacterData extends SavedData {
         PlayerMapNbt.read(tag, "History", data.history, e -> new Archived(e.getUUID("Account"), readCharacter(e)));
         PlayerMapNbt.read(tag, "Pending", data.pending, e -> new Pending(e.getUUID("Player"),
                 e.getUUID("Previous"), readCharacter(e), e.getString("AccountName")));
+        PlayerMapNbt.readSet(tag, "Authorized", data.authorized);
+        PlayerMapNbt.readSet(tag, "Newborn", data.newborn);
         data.current.values().forEach(data::index);
         data.history.values().forEach(a -> data.index(a.character()));
         data.pending.values().forEach(p -> data.index(p.next()));
@@ -171,6 +223,8 @@ public final class CharacterData extends SavedData {
         tag.put("Pending", PlayerMapNbt.write(pending, (e, p) -> {
             e.putUUID("Previous", p.previousId()); e.putString("AccountName", p.accountName()); writeCharacter(e, p.next());
         }));
+        tag.put("Authorized", PlayerMapNbt.writeSet(authorized));
+        tag.put("Newborn", PlayerMapNbt.writeSet(newborn));
         return tag;
     }
 }

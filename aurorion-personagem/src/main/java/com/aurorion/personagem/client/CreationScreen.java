@@ -41,7 +41,6 @@ public class CreationScreen extends Screen {
             c -> Character.isLetter(c) || c == ' ' || c == '-' || c == '\'' || c == '’');
 
     private final OpenCreationPayload data;
-    private final boolean resuming;
 
     private EditBox firstName;
     private EditBox lastName;
@@ -54,7 +53,6 @@ public class CreationScreen extends Screen {
     public CreationScreen(OpenCreationPayload data) {
         super(Component.literal(data.title()));
         this.data = data;
-        this.resuming = !data.reserved().isEmpty();
     }
 
     @Override
@@ -65,22 +63,15 @@ public class CreationScreen extends Screen {
         int left = (width - PANEL_WIDTH) / 2;
         int y = top() + LINE * 2 + intro.size() * LINE + 12;
 
-        if (!resuming) {
-            firstName = field(left, y, "aurorion_personagem.criacao.nome");
-            lastName = field(left + PANEL_WIDTH - FIELD_WIDTH, y, "aurorion_personagem.criacao.sobrenome");
-            addRenderableWidget(firstName);
-            addRenderableWidget(lastName);
-            setInitialFocus(firstName);
-            y += 24;
-        } else {
-            y += 14;
-        }
+        firstName = field(left, y, "aurorion_personagem.criacao.nome");
+        lastName = field(left + PANEL_WIDTH - FIELD_WIDTH, y, "aurorion_personagem.criacao.sobrenome");
+        addRenderableWidget(firstName);
+        addRenderableWidget(lastName);
+        setInitialFocus(firstName);
 
-        y += rules.size() * LINE + 14;
+        y += 24 + rules.size() * LINE + 14;
 
-        confirm = Button.builder(Component.translatable(resuming
-                        ? "aurorion_personagem.criacao.continuar"
-                        : "aurorion_personagem.criacao.nascer"), button -> submit())
+        confirm = Button.builder(Component.translatable("aurorion_personagem.criacao.nascer"), button -> submit())
                 .bounds(width / 2 - 75, Math.min(height - 28, y), 150, 20)
                 .build();
         addRenderableWidget(confirm);
@@ -99,9 +90,8 @@ public class CreationScreen extends Screen {
     private void submit() {
         confirm.active = false;
         error = null;
-        PacketDistributor.sendToServer(resuming
-                ? new SubmitNamePayload("", "")
-                : new SubmitNamePayload(firstName.getValue().strip(), lastName.getValue().strip()));
+        PacketDistributor.sendToServer(
+                new SubmitNamePayload(firstName.getValue().strip(), lastName.getValue().strip()));
     }
 
     /** O servidor recusou: a tela continua aberta, com o motivo onde a pessoa esta olhando. */
@@ -146,12 +136,7 @@ public class CreationScreen extends Screen {
         }
         y += 12;
 
-        if (!resuming) {
-            y += 24;
-        } else {
-            graphics.drawCenteredString(font, Component.literal(data.reserved()), width / 2, y, 0xFFFFFFFF);
-            y += 14;
-        }
+        y += 24;
 
         for (FormattedCharSequence line : rules) {
             graphics.drawString(font, line, left, y, 0xFF777777);

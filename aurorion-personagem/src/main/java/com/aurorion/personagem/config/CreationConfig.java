@@ -47,16 +47,26 @@ public final class CreationConfig {
                     "Este mundo não vai lembrar de você por você. Faça com que lembre."
             ), () -> "", CreationConfig::longText);
 
+    public static final ModConfigSpec.ConfigValue<String> NEEDS_STAFF = B
+            .comment("Tela de desconexao de quem morreu e ainda nao foi liberado pela staff.",
+                    "Liberar e /personagem liberar <jogador>, e vale por uma historia so.")
+            .define("semAutorizacao", "Você está morto.\n"
+                    + "A história deste personagem chegou ao fim.\n\n"
+                    + "Sua conta não foi banida. Para começar outra história, fale com a staff.",
+                    CreationConfig::longText);
+
+    public static final ModConfigSpec.ConfigValue<String> WIPING = B
+            .comment("Tela de desconexao entre reservar o nome e nascer. %s vira o nome escolhido.",
+                    "A troca so acontece com a conta fora do jogo: e o que permite apagar o arquivo.")
+            .define("apagando", "A história anterior está sendo apagada.\n\n"
+                    + "Entre no servidor de novo em alguns segundos para nascer como %s.",
+                    CreationConfig::longText);
+
     public static final ModConfigSpec.BooleanValue ASK_EXISTING = B
             .comment("Pede nome a quem ja jogava antes deste mod existir.",
                     "A progressao dessas pessoas NAO e apagada: elas so ganham um nome.",
                     "Em false, quem ja jogava segue sem nome e so os personagens novos sao nomeados.")
             .define("cobrarDeQuemJaJoga", true);
-
-    public static final ModConfigSpec.BooleanValue SPAWN_ON_BIRTH = B
-            .comment("Leva o personagem novo para o spawn do mundo depois do reset.",
-                    "Em false ele acorda onde o anterior morreu — inclusive dentro do Limbo.")
-            .define("nascerNoSpawn", true);
 
     public static final ModConfigSpec SPEC = B.build();
 

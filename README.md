@@ -17,7 +17,8 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Portais | [aurorion-portais/](aurorion-portais/) | Tranca todas as dimensões menos o overworld; o acesso abre em janelas agendadas por datapack (os "trens"), com avisos automáticos |
 | Aurorion Mundos | [aurorion-mundos/](aurorion-mundos/) | Mais de um overworld: mesmo gerador e mesmos mods de worldgen, mas com seed própria, barreira própria e portais de obsidiana com destino declarado em datapack |
 | Aurorion Vidas | [aurorion-vidas/](aurorion-vidas/) | Vidas limitadas por jogador, contador no HUD acima da fome, e exílio no Nether para quem zerar |
-| Aurorion Limbo | [aurorion-limbo/](aurorion-limbo/) | A dimensão de exílio e o **prazo** que corre nela; a Porta do Esquecido para quem ninguém foi buscar, e a auditoria que a staff lê por RCON ou webhook |
+| Aurorion Limbo | [aurorion-limbo/](aurorion-limbo/) | A dimensão de exílio e o **prazo** que corre nela; a Porta do Esquecido para quem ninguém foi buscar, a **morte definitiva** com epílogo, e a auditoria que a staff lê por RCON ou webhook |
+| Aurorion Personagem | [aurorion-personagem/](aurorion-personagem/) | Nome e sobrenome numa tela no primeiro login, e a troca de personagem depois da morte definitiva: identidade nova, progressão zerada, conta preservada |
 
 ### Conteúdo x comportamento
 
@@ -151,12 +152,37 @@ Versões de Minecraft/NeoForge/Parchment são atualizadas em um lugar só: o
 ## Problemas conhecidos de ambiente
 
 **`Connection reset` baixando `libraries.minecraft.net`** — algumas redes (corporativas, com DPI ou
-antivírus interceptando TLS) derrubam handshakes **TLS 1.3** contra o CDN da Mojang. O sintoma é o
-Gradle falhar em `Could not resolve com.mojang:brigadier` e afins. Contorno, só na máquina afetada:
+antivírus interceptando TLS) derrubam a conexão contra o CDN da Mojang. O sintoma é o Gradle falhar
+em `Could not resolve com.mojang:brigadier` e afins.
 
-```properties
-# gradle.properties (local, não commitar)
-org.gradle.jvmargs=-Xmx3G -Djdk.tls.client.protocols=TLSv1.2
+Vale diagnosticar antes de escolher o contorno, porque são duas falhas diferentes com a mesma
+mensagem:
+
+```bash
+curl -I https://libraries.minecraft.net/com/mojang/logging/1.2.7/logging-1.2.7.pom               # TLS padrão
+curl -I --tlsv1.2 --tls-max 1.2 https://libraries.minecraft.net/com/mojang/logging/1.2.7/logging-1.2.7.pom
+curl -I --tlsv1.2 --tls-max 1.2 https://libraries.minecraft.net/com/mojang/logging/1.2.7/logging-1.2.7.jar
+```
+
+- **Só o primeiro falha** → é o handshake **TLS 1.3**. Contorno, só na máquina afetada:
+
+  ```properties
+  # gradle.properties (local, não commitar)
+  org.gradle.jvmargs=-Xmx3G -Djdk.tls.client.protocols=TLSv1.2
+  ```
+
+- **`.pom` passa e `.jar` é derrubado** → não é TLS: é antivírus/proxy bloqueando **download de
+  arquivo compactado**. Nenhuma config do Gradle resolve; a saída é liberar `libraries.minecraft.net`
+  na política do antivírus/rede, ou buildar noutra rede uma vez para encher o cache em
+  `~/.gradle/caches` (ele é reaproveitado offline depois).
+
+**`Unsupported class file major version 69` antes de qualquer tarefa** — o Gradle 8.14 não roda em
+JDK 25. Acontece quando um `org.gradle.java.home` apontando para JDK 25 está no
+`~/.gradle/gradle.properties` **global** por causa de outro projeto: ele vale para todos. Contorno
+por invocação, sem mexer no arquivo global:
+
+```bash
+./gradlew -Dorg.gradle.java.home="C:/Program Files/Java/jdk-21" build
 ```
 
 ## Licença

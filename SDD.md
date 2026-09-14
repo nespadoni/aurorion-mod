@@ -916,10 +916,34 @@ A morte cinematográfica não chama o respawn vanilla. Espectador, veto a comand
 viagem e bloqueio de pacotes de movimento/inventário mantêm a regra mesmo se a tela for fechada.
 Após os créditos, o servidor conta 60 segundos e desconecta, sem aguardar confirmação do cliente.
 
-Criar outro personagem permanece uma operação futura: arquivar a identidade anterior, zerar
-progressão vanilla e dos mods e só então publicar a identidade nova. Remover uma flag ou apenas
-devolver vidas não substitui essa operação. Detalhes e configuração:
+Criar outro personagem é a §12.10. Remover uma flag ou apenas devolver vidas não substitui essa
+operação. Detalhes e configuração:
 [aurorion-limbo/MORTE-DEFINITIVA.md](aurorion-limbo/MORTE-DEFINITIVA.md).
+
+### 12.10 Criação de personagem: nome, portão e reset transacional
+
+O nome exibido passa a ser escolhido pelo jogador numa tela de login, e é a mesma identidade que o
+Core guarda. Nome e sobrenome são validados no servidor e indexados sem acento e sem caixa; a chave
+continua reservada depois da morte, então nome de personagem morto não volta a circular.
+
+O portão é do servidor, não da tela: quem deve um personagem fica em espectador, com chat, comandos,
+viagem e troca de modo vetados. A única brecha é a raiz de comando do criador, que é o que permite a
+um cliente sem o mod responder. A tela do cliente é cortesia — ela reabre sozinha, mas apagá-la não
+devolve o jogo. A varredura do portão roda uma vez por segundo sobre a lista de jogadores, sem
+alocar, e é ela que pega quem passou a dever um personagem no meio da sessão.
+
+A troca de identidade é uma transação com diário persistido: reserva gravada com `fsync` antes de
+qualquer apagamento, reset, publicação, segundo `fsync`. Queda no meio deixa reserva no disco e conta
+morta — o estado de retomada, com handlers escritos para serem idempotentes. Falha de IO desfaz a
+publicação em vez de reportar sucesso que o disco não viu.
+
+O criador não conhece nenhum outro mod do ecossistema: ele dispara um evento e cada mod apaga o que é
+seu, ao lado dos dados que escreveu. É a mesma regra do §9.2 aplicada a dado em vez de evento — quem
+é dono decide. Progressão de mod de terceiro não é alcançada por isso e precisa de listener próprio.
+
+A política de quem é barrado vem do criador para o Core por predicado, e não o contrário: ela depende
+de config de servidor que o Core não lê, e duplicá-la nos dois seria a mesma decisão escrita duas
+vezes. Detalhes: [aurorion-personagem/README.md](aurorion-personagem/README.md).
 
 ## 13. Fora de escopo (deliberadamente)
 
