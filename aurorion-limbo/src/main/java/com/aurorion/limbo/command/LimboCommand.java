@@ -5,6 +5,7 @@ import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
+import com.aurorion.limbo.network.LimboNetwork;
 import com.aurorion.limbo.report.AuditLog;
 import com.aurorion.vidas.lives.LivesManager;
 import com.mojang.authlib.GameProfile;
@@ -65,6 +66,17 @@ public final class LimboCommand {
 
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
+        // Raiz separada, sem exigencia de permissao, de proposito: e ela que a escolha do dialogo do
+        // ADM roda (commands: ["oraculo"]), e o dialogo acontece na mao de jogador comum. A trava nao
+        // e de permissao, e de posicao — LimboNetwork.openOracle so responde perto de um Oraculo.
+        event.getDispatcher().register(Commands.literal("oraculo")
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayer();
+                    if (player == null) return 0;
+                    LimboNetwork.openOracle(player);
+                    return 1;
+                }));
+
         event.getDispatcher().register(Commands.literal("limbo")
                 .requires(source -> source.hasPermission(STAFF_LEVEL))
                 .executes(LimboCommand::report)

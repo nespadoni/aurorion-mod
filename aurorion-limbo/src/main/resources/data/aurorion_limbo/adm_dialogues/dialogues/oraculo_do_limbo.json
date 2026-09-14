@@ -1,0 +1,117 @@
+{
+  "title": "O Oráculo",
+  "speaker": "O Oráculo",
+  "speaker_color": "#82B0CD",
+  "text_color": "#C9C4BA",
+  "text_speed": 2,
+  "start": "saudacao",
+
+  "nodes": {
+    "saudacao": {
+      "text": [
+        "Você chegou até aqui. Poucos chegam.",
+        "Eu conto os que se perdem. É só isso que eu faço."
+      ],
+      "choices": [
+        {
+          "text": "Quem está perdido?",
+          "next": "tem_perdidos",
+          "condition": { "type": "aurorion_limbo:exilados", "min": 1 }
+        },
+        {
+          "text": "Quem está perdido?",
+          "next": "ninguem",
+          "condition": { "type": "aurorion_limbo:exilados", "expected": false }
+        },
+        {
+          "text": "O que é este lugar?",
+          "next": "lore"
+        },
+        {
+          "text": "Nada. (sair)",
+          "close": true
+        }
+      ]
+    },
+
+    "tem_perdidos": {
+      "text": [
+        "Há nomes no escuro. Eu posso mostrá-los.",
+        "Abrir o caminho custa. Não custa moeda — custa o que você tem de mais curto."
+      ],
+      "choices": [
+        {
+          "text": "Mostre-me os nomes.",
+          "commands": ["oraculo"],
+          "close": true,
+          "condition": { "type": "aurorion_limbo:pode_pagar" }
+        },
+        {
+          "text": "Mostre-me os nomes.",
+          "next": "sem_preco",
+          "condition": { "type": "aurorion_limbo:pode_pagar", "expected": false }
+        },
+        {
+          "text": "Voltar",
+          "next": "saudacao"
+        }
+      ]
+    },
+
+    "sem_preco": {
+      "text": [
+        "Você não tem o bastante para pagar a travessia.",
+        "Volte quando tiver mais vida do que precisa para si mesmo."
+      ],
+      "choices": [
+        { "text": "Entendo.", "close": true }
+      ]
+    },
+
+    "ninguem": {
+      "text": [
+        "Hoje não. O escuro está calado.",
+        "Volte quando alguém deixar de voltar."
+      ],
+      "choices": [
+        { "text": "Que assim seja.", "close": true }
+      ]
+    },
+
+    "lore": {
+      "text": [
+        "Chamam de Limbo. É um nome emprestado — o lugar não se chama nada.",
+        "Quem cai aqui não está morto. Está esquecido, que é pior e demora mais.",
+        "Se ninguém vier, o próprio lugar abre uma porta. Não por piedade.",
+        "Por desinteresse."
+      ],
+      "choices": [
+        { "text": "E se eu cair aqui?", "next": "lore_exilado",
+          "condition": { "type": "aurorion_limbo:no_limbo", "expected": false } },
+        { "text": "Eu já caí.", "next": "lore_dentro",
+          "condition": { "type": "aurorion_limbo:no_limbo" } },
+        { "text": "Voltar", "next": "saudacao" }
+      ]
+    },
+
+    "lore_exilado": {
+      "text": [
+        "Então alguém vai olhar para uma cadeira vazia e perguntar por você.",
+        "Ou não vai. É essa a única coisa que importa."
+      ],
+      "choices": [
+        { "text": "Voltar", "next": "saudacao" }
+      ]
+    },
+
+    "lore_dentro": {
+      "text": [
+        "Eu sei. Eu conto os que se perdem, e você está na conta.",
+        "Ande. O escuro cede para quem insiste."
+      ],
+      "choices": [
+        { "text": "...", "close": true }
+      ]
+    }
+  }
+}

@@ -49,5 +49,7 @@
   "aurorion_limbo.passagem.recusa.sem_espaco": "Não há espaço aqui para a passagem abrir.",
   "aurorion_limbo.vinculo.usado": "O vínculo se fechou. %s está voltando.",
   "aurorion_limbo.vinculo.proprio": "O Vínculo não funciona em você mesmo.",
-  "aurorion_limbo.vinculo.nao_exilado": "Essa pessoa não está exilada."
+  "aurorion_limbo.vinculo.nao_exilado": "Essa pessoa não está exilada.",
+  "aurorion_limbo.subtitle.musica": "Um som distante",
+  "aurorion_limbo.subtitle.ambiente": "O Limbo respira"
 }

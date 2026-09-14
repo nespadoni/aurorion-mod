@@ -1,0 +1,15 @@
+{
+  "name": "aurorion_limbo:ruinas",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "aurorion_limbo:ruinas/altar_partido",
+        "processors": "aurorion_limbo:desgaste",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

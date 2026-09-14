@@ -49,5 +49,7 @@
   "aurorion_limbo.passagem.recusa.sem_espaco": "There is no room here for the passage to open.",
   "aurorion_limbo.vinculo.usado": "The bond closed. %s is coming back.",
   "aurorion_limbo.vinculo.proprio": "The Bond does not work on yourself.",
-  "aurorion_limbo.vinculo.nao_exilado": "That person is not exiled."
+  "aurorion_limbo.vinculo.nao_exilado": "That person is not exiled.",
+  "aurorion_limbo.subtitle.musica": "Something distant",
+  "aurorion_limbo.subtitle.ambiente": "The Limbo breathes"
 }

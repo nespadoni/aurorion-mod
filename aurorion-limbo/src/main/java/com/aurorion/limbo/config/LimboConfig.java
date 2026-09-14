@@ -21,12 +21,14 @@ public final class LimboConfig {
     public static final ModConfigSpec.IntValue DOOR_WALK_MAX;
     public static final ModConfigSpec.ConfigValue<String> DOOR_FRAME_BLOCK;
     public static final ModConfigSpec.IntValue LEASH_RADIUS;
+    public static final ModConfigSpec.IntValue SPAWN_SCATTER;
 
     public static final ModConfigSpec.IntValue RESCUE_LIFE_COST;
     public static final ModConfigSpec.IntValue RESCUE_MIN_LIVES;
     public static final ModConfigSpec.IntValue PASSAGE_MINUTES;
     public static final ModConfigSpec.IntValue BOND_COUNT;
     public static final ModConfigSpec.ConfigValue<String> ORACLE_TAG;
+    public static final ModConfigSpec.ConfigValue<String> ORACLE_DIALOGUE;
 
     public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_NAMES;
@@ -97,14 +99,34 @@ public final class LimboConfig {
 
         LEASH_RADIUS = BUILDER
                 .comment(
-                        "Enquanto a Porta NAO esta armada, o exilado nao se afasta mais que isto do ponto de",
-                        "chegada — e empurrado de volta. Serve ao resgate: uma busca de 15 minutos precisa de",
-                        "uma area, nao de um mundo infinito.",
-                        "Quando a janela da Porta abre, a coleira cai sozinha. E o momento em que o Limbo deixa",
-                        "de ser uma sala de espera e vira um lugar para vagar procurando saida.",
-                        "Zero desliga a coleira."
+                        "Ate onde o exilado pode se afastar da ancora do exilio antes de ser empurrado de volta.",
+                        "E a BORDA do Limbo — nao ha world border de verdade, o empurrao e esta config.",
+                        "",
+                        "O valor nasceu 300 quando o Limbo era uma arena plana e vazia e a coleira existia para o",
+                        "resgate: uma busca de 15 minutos precisava de area pequena. Duas coisas mudaram desde",
+                        "entao e o numero teve que mudar junto:",
+                        "  - as ruinas geram a cada ~400 blocos, entao com 300 ninguem encontrava nenhuma;",
+                        "  - o resgatador chega PERTO do exilado, nao num ponto fixo, entao a busca ja nao",
+                        "    depende de o Limbo ser pequeno.",
+                        "",
+                        "2000 da uma area para sobreviver, explorar e achar ruinas, e ainda e uma borda: o Limbo",
+                        "tem fim, e bater nele lembra que o lugar e uma jaula.",
+                        "Quando a janela da Porta do Esquecido abre, a coleira cai sozinha — e o momento em que o",
+                        "Limbo deixa de ser sala de espera e vira um lugar para vagar procurando saida.",
+                        "Zero desliga a borda e o Limbo vira infinito."
                 )
-                .defineInRange("raioDaColeira", 300, 0, 100_000);
+                .defineInRange("raioDaColeira", 2000, 0, 100_000);
+
+        SPAWN_SCATTER = BUILDER
+                .comment(
+                        "Raio em que o ponto de acordar e sorteado, em volta da ancora do exilio.",
+                        "Vale para a chegada E para cada morte dentro do Limbo: ninguem acorda duas vezes no",
+                        "mesmo lugar. Morrer passa a custar territorio em vez de rebobinar a caminhada.",
+                        "Sempre na SUPERFICIE — nunca dentro de caverna, nunca em cima de copa de arvore.",
+                        "Mantenha bem abaixo do raioDaColeira, ou alguem acorda ja fora da borda.",
+                        "Zero faz todo mundo acordar na ancora, como era antes."
+                )
+                .defineInRange("raioDeDispersao", 400, 0, 100_000);
 
         BUILDER.pop();
         BUILDER.comment(
@@ -152,6 +174,22 @@ public final class LimboConfig {
                         "   NoAI:1b,Silent:1b,PersistenceRequired:1b,Invulnerable:1b}"
                 )
                 .define("tagDoOraculo", "aurorion_oraculo");
+
+        ORACLE_DIALOGUE = BUILDER
+                .comment(
+                        "Arquivo de dialogo do ADM que o Oraculo abre, sem a extensao .json.",
+                        "Vazio (ou ADM ausente) faz o Oraculo abrir a lista de exilados direto — o resgate",
+                        "funciona igual, so perde a conversa.",
+                        "",
+                        "O dialogo e CONTEUDO: mora em config/adm-dialogues/dialogues/ ou num datapack, e a",
+                        "staff reescreve a fala sem rebuild. O que vem do codigo sao as condicoes que ele pode",
+                        "consultar:",
+                        "  {\"type\": \"aurorion_limbo:exilados\", \"min\": 1}  ha alguem no Limbo",
+                        "  {\"type\": \"aurorion_limbo:pode_pagar\"}          tem vida para a passagem",
+                        "  {\"type\": \"aurorion_limbo:no_limbo\"}            quem fala esta exilado",
+                        "Uma escolha do dialogo abre a lista rodando: commands: [\"limbo oraculo\"]"
+                )
+                .define("dialogoDoOraculo", "oraculo_do_limbo");
 
         BUILDER.pop();
         BUILDER.comment("O que o servidor conta, e para quem.").push("avisos");

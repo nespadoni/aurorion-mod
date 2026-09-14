@@ -1,0 +1,93 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Registro do terceiro turno",
+                  "author": "mão desconhecida",
+                  "pages": [
+                    "\"Contei catorze na primeira noite. Na segunda, doze.\n\nNão sei se dois foram embora ou se eu contei errado. Ninguém mais conta comigo.\"",
+                    "\"O Oráculo diz que só registra. Perguntei o que acontece com o registro.\n\nEle disse que alguém lê. Não disse quem.\"",
+                    "\"Parei de perguntar os nomes. Fica pior quando você sabe o nome.\""
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Sobre a porta",
+                  "author": "o penúltimo",
+                  "pages": [
+                    "\"Ela não abre porque você merece. Abre porque você cansou o lugar.\n\nAndei. Não sei quanto. O suficiente para o escuro desistir de mim.\"",
+                    "\"Quem atravessa sozinho volta com uma marca que ninguém vê.\n\nEu vejo. Nós nos reconhecemos.\""
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:written_book",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "minecraft:written_book_content": {
+                  "title": "Para quem vier me buscar",
+                  "author": "sem assinatura",
+                  "pages": [
+                    "\"Se você está lendo isto, chegou tarde.\n\nNão é culpa sua. O prazo é curto e o mundo é grande.\"",
+                    "\"Deixei isto aqui porque alguém vai cair no mesmo lugar, e vai querer saber que não foi o primeiro.\n\nVocê não é o primeiro.\""
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:paper",
+          "weight": 4,
+          "functions": [
+            { "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": { "min": 1, "max": 2 },
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:bone", "weight": 6,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 4 } }] },
+        { "type": "minecraft:item", "name": "minecraft:candle", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:soul_torch", "weight": 4,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }] },
+        { "type": "minecraft:item", "name": "minecraft:rotten_flesh", "weight": 5,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }] },
+        { "type": "minecraft:item", "name": "minecraft:echo_shard", "weight": 1 },
+        { "type": "minecraft:empty", "weight": 4 }
+      ]
+    }
+  ]
+}

@@ -296,7 +296,10 @@ public final class LimboManager {
         int x = (int) Math.round(center.getX() + dx / distance * pullback);
         int z = (int) Math.round(center.getZ() + dz / distance * pullback);
 
-        BlockPos ground = SafeSpot.scanDown(level, x, z, level.getMaxBuildHeight() - 2);
+        // Superficie, e nao o primeiro vao vindo do teto: numa floresta densa o scanDown do topo
+        // larga a pessoa em cima de uma copa de arvore, e num Limbo com cavernas pode larga-la
+        // debaixo da terra. A borda empurra para dentro do mapa, nao para dentro do chao.
+        BlockPos ground = LimboSpawn.surface(level, x, z);
         BlockPos target = ground != null ? ground : center;
 
         player.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);

@@ -18,8 +18,18 @@
     "mood_sound": {
       "block_search_extent": 8,
       "offset": 2.0,
-      "sound": "minecraft:ambient.cave",
-      "tick_delay": 1200
+      "sound": "aurorion_limbo:ambient.limbo",
+      "tick_delay": 900
+    },
+    "music": {
+      "sound": "aurorion_limbo:music.limbo",
+      "min_delay": 1200,
+      "max_delay": 6000,
+      "replace_current_music": true
+    },
+    "additions_sound": {
+      "sound": "aurorion_limbo:ambient.limbo",
+      "tick_chance": 0.0008
     }
   },
   "features": [

@@ -1,6 +1,7 @@
 package com.aurorion.limbo.event;
 
 import com.aurorion.limbo.AurorionLimbo;
+import com.aurorion.limbo.compat.AdmCompat;
 import com.aurorion.limbo.compat.PlayerReviveCompat;
 import com.aurorion.limbo.environment.LimboEnvironment;
 import com.aurorion.limbo.config.LimboConfig;
@@ -8,13 +9,18 @@ import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
+import com.aurorion.limbo.exile.LimboSpawn;
 import com.aurorion.limbo.network.LimboNetwork;
 import com.aurorion.limbo.report.DiscordSink;
 import com.aurorion.vidas.lives.LivesManager;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -23,6 +29,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerRespawnPositionEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -84,6 +91,33 @@ public final class LimboServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             LimboEnvironment.disconnect(player);
         }
+    }
+
+    /**
+     * Cada respawn no Limbo acorda a pessoa num lugar novo, sempre na superficie.
+     *
+     * <p>{@code LOWEST} porque o {@code aurorion_vidas} ja escolheu o destino em {@code LOW} — ele
+     * manda para a ancora do exilio, que e um ponto so. Aqui a dimensao ja esta decidida e o que se
+     * troca e apenas <b>onde</b> dentro dela, entao nada do outro mod precisa mudar. E o mesmo
+     * arbitro da SDD §9.2: a regra mais especifica fala por ultimo.
+     *
+     * <p>Cobre os dois casos de uma vez, porque sao o mesmo evento: cair no Limbo pela primeira vez e
+     * morrer ja estando dentro dele.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onRespawnPosition(PlayerRespawnPositionEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!LivesManager.isExiled(player.server, player.getUUID())) return;
+
+        ServerLevel limbo = player.server.getLevel(LimboManager.dimension());
+        if (limbo == null || event.getDimensionTransition().newLevel() != limbo) return;
+
+        BlockPos spot = LimboSpawn.scattered(limbo);
+        if (spot == null) return;
+
+        DimensionTransition current = event.getDimensionTransition();
+        event.setDimensionTransition(new DimensionTransition(limbo, spot.getBottomCenter(), Vec3.ZERO,
+                current.yRot(), current.xRot(), DimensionTransition.DO_NOTHING));
     }
 
     /** O respawn troca a entidade do jogador; e a primeira tela que o exilado ve. */
@@ -163,6 +197,8 @@ public final class LimboServerEvents {
      */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
+        AdmCompat.register();
+
         ResourceKey<Level> dimension = LimboManager.dimension();
 
         if (event.getServer().getLevel(dimension) == null) {
@@ -197,7 +233,11 @@ public final class LimboServerEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!event.getTarget().getTags().contains(LimboConfig.ORACLE_TAG.get())) return;
 
-        LimboNetwork.openOracle(player);
+        // Dialogo primeiro: e ele que da personalidade ao Oraculo. A lista e o que o ADM nao
+        // consegue mostrar, e uma escolha do dialogo a abre rodando /oraculo.
+        if (!AdmCompat.openOracleDialogue(player, event.getTarget())) {
+            LimboNetwork.openOracle(player);
+        }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
@@ -258,6 +298,7 @@ public final class LimboServerEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         LimboManager.reset();
+        AdmCompat.reset();
         LimboEnvironment.reset();
         DiscordSink.shutdown();
         counter = 0;

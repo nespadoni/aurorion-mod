@@ -43,9 +43,20 @@ public final class LimboNetwork {
 
     // --- O Oraculo -----------------------------------------------------------------------------
 
-    /** Abre a tela de quem clicou no Oraculo. Cliente sem o mod simplesmente nao ve nada. */
+    /**
+     * Abre a tela de quem clicou no Oraculo. Cliente sem o mod simplesmente nao ve nada.
+     *
+     * <p>Confere a distancia aqui tambem, e nao so na hora de pagar: {@code /oraculo} e um comando sem
+     * permissao (o dialogo do ADM precisa disso), entao sem esta checagem ele viraria um "listar todos
+     * os exilados" que qualquer um roda de qualquer lugar do mundo. Saber quem caiu e um servico do
+     * Oraculo, nao um comando.
+     */
     public static void openOracle(ServerPlayer player) {
         if (!player.connection.hasChannel(OpenOraclePayload.TYPE.id())) return;
+        if (!nearOracle(player)) {
+            player.displayClientMessage(LimboText.oracleTooFar(), true);
+            return;
+        }
 
         var exiles = RescueManager.listExiles(player.server).stream()
                 .limit(OpenOraclePayload.MAX_ENTRIES)
