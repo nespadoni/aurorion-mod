@@ -68,4 +68,19 @@ class ChatNarrator implements LimboNarrator {
     public void expired(ServerPlayer player) {
         player.sendSystemMessage(LimboText.expired().withStyle(ChatFormatting.DARK_RED));
     }
+
+    @Override
+    public void passageOpened(ServerPlayer rescuer, String target, int cost) {
+        rescuer.sendSystemMessage(LimboText.passageOpened(target, cost).withStyle(ChatFormatting.AQUA));
+    }
+
+    @Override
+    public void passageCrossed(ServerPlayer rescuer) {
+        rescuer.sendSystemMessage(LimboText.passageCrossed().withStyle(ChatFormatting.DARK_AQUA));
+    }
+
+    @Override
+    public void bondUsed(ServerPlayer rescuer, String target) {
+        rescuer.sendSystemMessage(LimboText.bondUsed(target).withStyle(ChatFormatting.GOLD));
+    }
 }

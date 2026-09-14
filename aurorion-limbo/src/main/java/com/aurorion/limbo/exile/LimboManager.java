@@ -390,7 +390,8 @@ public final class LimboManager {
         return true;
     }
 
-    private static boolean returnToOverworld(ServerPlayer player) {
+    /** Publico porque o resgate por Vinculo tambem tira gente do Limbo, e tem que sair pela mesma porta. */
+    public static boolean returnToOverworld(ServerPlayer player) {
         ServerLevel overworld = player.server.overworld();
         BlockPos landing = SafeSpot.aroundColumn(overworld, overworld.getSharedSpawnPos(), 8,
                 overworld.getMaxBuildHeight() - 2);

@@ -794,10 +794,11 @@ a garantia de não haver pacote por segundo (§12.6) de uma regressão silencios
 `:aurorion-limbo:runGameTestServer` exercita o ciclo com dois jogadores
 simulados e os mods Vidas e Portais carregados: travessia simultânea, cancelamento, tentativa de
 resgate, vencimento único, relatório RCON e retorno pela staff (inclusive após reconectar).
-O preset de teste incorpora o tipo real da dimensão, mas substitui o gerador por uma camada plana
-descartável. Assim o ciclo de exílio continua determinístico e barato no CI, enquanto a validação
-do worldgen de produção fica a cargo do carregamento de datapack e de uma inspeção no cliente.
-Classes e estruturas de teste não entram no jar de distribuição.
+O preset de teste usa um tipo e uma camada plana exclusivos do namespace de testes. Assim o ciclo de
+exílio continua determinístico e barato no CI, enquanto a validação do worldgen de produção fica a
+cargo do carregamento de datapack e de uma inspeção no cliente. Classes, tipo e estruturas de teste
+não entram no jar de distribuição. Uma execução explícita com `-PlimboRealWorldgen` conserva o
+gerador de produção no preset e cobre a criação de chunks quando o perfil de terreno muda.
 
 ### 12.6 Apresentação: três camadas, e nenhuma delas obrigatória
 
@@ -878,7 +879,8 @@ Limbo. Não existe varredura de blocos nem modificação recorrente do terreno. 
 planos até a dimensão ser recriada ou a exploração alcançar terreno novo.
 
 Darkness I é parte da regra da dimensão. Ela é aplicada na entrada, reconciliada na varredura de um
-segundo já existente e sua remoção ou expiração é cancelada enquanto o jogador está no Limbo; leite,
+segundo já existente apenas sobre a lista de jogadores da dimensão e sua remoção ou expiração é
+cancelada enquanto o jogador está no Limbo; leite,
 comando e outro efeito não abrem uma janela clara. A marca do efeito fica no NBT do jogador para que
 a saída remova apenas a escuridão criada pelo ambiente, inclusive depois de reiniciar o servidor.
 

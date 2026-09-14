@@ -2,6 +2,9 @@ package com.aurorion.limbo.network;
 
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.client.ClientLimbo;
+import com.aurorion.limbo.config.LimboConfig;
+import com.aurorion.limbo.narrate.LimboText;
+import com.aurorion.limbo.rescue.RescueManager;
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
@@ -28,6 +31,61 @@ public final class LimboNetwork {
         registrar.playToClient(LimboStatusPayload.TYPE, LimboStatusPayload.STREAM_CODEC, (payload, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> ClientLimbo.status(payload));
         });
+        registrar.playToClient(OpenOraclePayload.TYPE, OpenOraclePayload.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> ClientLimbo.openOracle(payload));
+        });
+        registrar.playToServer(BeginRescuePayload.TYPE, BeginRescuePayload.STREAM_CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) {
+                context.enqueueWork(() -> beginRescue(player, payload.target()));
+            }
+        });
+    }
+
+    // --- O Oraculo -----------------------------------------------------------------------------
+
+    /** Abre a tela de quem clicou no Oraculo. Cliente sem o mod simplesmente nao ve nada. */
+    public static void openOracle(ServerPlayer player) {
+        if (!player.connection.hasChannel(OpenOraclePayload.TYPE.id())) return;
+
+        var exiles = RescueManager.listExiles(player.server).stream()
+                .limit(OpenOraclePayload.MAX_ENTRIES)
+                .map(e -> new OpenOraclePayload.Entry(e.id(), e.name(), e.remainingMillis(),
+                        e.attempted(), e.online()))
+                .toList();
+
+        PacketDistributor.sendToPlayer(player, new OpenOraclePayload(exiles,
+                LivesManager.livesOf(player.server, player.getUUID()),
+                LimboConfig.RESCUE_LIFE_COST.get(),
+                LimboConfig.minLivesToRescue()));
+    }
+
+    /**
+     * A escolha chegou do cliente. Tudo e reconferido aqui.
+     *
+     * <p>Inclusive a distancia: a tela pode continuar aberta enquanto a pessoa anda para longe do
+     * Oraculo, e sem esta checagem daria para abrir passagem de qualquer lugar do mundo com a tela
+     * que sobrou de dez minutos atras.
+     */
+    private static void beginRescue(ServerPlayer player, java.util.UUID target) {
+        if (!nearOracle(player)) {
+            player.displayClientMessage(LimboText.oracleTooFar(), true);
+            return;
+        }
+
+        RescueManager.Refusal refusal = RescueManager.openPassage(player, target);
+        if (refusal != RescueManager.Refusal.OK) {
+            player.displayClientMessage(LimboText.refusal(refusal), true);
+        }
+    }
+
+    /** Um Oraculo a menos de 8 blocos. O mesmo alcance que o vanilla usa para interagir com bau. */
+    private static boolean nearOracle(ServerPlayer player) {
+        String tag = LimboConfig.ORACLE_TAG.get();
+        return !player.level()
+                .getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                        player.getBoundingBox().inflate(8.0D),
+                        entity -> entity.getTags().contains(tag))
+                .isEmpty();
     }
 
     public static boolean notice(ServerPlayer player, int kind, net.minecraft.network.chat.Component body) {

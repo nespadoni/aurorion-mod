@@ -22,6 +22,12 @@ public final class LimboConfig {
     public static final ModConfigSpec.ConfigValue<String> DOOR_FRAME_BLOCK;
     public static final ModConfigSpec.IntValue LEASH_RADIUS;
 
+    public static final ModConfigSpec.IntValue RESCUE_LIFE_COST;
+    public static final ModConfigSpec.IntValue RESCUE_MIN_LIVES;
+    public static final ModConfigSpec.IntValue PASSAGE_MINUTES;
+    public static final ModConfigSpec.IntValue BOND_COUNT;
+    public static final ModConfigSpec.ConfigValue<String> ORACLE_TAG;
+
     public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_NAMES;
 
@@ -101,6 +107,53 @@ public final class LimboConfig {
                 .defineInRange("raioDaColeira", 300, 0, 100_000);
 
         BUILDER.pop();
+        BUILDER.comment(
+                "O resgate: o Oraculo, a passagem e o Vinculo de Alma.",
+                "Ir buscar alguem custa uma vida de quem vai. E o que transforma resgate em decisao",
+                "em vez de logistica — e fecha de graca o abuso de conta alt, que nao tem vida sobrando."
+        ).push("resgate");
+
+        RESCUE_LIFE_COST = BUILDER
+                .comment(
+                        "Quantas vidas quem abre a passagem paga.",
+                        "Zero desliga o custo e transforma o resgate em rotina. Foi discutido e rejeitado:",
+                        "sem preco, a Porta do Esquecido perde o sentido, porque nunca faltaria quem fosse."
+                )
+                .defineInRange("custoEmVidas", 1, 0, 20);
+
+        RESCUE_MIN_LIVES = BUILDER
+                .comment(
+                        "Vidas minimas para poder abrir a passagem.",
+                        "Tem que ser MAIOR que o custo: quem ficaria com zero ao pagar seria exilado no ato,",
+                        "e o servidor ganharia dois exilados em vez de zero."
+                )
+                .defineInRange("vidasMinimas", 2, 1, 20);
+
+        PASSAGE_MINUTES = BUILDER
+                .comment(
+                        "Quantos minutos a passagem fica aberta.",
+                        "Fechou, quem esta dentro continua dentro ate achar o exilado ou ser trazido de volta."
+                )
+                .defineInRange("minutosDaPassagem", 15, 1, 120);
+
+        BOND_COUNT = BUILDER
+                .comment("Quantos Vinculos de Alma o resgatador leva ao atravessar. Um sobrando cobre perder um.")
+                .defineInRange("vinculosPorResgate", 2, 1, 16);
+
+        ORACLE_TAG = BUILDER
+                .comment(
+                        "Tag de entidade que transforma um mob em Oraculo.",
+                        "Nao registramos entidade propria de proposito: um esqueleto com esta tag ja serve, e",
+                        "qualquer mob do modpack pode virar Oraculo sem uma linha de codigo. Mesma ideia da tag",
+                        "de altar do aurorion_ethereal — o acoplamento e um dado, nunca uma classe.",
+                        "",
+                        "Para criar um:",
+                        "  /summon minecraft:skeleton ~ ~ ~ {Tags:[\"aurorion_oraculo\"],CustomName:'\"O Oraculo\"',",
+                        "   NoAI:1b,Silent:1b,PersistenceRequired:1b,Invulnerable:1b}"
+                )
+                .define("tagDoOraculo", "aurorion_oraculo");
+
+        BUILDER.pop();
         BUILDER.comment("O que o servidor conta, e para quem.").push("avisos");
 
         ANNOUNCE_FALL = BUILDER
@@ -161,5 +214,16 @@ public final class LimboConfig {
     /** O sorteio da Porta so faz sentido com o teto acima do piso; a config nao garante isso sozinha. */
     public static int walkMax() {
         return Math.max(DOOR_WALK_MIN.get(), DOOR_WALK_MAX.get());
+    }
+
+    /**
+     * Vidas minimas reais para abrir a passagem.
+     *
+     * <p>A config deixa configurar minimo e custo separados, e nada impede alguem escrever minimo 1 com
+     * custo 1. Isso exilaria o resgatador no momento em que ele paga — dois exilados no lugar de zero,
+     * e o segundo sem ninguem para ir buscar. O piso e sempre custo + 1.
+     */
+    public static int minLivesToRescue() {
+        return Math.max(RESCUE_MIN_LIVES.get(), RESCUE_LIFE_COST.get() + 1);
     }
 }

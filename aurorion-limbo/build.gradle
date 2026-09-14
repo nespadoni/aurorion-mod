@@ -69,21 +69,26 @@ dependencies {
     gameTestImplementation project(':aurorion-portais').sourceSets.main.output
 }
 
-// O GameTestServer 1.21.1 usa apenas as dimensoes do preset flat. Mantemos o tipo real do Limbo,
-// mas trocamos seu worldgen por uma camada previsivel: o teste valida regras, nao ruido aleatorio.
+// O GameTestServer 1.21.1 usa apenas as dimensoes do preset flat. Por padrao damos ao Limbo um tipo
+// e uma camada previsiveis; -PlimboRealWorldgen preserva a dimensao real para validar geracao.
 tasks.named('processGameTestResources', ProcessResources) {
     def dimensionJson = file('src/main/resources/data/aurorion_limbo/dimension/limbo.json')
+    def realWorldgen = providers.gradleProperty('limboRealWorldgen').isPresent()
     inputs.file(dimensionJson)
+    inputs.property('limboRealWorldgen', realWorldgen)
     doLast {
         def limbo = new groovy.json.JsonSlurper().parse(dimensionJson)
-        limbo.generator = [
-            type: 'minecraft:flat', settings: [biome: 'minecraft:the_void', lakes: false,
-            features: false, structure_overrides: [], layers: [
-                [block: 'minecraft:bedrock', height: 1],
-                [block: 'minecraft:blackstone', height: 3],
-                [block: 'minecraft:polished_blackstone', height: 1]
-            ]]
-        ]
+        if (!realWorldgen) {
+            limbo.type = 'aurorion_limbo_tests:limbo_test'
+            limbo.generator = [
+                type: 'minecraft:flat', settings: [biome: 'minecraft:the_void', lakes: false,
+                features: false, structure_overrides: [], layers: [
+                    [block: 'minecraft:bedrock', height: 1],
+                    [block: 'minecraft:blackstone', height: 3],
+                    [block: 'minecraft:polished_blackstone', height: 1]
+                ]]
+            ]
+        }
         def preset = [dimensions: [
             'minecraft:overworld': [type: 'minecraft:overworld', generator: [
                 type: 'minecraft:flat', settings: [biome: 'minecraft:plains', lakes: false,

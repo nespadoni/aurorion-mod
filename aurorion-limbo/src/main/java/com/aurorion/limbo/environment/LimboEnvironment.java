@@ -33,13 +33,14 @@ public final class LimboEnvironment {
     /** Reconciliação de um segundo: cobre reloads, comandos e mods que mexem no efeito diretamente. */
     public static void tick(MinecraftServer server) {
         long now = server.getTickCount();
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (isInside(player)) {
-                enforceDarkness(player);
-                tickSound(player, now);
-            } else {
-                leave(player);
-            }
+        ServerLevel level = server.getLevel(LimboManager.dimension());
+        if (level == null) return;
+
+        // A lista pertence somente ao Limbo. Com a dimensão vazia, os 80 jogadores do servidor
+        // não entram neste laço.
+        for (ServerPlayer player : level.players()) {
+            enforceDarkness(player);
+            tickSound(player, now);
         }
     }
 
@@ -89,6 +90,11 @@ public final class LimboEnvironment {
 
         player.getPersistentData().remove(DARKNESS_MARKER);
         player.removeEffect(MobEffects.DARKNESS);
+    }
+
+    /** Desconectar preserva o efeito no NBT, mas o agendamento sonoro é apenas desta sessão. */
+    public static void disconnect(ServerPlayer player) {
+        NEXT_SOUND.remove(player.getUUID());
     }
 
     private static void tickSound(ServerPlayer player, long now) {

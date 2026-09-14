@@ -52,7 +52,11 @@ public record AuditEvent(
         /** O prazo venceu sem resgate e sem Porta. */
         PRAZO_VENCIDO,
         TENTATIVA_RESGATE,
-        PRAZO_AJUSTADO
+        PRAZO_AJUSTADO,
+        /** O Oraculo abriu uma passagem: alguem pagou uma vida para ir buscar. */
+        PASSAGEM_ABERTA,
+        /** O Vinculo de Alma foi usado no exilado. O RESGATE que fecha o registro vem logo depois. */
+        VINCULO_USADO
     }
 
     public JsonObject toJson() {
@@ -84,6 +88,8 @@ public record AuditEvent(
             case PRAZO_VENCIDO -> name + " ficou no Limbo ate o prazo vencer.";
             case TENTATIVA_RESGATE -> "Tentativa de resgate registrada para " + name + ".";
             case PRAZO_AJUSTADO -> "Prazo de " + name + " ajustado para " + remainingMillis / 1000L + "s.";
+            case PASSAGEM_ABERTA -> "Uma passagem foi aberta para " + name + ".";
+            case VINCULO_USADO -> name + " recebeu o Vinculo de Alma.";
         };
         return detail.isEmpty() ? base : base + " (" + detail + ")";
     }

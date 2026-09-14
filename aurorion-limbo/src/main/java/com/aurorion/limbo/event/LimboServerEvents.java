@@ -3,6 +3,7 @@ package com.aurorion.limbo.event;
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.compat.PlayerReviveCompat;
 import com.aurorion.limbo.environment.LimboEnvironment;
+import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
@@ -11,6 +12,7 @@ import com.aurorion.limbo.network.LimboNetwork;
 import com.aurorion.limbo.report.DiscordSink;
 import com.aurorion.vidas.lives.LivesManager;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.EventPriority;
@@ -20,6 +22,7 @@ import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -74,6 +77,13 @@ public final class LimboServerEvents {
         LimboEnvironment.reconcile(player);
         refreshPanel(player);
         announceArrival(player);
+    }
+
+    @SubscribeEvent
+    public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            LimboEnvironment.disconnect(player);
+        }
     }
 
     /** O respawn troca a entidade do jogador; e a primeira tela que o exilado ve. */
@@ -168,6 +178,28 @@ public final class LimboServerEvents {
                             + "exileDimension=\"{}:limbo\" em config/aurorion_vidas-server.toml.",
                     dimension.location(), AurorionLimbo.MOD_ID);
         }
+    }
+
+    /**
+     * Clique direito num mob com a tag do Oraculo abre a tela do resgate.
+     *
+     * <p><b>Nao registramos entidade propria de proposito.</b> Um esqueleto com a tag
+     * {@code aurorion_oraculo} ja e um Oraculo, e qualquer mob do modpack tambem pode ser — sem
+     * modelo, sem renderer, sem IA, sem ovo de spawn e sem conteudo novo que fique preso no save para
+     * sempre (SDD §6.1). E a mesma ideia da tag de altar do {@code aurorion_ethereal}: o acoplamento
+     * e um dado, nunca uma classe.
+     *
+     * <p>Cancelamos o evento para o clique nao virar outra coisa — trocar de item, montar, abrir o
+     * inventario do mob. Sem isso, um Oraculo num mob montavel viraria um cavalo.
+     */
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!event.getTarget().getTags().contains(LimboConfig.ORACLE_TAG.get())) return;
+
+        LimboNetwork.openOracle(player);
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.SUCCESS);
     }
 
     @SubscribeEvent

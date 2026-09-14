@@ -117,4 +117,9 @@ public final class ClientLimbo {
     public static void clear() {
         remaining = -1; notice = null; particleTick = 0; clockSecond = -1; revision++;
     }
+
+    /** O Oraculo respondeu: abre a tela com a lista que o servidor montou. */
+    public static void openOracle(com.aurorion.limbo.network.OpenOraclePayload payload) {
+        Minecraft.getInstance().setScreen(new OracleScreen(payload));
+    }
 }

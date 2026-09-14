@@ -8,6 +8,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -30,5 +31,18 @@ public final class LimboClientEvents {
         var level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().location().equals(LIMBO) || event.getCamera().getFluidInCamera() != FogType.NONE) return;
         event.setRed(.055F); event.setGreen(.073F); event.setBlue(.11F);
+    }
+
+    /** O renderer da passagem. Registrado no mod bus, como todo renderer de entidade. */
+    @net.neoforged.fml.common.EventBusSubscriber(modid = AurorionLimbo.MOD_ID,
+            value = Dist.CLIENT)
+    public static final class Renderers {
+        private Renderers() { }
+
+        @SubscribeEvent
+        public static void register(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerEntityRenderer(com.aurorion.limbo.registry.LimboEntities.RESCUE_PORTAL.get(),
+                    RescuePortalRenderer::new);
+        }
     }
 }

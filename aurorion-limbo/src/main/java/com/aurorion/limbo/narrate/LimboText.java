@@ -71,6 +71,50 @@ public final class LimboText {
         return Component.translatable("aurorion_limbo.resgatado");
     }
 
+    // --- Resgate -------------------------------------------------------------------------------
+
+    public static MutableComponent passageOpened(String name, int cost) {
+        return Component.translatable("aurorion_limbo.passagem.aberta", name, cost);
+    }
+
+    public static MutableComponent passageCrossed() {
+        return Component.translatable("aurorion_limbo.passagem.atravessou");
+    }
+
+    public static MutableComponent bondUsed(String name) {
+        return Component.translatable("aurorion_limbo.vinculo.usado", name);
+    }
+
+    public static MutableComponent bondSelf() {
+        return Component.translatable("aurorion_limbo.vinculo.proprio");
+    }
+
+    public static MutableComponent bondNotExiled() {
+        return Component.translatable("aurorion_limbo.vinculo.nao_exilado");
+    }
+
+    public static MutableComponent oracleTooFar() {
+        return Component.translatable("aurorion_limbo.oraculo.longe");
+    }
+
+    /**
+     * Por que a passagem nao abriu, em uma frase.
+     *
+     * <p>Cada recusa tem texto proprio em vez de um "nao deu" generico: quem acabou de decidir gastar
+     * uma vida merece saber se o problema foi a vida que falta, a pessoa que ja saiu do Limbo, ou o
+     * chao onde ele esta parado.
+     */
+    public static MutableComponent refusal(com.aurorion.limbo.rescue.RescueManager.Refusal refusal) {
+        return Component.translatable(switch (refusal) {
+            case NOT_EXILED -> "aurorion_limbo.passagem.recusa.nao_exilado";
+            case SELF -> "aurorion_limbo.passagem.recusa.proprio";
+            case RESCUER_EXILED -> "aurorion_limbo.passagem.recusa.voce_exilado";
+            case NOT_ENOUGH_LIVES -> "aurorion_limbo.passagem.recusa.sem_vidas";
+            case NO_ROOM -> "aurorion_limbo.passagem.recusa.sem_espaco";
+            case OK -> "aurorion_limbo.passagem.aberta";
+        });
+    }
+
     public static MutableComponent expired() {
         return Component.translatable("aurorion_limbo.vencido");
     }

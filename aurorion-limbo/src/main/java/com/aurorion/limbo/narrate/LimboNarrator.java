@@ -54,6 +54,15 @@ public interface LimboNarrator {
     /** O prazo venceu com a pessoa online. */
     void expired(ServerPlayer player);
 
+    /** Pagou a vida e a passagem abriu. So quem pagou ve. */
+    void passageOpened(ServerPlayer rescuer, String target, int cost);
+
+    /** Atravessou a passagem e chegou ao Limbo. */
+    void passageCrossed(ServerPlayer rescuer);
+
+    /** Usou o Vinculo de Alma em alguem. */
+    void bondUsed(ServerPlayer rescuer, String target);
+
     /**
      * Escolhido uma vez, no primeiro uso.
      *

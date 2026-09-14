@@ -2,20 +2,15 @@
   "aurorion_limbo.queda": "Você perdeu a última vida. O Limbo te recebeu.",
   "aurorion_limbo.queda.publico": "Um vínculo se rompeu em Aurorion.",
   "aurorion_limbo.queda.publico.nome": "%s perdeu a última vida e caiu no Limbo.",
-
   "aurorion_limbo.chegada": "O Limbo. Faltam %s.",
   "aurorion_limbo.prazo": "Faltam %s.",
   "aurorion_limbo.vencido": "O prazo venceu. Ninguém veio.",
-
   "aurorion_limbo.coleira": "O Limbo não te deixa ir mais longe.",
-
   "aurorion_limbo.porta.janela": "As bordas do Limbo cederam. Caminhe.",
   "aurorion_limbo.porta.apareceu": "Alguma coisa se abriu em %s %s %s.",
   "aurorion_limbo.porta.saiu": "Você atravessou sozinho. Ninguém veio te buscar.",
   "aurorion_limbo.porta.saiu.repetido": "Você atravessou sozinho de novo — %s vezes até agora.",
-
   "aurorion_limbo.resgatado": "Alguém veio te buscar.",
-
   "aurorion_limbo.title.queda": "A última vida",
   "aurorion_limbo.title.chegada": "Você acordou",
   "aurorion_limbo.title.prazo": "O tempo corre",
@@ -26,12 +21,33 @@
   "aurorion_limbo.title.resgate": "Resgatado",
   "aurorion_limbo.title.vencido": "O fim do prazo",
   "aurorion_limbo.title.publico": "Um vínculo se rompeu",
-
   "aurorion_limbo.ui.eyebrow": "AURORION",
   "aurorion_limbo.ui.name": "O Limbo",
   "aurorion_limbo.ui.remaining": "Tempo restante",
   "aurorion_limbo.ui.waiting": "Aguardando resgate",
   "aurorion_limbo.ui.walking": "As bordas cederam",
   "aurorion_limbo.ui.door": "A Porta está aberta",
-  "aurorion_limbo.ui.expired": "Prazo vencido"
+  "aurorion_limbo.ui.expired": "Prazo vencido",
+  "item.aurorion_limbo.vinculo_de_alma": "Vínculo de Alma",
+  "item.aurorion_limbo.vinculo_de_alma.desc": "Use em quem está no Limbo para trazê-lo de volta.",
+  "entity.aurorion_limbo.passagem": "Passagem",
+  "aurorion_limbo.oraculo.titulo": "O Oráculo",
+  "aurorion_limbo.oraculo.vazio": "Ninguém se perdeu no Limbo.",
+  "aurorion_limbo.oraculo.abrir": "Abrir passagem",
+  "aurorion_limbo.oraculo.custo": "Custa %s vida.",
+  "aurorion_limbo.oraculo.prazo": "Resta %s",
+  "aurorion_limbo.oraculo.procurado": "já procurado",
+  "aurorion_limbo.oraculo.offline": "offline",
+  "aurorion_limbo.oraculo.suas_vidas": "Você tem %s vidas — precisa de %s.",
+  "aurorion_limbo.oraculo.longe": "Você se afastou do Oráculo.",
+  "aurorion_limbo.passagem.aberta": "A passagem se abriu para %s. Custou %s vida.",
+  "aurorion_limbo.passagem.atravessou": "Você atravessou. Encontre a pessoa e use o Vínculo.",
+  "aurorion_limbo.passagem.recusa.nao_exilado": "Essa pessoa não está mais no Limbo.",
+  "aurorion_limbo.passagem.recusa.proprio": "Ninguém resgata a si mesmo.",
+  "aurorion_limbo.passagem.recusa.voce_exilado": "Você está no Limbo. Não dá para buscar ninguém daqui.",
+  "aurorion_limbo.passagem.recusa.sem_vidas": "Você não tem vidas suficientes para pagar a passagem.",
+  "aurorion_limbo.passagem.recusa.sem_espaco": "Não há espaço aqui para a passagem abrir.",
+  "aurorion_limbo.vinculo.usado": "O vínculo se fechou. %s está voltando.",
+  "aurorion_limbo.vinculo.proprio": "O Vínculo não funciona em você mesmo.",
+  "aurorion_limbo.vinculo.nao_exilado": "Essa pessoa não está exilada."
 }

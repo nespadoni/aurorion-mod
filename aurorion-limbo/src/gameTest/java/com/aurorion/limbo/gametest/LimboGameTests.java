@@ -1,5 +1,6 @@
 package com.aurorion.limbo.gametest;
 
+import com.aurorion.core.level.SafeSpot;
 import com.aurorion.limbo.compat.PlayerReviveCompat;
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
@@ -250,9 +251,13 @@ public class LimboGameTests {
     private static void enter(ServerPlayer player, ServerLevel limbo, int x) {
         limbo.getChunk(x >> 4, 0);
         limbo.getChunk(x >> 4, 1);
+        BlockPos landing = SafeSpot.scanDown(limbo, x, 0, limbo.getMaxBuildHeight() - 2);
+        if (landing == null) {
+            throw new IllegalStateException("Limbo sem ponto seguro na coluna de teste x=" + x);
+        }
         ForgottenDoor.authorize(player, limbo.dimension());
         try {
-            player.changeDimension(new DimensionTransition(limbo, new Vec3(x + .5, 5, .5), Vec3.ZERO,
+            player.changeDimension(new DimensionTransition(limbo, landing.getBottomCenter(), Vec3.ZERO,
                     0, 0, DimensionTransition.DO_NOTHING));
         } finally {
             ForgottenDoor.clear();

@@ -2,20 +2,15 @@
   "aurorion_limbo.queda": "You lost your last life. The Limbo took you in.",
   "aurorion_limbo.queda.publico": "A bond broke in Aurorion.",
   "aurorion_limbo.queda.publico.nome": "%s lost their last life and fell into the Limbo.",
-
   "aurorion_limbo.chegada": "The Limbo. %s left.",
   "aurorion_limbo.prazo": "%s left.",
   "aurorion_limbo.vencido": "Your time ran out. Nobody came.",
-
   "aurorion_limbo.coleira": "The Limbo will not let you go any further.",
-
   "aurorion_limbo.porta.janela": "The edges of the Limbo gave way. Walk.",
   "aurorion_limbo.porta.apareceu": "Something opened at %s %s %s.",
   "aurorion_limbo.porta.saiu": "You crossed alone. Nobody came for you.",
   "aurorion_limbo.porta.saiu.repetido": "You crossed alone again — %s times so far.",
-
   "aurorion_limbo.resgatado": "Someone came for you.",
-
   "aurorion_limbo.title.queda": "The last life",
   "aurorion_limbo.title.chegada": "You woke up",
   "aurorion_limbo.title.prazo": "Time is running",
@@ -26,12 +21,33 @@
   "aurorion_limbo.title.resgate": "Rescued",
   "aurorion_limbo.title.vencido": "Time up",
   "aurorion_limbo.title.publico": "A bond broke",
-
   "aurorion_limbo.ui.eyebrow": "AURORION",
   "aurorion_limbo.ui.name": "The Limbo",
   "aurorion_limbo.ui.remaining": "Time remaining",
   "aurorion_limbo.ui.waiting": "Waiting for rescue",
   "aurorion_limbo.ui.walking": "The edges gave way",
   "aurorion_limbo.ui.door": "The Door is open",
-  "aurorion_limbo.ui.expired": "Time expired"
+  "aurorion_limbo.ui.expired": "Time expired",
+  "item.aurorion_limbo.vinculo_de_alma": "Soul Bond",
+  "item.aurorion_limbo.vinculo_de_alma.desc": "Use it on someone in the Limbo to bring them back.",
+  "entity.aurorion_limbo.passagem": "Passage",
+  "aurorion_limbo.oraculo.titulo": "The Oracle",
+  "aurorion_limbo.oraculo.vazio": "Nobody is lost in the Limbo.",
+  "aurorion_limbo.oraculo.abrir": "Open passage",
+  "aurorion_limbo.oraculo.custo": "Costs %s life.",
+  "aurorion_limbo.oraculo.prazo": "%s left",
+  "aurorion_limbo.oraculo.procurado": "already sought",
+  "aurorion_limbo.oraculo.offline": "offline",
+  "aurorion_limbo.oraculo.suas_vidas": "You have %s lives — you need %s.",
+  "aurorion_limbo.oraculo.longe": "You walked away from the Oracle.",
+  "aurorion_limbo.passagem.aberta": "A passage opened for %s. It cost %s life.",
+  "aurorion_limbo.passagem.atravessou": "You crossed. Find them and use the Bond.",
+  "aurorion_limbo.passagem.recusa.nao_exilado": "That person is no longer in the Limbo.",
+  "aurorion_limbo.passagem.recusa.proprio": "Nobody rescues themselves.",
+  "aurorion_limbo.passagem.recusa.voce_exilado": "You are in the Limbo. You cannot fetch anyone from here.",
+  "aurorion_limbo.passagem.recusa.sem_vidas": "You do not have enough lives to pay for the passage.",
+  "aurorion_limbo.passagem.recusa.sem_espaco": "There is no room here for the passage to open.",
+  "aurorion_limbo.vinculo.usado": "The bond closed. %s is coming back.",
+  "aurorion_limbo.vinculo.proprio": "The Bond does not work on yourself.",
+  "aurorion_limbo.vinculo.nao_exilado": "That person is not exiled."
 }

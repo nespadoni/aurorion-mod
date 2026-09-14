@@ -182,20 +182,25 @@ dele cita o nome e é independente de `anunciarNomes` do Limbo.
 
 ## A dimensão
 
-`data/aurorion_limbo/dimension/limbo.json` — **gerador plano**, e isso é escolha de design, não
-preguiça:
+`data/aurorion_limbo/dimension/limbo.json` usa relevo, cavernas, aquíferos e minérios do Overworld,
+mas fixa o bioma `aurorion_limbo:limbo_forest` em toda a dimensão. A superfície é podzol sobre terra
+infértil, com uma floresta escura cerca de 50% mais densa que a dark forest vanilla. Animais ainda
+aparecem em menor quantidade e a tabela normal de monstros continua ativa, então é possível viver e
+buscar recursos enquanto o resgate não chega.
 
-- **Ficção.** O Limbo é o lugar de quem o mundo esqueceu. Andar 1500 blocos ali tem que ser monótono.
-- **Custo.** A caminhada gera muito chunk novo. Flat com bioma `the_void` gera quase de graça.
-- **Resgate.** Terreno plano é o que torna uma busca de 15 minutos vencível.
+O céu é o do End, o relógio fica parado em 18000, não existe luz do céu e a luz ambiente é zero.
+Dentro da dimensão, **Darkness I é infinito**: leite, `/effect clear` e curas de outros mods não o
+removem. A saída limpa o efeito imediatamente. Um ambiente grave toca ao fundo e, a cada 18–42
+segundos, um som de monstro nasce em algum ponto ao redor do jogador. Esses sons não criam entidades;
+os monstros reais vêm do spawn vanilla.
 
-Céu de End (campo de estrelas parado), sem luz do céu, sem cama e sem âncora de renascimento — as
-duas explodem, e explodir é uma saída.
+As árvores são geradas uma vez, quando o chunk nasce. Construir e editar ruínas depois não aciona
+nenhuma regeneração e não há rotina que substitua blocos prontos.
 
-Trocar isso requer editar o JSON e reiniciar o servidor; chunks existentes mantêm o terreno anterior.
-Nenhum código lê a forma do terreno. Quando o resgate
-existir, vale **pré-gerar a área com o Chunky**: worldgen no meio da janela de 15 minutos é stutter na
-pior hora possível do servidor.
+Esta versão é bem mais cara para gerar que o Limbo plano. **Pré-gere com Chunky** a área de chegada,
+o raio da coleira e os caminhos prováveis da Porta antes de liberar a dimensão. Chunks existentes
+mantêm o terreno antigo; para converter tudo de uma vez, use um backup e recrie somente a pasta da
+dimensão do Limbo com o servidor desligado.
 
 ## A apresentação
 
@@ -296,12 +301,15 @@ Validação automatizada, sem cliente gráfico:
 ```bash
 ./gradlew :aurorion-limbo:test
 ./gradlew :aurorion-limbo:runGameTestServer
+./gradlew -PlimboRealWorldgen :aurorion-limbo:runGameTestServer
 ./gradlew buildAll
 ```
 
 O GameTest usa um mundo separado em `aurorion-limbo/run/gameTestServer`, dois jogadores simulados
 e os mods Vidas e Portais. Exercita travessia simultânea, cancelamento, tentativa, prazo zero,
-relatório para RCON e resgate online/offline com reconexão. Não envia webhook.
+Darkness irremovível, limpeza do efeito na saída, relatório para RCON e resgate online/offline com
+reconexão. A execução com `-PlimboRealWorldgen` repete o ciclo gerando chunks com a floresta real;
+a execução padrão usa terreno plano para ser rápida e determinística. Não envia webhook.
 A execução de compatibilidade também pode carregar os jars reais de PlayerRevive e CreativeCore;
 ela confirma que exilados não entram em outra quase-morte e que estado antigo é limpo e sincronizado.
 Aparência no cliente, Immersive Messages e carga de 80 jogadores
@@ -332,6 +340,7 @@ narrate/   LimboNarrator (interface) → ImmersiveNarrator → NativeNarrator �
 network/   LimboNetwork, LimboStatusPayload (o painel), LimboNoticePayload (a cena)
 client/    ClientLimbo (estado da tela), LimboHudLayer (desenho), LimboClientEvents
 report/    AuditEvent, AuditLog (jsonl no save), DiscordSink (webhook assíncrono)
+environment/ LimboEnvironment — Darkness persistente e sons espaciais de baixa frequência
 event/     LimboServerEvents — morte, login, varredura de 1s, destrave da travessia
 command/   LimboCommand — a saída estável que o bot lê por RCON
 ```
