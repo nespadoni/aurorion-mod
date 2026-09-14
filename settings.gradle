@@ -31,6 +31,7 @@ include 'aurorion-portais'
 include 'aurorion-mundos'
 include 'aurorion-vidas'
 include 'aurorion-limbo'
+include 'aurorion-personagem'
 
 // Nao e um mod: sobe um client/servidor com todos os mods acima de uma vez.
 include 'aurorion-runs'

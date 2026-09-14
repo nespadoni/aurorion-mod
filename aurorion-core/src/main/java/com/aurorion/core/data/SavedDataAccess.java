@@ -127,6 +127,14 @@ public final class SavedDataAccess<T extends SavedData> {
      * que solta a referencia ao {@link MinecraftServer} parado, que de outro jeito seguraria o grafo
      * inteiro do servidor na memoria ate o proximo mundo abrir.
      */
+    public static void flushAll(MinecraftServer server) throws java.io.IOException {
+        for (SavedDataAccess<?> access : ALL) {
+            if (access.cachedFrom == server && access.cached != null) {
+                DurableSavedData.flush(server, access.fileId, access.cached);
+            }
+        }
+    }
+
     public static void invalidateAll() {
         for (SavedDataAccess<?> access : ALL) {
             access.invalidate();

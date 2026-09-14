@@ -1,0 +1,43 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+# A regra e do servidor. O canal e optional(), entao um cliente sem o mod entra e continua jogando —
+# ele so nao ve a tela de criacao, e recebe as mesmas perguntas por mensagem, respondendo no comando
+# /personagem criar. Quem decide se o personagem existe e o servidor, nos dois casos.
+displayTest = "IGNORE_ALL_VERSION"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# Biblioteca compartilhada do ecossistema. Obrigatoria: a identidade do personagem (o UUID proprio,
+# a marca de morte e o diario de troca) mora nela, e e por ela que os outros mods sao avisados do
+# reset. Sem o core este mod nao tem o que gerenciar.
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Nenhum outro mod do ecossistema e dependencia declarada, e isso e deliberado: este mod nao importa
+# classe de nenhum deles. Ele dispara CharacterResetEvent e cada mod apaga o que e seu, no seu
+# proprio codigo. Instalado sozinho, ele continua fazendo a parte vanilla do reset.

@@ -103,6 +103,25 @@ public class LimboData extends SavedData {
     }
 
     /**
+     * Apaga tudo que o Limbo guarda sobre um jogador, inclusive a memoria permanente.
+     *
+     * <p>E o reset de personagem, nao um resgate: quem atravessou a Porta tres vezes comeca a
+     * proxima historia sem esse historico, porque ele era da anterior. Idempotente de proposito —
+     * um reset interrompido e retomado passa por aqui duas vezes.
+     */
+    public boolean clear(UUID player) {
+        boolean changed = active.remove(player) != null;
+        changed |= forgottenExits.remove(player) != null;
+        changed |= forgottenNames.remove(player) != null;
+        changed |= pendingDoors.remove(player) != null;
+
+        if (changed) {
+            setDirty();
+        }
+        return changed;
+    }
+
+    /**
      * A visao do relatorio e da varredura.
      *
      * <p>Devolve o mapa vivo em vez de uma copia: a varredura roda uma vez por segundo, e alocar uma

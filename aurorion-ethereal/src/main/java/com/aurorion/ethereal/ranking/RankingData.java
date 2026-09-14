@@ -166,6 +166,20 @@ public final class RankingData extends SavedData {
         return true;
     }
 
+    /**
+     * Tira o jogador do placar por completo — pontos, mortes, duelos, missoes e o nome exibido.
+     *
+     * <p>Serve a troca de personagem: o ranking e da historia, nao da conta. Zerar os pontos e
+     * deixar a linha no lugar mostraria "0 pontos" com o nome antigo ate a proxima morte.
+     */
+    public boolean clearPlayer(UUID id) {
+        if (players.remove(id) == null) {
+            return false;
+        }
+        setDirty();
+        return true;
+    }
+
     public int playerPoints(UUID id) {
         PlayerRanking ranking = players.get(id);
         return ranking == null ? 0 : ranking.points();
