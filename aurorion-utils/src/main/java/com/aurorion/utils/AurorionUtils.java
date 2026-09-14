@@ -1,5 +1,6 @@
 package com.aurorion.utils;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.utils.command.ModCommandArguments;
 import com.aurorion.utils.config.AbductionConfig;
 import com.aurorion.utils.entity.ModEntities;
@@ -27,6 +28,6 @@ public class AurorionUtils {
         ModEntities.ENTITY_TYPES.register(modEventBus);
         ModSounds.SOUND_EVENTS.register(modEventBus);
         ModCommandArguments.COMMAND_ARGUMENT_TYPES.register(modEventBus);
-        container.registerConfig(ModConfig.Type.SERVER, AbductionConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, AbductionConfig.SPEC);
     }
 }

@@ -1,5 +1,6 @@
 package com.aurorion.portais;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.portais.config.TransitConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -31,6 +32,6 @@ public class AurorionPortais {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionPortais(IEventBus modEventBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.SERVER, TransitConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, TransitConfig.SPEC);
     }
 }

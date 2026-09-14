@@ -1,5 +1,6 @@
 package com.aurorion.ethereal;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.ethereal.config.EtherealConfig;
 import com.aurorion.ethereal.registry.EtherealBlockEntities;
 import com.aurorion.ethereal.registry.EtherealBlocks;
@@ -42,6 +43,6 @@ public final class AurorionEthereal {
         EtherealBlockEntities.BLOCK_ENTITIES.register(modBus);
         EtherealCreativeTab.TABS.register(modBus);
 
-        container.registerConfig(ModConfig.Type.SERVER, EtherealConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, EtherealConfig.SPEC);
     }
 }

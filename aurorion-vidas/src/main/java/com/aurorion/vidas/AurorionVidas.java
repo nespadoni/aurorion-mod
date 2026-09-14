@@ -1,5 +1,6 @@
 package com.aurorion.vidas;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.vidas.config.LivesClientConfig;
 import com.aurorion.vidas.config.LivesConfig;
 import com.mojang.logging.LogUtils;
@@ -34,7 +35,7 @@ public class AurorionVidas {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionVidas(IEventBus modEventBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.SERVER, LivesConfig.SPEC);
-        container.registerConfig(ModConfig.Type.CLIENT, LivesClientConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, LivesConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.CLIENT, LivesClientConfig.SPEC);
     }
 }

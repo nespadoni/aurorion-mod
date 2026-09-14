@@ -22,6 +22,7 @@ public final class LimboConfig {
     public static final ModConfigSpec.ConfigValue<String> DOOR_FRAME_BLOCK;
     public static final ModConfigSpec.IntValue LEASH_RADIUS;
     public static final ModConfigSpec.IntValue SPAWN_SCATTER;
+    public static final ModConfigSpec.IntValue HAUNT_RARITY;
 
     public static final ModConfigSpec.IntValue RESCUE_LIFE_COST;
     public static final ModConfigSpec.IntValue RESCUE_MIN_LIVES;
@@ -127,6 +128,19 @@ public final class LimboConfig {
                         "Zero faz todo mundo acordar na ancora, como era antes."
                 )
                 .defineInRange("raioDeDispersao", 400, 0, 100_000);
+
+        HAUNT_RARITY = BUILDER
+                .comment(
+                        "Assombracao: 1 chance em N por segundo, por exilado dentro do Limbo.",
+                        "Olhos entre as arvores, vultos passando, sussurros sem nada para ver. Nada disso e",
+                        "entidade — sao particulas e som, sempre ATRAS de quem esta olhando, e somem sozinhos.",
+                        "O jogador nunca confirma o que viu, porque nao havia o que confirmar.",
+                        "",
+                        "180 da uma manifestacao a cada ~3 minutos. A raridade E o efeito: com algo aparecendo",
+                        "a cada dez segundos vira cenario e a pessoa para de olhar.",
+                        "Zero desliga."
+                )
+                .defineInRange("assombracaoUmEmN", 180, 0, 100_000);
 
         BUILDER.pop();
         BUILDER.comment(

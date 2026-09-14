@@ -3,24 +3,72 @@
     "category": "music",
     "subtitle": "aurorion_limbo.subtitle.musica",
     "sounds": [
-      { "name": "minecraft:music.nether.soul_sand_valley", "type": "event", "stream": true },
-      { "name": "minecraft:music.overworld.deep_dark", "type": "event", "stream": true },
-      { "name": "minecraft:music.nether.basalt_deltas", "type": "event", "stream": true },
-      { "name": "minecraft:music.end", "type": "event", "stream": true }
+      {
+        "name": "minecraft:music.nether.soul_sand_valley",
+        "type": "event",
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.deep_dark",
+        "type": "event",
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.nether.basalt_deltas",
+        "type": "event",
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.end",
+        "type": "event",
+        "stream": true
+      }
     ]
   },
-
   "ambient.limbo": {
     "category": "ambient",
     "subtitle": "aurorion_limbo.subtitle.ambiente",
     "sounds": [
-      { "name": "minecraft:ambient.soul_sand_valley.additions", "type": "event" },
-      { "name": "minecraft:ambient.basalt_deltas.additions", "type": "event" },
-      { "name": "minecraft:ambient.nether_wastes.additions", "type": "event" },
-      { "name": "minecraft:entity.warden.ambient", "type": "event" },
-      { "name": "minecraft:entity.warden.nearby_close", "type": "event" },
-      { "name": "minecraft:block.sculk_shrieker.shriek", "type": "event" },
-      { "name": "minecraft:ambient.cave", "type": "event" }
+      {
+        "name": "minecraft:block.enchantment_table.use",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.vex.ambient",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.allay.ambient_without_item",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.wandering_trader.disappeared",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.warden.ambient",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.warden.listening",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.sculk_sensor.clicking",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:ambient.soul_sand_valley.additions",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:ambient.basalt_deltas.additions",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:ambient.cave",
+        "type": "event"
+      }
     ]
   }
 }

@@ -1,5 +1,6 @@
 package com.aurorion.limbo;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.registry.LimboEntities;
 import com.aurorion.limbo.registry.LimboItems;
@@ -50,7 +51,7 @@ public class AurorionLimbo {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionLimbo(IEventBus modEventBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.SERVER, LimboConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, LimboConfig.SPEC);
 
         // Conteudo do resgate: um item e uma entidade temporaria. O Oraculo nao entra aqui de
         // proposito — ele e uma tag num mob que ja existe, e nao um registro novo.

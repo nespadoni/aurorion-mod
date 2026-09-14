@@ -1,5 +1,6 @@
 package com.aurorion.aeonita;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.aeonita.config.AeonitaClientConfig;
 import com.aurorion.aeonita.registry.AeonitaBlocks;
 import com.aurorion.aeonita.registry.AeonitaCreativeTab;
@@ -31,6 +32,6 @@ public class AurorionAeonita {
         AeonitaItems.ITEMS.register(modEventBus);
         AeonitaCreativeTab.CREATIVE_MODE_TABS.register(modEventBus);
 
-        container.registerConfig(ModConfig.Type.CLIENT, AeonitaClientConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.CLIENT, AeonitaClientConfig.SPEC);
     }
 }

@@ -1,5 +1,6 @@
 package com.aurorion.talk;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.talk.config.TalkConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.fml.ModContainer;
@@ -15,6 +16,6 @@ public class AurorionTalk {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionTalk(ModContainer container) {
-        container.registerConfig(ModConfig.Type.CLIENT, TalkConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.CLIENT, TalkConfig.SPEC);
     }
 }

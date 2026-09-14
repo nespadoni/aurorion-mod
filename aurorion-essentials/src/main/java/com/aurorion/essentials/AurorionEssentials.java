@@ -1,5 +1,6 @@
 package com.aurorion.essentials;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.essentials.cleanup.CleanupConfig;
 import com.aurorion.essentials.privacy.PrivacyConfig;
 import com.mojang.logging.LogUtils;
@@ -20,7 +21,7 @@ public class AurorionEssentials {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionEssentials(ModContainer container) {
-        container.registerConfig(ModConfig.Type.SERVER, CleanupConfig.SPEC);
-        container.registerConfig(ModConfig.Type.SERVER, PrivacyConfig.SPEC, MOD_ID + "-privacy.toml");
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, CleanupConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, PrivacyConfig.SPEC, "privacy");
     }
 }

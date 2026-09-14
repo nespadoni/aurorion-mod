@@ -1,5 +1,6 @@
 package com.aurorion.mundos;
 
+import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.mundos.config.MundosConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -44,6 +45,6 @@ public class AurorionMundos {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionMundos(IEventBus modEventBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.SERVER, MundosConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, MundosConfig.SPEC);
     }
 }

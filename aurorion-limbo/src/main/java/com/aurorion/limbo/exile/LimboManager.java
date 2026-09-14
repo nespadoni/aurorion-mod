@@ -3,6 +3,7 @@ package com.aurorion.limbo.exile;
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.config.LimboConfig;
+import com.aurorion.limbo.environment.LimboHaunt;
 import com.aurorion.limbo.narrate.LimboNarrator;
 import com.aurorion.limbo.network.LimboNetwork;
 import com.aurorion.limbo.report.AuditEvent;
@@ -163,6 +164,7 @@ public final class LimboManager {
             if (player.level().dimension() != dimension()) continue;
 
             warnIfBandChanged(player, record);
+            LimboHaunt.tick(player, (ServerLevel) player.level());
             if (tickDoor(server, player, record, id)) {
                 if (crossed == null) crossed = new ArrayList<>(2);
                 crossed.add(id);
