@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -92,17 +93,31 @@ public final class CreationManager {
         return true;
     }
 
-    /** Reassume a espera de quem foi solto por outro mod ou por comando de staff. */
+    /**
+     * A rede de seguranca do portao, uma vez por segundo.
+     *
+     * <p>Cobre duas coisas que o login sozinho nao cobre: quem foi solto do espectador por outro mod
+     * ou por comando de staff, e quem passou a dever um personagem <b>durante</b> a sessao — o caso
+     * real e o epilogo da morte definitiva terminando com a pessoa ainda conectada.
+     *
+     * <p>Percorre a lista de jogadores por indice e so faz consultas de mapa. Nada aqui aloca, e nada
+     * roda por tick: com 80 pessoas online sao 80 buscas por segundo, nao 1600.
+     */
     public static void sweep(MinecraftServer server) {
-        if (HELD.isEmpty()) return;
+        List<ServerPlayer> players = server.getPlayerList().getPlayers();
 
-        for (UUID account : HELD.keySet().toArray(new UUID[0])) {
-            ServerPlayer player = server.getPlayerList().getPlayer(account);
-            if (player == null) {
-                HELD.remove(account);
-            } else if (player.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) {
-                hold(player);
+        for (int i = 0; i < players.size(); i++) {
+            ServerPlayer player = players.get(i);
+
+            if (HELD.containsKey(player.getUUID())) {
+                if (player.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) hold(player);
+            } else {
+                onJoin(player);
             }
+        }
+
+        if (!HELD.isEmpty()) {
+            HELD.keySet().removeIf(account -> server.getPlayerList().getPlayer(account) == null);
         }
     }
 

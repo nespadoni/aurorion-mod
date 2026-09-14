@@ -21,6 +21,37 @@ public final class FinaleManager {
         return CharacterData.get(player.server).isDead(player.getUUID());
     }
 
+    /**
+     * Ainda ha epilogo a assistir para o personagem atual desta conta.
+     *
+     * <p>Consultado pelo criador de personagens, pelo {@code CharacterGate}: a pergunta do nome so
+     * pode aparecer depois que a cena terminar. Nao cria personagem nem marca nada como sujo — e
+     * uma pergunta, chamada em login.
+     */
+    public static boolean isViewing(ServerPlayer player) {
+        var character = CharacterData.get(player.server).find(player.getUUID());
+        if (character == null || !character.dead()) return false;
+
+        var record = FinaleData.get(player.server).record(player.getUUID());
+        return record != null && !record.finished() && record.characterId().equals(character.id());
+    }
+
+    /**
+     * Quem termina o epilogo e desconectado; a conta segue valida, sem banimento.
+     *
+     * <p>Com um criador de personagens instalado, a reconexao nao e mais recusada: a pessoa entra e
+     * a proxima coisa que ve e a tela de criacao. Sem ele, nao existe para onde mandar essa conta, e
+     * a recusa no login continua sendo a resposta honesta.
+     */
+    private static boolean closeOut(ServerPlayer player) {
+        if (!com.aurorion.core.character.CharacterGate.creationEnabled()) {
+            player.connection.disconnect(disconnectReason());
+        }
+        // Em ambos os casos o Limbo nao tem mais nada a fazer com esta conta: ou ela acabou de ser
+        // desconectada, ou o criador de personagens assume a partir daqui.
+        return true;
+    }
+
     /** Idempotent, including old expired saves and disconnects during the transition. */
     public static void expire(MinecraftServer server, UUID account) {
         var characters = CharacterData.get(server);
@@ -39,8 +70,7 @@ public final class FinaleManager {
         var record = FinaleData.get(player.server).record(account);
         if (record == null || record.finished()
                 || !record.characterId().equals(CharacterData.get(player.server).current(account).id())) {
-            player.connection.disconnect(disconnectReason());
-            return true;
+            return closeOut(player);
         }
         isolate(player);
         if (VIEWERS.put(account, player) != player) {
@@ -73,7 +103,7 @@ public final class FinaleManager {
             if (server.getPlayerList().getPlayer(entry.getKey()) != player) { iterator.remove(); continue; }
             FinaleRecord record = data.record(entry.getKey());
             if (record == null || !record.characterId().equals(CharacterData.get(server).current(entry.getKey()).id())) {
-                iterator.remove(); player.connection.disconnect(disconnectReason()); continue;
+                iterator.remove(); closeOut(player); continue;
             }
             isolate(player);
             long before = record.elapsed();

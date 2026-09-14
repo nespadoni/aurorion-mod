@@ -312,10 +312,20 @@ public final class LimboServerEvents {
                 && event.getNewGameMode() != net.minecraft.world.level.GameType.SPECTATOR) event.setCanceled(true);
     }
 
+    /**
+     * Um morto nao roda comando — com uma excecao: a do criador de personagens.
+     *
+     * <p>Ela existe porque um cliente sem o mod so tem o chat para responder a pergunta do nome. Sem
+     * a brecha, quem terminou o epilogo entraria, seria barrado e nao teria como sair disso.
+     */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onCommand(net.neoforged.neoforge.event.CommandEvent event) {
-        if (event.getParseResults().getContext().getSource().getEntity() instanceof ServerPlayer player
-                && FinaleManager.isDead(player)) event.setCanceled(true);
+        if (!(event.getParseResults().getContext().getSource().getEntity() instanceof ServerPlayer player)) return;
+        if (!FinaleManager.isDead(player)) return;
+
+        var nodes = event.getParseResults().getContext().getNodes();
+        String root = nodes.isEmpty() ? "" : nodes.get(0).getNode().getName();
+        if (!com.aurorion.core.character.CharacterGate.allowsCommand(root)) event.setCanceled(true);
     }
 
     /**

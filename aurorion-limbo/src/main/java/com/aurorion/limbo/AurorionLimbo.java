@@ -55,6 +55,11 @@ public class AurorionLimbo {
         AurorionConfigs.register(container, ModConfig.Type.SERVER,
                 com.aurorion.limbo.config.FinaleConfig.SPEC, "finale");
 
+        // Quem esta assistindo ao epilogo ainda tem uma cena para ver. Sem este aviso, um criador de
+        // personagens instalado no servidor abriria a tela de nome por cima dos creditos finais.
+        com.aurorion.core.character.CharacterGate.deferWhile(
+                com.aurorion.limbo.finale.FinaleManager::isViewing);
+
         // Conteudo do resgate: um item e uma entidade temporaria. O Oraculo nao entra aqui de
         // proposito — ele e uma tag num mob que ja existe, e nao um registro novo.
         LimboItems.ITEMS.register(modEventBus);
