@@ -84,6 +84,12 @@ dependencies {
     // e outra pelo diretorio anunciado em -Dfml.modFolders.
     modProjects.each { modProject ->
         implementation modProject.sourceSets.main.output
+
+        // O output acima e so classes + resources: nao traz as dependencias do mod junto.
+        // As bibliotecas de terceiros que ele precisa em runtime (GeckoLib, por exemplo) vem
+        // desta configuration, declarada na convencao compartilhada. Mod sem biblioteca
+        // externa contribui com um conjunto vazio, entao isto nao precisa de 'if'.
+        implementation files(modProject.configurations.modLibraries)
     }
 }
 

@@ -34,3 +34,17 @@ type = "required"
 versionRange = "[0.1.0,)"
 ordering = "AFTER"
 side = "BOTH"
+
+# Motor de animacao da capa de uniforme. Obrigatorio nos dois lados: a classe do item implementa
+# GeoItem, entao sem o GeckoLib no classpath este mod nao carrega nem no servidor dedicado.
+#
+# A consequencia e assumida e vale registrar: o Altar de Selecao mora neste mod, entao um pack sem
+# GeckoLib perde tambem o altar — e, com ele, a porta de entrada da escolha de casa do
+# aurorion-ethereal. Nao e uma quebra do isolamento entre mods (o Ethereal continua carregando e
+# fala com o altar por tag, nunca por import), mas e um mod a mais na lista de "tem que estar la".
+[[dependencies.${mod_id}]]
+modId = "geckolib"
+type = "required"
+versionRange = "[4.7,5.0)"
+ordering = "AFTER"
+side = "BOTH"

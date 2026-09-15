@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "aurorion_aeonita:item/uniform_cape_nyx"
+  }
+}

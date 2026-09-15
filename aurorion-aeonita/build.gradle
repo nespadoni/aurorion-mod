@@ -1,1 +1,7 @@
 apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+dependencies {
+    // Motor de animacao da capa de uniforme. Vai em 'modLibraries' (e nao em 'implementation')
+    // para que o aurorion-runs tambem a encontre -- ver o comentario na convencao compartilhada.
+    modLibraries "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+}

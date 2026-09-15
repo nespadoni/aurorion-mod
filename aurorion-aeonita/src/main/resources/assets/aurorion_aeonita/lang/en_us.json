@@ -1,12 +1,15 @@
 {
   "itemGroup.aurorion_aeonita": "Aurorion — Aeonita",
-
   "item.aurorion_aeonita.aeonita_ingot_yellow": "Yellow Aeonita Ingot",
   "item.aurorion_aeonita.aeonita_ingot_blue": "Blue Aeonita Ingot",
   "item.aurorion_aeonita.aeonita_ingot_red": "Red Aeonita Ingot",
-
   "block.aurorion_aeonita.aeonita_block_yellow": "Block of Yellow Aeonita",
   "block.aurorion_aeonita.aeonita_block_blue": "Block of Blue Aeonita",
   "block.aurorion_aeonita.aeonita_block_red": "Block of Red Aeonita",
-  "block.aurorion_aeonita.selection_altar": "Selection Altar"
+  "block.aurorion_aeonita.selection_altar": "Selection Altar",
+  "item.aurorion_aeonita.uniform_cape_venthra": "Venthra House Uniform Cape",
+  "item.aurorion_aeonita.uniform_cape_sylvara": "Sylvara House Uniform Cape",
+  "item.aurorion_aeonita.uniform_cape_nyx": "Nyx House Uniform Cape",
+  "item.aurorion_aeonita.uniform_cape_ignivar": "Ignivar House Uniform Cape",
+  "item.aurorion_aeonita.uniform_cape_aetheris": "Aetheris House Uniform Cape"
 }

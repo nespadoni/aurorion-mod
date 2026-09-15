@@ -3,7 +3,7 @@ package com.aurorion.limbo.config;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Config do lado servidor, em {@code config/aurorion_limbo-server.toml}.
+ * Config do lado servidor, em {@code config/aurorion/limbo-server.toml}.
  *
  * <p>Aqui mora <b>regra</b>: quanto tempo, quantos blocos, quem avisa quem. Coordenada nenhuma mora
  * aqui — o ponto de chegada do Limbo continua sendo do {@code aurorion_vidas}
@@ -191,19 +191,26 @@ public final class LimboConfig {
 
         ORACLE_DIALOGUE = BUILDER
                 .comment(
-                        "Arquivo de dialogo do ADM que o Oraculo abre, sem a extensao .json.",
-                        "Vazio (ou ADM ausente) faz o Oraculo abrir a lista de exilados direto — o resgate",
-                        "funciona igual, so perde a conversa.",
+                        "Dialogo do ADM que o Oraculo abre. Vazio (ou ADM ausente) faz o Oraculo abrir a",
+                        "lista de exilados direto — o resgate funciona igual, so perde a conversa.",
                         "",
-                        "O dialogo e CONTEUDO: mora em config/adm-dialogues/dialogues/ ou num datapack, e a",
-                        "staff reescreve a fala sem rebuild. O que vem do codigo sao as condicoes que ele pode",
-                        "consultar:",
+                        "ATENCAO AO FORMATO. O ADM resolve esta string de dois jeitos, e quem escolhe e a",
+                        "presenca de DOIS PONTOS (DialogueRepository.isDataId):",
+                        "  com ':'  -> datapack, id completo. E o nosso caso.",
+                        "  sem ':'  -> arquivo solto em config/adm-dialogues/dialogues/<nome>.json.",
+                        "O dialogo que este mod entrega vive no jar, em",
+                        "data/aurorion_limbo/adm_dialogues/dialogues/oraculo_do_limbo.json, entao o ADM o",
+                        "conhece como 'aurorion_limbo:oraculo_do_limbo'. Escrever so 'oraculo_do_limbo' manda",
+                        "o ADM procurar um arquivo que nao existe, e o Oraculo cai na lista sem conversa.",
+                        "",
+                        "O dialogo e CONTEUDO: a staff reescreve a fala num datapack ou num arquivo solto,",
+                        "sem rebuild. O que vem do codigo sao as condicoes que ele pode consultar:",
                         "  {\"type\": \"aurorion_limbo:exilados\", \"min\": 1}  ha alguem no Limbo",
                         "  {\"type\": \"aurorion_limbo:pode_pagar\"}          tem vida para a passagem",
                         "  {\"type\": \"aurorion_limbo:no_limbo\"}            quem fala esta exilado",
-                        "Uma escolha do dialogo abre a lista rodando: commands: [\"limbo oraculo\"]"
+                        "Uma escolha do dialogo abre a lista rodando: commands: [\"oraculo\"]"
                 )
-                .define("dialogoDoOraculo", "oraculo_do_limbo");
+                .define("dialogoDoOraculo", "aurorion_limbo:oraculo_do_limbo");
 
         BUILDER.pop();
         BUILDER.comment("O que o servidor conta, e para quem.").push("avisos");

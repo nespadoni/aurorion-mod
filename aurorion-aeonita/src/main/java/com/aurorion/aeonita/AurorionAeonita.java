@@ -2,6 +2,7 @@ package com.aurorion.aeonita;
 
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.aeonita.config.AeonitaClientConfig;
+import com.aurorion.aeonita.registry.AeonitaArmorMaterials;
 import com.aurorion.aeonita.registry.AeonitaBlocks;
 import com.aurorion.aeonita.registry.AeonitaCreativeTab;
 import com.aurorion.aeonita.registry.AeonitaItems;
@@ -17,8 +18,9 @@ import org.slf4j.Logger;
  * Quem da comportamento de historia a esse conteudo e outro mod (ex.: {@code aurorion_ato2} usa o
  * Altar de Selecao como entrada da escolha de casa) — aqui so existe o conteudo em si.
  *
- * <p>A ordem de registro importa: os itens de bloco referenciam os {@code DeferredBlock}, entao
- * {@link AeonitaBlocks} precisa estar carregado antes de {@link AeonitaItems}.
+ * <p>A ordem de registro importa: os itens de bloco referenciam os {@code DeferredBlock} e as capas
+ * de uniforme referenciam o material de armadura, entao {@link AeonitaBlocks} e
+ * {@link AeonitaArmorMaterials} precisam estar carregados antes de {@link AeonitaItems}.
  */
 @Mod(AurorionAeonita.MOD_ID)
 public class AurorionAeonita {
@@ -29,6 +31,7 @@ public class AurorionAeonita {
 
     public AurorionAeonita(IEventBus modEventBus, ModContainer container) {
         AeonitaBlocks.BLOCKS.register(modEventBus);
+        AeonitaArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
         AeonitaItems.ITEMS.register(modEventBus);
         AeonitaCreativeTab.CREATIVE_MODE_TABS.register(modEventBus);
 

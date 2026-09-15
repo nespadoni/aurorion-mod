@@ -2,15 +2,27 @@
   "title": "O Oráculo",
   "speaker": "O Oráculo",
   "speaker_color": "#82B0CD",
-  "text_color": "#C9C4BA",
+  "text_color": "#F1E8D8",
   "text_speed": 2,
   "start": "saudacao",
+
+  "style": {
+    "outer_color": "#D904090F",
+    "text_background": "#F60E131B",
+    "choices_background": "#F6111924",
+    "divider_color": "#FF2B3444",
+    "button_color": "#FF182230",
+    "button_hover_color": "#FF263A50",
+    "button_disabled_color": "#FF11161E",
+    "button_text_color": "#FFF1E8D8",
+    "button_disabled_text_color": "#FF687282"
+  },
 
   "nodes": {
     "saudacao": {
       "text": [
-        "Você chegou até aqui. Poucos chegam.",
-        "Eu conto os que se perdem. É só isso que eu faço."
+        "Não se aproxime tanto. O escuro também escuta através de mim.",
+        "Eu guardo os nomes de quem deixou de voltar."
       ],
       "choices": [
         {
@@ -28,7 +40,7 @@
           "next": "lore"
         },
         {
-          "text": "Nada. (sair)",
+          "text": "Não preciso de nada.",
           "close": true
         }
       ]
@@ -36,8 +48,8 @@
 
     "tem_perdidos": {
       "text": [
-        "Há nomes no escuro. Eu posso mostrá-los.",
-        "Abrir o caminho custa. Não custa moeda — custa o que você tem de mais curto."
+        "Há nomes respirando no escuro. Eu posso mostrá-los.",
+        "A passagem não aceita moeda. Ela cobra vida."
       ],
       "choices": [
         {
@@ -60,8 +72,8 @@
 
     "sem_preco": {
       "text": [
-        "Você não tem o bastante para pagar a travessia.",
-        "Volte quando tiver mais vida do que precisa para si mesmo."
+        "A passagem recusaria você agora.",
+        "Volte quando carregar vida suficiente para atravessar e retornar."
       ],
       "choices": [
         { "text": "Entendo.", "close": true }
@@ -70,8 +82,8 @@
 
     "ninguem": {
       "text": [
-        "Hoje não. O escuro está calado.",
-        "Volte quando alguém deixar de voltar."
+        "Hoje, nenhum nome responde do outro lado.",
+        "Volte quando uma ausência começar a pesar."
       ],
       "choices": [
         { "text": "Que assim seja.", "close": true }

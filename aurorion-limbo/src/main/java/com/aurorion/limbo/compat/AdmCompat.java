@@ -159,7 +159,11 @@ public final class AdmCompat {
         } catch (ReflectiveOperationException | RuntimeException e) {
             // Dialogo com erro de sintaxe, arquivo que sumiu, id errado: a conversa falha, o resgate
             // nao. Cair para a lista e sempre melhor que um Oraculo que nao responde.
-            AurorionLimbo.LOGGER.warn("Nao consegui abrir o dialogo '{}' do Oraculo; abrindo a lista.", file);
+            // O motivo vai junto de proposito: sem ele, "nao abriu" nao distingue arquivo ausente de
+            // id errado de JSON quebrado — e o id errado e o engano facil de cometer (ver o comentario
+            // de dialogoDoOraculo: sem ':' o ADM procura arquivo, nao datapack).
+            AurorionLimbo.LOGGER.warn("Nao consegui abrir o dialogo '{}' do Oraculo ({}); abrindo a lista.",
+                    file, e.toString());
             return false;
         }
     }

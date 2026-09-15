@@ -269,6 +269,24 @@ A fonte é **dado, não código** — trocar é substituir o `.ttf` e a entrada 
 por resource pack sem tocar no jar. Se for modificá-la, o nome reservado "Cinzel" não pode
 acompanhar a versão modificada; ver [CREDITS.md](../CREDITS.md).
 
+### O Oráculo e o padrão dos próximos NPCs
+
+O ADM conduz a conversa escrita do Oráculo. O arquivo entregue pelo mod é
+`aurorion_limbo:oraculo_do_limbo`; quando o jogador pede os nomes, o servidor envia um snapshot com
+exilados, prazos, presença e custo e abre a lista dinâmica. Sem ADM, interagir com o Oráculo abre a
+lista diretamente, então o resgate não depende da integração cosmética.
+
+A conversa e a lista usam a mesma paleta de grafite azulado, osso e ferrugem. O ADM recebe as nove
+cores pelo bloco `style` do JSON. Ele não oferece fonte por diálogo na versão 0.7.3; a lista nativa
+usa `aurorion_limbo:limbo`, e Caxton pode assumir sua renderização quando estiver instalado. Não há
+injeção global na tela do ADM, que mudaria também NPCs de outros mods.
+
+As peças reutilizáveis ficam em `aurorion-core/client/gui`: `NpcScreenTheme` guarda fonte e paleta,
+`NpcPanelScreen` fornece moldura, cabeçalho, linhas, etiquetas e rolagem, e `AurorionButton` fornece
+o botão narrativo. Um NPC novo cria seu tema e implementa somente medida, widgets e conteúdo.
+Immersive Messages continua nos avisos e cenas do Limbo; colocá-lo sobre o diálogo esconderia as
+escolhas que o jogador precisa ler.
+
 ### Cinematic Respawn
 
 O Cinematic Respawn continua ativo nas mortes comuns. Na morte que deixa o contador em zero, o
@@ -339,7 +357,7 @@ exile/     ExileRecord (estado de um exilado), LimboData (SavedData), LimboManag
 narrate/   LimboNarrator (interface) → ImmersiveNarrator → NativeNarrator → ChatNarrator,
            ImmersiveBridge (reflexão), LimboText (as falas, num lugar só)
 network/   LimboNetwork, LimboStatusPayload (o painel), LimboNoticePayload (a cena)
-client/    ClientLimbo (estado da tela), LimboHudLayer (desenho), LimboClientEvents
+client/    ClientLimbo (estado da tela), LimboHudLayer, OracleScreen e LimboNpcThemes
 report/    AuditEvent, AuditLog (jsonl no save), DiscordSink (webhook assíncrono)
 environment/ LimboEnvironment — Darkness persistente e sons espaciais de baixa frequência
 event/     LimboServerEvents — morte, login, varredura de 1s, destrave da travessia
@@ -361,9 +379,8 @@ Configuração, identidade de personagem e roteiro de validação estão em
 
 Deliberado, para não construir em cima de decisão não tomada:
 
-- **O ritual de resgate** (a porta de 15 min, a Âncora de Vínculo). Hoje o resgate é `/vidas dar`, e o
-  gancho `markRescueAttempt` já está pronto esperando por ele.
-- **O Oráculo** (ADM) e os Faróis — a economia de informação sobre quem está onde.
+- **Os Faróis** — pontos adicionais para a economia de informação sobre quem está onde. O Oráculo,
+  a passagem paga e o Vínculo de Alma já fazem o ciclo de resgate.
 - **Criação de outro personagem e reset completo da progressão**. A morte definitiva e o bloqueio já existem; o fluxo de criação ainda será implementado. Ver [morte definitiva](MORTE-DEFINITIVA.md).
 
 E uma coisa que não é decisão, é só verificação que falta:

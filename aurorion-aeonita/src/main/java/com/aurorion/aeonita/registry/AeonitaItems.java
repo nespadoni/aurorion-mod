@@ -1,6 +1,7 @@
 package com.aurorion.aeonita.registry;
 
 import com.aurorion.aeonita.AurorionAeonita;
+import com.aurorion.aeonita.item.UniformCapeItem;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
@@ -23,7 +24,27 @@ public final class AeonitaItems {
 
     public static final DeferredItem<BlockItem> SELECTION_ALTAR = ITEMS.registerSimpleBlockItem(AeonitaBlocks.SELECTION_ALTAR);
 
+    /**
+     * As capas do uniforme da escola, uma por casa de Ethereal.
+     *
+     * <p>A ordem segue o campo {@code order} das casas no datapack do {@code aurorion-ethereal},
+     * para a aba do criativo sair na mesma ordem que o altar mostra. E so ordem: este mod nao le
+     * aquele datapack nem depende dele para nada (ver {@link UniformCapeItem}).
+     *
+     * <p>O nome do arquivo de textura e o proprio argumento, entao registrar uma capa nova e uma
+     * linha aqui mais um PNG em {@code textures/entity/armor/uniform_cape/}.
+     */
+    public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_VENTHRA = uniformCape("venthra");
+    public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_SYLVARA = uniformCape("sylvara");
+    public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_NYX = uniformCape("nyx");
+    public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_IGNIVAR = uniformCape("ignivar");
+    public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_AETHERIS = uniformCape("aetheris");
+
     private AeonitaItems() {
+    }
+
+    private static DeferredItem<UniformCapeItem> uniformCape(String house) {
+        return ITEMS.register("uniform_cape_" + house, () -> new UniformCapeItem(house));
     }
 
     /** Lingote de Aeonita: comestivel em qualquer situacao e sempre da Brilho ao comer. */

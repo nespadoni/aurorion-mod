@@ -12,7 +12,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Talk | [aurorion-talk/](aurorion-talk/) | Balões de fala acima dos jogadores; tira as falas do HUD do chat |
 | Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Comandos essenciais de servidor: `/fakename` (troca o nome exibido em todo o jogo) e cleanup periódico de itens/XP no chão |
 | Aurorion Utils | [aurorion-utils/](aurorion-utils/) | Utilitários diversos: `/abduzir` (puxa um jogador com uma animação de feixe de luz, com opção de trazer de volta) |
-| Aurorion Aeonita | [aurorion-aeonita/](aurorion-aeonita/) | **Conteúdo**: itens e blocos de Aeonita, luz dinâmica e o Altar de Seleção |
+| Aurorion Aeonita | [aurorion-aeonita/](aurorion-aeonita/) | **Conteúdo**: itens e blocos de Aeonita, luz dinâmica, o Altar de Seleção e as capas de uniforme animadas (uma por casa) |
 | Aurorion Ethereal | [aurorion-ethereal/](aurorion-ethereal/) | **O mod central**: as cinco casas por datapack, a Cerimônia de Vinculação no altar com revelação animada, e o Projetor Aeônico com os rankings |
 | Aurorion Portais | [aurorion-portais/](aurorion-portais/) | Tranca todas as dimensões menos o overworld; o acesso abre em janelas agendadas por datapack (os "trens"), com avisos automáticos |
 | Aurorion Mundos | [aurorion-mundos/](aurorion-mundos/) | Mais de um overworld: mesmo gerador e mesmos mods de worldgen, mas com seed própria, barreira própria e portais de obsidiana com destino declarado em datapack |
@@ -58,6 +58,10 @@ uma ponte que some sozinha quando ele não está no pack.
 
 - **JDK 21** (`java -version` deve mostrar 21.x)
 - Nada mais — o Gradle vem pelo wrapper (`./gradlew`)
+
+O `aurorion-aeonita` é o único mod com biblioteca de terceiros: o **GeckoLib**, que anima as capas de
+uniforme. Ela é baixada sozinha pelo Gradle e entra no `runClient` do ecossistema sem nenhum passo
+manual; no servidor de verdade, o jar precisa estar instalado ao lado dos mods Aurorion.
 
 ## Comandos
 

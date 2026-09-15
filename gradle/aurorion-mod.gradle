@@ -72,6 +72,27 @@ neoForge {
 
 repositories {
     mavenCentral()
+    // Bibliotecas de mod de terceiros (GeckoLib e afins) nao existem no Maven Central.
+    maven {
+        name = 'Cloudsmith (GeckoLib)'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
+}
+
+// Biblioteca de terceiros que o mod precisa em runtime -- um mod, nao um jar comum: quem
+// instala o pack instala ela ao lado, e nao vai jar-in-jar nenhum aqui.
+//
+// Existe como configuration separada porque o 'aurorion-runs' monta o classpath dele a partir
+// do OUTPUT de cada subprojeto (classes + resources), que nao carrega dependencia junto. Sem
+// isto, um mod com biblioteca externa compilaria e passaria nos testes, e so quebraria ao abrir
+// o runClient do ecossistema -- o tipo de esquecimento silencioso que a secao 3.2 da SDD existe
+// para evitar. Declarar em 'modLibraries' e o bastante: o runs varre todos os subprojetos.
+configurations {
+    modLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    implementation.extendsFrom(modLibraries)
 }
 
 dependencies {

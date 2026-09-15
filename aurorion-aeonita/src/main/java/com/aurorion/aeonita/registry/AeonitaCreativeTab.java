@@ -24,6 +24,11 @@ public final class AeonitaCreativeTab {
                         output.accept(AeonitaItems.AEONITA_BLOCK_BLUE.get());
                         output.accept(AeonitaItems.AEONITA_BLOCK_RED.get());
                         output.accept(AeonitaItems.SELECTION_ALTAR.get());
+                        output.accept(AeonitaItems.UNIFORM_CAPE_VENTHRA.get());
+                        output.accept(AeonitaItems.UNIFORM_CAPE_SYLVARA.get());
+                        output.accept(AeonitaItems.UNIFORM_CAPE_NYX.get());
+                        output.accept(AeonitaItems.UNIFORM_CAPE_IGNIVAR.get());
+                        output.accept(AeonitaItems.UNIFORM_CAPE_AETHERIS.get());
                     })
                     .build());
 

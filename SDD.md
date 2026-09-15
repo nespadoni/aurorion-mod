@@ -982,7 +982,123 @@ Este é o único laço por tick do mod, e ele sai na primeira linha enquanto nã
 do servidor quase o tempo inteiro. Com um rito em andamento são no máximo seis chamadas de partícula
 por tick. Um personagem passa por isso uma vez na vida (§7.1).
 
-## 13. Fora de escopo (deliberadamente)
+### 12.12 NPCs narrativos: conteúdo no ADM, identidade visual compartilhada
+
+O ADM continua dono da conversa escrita e das escolhas do NPC. O Oráculo usa um diálogo de datapack
+com ID namespaced e registra apenas as condições que dependem das regras do Limbo. Quando a escolha
+precisa mostrar dados vivos — nomes, prazo, presença e custo — ela abre uma tela Aurorion alimentada
+por um snapshot do servidor. A autorização da passagem continua no servidor.
+
+Moldura, botão, cabeçalho, linha, etiqueta e barra de rolagem passam a ser componentes de cliente do
+`aurorion-core`. Cada mod fornece somente tema, texto e conteúdo. Isso deixa os próximos NPCs com a
+mesma gramática visual sem criar dependência do Core no Limbo ou copiar uma tela inteira.
+
+A paleta do diálogo ADM repete, por dados, a paleta da tela dinâmica. O ADM 0.7.3 expõe cores, mas não
+expõe fonte por diálogo; por isso não há mixin global em uma tela privada de terceiro. Os componentes
+nativos referenciam a fonte Aurorion por `ResourceLocation`. Caxton pode renderizá-la quando estiver
+instalado e o provider TTF do Minecraft permanece a base. Immersive Messages continua reservado aos
+avisos e cenas: abrir uma segunda sobreposição durante a conversa esconderia as escolhas do ADM.
+
+**Custo:** tema e layout são resolvidos em `init`/resize; durante a tela aberta existem apenas
+retângulos e texto no frame normal da GUI. A integração não acrescenta tick de servidor, consulta de
+mundo, pacote periódico ou reflexão por quadro. ADM e Immersive Messages continuam opcionais e suas
+pontes são resolvidas uma vez.
+
+## 13. As capas de uniforme (`aurorion-aeonita`)
+
+Primeira peça de arte animada do ecossistema, e a primeira dependência de biblioteca de terceiros.
+
+### 13.1 Por que cinco itens, e não um item com a casa num componente
+
+A §7, diretriz 4, manda preferir descoberta em runtime a registro estático quando o conteúdo é
+*dado*. A capa parece caso disso — cinco texturas de uma peça só — e não é: o que varia aqui não é
+a aparência de um objeto, são cinco objetos diferentes. Uma capa é entregue pela staff, guardada num
+baú, dada de presente. Com id próprio, cada uma aparece em `/give`, em receita, em loot table e em
+advancement sem nenhum predicado de componente no meio; com um componente, tudo isso viraria um
+predicado de componente escrito à mão em cada lugar, e um `/clear` de "capa" teria que saber a
+diferença.
+
+O preço é assumido e está registrado: **uma casa nova exige recompilar**, diferente das casas em si,
+que são datapack no `aurorion-ethereal`. Aceitável porque a lista de casas é o dado mais estável do
+servidor — o que muda nelas é nome, lema e cor, e nada disso passa pela capa.
+
+### 13.2 A capa não sabe em que casa o jogador está
+
+As cinco texturas têm o nome das cinco casas, e ainda assim este mod não lê o datapack de casas nem
+pergunta nada ao `aurorion-ethereal`. Quem veste o quê é decisão de quem entrega a capa.
+
+É a mesma fronteira da §6.1: o Altar de Seleção mora no mod de conteúdo, e o comportamento mora no
+mod de ato. Travar a capa na casa vinculada exigiria uma ponte entre os dois mods para uma regra que
+um comando de staff já resolve — e transformaria uma peça de roupa numa mecânica, com validação de
+servidor, pacote de sincronia e um caso novo a tratar toda vez que alguém troca de casa.
+
+### 13.3 Protege como couro, de propósito
+
+3 de armadura, durabilidade de couro, sem tenacidade. Um peitoral novo com proteção competitiva
+mudaria o balanceamento de PvP e de mob de dezenas de outros mods sem ninguém ter pedido — que é
+exatamente a meta de "nunca interferir fora do escopo próprio" da §2. Proteção de couro faz vestir
+a capa custar alguma coisa sem que ela vire a melhor peça do modpack.
+
+O material declara **lista de camadas vazia**. Quem desenha a capa é o `GeoArmorRenderer`, que
+cancela o caminho vanilla de render de armadura antes de ele resolver textura nenhuma — declarar
+camadas seria apontar para um PNG que nunca é lido. Com a lista vazia, o pior caso (GeckoLib
+ausente ou quebrado) é a capa ficar invisível, e não virar textura faltando em cima do jogador.
+
+### 13.4 O custo por frame foi pago na conversão, não no código
+
+A escolha de animação roda **por capa visível, por frame**. Duas consequências diretas da §2:
+
+- **Os quatro `RawAnimation` são constantes.** `RawAnimation.begin().thenLoop(...)` aloca uma lista
+  e um record por chamada; construí-los dentro do handler seria lixo novo 60×/s por jogador na tela.
+- **Os 9 cubos de tamanho zero do export do CPM foram removidos do `.geo.json`.** Eles não desenham
+  nada, mas o GeckoLib assa seis quads por cubo desses e paga os vértices assim mesmo — 120 vértices
+  jogados fora por capa, por frame, multiplicados por quantas capas estiverem na tela.
+
+A decisão de animação não gera pacote nenhum: ela lê `onGround`, `isSprinting` e `isMoving` da cópia
+local da entidade, que o cliente já tem de qualquer jeito. O servidor não participa.
+
+### 13.5 A referência a classe de cliente nasce depois da checagem de `Dist`
+
+`UniformCapeItem` implementa `GeoItem`, que é comum, e expõe o renderer numa classe anônima dentro
+de `createGeoRenderer`. O GeckoLib só executa esse método depois de checar `isPhysicalClient()`, e a
+checagem mora dentro de um `Supplier` preguiçoso — então a classe anônima, que referencia
+`GeoArmorRenderer` e `HumanoidModel`, só é carregada pela JVM quando o corpo executa, ou seja, nunca
+no servidor dedicado.
+
+É literalmente a disciplina descrita na §3.1 sobre os lambdas de registro de rede, e o motivo de ela
+ter sido verificada no bytecode do GeckoLib em vez de assumida: o modo de falhar é derrubar o
+servidor dedicado no boot, e num servidor de 80 jogadores isso não se descobre em produção.
+
+### 13.6 Um teste para arte, porque nenhum outro comando chega perto dela
+
+A geometria e as animações não foram escritas à mão: vieram de um export do Customizable Player
+Models convertido por script — bones renomeados, UV reescalada de um espaço 16× maior, cubos
+degenerados removidos, animações renomeadas. Um erro nessa conversão **não quebra build e não
+levanta exceção**: a capa só aparece torta, parada ou invisível, e só em cliente, em cima de um
+jogador.
+
+Nenhum dos três comandos de validação do repo (build, teste, gameTest) chega perto de `assets/` —
+gameTest roda no servidor, que nem carrega essa pasta. Por isso `UniformCapeAssetsTest` lê os dois
+arquivos com o **próprio Gson do GeckoLib** e monta o modelo assado, que é o mesmo caminho que o
+jogo percorre. E as constantes `RawAnimation` são lidas da própria classe do item, não copiadas no
+teste: um nome de animação escrito errado não tem como passar pelos dois lados.
+
+### 13.7 A dependência de terceiro fica numa configuration própria
+
+O GeckoLib é declarado em `modLibraries`, e não em `implementation`. O motivo é o `aurorion-runs`:
+ele monta o classpath a partir do **output** de cada subprojeto (classes + resources), que não
+carrega dependência junto. Sem isso, um mod com biblioteca externa compilaria e passaria nos testes,
+e só quebraria ao abrir o `runClient` do ecossistema — o mesmo esquecimento silencioso que a §3.2
+existe para evitar. Como o `aurorion-runs` varre todos os subprojetos, declarar em `modLibraries` é
+o bastante e o próximo mod com biblioteca externa não precisa lembrar de nada.
+
+**A consequência que fica registrada:** o GeckoLib é obrigatório para o `aurorion-aeonita` carregar,
+e o Altar de Seleção mora nele. Um pack sem GeckoLib perde o altar, e com ele a porta de entrada da
+escolha de casa do `aurorion-ethereal`. Não é quebra do isolamento da §3 — o Ethereal continua
+carregando sozinho e falando com o altar por tag, nunca por import — mas é um mod a mais na lista de
+"tem que estar lá", e essa lista é o que a §3 tenta manter curta.
+
+## 14. Fora de escopo (deliberadamente)
 
 - Suporte a múltiplos servidores públicos / milhares de instalações — este é software para um
   servidor específico, não um mod para a CurseForge competir por downloads.
