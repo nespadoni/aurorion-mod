@@ -295,34 +295,14 @@ feito para sair do modpack não pode ser dono de nada que fique no mundo.
 
 ### 6.4 A Cerimônia de Vinculação
 
-O ritual tem duas metades separadas no tempo, e é isso que o diferencia de um questionário: **as
-respostas** acontecem no altar e terminam sem revelar nada; **a decisão** é da staff, por comando. A
-contagem das respostas é uma *sugestão* que chega pronta para ela.
+O site decide a casa; o servidor persiste o resultado recebido por comando da staff.
+Cadastro e apresentação são ações independentes: `/casa definir` prepara, e
+`/casa cerimonia <jogador> [casa]` dispara no palco. Não existe chamada HTTP ao site.
+Uma casa cadastrada offline não produz animação ao entrar: o momento pertence à narração da staff.
 
-- **O vínculo opção→casa nunca sai do servidor.** O cliente recebe só os textos das alternativas. Se
-  o mapeamento viajasse no pacote, qualquer jogador leria o tráfego e saberia a resposta "certa" para
-  cair na casa que quisesse — e a cerimônia viraria um menu. Diretriz 5 da seção 7 aplicada na
-  direção contrária à usual: aqui o risco não é o cliente *mandar* algo falso, é ele *saber* demais.
-- **As perguntas são datapack, como as casas.** Reescrever uma pergunta, mudar a ordem ou trocar o
-  conjunto inteiro entre um ato e outro é editar arquivo e dar `/reload`. Foi a decisão que mais se
-  afastou do mod de referência, onde as cinco casas e as oito perguntas eram `enum` e array em Java:
-  corrigir uma palavra do lema da Nyx era recompilar e reiniciar um servidor de 80 jogadores.
-- **As perguntas são fotografadas na abertura da cerimônia.** Um `/reload` no meio trocaria o
-  conjunto sob os pés de quem está respondendo, e a resposta 3 cairia numa pergunta que ele nunca leu.
-- **O veredito vai para o disco, não para o chat de quem estiver online.** Um fluxo mediado por admin
-  que só funcionasse com staff acordada seria inútil num servidor de 80 pessoas: alguém termina a
-  cerimônia às três da manhã e a decisão sai no dia seguinte. Pelo mesmo motivo, uma casa confirmada
-  com o jogador offline deixa a **revelação na fila** e ela toca no próximo login dele — a cerimônia
-  dele não pode terminar num anúncio de chat que ele não estava lá para ver.
-- **Fechar a tela no meio não tranca ninguém.** Clicar no altar de novo devolve o jogador à pergunta
-  em que o *servidor* diz que ele parou. Sem isso, um Esc acidental deixaria a cerimônia em
-  andamento para sempre, com o altar respondendo "você já está respondendo".
-- **O empate na contagem é desfeito pelo id da casa.** A ordem de um `HashMap` não é estável entre
-  execuções; sem o desempate, a "casa sugerida" poderia mudar sozinha entre o fim da cerimônia e a
-  leitura da staff no dia seguinte.
-- **A revelação é encenada em tempo, não em quadros.** O original contava `tick++` dentro do
-  `render`, o que amarrava a duração da cena ao frame rate: num cliente rodando o modpack inteiro a
-  30 fps, a revelação levava o dobro do tempo que no cliente do dono do servidor.
+O vínculo é gravado antes da cena e passa pelo mesmo `HouseManager` que atualiza os placares.
+Interromper a apresentação nunca desfaz a atribuição. Há somente um rito ativo de cada vez.
+A nova apresentação e seu orçamento de render/rede estão descritos na seção 12.11.
 
 ## 7. Diretrizes para os próximos mods do ecossistema
 
@@ -957,30 +937,40 @@ qual raiz de comando deixar passar para um morto, e quais contas estão no meio 
 podem ser interrompidas por uma pergunta de nome.
 Detalhes: [aurorion-personagem/README.md](aurorion-personagem/README.md).
 
-### 12.11 Rito de Vinculação: a cena no lugar do questionário
+### 12.11 Rito de Vinculação: revelação pública comandada
 
-A Cerimônia de Vinculação era um questionário de oito perguntas com contagem por casa e uma fila de
-vereditos. Ele decidia uma coisa já decidida fora do jogo, e cobrava oito telas de leitura antes do
-único instante memorável. As perguntas saíram; o instante virou treze segundos em quatro tempos.
+Uma cena de 18 segundos: música entra em dois segundos, o círculo se forma e gira por seis,
+a casa aparece aos oito e a coroação permanece até dezoito, com dois segundos de fade final.
+As cinco paletas e o evento de música são conteúdo de datapack, em `House.ceremony`.
+Os OGG são recursos locais em streaming, substituíveis por resource pack.
 
-A divisão é por onde cada coisa precisa ser desenhada. **Luz e partículas são do servidor**, porque
-um rito que só o dono enxerga é uma tela, não uma cerimônia — todo mundo num raio de 32 blocos
-assiste. **Símbolo, nome e lema são do cliente**, porque são imagem e texto que dependem da câmera de
-quem olha, e chegam em **dois pacotes** (início e fim) com o cliente contando os próprios ticks: a
-animação inteira sai de um inteiro por rito, e não de um pacote por quadro.
+**Uma cena ativa, sem entidades adicionais e sem partículas enviadas pelo servidor.**
+O início contém participante, dimensão, âncora, idade da cena, nome, lema e paleta.
+O fim é enviado à plateia que recebeu o início, inclusive quem se afastou. Login/tracking podem
+enviar a fase atual a um novo espectador. Não existe varredura da plateia por tick.
+O servidor faz apenas validações do participante e incrementa um contador enquanto existe rito.
 
-O símbolo é renderizado dentro do `RenderPlayerEvent`, e não num estágio solto do mundo: a pilha de
-matrizes já vem no pé do jogador e o `partialTick` vem junto, o que elimina a chance de o símbolo
-atrasar um quadro em relação ao corpo quando a pessoa corre. O texto não usa tela modal — modal
-cobriria exatamente o que há para ver.
+**Círculo e título não dependem do render do corpo.** Um estágio do mundo desenha a geometria
+pré-calculada até 96 blocos, com corte por frustum e profundidade. Isso permite que a plateia
+veja a casa mesmo quando o Minecraft deixa de desenhar o jogador distante. Dois anéis giram em
+sentidos opostos; faixas de cor secundária mantêm o preto/cinza das casas e o núcleo colorido
+mantém os traços legíveis. Runas orbitais só são desenhadas até 64 blocos.
 
-A casa é gravada **antes** da cena. Apresentação não pode desfazer decisão de staff: cair a conexão
-ou reiniciar o servidor no meio não desfaz nada, e um rito definido com o dono offline espera o
-login dele.
+O caminho de render reutiliza segmentos e texto medido no início. PoseStack e buffers do motor
+são reaproveitados. O custo visual é limitado a uma única cena: três passadas do mesmo material
+para a geometria de cada anel e uma chamada de texto. Partículas vanilla, até 48 blocos,
+têm limite de seis a cada dois ticks após a revelação, com uma rajada de 48 no instante dela.
+Essas partículas alocam apenas no cliente durante o efeito e respeitam as opções do Minecraft.
 
-Este é o único laço por tick do mod, e ele sai na primeira linha enquanto não houver rito — o estado
-do servidor quase o tempo inteiro. Com um rito em andamento são no máximo seis chamadas de partícula
-por tick. Um personagem passa por isso uma vez na vida (§7.1).
+Não há teleporte, invulnerabilidade ou alteração de poções para imobilizar a pessoa. A apresentação
+acompanha pequenos deslocamentos e encerra se ela sair quatro blocos da âncora, trocar de dimensão,
+morrer ou desconectar. A casa permanece salva. Cadastro administrativo diferente também encerra o
+rito anterior. Cancelamento limpa áudio e render; mudança de mundo limpa o cliente por dimensão.
+
+A trilha usa o volume Música, começa somente junto com um início de idade zero e termina com a
+cena. Um espectador que entra atrasado vê a fase atual sem ouvir um reinício fora de sincronia.
+O anúncio público acontece junto da revelação; o texto pessoal é HUD, sem tela modal.
+
 
 ### 12.12 NPCs narrativos: conteúdo no ADM, identidade visual compartilhada
 

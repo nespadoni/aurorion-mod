@@ -2,7 +2,12 @@
   "name": "Casa Aetheris",
   "motto": "Nem toda magia deve ser compreendida.",
   "description": "O que existe além de Ethereal. Aetheris convive com o que não tem explicação e desconfia de quem garante ter uma.",
-  "color": "#B8C6E0",
+  "color": "#A567F4",
   "icon": "minecraft:nether_star",
-  "order": 5
+  "order": 5,
+  "ceremony": {
+    "secondary": "#100B19",
+    "accent": "#D7B2FF",
+    "music": "aurorion_ethereal:ceremony.memory_lane"
+  }
 }

@@ -10,13 +10,13 @@ exibe essa soma. Ver [SDD §6.0](../SDD.md) para o porquê da fusão de `aurorio
 
 ## As cinco casas
 
-| Casa | O que representa em Ethereal | Cor |
+| Casa | O que representa em Ethereal | Paleta da cerimônia |
 |---|---|---|
-| **Venthra** | O vento — movimento, adaptação, o que não fica parado | `#FFD23F` |
-| **Sylvara** | A vida — compreensão, cuidado, crescer junto | `#3ECF6E` |
-| **Nyx** | A mente — entendimento, estratégia, a pergunta certa | `#8A5CF0` |
-| **Ignivar** | O fogo — força, domínio, coragem de segurar | `#FF5533` |
-| **Aetheris** | O que existe além — o inexplicável, e a desconfiança de quem explica | `#B8C6E0` |
+| **Venthra** | O vento — movimento, adaptação, o que não fica parado | Amarelo `#FFD54A`, cinza `#8A919B` e amarelo claro |
+| **Sylvara** | A vida — compreensão, cuidado, crescer junto | Verde `#58C87A`, branco gelo quente `#FFF7DC` e verde claro |
+| **Nyx** | A mente — entendimento, estratégia, a pergunta certa | Azul `#439CFF`, branco `#F1F7FF` e azul claro |
+| **Ignivar** | O fogo — força, domínio, coragem de segurar | Vermelho `#F04438`, preto `#130C10` e laranja `#FF952E` |
+| **Aetheris** | O que existe além — o inexplicável, e a desconfiança de quem explica | Roxo `#A567F4`, preto `#100B19` e lilás |
 
 As casas **não estão em código**: cada uma é um JSON de datapack. Adicionar, remover, renomear,
 recolorir, trocar o lema ou botar limite de membros é editar arquivo e dar `/reload`.
@@ -27,7 +27,12 @@ recolorir, trocar o lema ou botar limite de membros é editar arquivo e dar `/re
   "name": "Casa Nyx",
   "motto": "A magia obedece a quem a entende.",
   "description": "A mente de Ethereal.",
-  "color": "#8A5CF0",
+  "color": "#439CFF",
+  "ceremony": {
+    "secondary": "#F1F7FF",
+    "accent": "#A8DBFF",
+    "music": "aurorion_ethereal:ceremony.memory_lane"
+  },
   "icon": "minecraft:amethyst_shard",
   "capacity": 0,
   "order": 3
@@ -40,61 +45,101 @@ recolorir, trocar o lema ou botar limite de membros é editar arquivo e dar `/re
 | `motto` | não | o que a casa diz de si; aparece no card e, em destaque, na revelação |
 | `description` | não | aparece no card, quebrada em linhas automaticamente |
 | `color` | não | `"#RRGGBB"`; tinge o card, o nome no chat e a linha da casa no holograma. Padrão branco |
+| `ceremony` | não | `secondary` e `accent` completam a cor principal; `music` aponta para evento de som do resource pack |
 | `icon` | não | id de item desenhado no card. Item inexistente vira papel, não crash |
 | `capacity` | não | `0` (padrão) = sem limite. Acima disso a casa lota |
 | `order` | não | ordem na grade; empate desempata pelo id |
 
 ## A Cerimônia de Vinculação
 
-A staff define a casa, e o mundo assiste:
+O resultado vem do site e a staff conduz a apresentação no jogo. Não há questionário nem conexão
+HTTP com o site: o comando recebe a casa já decidida.
 
+### Comandos de operação (staff nível 2)
+
+```mcfunction
+# Cadastrar antes da apresentação, inclusive para um jogador conhecido offline:
+/casa definir NomeDoJogador aurorion_ethereal:nyx
+
+# Na hora em que a pessoa chegar à frente, revelar a casa cadastrada:
+/casa cerimonia NomeDoJogador
+
+# Ou atribuir e iniciar a revelação em um único comando:
+/casa cerimonia NomeDoJogador aurorion_ethereal:ignivar
+
+# Interromper música e efeitos; a casa continua atribuída:
+/casa cerimonia cancelar NomeDoJogador
 ```
-/casa cerimonia <jogador> <casa>
-   -> a casa é gravada na hora
-       -> o Rito de Vinculação toca (13 s), para quem passa e para quem está por perto
-           -> anúncio no chat no fim
-```
 
-### O Rito, em quatro tempos
+IDs: `aurorion_ethereal:ignivar`, `aurorion_ethereal:aetheris`,
+`aurorion_ethereal:sylvara`, `aurorion_ethereal:venthra` e `aurorion_ethereal:nyx`.
+O autocomplete oferece os IDs do datapack carregado.
 
-| Fase | Duração | O que se vê |
+**Uma pessoa por vez.** O comando de cerimônia aceita somente um jogador online e vivo.
+Atribuir uma casa offline nunca agenda uma revelação no login. Uma fila legada também não toca
+automaticamente: a staff dispara o momento. A casa é gravada antes da animação; desconectar,
+cancelar ou reiniciar o servidor não desfaz o vínculo.
+
+### A cena (18 segundos a 20 ticks/s)
+
+| Fase | Tempo | Apresentação |
 |---|---|---|
-| Convocação | 3 s | um anel de runas se fecha em volta da pessoa; nada ainda tem cor de casa |
-| Reunião | 3 s | a luz converge de fora para dentro do peito e cresce |
-| Revelação | 1 s | estouro nas cores da casa; o **símbolo** aparece girando acima da cabeça |
-| Coroação | 6 s | a coluna de luz se sustenta sob o símbolo, e some junto com ele |
+| Entrada | 0–2 s | Música entra com fade; escurecimento suave somente para o escolhido |
+| Convocação | 2–5 s | Círculo duplo luminoso se forma nos pés; runas aparecem |
+| Reunião | 5–8 s | Anéis giram em sentidos opostos e runas orbitam o corpo |
+| Revelação | 8–9 s | Onda de luz e partículas nas cores da casa; nome grande surge acima da cabeça e no HUD |
+| Coroação | 9–18 s | Nome, círculo e runas permanecem; música e efeitos somem nos últimos 2 s |
 
-Quem está passando pelo rito fica parado e intocável durante a cena, e vê o **nome** e o **lema** da
-casa surgirem por cima do HUD. Não há tela modal: a cena boa acontece no mundo, e uma tela cobriria
-justamente o que há para ver.
+O nome flutua aproximadamente **4,4 blocos acima dos pés** e enfrenta a câmera de cada espectador.
+Círculo, runas e título são desenhados no mundo até **96 blocos**, sem depender do alcance de
+renderização do corpo. Paredes continuam ocultando a cena. Os detalhes das runas orbitais param a
+64 blocos e as partículas pequenas a 48; o círculo e o nome permanecem à distância.
 
-O **símbolo** é o `icon` da casa — o mesmo item do card do altar — renderizado no mundo, com
-brilho próprio, chegando com um estalo de escala.
+O escolhido recebe nome e lema sobre o HUD, com um clarão suave na revelação. O palco continua
+visível e não se abre tela modal. O rito acompanha pequenos deslocamentos; sair mais de quatro
+blocos do ponto inicial, morrer, trocar de dimensão ou desconectar encerra a apresentação.
+Não altera invulnerabilidade nem efeitos de poção. Uma alteração administrativa da casa também
+encerra a cena antiga.
 
-### Detalhes que importam na operação
+### Música
 
-- **Luz e partículas são do servidor**, então todo mundo num raio de 32 blocos assiste. Um rito que
-  só o dono enxergasse não seria um rito, seria uma tela.
-- **Dois pacotes por rito**, um no início e um no fim. O cliente conta os próprios ticks; treze
-  segundos de animação custam à rede o mesmo que dois cliques.
-- **A casa é gravada antes da cena**, não no fim dela. Sair no meio, cair a conexão ou reiniciar o
-  servidor não desfaz uma decisão da staff.
-- **Jogador offline não perde o rito.** Definir com ele fora deixa o rito na fila; ele toca no
-  próximo login.
-- **O altar não decide mais nada.** Ele é onde se consulta a própria casa — e, com
-  `ceremonyRequired=false`, onde o jogador escolhe sozinho, para quando não houver staff conduzindo.
+Os dois OGG fornecidos estão em `assets/aurorion_ethereal/sounds/ceremony/`:
 
-### O que saiu daqui
+- `going_north.ogg` — Going North, Jon Björk; padrão de Ignivar e Venthra.
+- `memory_lane.ogg` — Memory Lane, Jon Björk; padrão de Aetheris, Sylvara e Nyx.
 
-Havia um questionário de oito perguntas em datapack, com contagem de pontos por casa, uma fila de
-vereditos esperando decisão e quatro subcomandos de staff em volta disso. Tudo aquilo existia para
-**sugerir** uma casa que, na prática, já era decidida fora do jogo — e cobrava oito telas de leitura
-antes do único instante de que as pessoas lembram depois. As perguntas saíram; o instante ficou, e
-agora dura treze segundos.
+A trilha é transmitida do arquivo local por streaming, com volume uniforme para a plateia e
+controle pelo volume **Música** do Minecraft. Um resource pack pode substituir os OGG ou declarar
+outro evento em `sounds.json`; `ceremony.music` no JSON da casa seleciona esse evento.
+[Formato de áudio do NeoForge 1.21.1](https://docs.neoforged.net/docs/1.21.1/resources/client/sounds/).
 
-O teste [`ShippedDatapackTest`](src/test/java/com/aurorion/ethereal/ceremony/ShippedDatapackTest.java)
-valida os JSON das casas no build: cor repetida, ordem duplicada e casa sem `icon` quebram a
-compilação em vez de aparecerem no meio de um rito ao vivo.
+### Rede e ciclo de vida
+
+O servidor envia um início e um fim para cada espectador na mesma dimensão e no raio da cena.
+Não envia partículas por tick: cada cliente reconstrói a animação localmente. Quem passa a rastrear
+o participante durante o rito recebe a fase atual; nesse caso a música não reinicia do zero.
+Quem se afasta ou muda de dimensão limpa a cena local. Cancelamento é entregue também à plateia
+original que já se afastou.
+
+O anúncio no chat acontece **na revelação**, respeitando `announceInChat`. Ambos os lados precisam
+usar esta versão do mod (protocolo 2) para a apresentação completa.
+O altar continua servindo para consulta; `ceremonyRequired=false` mantém a escolha direta opcional.
+
+### Validação
+
+```powershell
+.\gradlew.bat :aurorion-ethereal:build :aurorion-ethereal:runGameTestServer
+```
+
+Foram escritos testes para os dados de casas e caminhos dos OGG. O GameTest usa um servidor dedicado descartável
+para conferir cadastro, revelação por comando, audiência a 80 blocos, exclusão fora do raio,
+cancelamento, desconexão, persistência do vínculo e transmissão da paleta.
+O build e os GameTests desta alteração ainda precisam ser executados em um ambiente de validação.
+
+Para conferir aparência e áudio no modpack, usar dois clientes com nomes diferentes, participante
+e espectador, conectados ao mesmo servidor. Conferir as cinco casas, distâncias de 10/48/80 blocos,
+primeira e terceira pessoa, qualidade de partículas reduzida, shaders e cancelamento no meio.
+As classes e os recursos dos testes não entram no jar distribuído.
 
 ### Que bloco é um altar
 
@@ -152,7 +197,7 @@ travar a atualização do pack inteiro.
 /casa definir <jogador> <casa>    -> atribui, ignorando cerimonia e lotacao          (nivel 2)
 /casa limpar <jogador>            -> tira da casa                                    (nivel 2)
 
-/casa cerimonia <jogador> <casa>             -> define a casa e toca o Rito           (nivel 2)
+/casa cerimonia <jogador> [casa]             -> revela a casa cadastrada (ou atribui a informada)           (nivel 2)
 /casa cerimonia cancelar <jogador>           -> corta o rito, ou tira ele da fila     (nivel 2)
 
 /pontos ver                       -> pontuacao de todas as casas                     (nivel 2)
@@ -163,11 +208,11 @@ travar a atualização do pack inteiro.
 
 O jogador comum só tem `/casa` (consulta). Quem vincula é a staff.
 
-A diferença entre `definir` e `cerimonia` é a cena: `definir` grava em silêncio, útil para corrigir
-engano; `cerimonia` grava e apresenta.
+`definir` cadastra ou corrige a casa. `cerimonia` revela a casa cadastrada; com o argumento de casa,
+atribui e apresenta em uma única ação.
 
-Tudo aceita jogador offline, porque tudo é gravado por UUID. Definir a casa de quem não está online é
-o caso normal num servidor de 80 pessoas, não a exceção — o rito espera o login.
+Cadastro e consulta aceitam perfis offline conhecidos. A cerimônia exige um participante online
+e somente começa quando a staff executa o comando.
 
 ## Configuração
 
@@ -176,7 +221,6 @@ o caso normal num servidor de 80 pessoas, não a exceção — o rito espera o l
 ```toml
 [houses]
 ceremonyRequired = true   # false = o altar volta a abrir a grade e o jogador escolhe sozinho
-notifyStaff      = true   # avisa a staff online quando uma cerimonia termina
 allowRechoose    = false  # true deixa o jogador refazer a vinculacao
 announceInChat   = true   # anuncia no chat quando alguem e acolhido por uma casa
 ```
@@ -185,7 +229,7 @@ announceInChat   = true   # anuncia no chat quando alguem e acolhido por uma cas
 altar volta ao comportamento de escolha direta, em duas etapas.
 
 O que **não** é config é tão proposital quanto o que é: nome, cor, lema e lotação de casa são
-datapack, e as perguntas também. Config é para regra de servidor; conteúdo é para dado.
+datapack, junto com as cores e a trilha da cerimônia. Config é para regra de servidor; conteúdo é para dado.
 
 ## Arquitetura
 
@@ -193,17 +237,16 @@ datapack, e as perguntas também. Config é para regra de servidor; conteúdo é
 house/       House (record + Codec do JSON + StreamCodec da rede), HouseCatalog (reload listener),
              HouseData (SavedData por UUID), HouseManager (as regras + o unico ponto que grava casa),
              HouseOption, PendingSelections (quem tem grade aberta e em qual altar)
-ceremony/    CeremonyQuestion (+ Option), CeremonyQuestionView (o que o cliente pode ver),
-             CeremonyCatalog, ActiveCeremony (estado em memoria), CeremonyData (vereditos e
-             revelacoes pendentes, em disco), CeremonyManager (o ritual)
+ceremony/    BindingRite (cena e plateia), CeremonyManager (atribuicao e apresentacao),
+             CeremonyData (leitura/limpeza de filas legadas)
 ranking/     RankingData (SavedData), PlayerRanking, RankedEntry, BoardLine, BoardMode (as metas),
              BoardService
 block/       AeonicProjectorBlock, entity/AeonicProjectorBlockEntity
 registry/    EtherealBlocks, EtherealItems, EtherealBlockEntities, EtherealCreativeTab
-network/     EtherealNetwork (registro + ponta servidora) e 9 payloads
+network/     EtherealNetwork (registro + ponta servidora), RitePayload e payloads de casas/projetor
 client/      EtherealClientNetwork, EtherealClientEvents, AeonicProjectorRenderer,
-             gui/ HouseSelectionScreen, HouseCardWidget, CeremonyScreen, HouseRevealScreen,
-                  ProjectorConfigScreen
+             RiteClient, RiteRenderer, RiteOverlay, RiteParticles, RiteMusic,
+             gui/ HouseSelectionScreen, HouseCardWidget, ProjectorConfigScreen
 command/     HouseCommand (/casa), PointsCommand (/pontos)
 event/       EtherealServerEvents
 config/      EtherealConfig

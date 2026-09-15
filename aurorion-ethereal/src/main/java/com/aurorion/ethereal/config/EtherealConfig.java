@@ -13,7 +13,6 @@ public final class EtherealConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue CEREMONY_REQUIRED;
-    public static final ModConfigSpec.BooleanValue NOTIFY_STAFF;
     public static final ModConfigSpec.BooleanValue ALLOW_RECHOOSE;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_IN_CHAT;
 
@@ -33,14 +32,6 @@ public final class EtherealConfig {
                         "para quando nao houver staff para conduzir as cerimonias."
                 )
                 .define("ceremonyRequired", true);
-
-        NOTIFY_STAFF = BUILDER
-                .comment(
-                        "Avisa a staff online quando uma cerimonia termina e fica esperando decisao.",
-                        "Desligue se o chat da staff ficar barulhento — o veredito e gravado em disco de",
-                        "qualquer jeito, e /casa cerimonia pendentes lista o que esta esperando."
-                )
-                .define("notifyStaff", true);
 
         ALLOW_RECHOOSE = BUILDER
                 .comment(

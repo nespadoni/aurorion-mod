@@ -5,6 +5,7 @@ import com.aurorion.ethereal.EtherealTags;
 import com.aurorion.ethereal.block.AeonicProjectorBlock;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
+import com.aurorion.ethereal.ceremony.BindingRite;
 import com.aurorion.ethereal.config.EtherealConfig;
 import com.aurorion.ethereal.house.HouseCatalog;
 import com.aurorion.ethereal.house.HouseManager;
@@ -34,7 +35,7 @@ public final class EtherealServerEvents {
     private EtherealServerEvents() {
     }
 
-    /** Casas e perguntas sao datapack: recarregam com receitas e loot tables, no start e em cada /reload. */
+    /** Casas sao datapack: recarregam com receitas e loot tables, no start e em cada /reload. */
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(HouseCatalog.listener());
@@ -124,9 +125,14 @@ public final class EtherealServerEvents {
         BoardService.refresh(player.server, BoardMode.TOP_PLAYERS, BoardMode.WORST_PLAYERS,
                 BoardMode.MISSIONS, BoardMode.DEATHS, BoardMode.DUEL_WINS);
 
-        // Uma casa definida com ele offline: o rito acontece agora, e nao vira um anuncio de chat
-        // que ele nunca viu.
-        CeremonyManager.playPending(player);
+        // A apresentacao e sempre disparada pela staff; entrar nunca consome uma fila antiga.
+        BindingRite.syncTo(player);
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer viewer
+                && BindingRite.isBinding(event.getTarget().getUUID())) BindingRite.syncTo(viewer);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -143,28 +149,20 @@ public final class EtherealServerEvents {
         }
     }
 
-    /** Sair no meio das perguntas descarta o andamento; um veredito ja fechado fica no disco. */
+    /** Sair encerra a apresentacao e preserva a casa. */
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PendingSelections.forget(event.getEntity().getUUID());
         CeremonyManager.forget(event.getEntity().getUUID());
     }
 
-    /**
-     * Servidor integrado: sem isto, uma sessao deixaria pendencias visiveis para a proxima.
-     *
-     * <p>Os {@code SavedData} nao aparecem aqui de proposito — quem solta o cache deles e o
-     * {@code aurorion-core}, para nenhum mod precisar lembrar disso (SDD §3.1).
-     */
-    /**
-     * O unico laco por tick do mod, e ele sai na primeira linha enquanto nao houver rito nenhum —
-     * que e o estado do servidor quase o tempo inteiro. Ver {@link com.aurorion.ethereal.ceremony.BindingRite}.
-     */
+    /** Sem rito ativo, o relogio sai imediatamente. */
     @SubscribeEvent
     public static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-        com.aurorion.ethereal.ceremony.BindingRite.tick(event.getServer());
+        BindingRite.tick(event.getServer());
     }
 
+    /** Limpa estado transitorio inclusive entre mundos do servidor integrado. */
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         PendingSelections.clear();

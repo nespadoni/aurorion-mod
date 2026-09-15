@@ -36,7 +36,8 @@ public record House(
         int color,
         Optional<ResourceLocation> icon,
         int capacity,
-        int order
+        int order,
+        RiteStyle ceremony
 ) {
     /** Branco: cor neutra de quem nao declarou cor no JSON. */
     public static final int DEFAULT_COLOR = 0xFFFFFF;
@@ -45,7 +46,7 @@ public record House(
     public static final int UNLIMITED = 0;
 
     /** Aceita "#RRGGBB" ou "RRGGBB" — hex e o que quem edita datapack ja esta acostumado a escrever. */
-    private static final Codec<Integer> COLOR_CODEC = Codec.STRING.comapFlatMap(
+    static final Codec<Integer> COLOR_CODEC = Codec.STRING.comapFlatMap(
             raw -> {
                 String hex = raw.startsWith("#") ? raw.substring(1) : raw;
                 if (hex.length() != 6) {
@@ -61,7 +62,7 @@ public record House(
 
     /**
      * Escrito campo a campo, e nao com {@code StreamCodec.composite}: o {@code composite} para em
-     * seis campos, e a casa tem sete que precisam viajar.
+     * seis campos; nome, paleta e trilha viajam juntos.
      *
      * <p>O {@code order} nao vai junto — ele so importa para ordenar a lista no servidor, e o cliente
      * recebe a lista ja ordenada. Por isso ele volta como zero na leitura.
@@ -77,6 +78,9 @@ public record House(
         buffer.writeInt(house.color());
         ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC).encode(buffer, house.icon());
         buffer.writeVarInt(house.capacity());
+        buffer.writeInt(house.ceremony.secondary());
+        buffer.writeInt(house.ceremony.accent());
+        ResourceLocation.STREAM_CODEC.encode(buffer, house.ceremony.music());
     }
 
     private static House read(RegistryFriendlyByteBuf buffer) {
@@ -88,7 +92,7 @@ public record House(
                 buffer.readInt(),
                 ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC).decode(buffer),
                 buffer.readVarInt(),
-                0);
+                0, new RiteStyle(buffer.readInt(), buffer.readInt(), ResourceLocation.STREAM_CODEC.decode(buffer)));
     }
 
     /** Codec do arquivo. Precisa do id porque ele vem de fora do JSON (do caminho do arquivo). */
@@ -100,9 +104,10 @@ public record House(
                 COLOR_CODEC.optionalFieldOf("color", DEFAULT_COLOR).forGetter(House::color),
                 ResourceLocation.CODEC.optionalFieldOf("icon").forGetter(House::icon),
                 Codec.intRange(UNLIMITED, 100_000).optionalFieldOf("capacity", UNLIMITED).forGetter(House::capacity),
-                Codec.INT.optionalFieldOf("order", 0).forGetter(House::order)
-        ).apply(instance, (name, motto, description, color, icon, capacity, order) ->
-                new House(id, name, motto, description, color, icon, capacity, order)));
+                Codec.INT.optionalFieldOf("order", 0).forGetter(House::order),
+                RiteStyle.CODEC.optionalFieldOf("ceremony", RiteStyle.DEFAULT).forGetter(House::ceremony)
+        ).apply(instance, (name, motto, description, color, icon, capacity, order, ceremony) ->
+                new House(id, name, motto, description, color, icon, capacity, order, ceremony)));
     }
 
     public boolean hasCapacity() {

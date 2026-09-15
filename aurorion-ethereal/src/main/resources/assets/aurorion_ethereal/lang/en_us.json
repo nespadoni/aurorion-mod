@@ -63,5 +63,11 @@
   "commands.aurorion_ethereal.pontos.aluno": "%1$s points for %2$s — total: %3$s",
   "commands.aurorion_ethereal.pontos.missao": "Mission completion recorded for %s.",
   "commands.aurorion_ethereal.cerimonia.bound": "%1$s player(s) bound to %2$s.",
-  "commands.aurorion_ethereal.cerimonia.nothing_to_cancel": "There was no rite running or queued."
+  "commands.aurorion_ethereal.cerimonia.nothing_to_cancel": "There was no rite running or queued.",
+  "commands.aurorion_ethereal.cerimonia.no_house": "%s has no assigned house. Use /casa definir or specify a house in the ceremony command.",
+  "commands.aurorion_ethereal.cerimonia.busy": "A ceremony is already running. Wait for it to finish or cancel it before calling the next person.",
+  "commands.aurorion_ethereal.cerimonia.unavailable": "The participant must be online and alive to start the ceremony.",
+  "commands.aurorion_ethereal.cerimonia.started": "Ceremony started for %s.",
+  "aurorion_ethereal.rite.invocation": "The Aether recognizes your essence?",
+  "aurorion_ethereal.rite.welcome": "YOUR PLACE IN ETHEREAL"
 }

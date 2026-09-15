@@ -2,7 +2,12 @@
   "name": "Casa Ignivar",
   "motto": "Magia é força. E força existe para ser dominada.",
   "description": "O fogo de Ethereal. Ignivar não pede licença ao mundo: se a magia queima, que queime a favor de quem teve coragem de segurá-la.",
-  "color": "#FF5533",
+  "color": "#F04438",
   "icon": "aurorion_aeonita:aeonita_ingot_red",
-  "order": 4
+  "order": 4,
+  "ceremony": {
+    "secondary": "#130C10",
+    "accent": "#FF952E",
+    "music": "aurorion_ethereal:ceremony.going_north"
+  }
 }

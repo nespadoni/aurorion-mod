@@ -64,16 +64,12 @@ class ShippedDatapackTest {
         }
     }
 
-    /**
-     * O icone deixou de ser enfeite de tela quando virou o <b>simbolo do Rito de Vinculacao</b>: e
-     * ele que gira acima da pessoa nos treze segundos da cena. Casa sem icone cai no item generico,
-     * e a cerimonia inteira fica com uma folha de papel flutuando no lugar do brasao.
-     */
+    /** Toda casa distribuida tem um icone reconhecivel no card do altar. */
     @Test
     void everyHouseDeclaresASymbol() throws IOException {
         for (Path file : jsonFiles("houses")) {
             JsonObject house = read(file);
-            assertTrue(house.has("icon"), idOf(file) + " nao declara icon — sem simbolo no rito");
+            assertTrue(house.has("icon"), idOf(file) + " nao declara icon — sem simbolo no altar");
 
             String icon = house.get("icon").getAsString();
             assertTrue(icon.matches("[a-z0-9_.-]+:[a-z0-9_./-]+"),
@@ -92,6 +88,29 @@ class ShippedDatapackTest {
         for (Path file : jsonFiles("houses")) {
             int order = read(file).get("order").getAsInt();
             assertTrue(orders.add(order), idOf(file) + " repete a ordem " + order);
+        }
+    }
+
+    /** Falha de caminho em sounds.json so apareceria quando a cena tentasse tocar ao vivo. */
+    @Test
+    void everyCeremonyTrackResolvesToAStreamedVorbisFile() throws IOException {
+        Path assets = Path.of("src/main/resources/assets/aurorion_ethereal");
+        JsonObject sounds = read(assets.resolve("sounds.json"));
+        for (Path file : jsonFiles("houses")) {
+            JsonObject style = read(file).getAsJsonObject("ceremony");
+            for (String field : List.of("secondary", "accent")) {
+                assertTrue(style.get(field).getAsString().matches("#[0-9A-Fa-f]{6}"), idOf(file) + ": " + field);
+            }
+            String event = style.get("music").getAsString().split(":", 2)[1];
+            assertTrue(sounds.has(event), "Evento sem trilha: " + event);
+            JsonObject sound = sounds.getAsJsonObject(event).getAsJsonArray("sounds").get(0).getAsJsonObject();
+            assertTrue(sound.get("stream").getAsBoolean(), "Trilha precisa usar streaming");
+            String path = sound.get("name").getAsString().split(":", 2)[1];
+            byte[] ogg = Files.readAllBytes(assets.resolve("sounds/" + path + ".ogg"));
+            assertTrue(ogg.length > 64 && ogg[0] == 'O' && ogg[1] == 'g' && ogg[2] == 'g' && ogg[3] == 'S',
+                    "Arquivo OGG ausente ou invalido: " + path);
+            assertTrue(new String(ogg, 0, Math.min(ogg.length, 256), StandardCharsets.ISO_8859_1).contains("vorbis"),
+                    "Minecraft espera Ogg Vorbis: " + path);
         }
     }
 

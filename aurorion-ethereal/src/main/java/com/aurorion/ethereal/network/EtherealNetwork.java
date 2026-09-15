@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = AurorionEthereal.MOD_ID)
 public final class EtherealNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload. */
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "2";
 
     /** Alcance para editar um placar, em blocos ao quadrado. O cliente pode mentir na posicao. */
     private static final double MAX_EDIT_DISTANCE_SQR = 64.0;

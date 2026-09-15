@@ -2,7 +2,12 @@
   "name": "Casa Nyx",
   "motto": "A magia obedece a quem a entende.",
   "description": "A mente de Ethereal. Para Nyx, todo feitiço é uma pergunta mal formulada — e a resposta certa dispensa força.",
-  "color": "#8A5CF0",
+  "color": "#439CFF",
   "icon": "minecraft:amethyst_shard",
-  "order": 3
+  "order": 3,
+  "ceremony": {
+    "secondary": "#F1F7FF",
+    "accent": "#A8DBFF",
+    "music": "aurorion_ethereal:ceremony.memory_lane"
+  }
 }
