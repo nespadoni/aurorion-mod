@@ -121,7 +121,7 @@ public final class RescueManager {
         Vec3 spot = passageSpot(rescuer);
         if (spot == null) return Refusal.NO_ROOM;
 
-        RescuePortalEntity portal = new RescuePortalEntity(level, target,
+        RescuePortalEntity portal = new RescuePortalEntity(level, target, rescuerId,
                 LimboConfig.PASSAGE_MINUTES.get() * 60 * 20);
         portal.setPos(spot);
         if (!level.addFreshEntity(portal)) return Refusal.NO_ROOM;
@@ -217,6 +217,11 @@ public final class RescueManager {
                 player.drop(bond, false);
             }
         }
+
+        // A entrega acontece imediatamente depois de changeDimension, fora do fluxo comum de coleta.
+        // O inventario do servidor ja esta correto, mas sem este broadcast o cliente pode continuar
+        // mostrando o snapshot anterior ate outra alteracao de slot ou uma reconexao.
+        player.inventoryMenu.broadcastChanges();
     }
 
     // --- Concluir ------------------------------------------------------------------------------

@@ -167,8 +167,9 @@ public final class LimboConfig {
 
         PASSAGE_MINUTES = BUILDER
                 .comment(
-                        "Quantos minutos a passagem fica aberta.",
-                        "Fechou, quem esta dentro continua dentro ate achar o exilado ou ser trazido de volta."
+                        "Quantos minutos a passagem espera seu dono atravessar.",
+                        "Ela e apenas visual para terceiros e fecha imediatamente quando quem pagou entra.",
+                        "Se o tempo acabar primeiro, o dono continua no overworld e o custo nao e devolvido."
                 )
                 .defineInRange("minutosDaPassagem", 15, 1, 120);
 
@@ -202,12 +203,13 @@ public final class LimboConfig {
                         "data/aurorion_limbo/adm_dialogues/dialogues/oraculo_do_limbo.json, entao o ADM o",
                         "conhece como 'aurorion_limbo:oraculo_do_limbo'. Escrever so 'oraculo_do_limbo' manda",
                         "o ADM procurar um arquivo que nao existe, e o Oraculo cai na lista sem conversa.",
+                        "O valor default antigo 'oraculo_do_limbo' e migrado em memoria por compatibilidade.",
                         "",
                         "O dialogo e CONTEUDO: a staff reescreve a fala num datapack ou num arquivo solto,",
                         "sem rebuild. O que vem do codigo sao as condicoes que ele pode consultar:",
-                        "  {\"type\": \"aurorion_limbo:exilados\", \"min\": 1}  ha alguem no Limbo",
-                        "  {\"type\": \"aurorion_limbo:pode_pagar\"}          tem vida para a passagem",
-                        "  {\"type\": \"aurorion_limbo:no_limbo\"}            quem fala esta exilado",
+                        "  {\"type\": \"aurorion_limbo_exilados\", \"min\": 1}  ha alguem no Limbo",
+                        "  {\"type\": \"aurorion_limbo_pode_pagar\"}          tem vida para a passagem",
+                        "  {\"type\": \"aurorion_limbo_exilado\"}             quem fala esta exilado",
                         "Uma escolha do dialogo abre a lista rodando: commands: [\"oraculo\"]"
                 )
                 .define("dialogoDoOraculo", "aurorion_limbo:oraculo_do_limbo");

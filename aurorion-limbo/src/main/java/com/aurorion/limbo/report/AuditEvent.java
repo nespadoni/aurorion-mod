@@ -56,7 +56,9 @@ public record AuditEvent(
         /** O Oraculo abriu uma passagem: alguem pagou uma vida para ir buscar. */
         PASSAGEM_ABERTA,
         /** O Vinculo de Alma foi usado no exilado. O RESGATE que fecha o registro vem logo depois. */
-        VINCULO_USADO
+        VINCULO_USADO,
+        /** A staff retirou do Limbo alguem que estava la sem possuir um exilio ativo. */
+        RETORNO_ADMIN
     }
 
     public JsonObject toJson() {
@@ -90,6 +92,7 @@ public record AuditEvent(
             case PRAZO_AJUSTADO -> "Prazo de " + name + " ajustado para " + remainingMillis / 1000L + "s.";
             case PASSAGEM_ABERTA -> "Uma passagem foi aberta para " + name + ".";
             case VINCULO_USADO -> name + " recebeu o Vinculo de Alma.";
+            case RETORNO_ADMIN -> name + " foi retirado do Limbo pela staff.";
         };
         return detail.isEmpty() ? base : base + " (" + detail + ")";
     }

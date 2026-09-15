@@ -94,4 +94,26 @@ final class ImmersiveNarrator extends NativeNarrator {
             super.expired(player);
         }
     }
+
+    @Override
+    public void passageOpened(ServerPlayer player, String target, int cost) {
+        if (!ImmersiveBridge.top(player, LimboText.passageOpened(target, cost),
+                LimboText.COLD, LIGHT_SECONDS)) {
+            super.passageOpened(player, target, cost);
+        }
+    }
+
+    @Override
+    public void passageCrossed(ServerPlayer player) {
+        if (!ImmersiveBridge.center(player, LimboText.passageCrossed(), LimboText.COLD, LIGHT_SECONDS)) {
+            super.passageCrossed(player);
+        }
+    }
+
+    @Override
+    public void bondUsed(ServerPlayer player, String target) {
+        if (!ImmersiveBridge.center(player, LimboText.bondUsed(target), LimboText.AMBER, HEAVY_SECONDS)) {
+            super.bondUsed(player, target);
+        }
+    }
 }
