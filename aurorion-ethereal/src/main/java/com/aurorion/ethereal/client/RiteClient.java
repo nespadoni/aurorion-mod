@@ -28,6 +28,8 @@ public final class RiteClient {
         final int titleWidth, mottoWidth;
         final int color, secondary, accent;
         final DustParticleOptions mainDust, secondaryDust, accentDust;
+        /** Semente dos fogos: o mesmo escolhido rende o mesmo espetaculo em todos os clientes. */
+        final long seed;
         @Nullable Entity entity;
         @Nullable RiteMusic music;
         int tick;
@@ -51,6 +53,7 @@ public final class RiteClient {
             mainDust = dust(color, 1.25F);
             secondaryDust = dust(secondary, 1.0F);
             accentDust = dust(accent, 1.1F);
+            seed = playerId.getMostSignificantBits() ^ playerId.getLeastSignificantBits();
             tick = Mth.clamp(payload.elapsed(), 0, BindingRite.TOTAL_TICKS);
         }
 

@@ -86,14 +86,41 @@ cancelar ou reiniciar o servidor não desfaz o vínculo.
 |---|---|---|
 | Entrada | 0–2 s | Música entra com fade; escurecimento suave somente para o escolhido |
 | Convocação | 2–5 s | Círculo duplo luminoso se forma nos pés; runas aparecem |
-| Reunião | 5–8 s | Anéis giram em sentidos opostos e runas orbitam o corpo |
-| Revelação | 8–9 s | Onda de luz e partículas nas cores da casa; nome grande surge acima da cabeça e no HUD |
-| Coroação | 9–18 s | Nome, círculo e runas permanecem; música e efeitos somem nos últimos 2 s |
+| Reunião | 5–8 s | O selo pulsa, as lanças de luz sobem e a coluna se fecha sobre a pessoa |
+| Revelação | 8–9 s | Onda de luz e partículas nas cores da casa; nome grande surge acima da cabeça e no HUD; sobe a primeira salva de fogos |
+| Coroação | 9–18 s | Nome, círculo e runas permanecem; fogos seguem abrindo; música e efeitos somem nos últimos 2 s |
 
-O nome flutua aproximadamente **4,4 blocos acima dos pés** e enfrenta a câmera de cada espectador.
+**A cena é parada, de propósito.** O selo não gira e as runas não orbitam: com trinta pessoas
+espalhadas em volta, qualquer giro faz cada uma ver um desenho diferente no mesmo instante, e o
+nome parecia escorregar para fora do círculo. O selo fica cravado nos pés e o que dá vida a ele é
+um pulso de brilho, igual de qualquer ângulo. As runas ficam paradas em volta do corpo, viradas
+para fora do círculo.
+
+O nome flutua aproximadamente **4,4 blocos acima dos pés** e acompanha quem olha **só no eixo Y**:
+ele fica sempre em pé e ancorado acima da cabeça, em vez de tombar junto com a mira de cada
+espectador — que era o que o descolava do círculo para quem estava perto ou olhando de baixo.
 Círculo, runas e título são desenhados no mundo até **96 blocos**, sem depender do alcance de
-renderização do corpo. Paredes continuam ocultando a cena. Os detalhes das runas orbitais param a
-64 blocos e as partículas pequenas a 48; o círculo e o nome permanecem à distância.
+renderização do corpo. Paredes continuam ocultando a cena. Os detalhes das runas param a
+64 blocos e as partículas pequenas a 48; o círculo, a luz e o nome permanecem à distância.
+
+### Luz e fogos
+
+A luz da casa é uma segunda camada de geometria, **aditiva** (`SRC_ALPHA, ONE`): ela soma no que já
+está na tela em vez de pintar por cima, e não escreve profundidade — então nunca tapa os traços do
+selo nem as letras do nome. São quatro peças, todas na cor principal e no acento da casa: o chão
+aceso sob os pés, dezesseis lanças verticais em volta do círculo, a coluna de luz que desce sobre a
+pessoa e a onda que abre na revelação. Atrás das letras do nome fica um clarão na cor da casa.
+
+Os **fogos de artifício** abrem de 7,5 a 12 blocos em volta e de 7,5 a 11,5 blocos acima do palco,
+a partir da revelação: seis salvas, a primeira com três bombas e as demais com duas. A faísca de
+foguete do vanilla não aceita cor por `addParticle` — quem tinge a do foguete comum é a entidade,
+lendo o item. Criando a partícula pelo motor recebe-se a instância de volta, e a cor da casa vira
+uma chamada direta, sem entidade nem item no meio (é o mesmo caminho que o próprio Minecraft usa).
+
+Cada bomba é sorteada a partir do id do escolhido e do seu número de ordem, nunca de um estado que
+ande junto com o tick: os trinta clientes abrem a mesma bomba no mesmo ponto do céu, e quem chega no
+meio da cena cai no mesmo espetáculo em vez de num paralelo. Em "partículas: mínimas" os fogos não
+saem; em "reduzidas" cada bomba cai de 76 para 36 faíscas.
 
 O escolhido recebe nome e lema sobre o HUD, com um clarão suave na revelação. O palco continua
 visível e não se abre tela modal. O rito acompanha pequenos deslocamentos; sair mais de quatro

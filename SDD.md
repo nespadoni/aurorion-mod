@@ -939,7 +939,7 @@ Detalhes: [aurorion-personagem/README.md](aurorion-personagem/README.md).
 
 ### 12.11 Rito de Vinculação: revelação pública comandada
 
-Uma cena de 18 segundos: música entra em dois segundos, o círculo se forma e gira por seis,
+Uma cena de 18 segundos: música entra em dois segundos, o círculo se forma por seis,
 a casa aparece aos oito e a coroação permanece até dezoito, com dois segundos de fade final.
 As cinco paletas e o evento de música são conteúdo de datapack, em `House.ceremony`.
 Os OGG são recursos locais em streaming, substituíveis por resource pack.
@@ -952,15 +952,38 @@ O servidor faz apenas validações do participante e incrementa um contador enqu
 
 **Círculo e título não dependem do render do corpo.** Um estágio do mundo desenha a geometria
 pré-calculada até 96 blocos, com corte por frustum e profundidade. Isso permite que a plateia
-veja a casa mesmo quando o Minecraft deixa de desenhar o jogador distante. Dois anéis giram em
-sentidos opostos; faixas de cor secundária mantêm o preto/cinza das casas e o núcleo colorido
-mantém os traços legíveis. Runas orbitais só são desenhadas até 64 blocos.
+veja a casa mesmo quando o Minecraft deixa de desenhar o jogador distante. Faixas de cor secundária
+mantêm o preto/cinza das casas e o núcleo colorido mantém os traços legíveis. Runas só são
+desenhadas até 64 blocos.
+
+**A cena é parada, e isso é decisão de design, não economia.** Os anéis giravam em sentidos opostos
+e as runas orbitavam o corpo; o nome usava a rotação inteira da câmera. Com trinta pessoas em volta
+em posições diferentes — o caso real do evento, não o teste com um cliente da diretriz §7.6 — cada
+espectador via um desenho diferente no mesmo instante, e o nome tombava junto com a mira de quem
+olhava, escorregando para fora do círculo de perto ou de baixo. Hoje o selo fica cravado nos pés,
+as runas ficam paradas viradas para fora, e o único elemento que acompanha o espectador é o nome,
+**só no eixo Y**: em pé, sempre ancorado acima da cabeça. O pulso de brilho substituiu o giro como
+fonte de movimento porque se lê igual de qualquer ângulo.
+
+A luz da casa é uma segunda camada, aditiva (`SRC_ALPHA, ONE`) e sem escrita de profundidade — soma
+sobre o mundo como luz em vez de cobri-lo como tinta, e por isso nunca tapa os traços do selo nem as
+letras do nome. São ~134 quads (chão aceso, dezesseis lanças, coluna e a onda da revelação) sobre os
+~2.200 que o selo já custava: **+6% numa cena que existe uma de cada vez**.
 
 O caminho de render reutiliza segmentos e texto medido no início. PoseStack e buffers do motor
-são reaproveitados. O custo visual é limitado a uma única cena: três passadas do mesmo material
-para a geometria de cada anel e uma chamada de texto. Partículas vanilla, até 48 blocos,
-têm limite de seis a cada dois ticks após a revelação, com uma rajada de 48 no instante dela.
-Essas partículas alocam apenas no cliente durante o efeito e respeitam as opções do Minecraft.
+são reaproveitados, e cada `RenderType` fecha o próprio batch antes que outro peça o buffer
+compartilhado — a armadilha descrita na §4.2. Nenhum dos métodos novos aloca por frame: as colunas
+do clarão atrás do nome saem por aritmética, não por tabela. O custo visual é limitado a uma única
+cena: três passadas do mesmo material para a geometria de cada anel e uma chamada de texto.
+
+Partículas vanilla, até 48 blocos, têm limite de seis a cada dois ticks após a revelação, com uma
+rajada de 48 no instante dela. Os fogos de artifício são a exceção de alcance: abrem alto e longe,
+antes do corte de 48 blocos, porque quem assiste do fundo pode perder as faíscas dos pés mas não o
+céu. São seis salvas de duas a três bombas, sorteadas a partir do id do escolhido e do número de
+ordem — nunca de um estado que ande junto com o tick, o que faria cada cliente ver um céu diferente
+e quem chega atrasado cair num espetáculo paralelo. Essas partículas alocam apenas no cliente
+durante o efeito e respeitam as opções do Minecraft: "mínimas" desliga os fogos, "reduzidas" corta
+cada bomba de 76 para 36 faíscas.
 
 Não há teleporte, invulnerabilidade ou alteração de poções para imobilizar a pessoa. A apresentação
 acompanha pequenos deslocamentos e encerra se ela sair quatro blocos da âncora, trocar de dimensão,
