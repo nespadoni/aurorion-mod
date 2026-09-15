@@ -1,1 +1,24 @@
 apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// Integracao em servidor dedicado descartavel; estas classes nao entram no jar do mod.
+sourceSets { gameTest }
+configurations.gameTestImplementation.extendsFrom(configurations.implementation)
+configurations.gameTestCompileOnly.extendsFrom(configurations.compileOnly)
+configurations.gameTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+neoForge {
+    addModdingDependenciesTo sourceSets.gameTest
+    mods {
+        create('aurorion_ethereal_tests') { sourceSet sourceSets.gameTest }
+    }
+    runs {
+        client { loadedMods = [mods.aurorion_ethereal, mods.aurorion_core] }
+        server { loadedMods = [mods.aurorion_ethereal, mods.aurorion_core] }
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gameTest
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'aurorion_ethereal_tests'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+}
+dependencies { gameTestImplementation sourceSets.main.output }

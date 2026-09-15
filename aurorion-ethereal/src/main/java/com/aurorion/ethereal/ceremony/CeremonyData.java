@@ -8,21 +8,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Ritos que ficaram esperando o dono voltar.
- *
- * <p>A staff define a casa de alguem a qualquer hora, inclusive com a pessoa offline — num servidor
- * de 80 jogadores esse e o caso comum, nao o raro. O que nao pode acontecer e a cerimonia dela
- * terminar num anuncio de chat que ela nunca viu: o rito espera aqui e toca no proximo login.
- *
- * <p>Guarda o <b>id da casa</b>, e nao a casa: entre gravar e tocar cabe um {@code /reload} que muda
- * cor, lema ou nome. O rito precisa mostrar o que a casa e <em>na hora de tocar</em>.
+ * Compatibilidade com filas salvas por versoes antigas.
+ * Novas cerimonias nao sao agendadas; a staff pode cancelar/limpar registros legados.
  */
 public final class CeremonyData extends SavedData {
     private static final String FILE_ID = AurorionEthereal.MOD_ID + "_ceremonies";
@@ -51,19 +44,6 @@ public final class CeremonyData extends SavedData {
         tag.put(KEY_RITES, PlayerMapNbt.write(rites,
                 (entry, house) -> entry.putString(KEY_HOUSE, house.toString())));
         return tag;
-    }
-
-    public void queue(UUID player, ResourceLocation house) {
-        rites.put(player, house);
-        setDirty();
-    }
-
-    /** Tira o rito da fila e devolve. Chamada uma vez, no login. */
-    @Nullable
-    public ResourceLocation take(UUID player) {
-        ResourceLocation house = rites.remove(player);
-        if (house != null) setDirty();
-        return house;
     }
 
     public boolean cancel(UUID player) {

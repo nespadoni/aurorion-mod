@@ -13,6 +13,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -25,13 +26,8 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import java.util.Collection;
 
 /**
- * {@code /casa} — mostra a sua casa. Para o jogador comum, e so isso: quem vincula e a cerimonia no
- * altar, nao o comando. O ritual seria decorativo se desse para pular ele digitando.
- *
- * <p>O resto e ferramenta de staff (nivel 2): {@code listar}, {@code ver}, {@code definir},
- * {@code limpar} e a arvore {@code cerimonia}. Usam {@link GameProfileArgument} em vez de seletor de
- * entidade porque casa e gravada por UUID — e o caso que mais importa, confirmar o veredito de quem
- * respondeu ontem e ja deslogou, e justamente o de jogador offline.
+ * Consulta publica da casa e ferramentas de staff (nivel 2).
+ * Definir aceita perfis offline; cerimonia exige um unico participante online no palco.
  */
 @EventBusSubscriber(modid = AurorionEthereal.MOD_ID)
 public final class HouseCommand {
@@ -67,10 +63,11 @@ public final class HouseCommand {
                         .then(Commands.literal("cancelar")
                                 .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
                                         .executes(HouseCommand::ceremonyCancel)))
-                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                        .then(Commands.argument("jogador", EntityArgument.player())
+                                .executes(context -> ceremony(context, false))
                                 .then(Commands.argument("casa", ResourceLocationArgument.id())
                                         .suggests(HOUSE_SUGGESTIONS)
-                                        .executes(HouseCommand::ceremony)))));
+                                        .executes(context -> ceremony(context, true))))));
     }
 
     // --- Consulta ------------------------------------------------------------------------------
@@ -181,40 +178,32 @@ public final class HouseCommand {
 
     // --- Cerimonia -----------------------------------------------------------------------------
 
-    /**
-     * Define a casa e toca o Rito de Vinculacao.
-     *
-     * <p>Substituiu {@code iniciar}, {@code confirmar}, {@code ver} e {@code pendentes}. Aqueles
-     * quatro existiam para conduzir um questionario e decidir em cima do resultado dele; sem as
-     * perguntas, sobrou o que a staff sempre quis fazer numa linha so — dizer de qual casa a pessoa e.
-     *
-     * <p>A diferenca para {@code /casa definir} e a cena: {@code definir} grava em silencio, util
-     * para corrigir engano; {@code cerimonia} grava e apresenta.
-     */
-    private static int ceremony(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    /** Usa a casa cadastrada ou atribui e revela em uma unica acao da staff. */
+    private static int ceremony(CommandContext<CommandSourceStack> context, boolean explicitHouse)
+            throws CommandSyntaxException {
         MinecraftServer server = context.getSource().getServer();
-        ResourceLocation houseId = ResourceLocationArgument.getId(context, "casa");
-        Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, "jogador");
-        int bound = 0;
-
-        for (GameProfile profile : profiles) {
-            switch (CeremonyManager.bind(server, profile.getId(), houseId)) {
-                case OK, QUEUED -> bound++;
-                case UNKNOWN_HOUSE -> context.getSource().sendFailure(Component.translatable(
-                        "commands.aurorion_ethereal.casa.unknown", houseId.toString()));
-                case ALREADY_RUNNING -> context.getSource().sendFailure(Component.translatable(
-                        "commands.aurorion_ethereal.cerimonia.already_running", profile.getName()));
+        ServerPlayer player = EntityArgument.getPlayer(context, "jogador");
+        ResourceLocation houseId = explicitHouse ? ResourceLocationArgument.getId(context, "casa")
+                : HouseManager.houseIdOf(server, player.getUUID());
+        if (houseId == null) {
+            context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.cerimonia.no_house", player.getScoreboardName()));
+            return 0;
+        }
+        switch (CeremonyManager.bind(server, player.getUUID(), houseId)) {
+            case UNKNOWN_HOUSE -> context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.casa.unknown", houseId.toString()));
+            case OFFLINE -> context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.cerimonia.unavailable"));
+            case ALREADY_RUNNING -> context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.cerimonia.busy"));
+            case OK -> {
+                context.getSource().sendSuccess(() -> Component.translatable(
+                        "commands.aurorion_ethereal.cerimonia.started", player.getDisplayName()), false);
+                return 1;
             }
         }
-
-        if (bound == 0) return 0;
-
-        House house = HouseCatalog.get(houseId);
-        int total = bound;
-        context.getSource().sendSuccess(() -> Component.translatable(
-                "commands.aurorion_ethereal.cerimonia.bound", total,
-                house == null ? Component.literal(houseId.toString()) : house.coloredName()), true);
-        return bound;
+        return 0;
     }
 
     /** Tira da fila um rito que ainda nao tocou, ou corta um que esta acontecendo. */

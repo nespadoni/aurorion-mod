@@ -63,5 +63,11 @@
   "commands.aurorion_ethereal.pontos.aluno": "%1$s pontos para %2$s — total: %3$s",
   "commands.aurorion_ethereal.pontos.missao": "Missão concluída registrada para %s.",
   "commands.aurorion_ethereal.cerimonia.bound": "%1$s pessoa(s) vinculada(s) à %2$s.",
-  "commands.aurorion_ethereal.cerimonia.nothing_to_cancel": "Não havia rito em andamento nem na fila."
+  "commands.aurorion_ethereal.cerimonia.nothing_to_cancel": "Não havia rito em andamento nem na fila.",
+  "commands.aurorion_ethereal.cerimonia.no_house": "%s ainda não tem casa cadastrada. Use /casa definir ou informe a casa no comando da cerimônia.",
+  "commands.aurorion_ethereal.cerimonia.busy": "Há uma cerimônia em andamento. Aguarde o encerramento ou cancele antes de chamar a próxima pessoa.",
+  "commands.aurorion_ethereal.cerimonia.unavailable": "O participante precisa estar online e vivo para começar a cerimônia.",
+  "commands.aurorion_ethereal.cerimonia.started": "Cerimônia iniciada para %s.",
+  "aurorion_ethereal.rite.invocation": "O Éter reconhece sua essência…",
+  "aurorion_ethereal.rite.welcome": "SEU LUGAR EM ETHEREAL"
 }

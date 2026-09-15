@@ -22,7 +22,7 @@ class RankingDataTest {
     private static House house(String id, String name, int color) {
         return new House(ResourceLocation.fromNamespaceAndPath("aurorion_ethereal", id),
                 Component.literal(name), CommonComponents.EMPTY, CommonComponents.EMPTY,
-                color, Optional.empty(), House.UNLIMITED, 0);
+                color, Optional.empty(), House.UNLIMITED, 0, com.aurorion.ethereal.house.RiteStyle.DEFAULT);
     }
 
     /** O caso que o placar antigo nao cobria: ponto de aluno tem de aparecer no total da casa dele. */

@@ -2,7 +2,12 @@
   "name": "Casa Sylvara",
   "motto": "Magia não deve ser dominada. Deve ser compreendida.",
   "description": "A vida de Ethereal. Sylvara trata a magia como se trata uma floresta: quem tenta mandar nela perde; quem escuta cresce junto.",
-  "color": "#3ECF6E",
+  "color": "#58C87A",
   "icon": "minecraft:emerald",
-  "order": 2
+  "order": 2,
+  "ceremony": {
+    "secondary": "#FFF7DC",
+    "accent": "#DBFFE9",
+    "music": "aurorion_ethereal:ceremony.memory_lane"
+  }
 }

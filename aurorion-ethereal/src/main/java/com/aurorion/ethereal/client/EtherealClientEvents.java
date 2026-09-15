@@ -9,7 +9,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
-import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 @EventBusSubscriber(modid = AurorionEthereal.MOD_ID, value = Dist.CLIENT)
 public final class EtherealClientEvents {
@@ -28,9 +28,9 @@ public final class EtherealClientEvents {
         RiteClient.tick();
     }
 
-    /** O simbolo da casa, girando sobre quem esta sendo vinculado — visto por todo mundo. */
+    /** Circulos, runas e nome da casa, inclusive quando o corpo esta fora do alcance de render. */
     @SubscribeEvent
-    public static void renderPlayer(RenderPlayerEvent.Post event) {
+    public static void renderWorld(RenderLevelStageEvent event) {
         RiteRenderer.render(event);
     }
 
