@@ -41,8 +41,8 @@ monorepo é NeoForge single-loader, decisão final registrada em [SDD.md §3](..
 ./gradlew :aurorion-runs:runClient2    # segundo cliente (teste de 2 jogadores)
 ./gradlew :aurorion-talk:runClient     # cliente com um mod so
 ./gradlew :aurorion-talk:runServer     # servidor dedicado de teste
-./gradlew :aurorion-talk:build         # jar em aurorion-talk/build/libs/
-./gradlew buildAll                     # todos os mods do ecossistema
+./gradlew :aurorion-talk:build         # jar em build/jars-servidor/
+./gradlew buildAll                     # todos os mods em build/jars-servidor/
 ```
 
 `aurorion-runs` nao e um mod: e um subprojeto so de execucao que declara um mod por subprojeto

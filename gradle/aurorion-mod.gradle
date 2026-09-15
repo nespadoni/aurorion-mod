@@ -146,6 +146,9 @@ tasks.named('test', Test).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    // Destino comum dos jars instalaveis, inclusive nos builds de um mod so.
+    destinationDirectory = rootProject.layout.buildDirectory.dir('jars-servidor')
+
     manifest {
         attributes([
                 'Specification-Title'   : mod_id,
