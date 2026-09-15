@@ -6,6 +6,7 @@ import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
 import com.aurorion.limbo.network.LimboNetwork;
+import com.aurorion.limbo.report.AuditEvent;
 import com.aurorion.limbo.report.AuditLog;
 import com.aurorion.vidas.lives.LivesManager;
 import com.mojang.authlib.GameProfile;
@@ -14,6 +15,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -98,6 +100,9 @@ public final class LimboCommand {
                 .then(Commands.literal("tentativa")
                         .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
                                 .executes(LimboCommand::markAttempt)))
+                .then(Commands.literal("retornar")
+                        .then(Commands.argument("jogador", EntityArgument.player())
+                                .executes(LimboCommand::returnStranded)))
                 .then(Commands.literal("prazo")
                         .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
                                 .then(Commands.argument("horas", IntegerArgumentType.integer(0, 24 * 14))
@@ -212,6 +217,37 @@ public final class LimboCommand {
             }
         }
         return changed;
+    }
+
+    /** Recupera quem chegou ao Limbo sem possuir um exilio ativo, sem mexer em vida ou historico. */
+    private static int returnStranded(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = EntityArgument.getPlayer(context, "jogador");
+        MinecraftServer server = source.getServer();
+
+        if (player.level().dimension() != LimboManager.dimension()) {
+            source.sendSuccess(() -> literal("sem efeito nome=" + player.getGameProfile().getName()
+                    + " motivo=nao_esta_no_limbo"), false);
+            return 0;
+        }
+        if (LivesManager.isExiled(server, player.getUUID())) {
+            source.sendFailure(literal("sem efeito nome=" + player.getGameProfile().getName()
+                    + " motivo=jogador_exilado use_resgate=sim"));
+            return 0;
+        }
+        if (!LimboManager.returnToOverworld(player)) {
+            source.sendFailure(literal("sem efeito nome=" + player.getGameProfile().getName()
+                    + " motivo=retorno_sem_local_seguro_ou_personagem_morto"));
+            return 0;
+        }
+
+        AuditLog.record(server, new AuditEvent(AuditEvent.Type.RETORNO_ADMIN,
+                player.getUUID(), player.getGameProfile().getName(),
+                LivesManager.livesOf(server, player.getUUID()), 0L, 0,
+                LimboData.get(server).forgottenExits(player.getUUID()),
+                "retirado por " + source.getDisplayName().getString()));
+        source.sendSuccess(() -> literal("retorno concluido nome=" + player.getGameProfile().getName()), true);
+        return 1;
     }
 
     /** Ajuste de prazo na mao. Zero encerra o personagem imediatamente. */

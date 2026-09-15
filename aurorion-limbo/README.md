@@ -149,6 +149,7 @@ Todos são staff (nível 2).
 | `/limbo auditoria [linhas]` | Últimas linhas do log, mais novas primeiro |
 | `/limbo tentativa <jogador>` | Marca que alguém tentou resgatar — desliga a Porta para essa pessoa |
 | `/limbo prazo <jogador> <horas>` | Ajusta o prazo antes do vencimento. **Zero mata o personagem imediatamente** |
+| `/limbo retornar <jogador>` | Retira com segurança quem ficou no Limbo sem estar exilado; não altera vidas |
 | `/limbo finale previa` | Prévia local com música junto ao fechamento dos olhos; não mata nem desconecta; Esc fecha durante a cena |
 
 ## Config
@@ -215,7 +216,7 @@ O mod **não importa classe de mod nenhum**. Tudo que o Limbo fala passa pelo `L
 
 | Camada | Quando | O que entrega |
 |---|---|---|
-| `ImmersiveNarrator` | Immersive Messages no pack | Tela cheia com máquina de escrever nos três momentos irreversíveis; topo e rodapé no resto |
+| `ImmersiveNarrator` | Immersive Messages no pack | Cenas com máquina de escrever nos momentos fortes; topo e rodapé nos avisos e na abertura da passagem |
 | `NativeNarrator` | **padrão** | Painel e cena próprios do mod, desenhados pelo cliente |
 | `ChatNarrator` | último recurso | Chat e actionbar |
 
@@ -274,18 +275,26 @@ acompanhar a versão modificada; ver [CREDITS.md](../CREDITS.md).
 O ADM conduz a conversa escrita do Oráculo. O arquivo entregue pelo mod é
 `aurorion_limbo:oraculo_do_limbo`; quando o jogador pede os nomes, o servidor envia um snapshot com
 exilados, prazos, presença e custo e abre a lista dinâmica. Sem ADM, interagir com o Oráculo abre a
-lista diretamente, então o resgate não depende da integração cosmética.
+lista diretamente, então o resgate não depende da integração cosmética. O valor antigo
+`oraculo_do_limbo` do TOML é reconhecido e convertido em memória para o ID do datapack.
 
 A conversa e a lista usam a mesma paleta de grafite azulado, osso e ferrugem. O ADM recebe as nove
 cores pelo bloco `style` do JSON. Ele não oferece fonte por diálogo na versão 0.7.3; a lista nativa
 usa `aurorion_limbo:limbo`, e Caxton pode assumir sua renderização quando estiver instalado. Não há
 injeção global na tela do ADM, que mudaria também NPCs de outros mods.
 
+A passagem pertence a quem pagou por ela. Outros jogadores enxergam e atravessam apenas o efeito
+visual; somente o dono é levado ao Limbo. Quando ele chega, a passagem fecha no mesmo tick e os
+Vínculos de Alma são colocados no inventário com uma sincronização explícita para o cliente. Se o
+inventário estiver cheio, os itens caem aos pés do resgatador.
+
 As peças reutilizáveis ficam em `aurorion-core/client/gui`: `NpcScreenTheme` guarda fonte e paleta,
 `NpcPanelScreen` fornece moldura, cabeçalho, linhas, etiquetas e rolagem, e `AurorionButton` fornece
 o botão narrativo. Um NPC novo cria seu tema e implementa somente medida, widgets e conteúdo.
 Immersive Messages continua nos avisos e cenas do Limbo; colocá-lo sobre o diálogo esconderia as
-escolhas que o jogador precisa ler.
+escolhas que o jogador precisa ler. Depois da escolha, abertura da passagem, travessia e conclusão
+do Vínculo passam pelo Immersive Messages com a fonte do Limbo; sem ele, usam o painel nativo e,
+como último recurso, o chat.
 
 ### Cinematic Respawn
 

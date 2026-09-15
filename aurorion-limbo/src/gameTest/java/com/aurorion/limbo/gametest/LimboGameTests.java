@@ -8,7 +8,10 @@ import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.environment.LimboEnvironment;
+import com.aurorion.limbo.registry.LimboItems;
 import com.aurorion.limbo.report.AuditLog;
+import com.aurorion.limbo.rescue.RescueManager;
+import com.aurorion.limbo.rescue.RescuePortalEntity;
 import com.aurorion.vidas.config.LivesConfig;
 import com.aurorion.vidas.lives.LivesManager;
 import com.aurorion.vidas.network.SyncLivesPayload;
@@ -58,6 +61,92 @@ public class LimboGameTests {
             LivesConfig.EXILE_DIMENSION.set("aurorion_limbo:limbo");
             LimboConfig.WEBHOOK_URL.set("");
         });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void rescuePassageGrantsSoulBonds(GameTestHelper helper) throws Exception {
+        var server = helper.getLevel().getServer();
+        ServerLevel overworld = server.overworld();
+        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION,
+                ResourceLocation.parse("aurorion_limbo:limbo"));
+        ServerLevel limbo = server.getLevel(dimension);
+        helper.assertTrue(limbo != null, "Dimensao do Limbo deve carregar para o resgate");
+        LivesConfig.EXILE_DIMENSION.set(dimension.location().toString());
+        LimboConfig.BOND_COUNT.set(2);
+        LimboConfig.RESCUE_LIFE_COST.set(1);
+        LimboConfig.RESCUE_MIN_LIVES.set(2);
+
+        limbo.getChunk(0, 0);
+        limbo.getChunk(0, 1);
+        ServerPlayer exiled = player(helper, "LimboBondTarget");
+        ServerPlayer rescuer = player(helper, "LimboBondRescuer");
+        ServerPlayer bystander = player(helper, "LimboBondBystander");
+        try {
+            enter(exiled, limbo, 0);
+            LivesManager.setLives(server, rescuer.getUUID(), 3);
+
+            BlockPos center = helper.absolutePos(new BlockPos(1, 2, 1));
+            for (int x = -6; x <= 6; x++) {
+                for (int z = -6; z <= 6; z++) {
+                    BlockPos floor = center.offset(x, -1, z);
+                    overworld.setBlockAndUpdate(floor, Blocks.STONE.defaultBlockState());
+                    overworld.setBlockAndUpdate(floor.above(), Blocks.AIR.defaultBlockState());
+                    overworld.setBlockAndUpdate(floor.above(2), Blocks.AIR.defaultBlockState());
+                    overworld.setBlockAndUpdate(floor.above(3), Blocks.AIR.defaultBlockState());
+                }
+            }
+            rescuer.teleportTo(center.getX() + .5, center.getY(), center.getZ() + .5);
+            bystander.teleportTo(center.getX() + .5, center.getY(), center.getZ() + .5);
+
+            helper.assertTrue(RescueManager.openPassage(rescuer, exiled.getUUID()) == RescueManager.Refusal.OK,
+                    "Oraculo deve abrir uma passagem valida");
+            List<RescuePortalEntity> portals = overworld.getEntitiesOfClass(RescuePortalEntity.class,
+                    rescuer.getBoundingBox().inflate(12));
+            helper.assertTrue(portals.size() == 1, "Deve existir exatamente uma passagem de resgate");
+            RescuePortalEntity portal = portals.getFirst();
+
+            bystander.teleportTo(portal.getX(), portal.getY(), portal.getZ());
+            portal.tick();
+            helper.assertTrue(bystander.level() == overworld && !portal.isRemoved(),
+                    "Terceiros devem atravessar apenas o visual sem ativar a passagem");
+
+            // Simula alguem preso por uma passagem de versao antiga e valida a recuperacao de staff.
+            BlockPos strayLanding = SafeSpot.scanDown(limbo, 8, 0, limbo.getMaxBuildHeight() - 2);
+            helper.assertTrue(strayLanding != null, "Limbo deve ter chegada segura para o terceiro");
+            ForgottenDoor.authorize(bystander, limbo.dimension());
+            try {
+                bystander.changeDimension(new DimensionTransition(limbo, strayLanding.getBottomCenter(),
+                        Vec3.ZERO, 0, 0, DimensionTransition.DO_NOTHING));
+            } finally {
+                ForgottenDoor.clear();
+            }
+            bystander.addTag("limbo_return_test");
+            helper.assertTrue(server.getCommands().getDispatcher().execute(
+                            "limbo retornar @a[tag=limbo_return_test,limit=1]",
+                            server.createCommandSourceStack()) == 1
+                            && bystander.level() == overworld,
+                    "Staff deve retirar um terceiro preso sem alterar seu estado de vidas");
+
+            rescuer.teleportTo(portal.getX(), portal.getY(), portal.getZ());
+            portal.tick();
+            helper.assertTrue(rescuer.level() == limbo,
+                    "Resgatador deve chegar ao Limbo antes de receber o kit");
+            helper.assertTrue(rescuer.getInventory().countItem(LimboItems.SOUL_BOND.get()) == 2,
+                    "Travessia deve entregar exatamente dois Vinculos de Alma");
+            helper.assertTrue(portal.isRemoved(),
+                    "Passagem deve fechar no mesmo tick depois que o dono atravessa");
+
+            // Nao deixa um exilio ativo contaminar os outros GameTests que compartilham este servidor.
+            LivesManager.setLives(server, exiled.getUUID(), LimboConfig.LIVES_ON_RESCUE.get());
+            LimboManager.sweep(server);
+            helper.assertTrue(!LimboData.get(server).isTracked(exiled.getUUID()),
+                    "Cenario de resgate deve limpar o registro que criou");
+            helper.succeed();
+        } finally {
+            server.getPlayerList().remove(exiled);
+            server.getPlayerList().remove(rescuer);
+            server.getPlayerList().remove(bystander);
+        }
     }
 
     @GameTest(template = "empty", timeoutTicks = 400)

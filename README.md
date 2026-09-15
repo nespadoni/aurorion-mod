@@ -72,9 +72,12 @@ manual; no servidor de verdade, o jar precisa estar instalado ao lado dos mods A
 
 ./gradlew :aurorion-talk:runClient    # abre o Minecraft com um mod so
 ./gradlew :aurorion-talk:runServer    # sobe um servidor dedicado de teste
-./gradlew :aurorion-talk:build        # gera o .jar em aurorion-talk/build/libs/
-./gradlew buildAll                    # gera o .jar de todos os mods
+./gradlew :aurorion-talk:build        # gera o .jar em build/jars-servidor/
+./gradlew buildAll                    # gera todos os jars em build/jars-servidor/
 ```
+
+Os JARs instaláveis de todos os mods saem diretamente em `build/jars-servidor/`, inclusive ao
+buildar um mod individual. Os arquivos `-sources.jar` continuam em `<subprojeto>/build/libs/`.
 
 Os mundos/logs de teste ficam em `<subprojeto>/run/client` e `<subprojeto>/run/server`
 (ignorados pelo git) — inclusive `aurorion-runs/run/`, que é o mundo de teste do ecossistema

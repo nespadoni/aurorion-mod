@@ -766,6 +766,11 @@ recente, sem carregar o histórico da temporada. Gravação JSONL ocorre apenas 
 roda em uma thread própria, com fila de 64, timeout e cliente pertencente à sessão; desligar o
 servidor interrompe a fila e fecha o cliente. O timestamp pertence ao evento, não à entrega.
 
+`/limbo retornar <jogador>` recupera somente jogadores online que estejam fisicamente no Limbo sem
+estar exilados. É a saída operacional para alguém levado por uma passagem de versão antiga ou por
+outro teleporte indevido. O comando usa a mesma busca de chegada segura dos resgates, não altera
+vidas, recusa exilados e registra `RETORNO_ADMIN`; portanto não fabrica um resgate no histórico.
+
 ### 12.5 Validação
 
 Testes JUnit cobrem prazo, autosave, migração de NBT, avisos, caminhada, identidade da moldura,
@@ -1016,6 +1021,24 @@ avisos e cenas: abrir uma segunda sobreposição durante a conversa esconderia a
 retângulos e texto no frame normal da GUI. A integração não acrescenta tick de servidor, consulta de
 mundo, pacote periódico ou reflexão por quadro. ADM e Immersive Messages continuam opcionais e suas
 pontes são resolvidas uma vez.
+
+### 12.13 Passagem individual e entrega do kit
+
+A passagem guarda o UUID de quem pagou e só reage à presença dessa pessoa. Para qualquer outro
+jogador ela é cenário sem colisão nem destino. Depois que o dono atravessa com sucesso, a entidade é
+descartada no mesmo tick; assim ninguém o segue por acidente e ninguém fica no Limbo sem Vínculo ou
+sem registro de exílio. Passagens antigas sem UUID de dono são inválidas e somem ao carregar.
+
+O Vínculo de Alma só é entregue depois de o servidor confirmar que o resgatador chegou ao Limbo.
+Cada item tenta entrar no inventário e cai aos pés do jogador se não houver espaço. Depois da entrega,
+o menu de inventário envia uma única atualização completa ao cliente. A sincronização explícita é
+necessária porque a alteração acontece logo após `changeDimension`, fora do fluxo comum de coleta:
+sem ela, o servidor pode possuir o item enquanto o cliente continua mostrando o inventário anterior.
+
+O custo é uma consulta direta ao jogador dono e um broadcast de inventário por travessia de resgate,
+um evento raro; não há varredura da lista de jogadores, consulta ou pacote periódico. O GameTest
+valida que terceiros não ativam a passagem, que o dono chega à dimensão com a quantidade exata de
+Vínculos e que a passagem fecha imediatamente.
 
 ## 13. As capas de uniforme (`aurorion-aeonita`)
 

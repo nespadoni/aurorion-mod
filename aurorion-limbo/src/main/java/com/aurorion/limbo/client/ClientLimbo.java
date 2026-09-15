@@ -15,7 +15,7 @@ import net.minecraft.sounds.SoundEvents;
 public final class ClientLimbo {
     public static final ResourceLocation FONT = ResourceLocation.parse("aurorion_limbo:limbo");
     private static final String[] NOTICE_KEYS = {"queda", "chegada", "prazo", "coleira", "janela",
-            "porta", "saida", "resgate", "vencido", "publico"};
+            "porta", "saida", "resgate", "vencido", "publico", "passagem", "travessia", "vinculo"};
     public static final Component EYEBROW = Component.translatable("aurorion_limbo.ui.eyebrow");
     public static final Component NAME = title("aurorion_limbo.ui.name");
     public static final Component REMAINING = Component.translatable("aurorion_limbo.ui.remaining");
@@ -103,13 +103,15 @@ public final class ClientLimbo {
     public static float ageSeconds() { return (System.nanoTime() - noticeStart) / 1_000_000_000F; }
     public static boolean major() {
         return notice != null && notice.kind() != LimboNoticePayload.PUBLIC
-                && notice.kind() != LimboNoticePayload.DEADLINE && notice.kind() != LimboNoticePayload.LEASH;
+                && notice.kind() != LimboNoticePayload.DEADLINE && notice.kind() != LimboNoticePayload.LEASH
+                && notice.kind() != LimboNoticePayload.PASSAGE_OPENED;
     }
     public static float durationSeconds() { return major() ? 8 : 4.5F; }
     public static int accent() {
         if (notice == null) return 0x9BBFD6;
         return switch (notice.kind()) {
-            case LimboNoticePayload.RESCUED, LimboNoticePayload.DEADLINE -> 0xDDB878;
+            case LimboNoticePayload.RESCUED, LimboNoticePayload.DEADLINE,
+                    LimboNoticePayload.BOND_USED -> 0xDDB878;
             case LimboNoticePayload.FALL, LimboNoticePayload.EXPIRED -> 0xD99891;
             default -> 0x9BBFD6;
         };

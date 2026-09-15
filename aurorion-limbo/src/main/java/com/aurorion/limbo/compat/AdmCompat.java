@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  * servidor, nao texto de arquivo.
  *
  * <p>Entao a integracao nao troca uma coisa pela outra: o dialogo e a moldura e a tela e o miolo. Uma
- * escolha do dialogo roda {@code /limbo oraculo}, que abre a lista. Sem o ADM, o esqueleto abre a
+ * escolha do dialogo roda {@code /oraculo}, que abre a lista. Sem o ADM, o esqueleto abre a
  * lista direto e o servidor perde a conversa, nao o resgate.
  *
  * <h2>Reflexao, pelo mesmo motivo de sempre</h2>
@@ -39,9 +39,9 @@ import java.util.function.Predicate;
  * a poder fazer:
  *
  * <pre>{@code
- * "condition": { "type": "aurorion_limbo:exilados", "min": 1 }   // ha alguem no Limbo?
- * "condition": { "type": "aurorion_limbo:pode_pagar" }           // tem vida para a passagem?
- * "condition": { "type": "aurorion_limbo:no_limbo" }             // quem fala esta exilado?
+ * "condition": { "type": "aurorion_limbo_exilados", "min": 1 }  // ha alguem no Limbo?
+ * "condition": { "type": "aurorion_limbo_pode_pagar" }          // tem vida para a passagem?
+ * "condition": { "type": "aurorion_limbo_exilado" }             // quem fala esta exilado?
  * }</pre>
  *
  * <p>Condicao e <b>comportamento</b>, entao vem de codigo. A fala e <b>conteudo</b>, entao mora no
@@ -52,6 +52,8 @@ public final class AdmCompat {
     private static final String API = "net.aviel.dialogue.api.AdmDialogueApi";
     private static final String HANDLER = "net.aviel.dialogue.api.DialogueConditionHandler";
     private static final String PREDICATE = "net.aviel.dialogue.npc.dialogue.DialogueCondition$Predicate";
+    private static final String LEGACY_ORACLE_DIALOGUE = "oraculo_do_limbo";
+    private static final String BUILTIN_ORACLE_DIALOGUE = "aurorion_limbo:oraculo_do_limbo";
 
     private static Method openDialogue;
     private static boolean available;
@@ -81,26 +83,28 @@ public final class AdmCompat {
             openDialogue = api.getMethod("openDialogue", ServerPlayer.class, Entity.class, String.class);
 
             Method min = predicate.getMethod("min");
-            Method expected = predicate.getMethod("expected");
-
-            condition(registerType, handler, min, expected, "aurorion_limbo:exilados",
+            condition(registerType, handler, min, "aurorion_limbo_exilados",
                     player -> !LimboData.get(player.server).active().isEmpty(),
                     player -> LimboData.get(player.server).active().size());
 
-            condition(registerType, handler, min, expected, "aurorion_limbo:pode_pagar",
+            condition(registerType, handler, min, "aurorion_limbo_pode_pagar",
                     player -> LivesManager.livesOf(player.server, player.getUUID())
                             >= LimboConfig.minLivesToRescue(),
                     player -> LivesManager.livesOf(player.server, player.getUUID()));
 
-            condition(registerType, handler, min, expected, "aurorion_limbo:no_limbo",
+            condition(registerType, handler, min, "aurorion_limbo_exilado",
                     player -> LivesManager.isExiled(player.server, player.getUUID()),
                     player -> LivesManager.isExiled(player.server, player.getUUID()) ? 1 : 0);
 
             available = true;
             AurorionLimbo.LOGGER.info("ADM encontrado: o Oraculo pode usar dialogo.");
+            if (LEGACY_ORACLE_DIALOGUE.equals(LimboConfig.ORACLE_DIALOGUE.get())) {
+                AurorionLimbo.LOGGER.info("Config antiga do Oraculo detectada; usando '{}' como datapack.",
+                        BUILTIN_ORACLE_DIALOGUE);
+            }
         } catch (ReflectiveOperationException | RuntimeException e) {
-            AurorionLimbo.LOGGER.warn("ADM presente mas com API diferente da esperada ({}); "
-                    + "o Oraculo abre a lista direto.", e.toString());
+            AurorionLimbo.LOGGER.warn("ADM presente mas a ponte nao iniciou ({}); "
+                    + "o Oraculo abre a lista direto.", causeOf(e));
             available = false;
         }
     }
@@ -108,11 +112,11 @@ public final class AdmCompat {
     /**
      * Uma condicao, com as duas leituras que o ADM oferece.
      *
-     * <p>Sem {@code min}, a condicao e um sim/nao e {@code expected} inverte (o {@code "not"} do
-     * JSON). Com {@code min}, ela compara a contagem — e o que faz
-     * {@code {"type":"aurorion_limbo:exilados","min":3}} significar "tres ou mais perdidos".
+     * <p>Sem {@code min}, a condicao e um sim/nao. Com {@code min}, ela compara a contagem. O ADM
+     * aplica {@code expected} depois de chamar o handler; aplicar aqui tambem inverteria duas vezes.
+     * O nome nao leva namespace porque a 0.7.3 aceita apenas {@code [a-z][a-z0-9_.-]{0,63}}.
      */
-    private static void condition(Method registerType, Class<?> handlerType, Method minOf, Method expectedOf,
+    private static void condition(Method registerType, Class<?> handlerType, Method minOf,
                                   String type, Predicate<ServerPlayer> yesNo,
                                   java.util.function.ToIntFunction<ServerPlayer> count)
             throws ReflectiveOperationException {
@@ -130,13 +134,9 @@ public final class AdmCompat {
 
             Object pred = args[2];
             Double min = pred == null ? null : (Double) minOf.invoke(pred);
-            boolean expected = pred == null || (boolean) expectedOf.invoke(pred);
-
-            boolean result = min != null
+            return min != null
                     ? count.applyAsInt(player) >= min
                     : yesNo.test(player);
-
-            return result == expected;
         };
 
         Object handler = Proxy.newProxyInstance(AdmCompat.class.getClassLoader(),
@@ -151,6 +151,9 @@ public final class AdmCompat {
      */
     public static boolean openOracleDialogue(ServerPlayer player, Entity oracle) {
         String file = LimboConfig.ORACLE_DIALOGUE.get();
+        // O valor default antigo nao tinha namespace. Preservar este alias evita que uma atualizacao
+        // funcional dependa de alguem lembrar de reescrever um TOML ja existente no servidor.
+        if (LEGACY_ORACLE_DIALOGUE.equals(file)) file = BUILTIN_ORACLE_DIALOGUE;
         if (!available || openDialogue == null || file == null || file.isBlank()) return false;
 
         try {
@@ -163,9 +166,15 @@ public final class AdmCompat {
             // id errado de JSON quebrado — e o id errado e o engano facil de cometer (ver o comentario
             // de dialogoDoOraculo: sem ':' o ADM procura arquivo, nao datapack).
             AurorionLimbo.LOGGER.warn("Nao consegui abrir o dialogo '{}' do Oraculo ({}); abrindo a lista.",
-                    file, e.toString());
+                    file, causeOf(e));
             return false;
         }
+    }
+
+    private static String causeOf(Throwable error) {
+        Throwable cause = error;
+        while (cause.getCause() != null && cause.getCause() != cause) cause = cause.getCause();
+        return cause.toString();
     }
 
     /** Solta o estado ligado ao processo, como o resto do mod faz no desligamento. */

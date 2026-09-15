@@ -11,7 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Uma mensagem por acontecimento; textos continuam traduziveis por resource pack. */
 public record LimboNoticePayload(int kind, Component body) implements CustomPacketPayload {
     public static final int FALL = 0, ARRIVAL = 1, DEADLINE = 2, LEASH = 3, WINDOW = 4,
-            DOOR = 5, ESCAPED = 6, RESCUED = 7, EXPIRED = 8, PUBLIC = 9;
+            DOOR = 5, ESCAPED = 6, RESCUED = 7, EXPIRED = 8, PUBLIC = 9,
+            PASSAGE_OPENED = 10, PASSAGE_CROSSED = 11, BOND_USED = 12;
     public static final Type<LimboNoticePayload> TYPE = new Type<>(ResourceLocation.parse("aurorion_limbo:notice"));
     public static final StreamCodec<RegistryFriendlyByteBuf, LimboNoticePayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, LimboNoticePayload::kind,

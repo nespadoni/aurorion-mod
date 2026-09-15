@@ -28,12 +28,12 @@
         {
           "text": "Quem está perdido?",
           "next": "tem_perdidos",
-          "condition": { "type": "aurorion_limbo:exilados", "min": 1 }
+          "condition": { "type": "aurorion_limbo_exilados", "min": 1 }
         },
         {
           "text": "Quem está perdido?",
           "next": "ninguem",
-          "condition": { "type": "aurorion_limbo:exilados", "expected": false }
+          "condition": { "type": "aurorion_limbo_exilados", "expected": false }
         },
         {
           "text": "O que é este lugar?",
@@ -56,12 +56,12 @@
           "text": "Mostre-me os nomes.",
           "commands": ["oraculo"],
           "close": true,
-          "condition": { "type": "aurorion_limbo:pode_pagar" }
+          "condition": { "type": "aurorion_limbo_pode_pagar" }
         },
         {
           "text": "Mostre-me os nomes.",
           "next": "sem_preco",
-          "condition": { "type": "aurorion_limbo:pode_pagar", "expected": false }
+          "condition": { "type": "aurorion_limbo_pode_pagar", "expected": false }
         },
         {
           "text": "Voltar",
@@ -99,9 +99,9 @@
       ],
       "choices": [
         { "text": "E se eu cair aqui?", "next": "lore_exilado",
-          "condition": { "type": "aurorion_limbo:no_limbo", "expected": false } },
+          "condition": { "type": "aurorion_limbo_exilado", "expected": false } },
         { "text": "Eu já caí.", "next": "lore_dentro",
-          "condition": { "type": "aurorion_limbo:no_limbo" } },
+          "condition": { "type": "aurorion_limbo_exilado" } },
         { "text": "Voltar", "next": "saudacao" }
       ]
     },

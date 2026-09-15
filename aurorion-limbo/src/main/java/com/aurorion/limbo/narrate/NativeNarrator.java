@@ -41,4 +41,16 @@ class NativeNarrator extends ChatNarrator {
     @Override public void expired(ServerPlayer player) {
         if (!LimboNetwork.notice(player, LimboNoticePayload.EXPIRED, LimboText.expired())) super.expired(player);
     }
+    @Override public void passageOpened(ServerPlayer player, String target, int cost) {
+        if (!LimboNetwork.notice(player, LimboNoticePayload.PASSAGE_OPENED,
+                LimboText.passageOpened(target, cost))) super.passageOpened(player, target, cost);
+    }
+    @Override public void passageCrossed(ServerPlayer player) {
+        if (!LimboNetwork.notice(player, LimboNoticePayload.PASSAGE_CROSSED,
+                LimboText.passageCrossed())) super.passageCrossed(player);
+    }
+    @Override public void bondUsed(ServerPlayer player, String target) {
+        if (!LimboNetwork.notice(player, LimboNoticePayload.BOND_USED,
+                LimboText.bondUsed(target))) super.bondUsed(player, target);
+    }
 }
