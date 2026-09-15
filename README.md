@@ -9,11 +9,12 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Mod | Pasta | O que faz |
 |---|---|---|
 | Aurorion Core | [aurorion-core/](aurorion-core/) | **Biblioteca**: não adiciona nada ao jogo, mas todos os outros dependem dela |
-| Aurorion Talk | [aurorion-talk/](aurorion-talk/) | Balões de fala acima dos jogadores; tira as falas do HUD do chat |
+| Aurorion Talk | [aurorion-talk/](aurorion-talk/) | Balões de fala acima dos jogadores; tira as falas do HUD do chat e fecha o sussurro |
 | Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Comandos essenciais de servidor: `/fakename` (troca o nome exibido em todo o jogo) e cleanup periódico de itens/XP no chão |
 | Aurorion Utils | [aurorion-utils/](aurorion-utils/) | Utilitários diversos: `/abduzir` (puxa um jogador com uma animação de feixe de luz, com opção de trazer de volta) |
 | Aurorion Aeonita | [aurorion-aeonita/](aurorion-aeonita/) | **Conteúdo**: itens e blocos de Aeonita, luz dinâmica, o Altar de Seleção e as capas de uniforme animadas (uma por casa) |
 | Aurorion Ethereal | [aurorion-ethereal/](aurorion-ethereal/) | **O mod central**: as cinco casas por datapack, a Cerimônia de Vinculação no altar com revelação animada, e o Projetor Aeônico com os rankings |
+| Aurorion Areas | [aurorion-areas/](aurorion-areas/) | Areas de staff com formas livres, regras sobrepostas, excecoes por personagem, zonas seguras e ambientes narrativos |
 | Aurorion Portais | [aurorion-portais/](aurorion-portais/) | Tranca todas as dimensões menos o overworld; o acesso abre em janelas agendadas por datapack (os "trens"), com avisos automáticos |
 | Aurorion Mundos | [aurorion-mundos/](aurorion-mundos/) | Mais de um overworld: mesmo gerador e mesmos mods de worldgen, mas com seed própria, barreira própria e portais de obsidiana com destino declarado em datapack |
 | Aurorion Vidas | [aurorion-vidas/](aurorion-vidas/) | Vidas limitadas por jogador, contador no HUD acima da fome, e exílio no Nether para quem zerar |

@@ -1,0 +1,40 @@
+{
+  "sounds": {
+    "events": [
+      "minecraft:block.grass.step",
+      "minecraft:block.gravel.step",
+      "minecraft:entity.vex.ambient",
+      "minecraft:entity.allay.ambient_without_item",
+      "minecraft:entity.warden.listening",
+      "minecraft:ambient.soul_sand_valley.additions"
+    ],
+    "interval": {
+      "min_seconds": 7,
+      "max_seconds": 16
+    },
+    "volume": 0.65,
+    "pitch": 0.7,
+    "distance": 7
+  },
+  "pulse": {
+    "darkness_seconds": 5,
+    "blindness_seconds": 2,
+    "vignette": 0.65,
+    "interval": {
+      "min_seconds": 20,
+      "max_seconds": 38
+    }
+  },
+  "attack": {
+    "damage": 1,
+    "lethal": false,
+    "interval": {
+      "min_seconds": 35,
+      "max_seconds": 65
+    }
+  },
+  "fog": {
+    "distance": 26,
+    "color": "#102019"
+  }
+}

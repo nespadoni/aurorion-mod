@@ -1,0 +1,12 @@
+{
+  "flags": {
+    "voo": "deny",
+    "magia": "deny",
+    "monstros": "deny",
+    "dano_monstros": "deny",
+    "pvp": "deny"
+  },
+  "ambience": "aurorion_areas:none",
+  "mob_health": 1,
+  "mob_damage": 1
+}

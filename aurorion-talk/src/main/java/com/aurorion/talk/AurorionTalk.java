@@ -2,6 +2,7 @@ package com.aurorion.talk;
 
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.talk.config.TalkConfig;
+import com.aurorion.talk.config.TalkServerConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -17,5 +18,6 @@ public class AurorionTalk {
 
     public AurorionTalk(ModContainer container) {
         AurorionConfigs.register(container, ModConfig.Type.CLIENT, TalkConfig.SPEC);
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, TalkServerConfig.SPEC);
     }
 }

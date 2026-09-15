@@ -1,0 +1,12 @@
+{
+  "flags": {
+    "voo": "allow",
+    "magia": "allow",
+    "monstros": "allow",
+    "dano_monstros": "allow",
+    "pvp": "allow"
+  },
+  "ambience": "aurorion_areas:none",
+  "mob_health": 1.5,
+  "mob_damage": 1.25
+}

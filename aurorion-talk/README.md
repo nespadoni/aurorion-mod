@@ -9,6 +9,7 @@ Fork do [Talk Balloons](https://github.com/CERBON-MODS/Talk-Balloons) (LGPL-3.0)
 
 - Mensagem de jogador → balão acima da cabeça, e some do chat
 - Mensagens de sistema, comandos, morte e entrada/saída **continuam** no chat
+- `/msg`, `/tell` e `/w` são **recusados** para jogador comum — a staff continua sussurrando
 - Cada jogador personaliza o **próprio** balão (skin, enfeite, cor do balão, cor do texto) numa
   tela in-game — a escolha é sincronizada, então todo mundo vê o mesmo balão
 - Arte nova (skins e enfeites) entra só soltando um PNG na pasta certa e reexportando o jar,
@@ -42,12 +43,40 @@ achataria escolha demais).
 Quem decide é o **servidor**, em `BalloonStyle#normalized()`: a garantia não pode depender de uma GUI
 que é do cliente e pode ser trocada. A tela avisa antes, para a correção não parecer um bug.
 
+## O sussurro fecha junto
+
+Tirar a fala do HUD é decisão do **cliente** — e cliente é opcional: quem entra sem o mod nunca leu
+essa config. Enquanto `/w` existisse, falar sem aparecer acima da própria cabeça continuava a uma
+tecla de distância, e a regra que sustenta o mod inteiro era só uma sugestão. Quem recusa o comando,
+então, é o servidor — em `config/aurorion/talk-server.toml`:
+
+```toml
+[privateMessages]
+blockPrivateMessages = true
+commands = ["msg", "tell", "w"]
+bypassPermissionLevel = 2
+denyMessage = "Em Aurorion ninguém sussurra. Fale — o que você disser aparece acima da sua cabeça."
+```
+
+- **A staff continua sussurrando** (nível 2, o OP comum): moderar às vezes exige falar com uma
+  pessoa só, sem a cena inteira ouvindo. **Receber** nunca foi barrado — o admin chama e o jogador
+  lê no chat normalmente; o caminho de volta, do jogador para a staff, é o `/ajuda` do
+  `aurorion-essentials`, que avisa todos os OPs online com nome, fakename e coordenada.
+- **Console, bloco de comando e datapack passam direto**: nenhum deles está fugindo de balão.
+- `/tell` e `/w` são apelidos de `/msg` no vanilla, mas o servidor barra pelo que foi **digitado** —
+  por isso os três estão na lista. Ela aceita `/w` e `W` do mesmo jeito que `w`, e aceita o comando
+  de sussurro de qualquer outro mod do pack (`teammsg` e `tm`, se o chat de time também virar
+  conversa paralela).
+- O jogador recusado **lê o porquê**. Cancelar um comando não devolve nada ao cliente por padrão, e
+  comando engolido em silêncio parece servidor travado.
+
 ## Arquitetura
 
 ```
 style/           BalloonStyle (skin + enfeite + 2 cores) + grade/contraste + convenção de pastas
 network/         SetStylePayload (cliente -> servidor), Sync/Update (servidor -> clientes)
-server/          SavedData (persistência por jogador), validação, broadcast
+server/          SavedData (persistência por jogador), validação, broadcast, veto do sussurro
+config/          client (como a fala aparece) e server (o que conta como fala)
 client/          catálogo de texturas (scan em runtime), cache de estilos, renderer 3D, GUI
 client/render/   geometria nine-slice compartilhada entre o balão 3D e o preview 2D da GUI
 mixin/           4 mixins, todos client-side

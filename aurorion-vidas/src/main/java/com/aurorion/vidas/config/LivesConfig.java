@@ -46,7 +46,7 @@ public final class LivesConfig {
                         "portal que encontrar.",
                         "O ponto exato de chegada NAO se configura aqui: use /vidas exilio aqui, no lugar."
                 )
-                .define("exileDimension", "minecraft:the_nether");
+                .define("exileDimension", "aurorion_limbo:limbo");
 
         BLOCK_EXILE_EXIT = BUILDER
                 .comment(

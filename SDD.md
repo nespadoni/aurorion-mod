@@ -129,6 +129,25 @@ Primeiro mod do ecossistema; as decisões abaixo são o padrão a repetir nos pr
   nenhum registro em código, nenhum banco de dados, nenhuma API externa. Reduz a distância entre
   "eu quero adicionar uma skin" e "ela existe no jogo" a zero infraestrutura nova.
 
+### 4.5 O sussurro é decisão do servidor (a regra não pode morar no cliente)
+
+- **Esconder a fala do HUD é do cliente; proibir `/w` é do servidor.** As duas metades parecem a
+  mesma feature e não são: a primeira é preferência de quem instalou o mod, a segunda é regra do
+  mundo. Deixar a segunda no cliente seria deixá-la valendo só para quem quisesse — e um jogador
+  com o cliente limpo continuaria conversando fora de cena, que é exatamente o que o mod existe
+  para impedir. Daí o segundo arquivo de config (`talk-server.toml`), e não um campo novo no do
+  cliente.
+- **Veto em `CommandEvent`, não mixin em `MsgCommand`.** O evento já existe, é o mesmo ponto que o
+  `aurorion-personagem` e o `aurorion-limbo` usam para barrar comando, e não conflita com nenhum
+  outro mod do pack que também mexa em chat. Um mixin no comando do vanilla seria superfície nova
+  por nada.
+- **A lista de comandos é config, e a comparação é pelo nome digitado.** `/tell` e `/w` são
+  apelidos redirecionados de `/msg`, mas o que chega ao evento é a palavra que a pessoa escreveu;
+  os três precisam estar na lista. Ser config é o que faz o veto alcançar o comando de sussurro de
+  qualquer outro mod do modpack sem uma linha de código nova.
+- **Recusar em silêncio é bug.** Cancelar um `CommandEvent` não devolve nada ao jogador: sem a
+  mensagem explícita, o comando engolido é indistinguível de servidor travado.
+
 ## 5. aurorion-essentials — decisões (fakename)
 
 Segundo mod do ecossistema; primeira feature é o **fakename** (nome exibido trocado em quase todo
@@ -1141,3 +1160,30 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
 - Multiloader (Fabric/Forge legado) — ver seção 3.
 - Escala além de ~100 jogadores simultâneos — não foi um requisito colocado, e desenhar para isso
   agora seria complexidade especulativa sem uso.
+
+
+## 15. aurorion-areas — regras e ambientes por territorio
+
+- Areas sao geometria persistida no mundo e editada apenas pela staff. Circulos exatos e
+  poligonos concavos formam unioes com recortes e alturas independentes. Nenhum chunk e carregado
+  para criar, consultar ou visualizar limites.
+- A prioridade resolve cada regra separadamente; herdar nao e permitir. Uma sala pode liberar
+  magia mantendo voo e spawn de monstros bloqueados pela escola. Empate usa id alfabetico.
+- Um BVH por dimensao e reconstruido somente quando o cadastro muda; nao se indexa cada chunk de
+  areas gigantes. Consultas de movimento reutilizam o resultado por jogador, com revisao e
+  coordenadas exatas. Parado nao recalcula geometria; o caminho por tick nao monta colecoes.
+- Som, darkness e dano ambiental usam prazos independentes somente para jogadores em perfis
+  ativos. Som e individual, sem entidades falsas e sem broadcast para a plateia. Neblina chega
+  por delta na troca de perfil e a visao fechada por pulsos com prazo local.
+- Spawn e dano usam eventos do servidor. Escala de vida e dano de monstros nasce no spawn e
+  persiste, sem multiplicar de novo ao carregar chunk. Zona segura bloqueia spawn novo e dano
+  hostil, sem apagar mobs salvos, NPCs ou animais.
+- Voo/magia afetam jogadores. Excecoes por UUID, regra e area autorizam personagens especificos;
+  reset de personagem remove essas excecoes. NPCs continuam usando suas proprias mecanicas.
+- Elytra e habilidades vanilla sao fiscalizadas no servidor. Iron's Spells usa evento de
+  pre-cast via ponte opcional; outros meios de voo usam tags e a API publica conforme o modpack.
+  Permitir voo nunca concede uma habilidade que o jogador nao tinha.
+- Edicao e visualizacao exigem permissao nivel 2. Previews duram 30 segundos, so para o ADM,
+  com no maximo 96 amostras por emissao. Nao ha ferramenta de claim para jogadores.
+- Limites de vertices, partes, areas e regras sao validados antes de publicar o novo indice.
+  Profiles narrativos sao datapack; /reload atualiza quem esta dentro sem resetar prazos por passo.
