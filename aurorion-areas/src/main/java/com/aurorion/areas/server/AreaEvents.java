@@ -95,19 +95,18 @@ public final class AreaEvents {
     }
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void damage(LivingIncomingDamageEvent event) {
-        if (!AreasConfig.ENABLED.get() || !(event.getEntity().level() instanceof ServerLevel level)) return;
+        if (!AreasConfig.ENABLED.get() || !(event.getEntity().level() instanceof ServerLevel)) return;
         var source = event.getSource().getEntity();
         var victim = event.getEntity();
         if (source != null && hostile(source)) {
-            if (!AreaApi.allowsAt(level, victim.getX(), victim.getY(), victim.getZ(), victim.getUUID(), AreaRule.HOSTILE_DAMAGE.key())) {
+            if (!AreaApi.allowsFor(victim, AreaRule.HOSTILE_DAMAGE)) {
                 event.setCanceled(true); return;
             }
             double factor = source.getPersistentData().getDouble(STRENGTH);
             if (factor >= .1 && factor <= 20) event.setAmount((float) (event.getAmount() * factor));
         }
         if (source instanceof ServerPlayer attacker && victim instanceof ServerPlayer target && attacker != target
-                && (!AreaApi.allowsAt(level, victim.getX(), victim.getY(), victim.getZ(), victim.getUUID(), AreaRule.PVP.key())
-                || !AreaApi.allowsAt(attacker.serverLevel(), attacker.getX(), attacker.getY(), attacker.getZ(), attacker.getUUID(), AreaRule.PVP.key()))) {
+                && (!AreaApi.allowsFor(target, AreaRule.PVP) || !AreaApi.allowsFor(attacker, AreaRule.PVP))) {
             event.setCanceled(true);
         }
     }
@@ -119,9 +118,10 @@ public final class AreaEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void target(LivingChangeTargetEvent event) {
         var target = event.getNewAboutToBeSetTarget();
-        if (target == null || !hostile(event.getEntity()) || !(target.level() instanceof ServerLevel level)) return;
-        if (!AreaApi.allowsAt(level, target.getX(), target.getY(), target.getZ(), target.getUUID(), AreaRule.HOSTILE_DAMAGE.key()))
-            event.setNewAboutToBeSetTarget(null);
+        // Dispara a cada reavaliacao de alvo de cada mob: a config vem antes das consultas de tag.
+        if (target == null || !AreasConfig.ENABLED.get() || !(target.level() instanceof ServerLevel)
+                || !hostile(event.getEntity())) return;
+        if (!AreaApi.allowsFor(target, AreaRule.HOSTILE_DAMAGE)) event.setNewAboutToBeSetTarget(null);
     }
     private static boolean blocked(ServerPlayer player, ItemStack item) {
         AreaRule rule = item.is(AreaTags.FLIGHT_ITEMS) ? AreaRule.FLIGHT

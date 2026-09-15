@@ -27,8 +27,10 @@ public record AreaRegion(String id, String name, ResourceLocation dimension, int
         exceptions = Map.copyOf(copy);
     }
 
-    public Decision decision(String key, @Nullable UUID actor) {
-        Set<String> allowed = actor == null ? null : exceptions.get(actor);
+    public Decision decision(String key, @Nullable UUID actor) { return decision(key, exceptionsOf(actor)); }
+    /** Buscado uma vez quando varias regras da mesma area sao resolvidas para o mesmo personagem. */
+    @Nullable public Set<String> exceptionsOf(@Nullable UUID actor) { return actor == null ? null : exceptions.get(actor); }
+    public Decision decision(String key, @Nullable Set<String> allowed) {
         return allowed != null && allowed.contains(key) ? Decision.ALLOW : rules.flag(key);
     }
     public boolean beats(@Nullable AreaRegion other) {
