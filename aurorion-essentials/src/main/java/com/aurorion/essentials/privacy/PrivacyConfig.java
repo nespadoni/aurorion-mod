@@ -18,12 +18,12 @@ public final class PrivacyConfig {
 
     static {
         BUILDER.comment(
-                "Esconde de quem nao e OP informacoes que ajudam em meta-gaming: quem esta online,",
-                "conquistas alheias, e troca de mensagens privadas. Operadores sempre veem/usam tudo."
+                "Oculta entradas e saidas de todos os jogadores, inclusive operadores.",
+                "Conquistas alheias e mensagens privadas podem ser restritas a operadores."
         ).push("privacy");
 
         HIDE_JOIN_LEAVE_MESSAGES = BUILDER
-                .comment("Esconde \"Fulano entrou/saiu do jogo\" do chat de quem nao e OP.")
+                .comment("Esconde \"Fulano entrou/saiu do jogo\" de todos os chats, inclusive de operadores.")
                 .define("hideJoinLeaveMessages", true);
 
         HIDE_ADVANCEMENT_MESSAGES = BUILDER

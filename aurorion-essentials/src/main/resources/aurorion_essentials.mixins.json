@@ -11,7 +11,12 @@
     "AdvancementAnnounceMixin",
     "WhisperCommandMixin"
   ],
-  "client": [],
+  "client": [
+    "PhoneDisplayNameMixin",
+    "PhoneContactNameMixin",
+    "PhoneCallingNameMixin",
+    "PhoneIncomingNameMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

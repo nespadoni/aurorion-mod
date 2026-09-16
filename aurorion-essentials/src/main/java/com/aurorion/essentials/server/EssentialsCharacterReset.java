@@ -3,6 +3,7 @@ package com.aurorion.essentials.server;
 import com.aurorion.core.character.CharacterNamedEvent;
 import com.aurorion.core.character.CharacterResetEvent;
 import com.aurorion.essentials.AurorionEssentials;
+import com.aurorion.essentials.compat.MattupolisPhoneCompat;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -25,6 +26,11 @@ public final class EssentialsCharacterReset {
     @SubscribeEvent
     public static void onReset(CharacterResetEvent event) {
         ServerPlayer player = event.player();
+        try {
+            MattupolisPhoneCompat.resetCharacterData(event.server(), event.account());
+        } catch (Exception e) {
+            throw new IllegalStateException("Falha ao limpar dados do telefone do personagem anterior", e);
+        }
 
         // Offline acontece quando um reset interrompido e retomado antes do dono voltar: sem
         // jogador nao ha pacote para enviar, e apagar o dado guardado ja basta.
