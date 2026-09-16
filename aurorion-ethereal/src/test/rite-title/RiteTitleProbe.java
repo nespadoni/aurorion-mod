@@ -4,6 +4,20 @@ import java.util.regex.Pattern;
 import jdk.jshell.JShell;
 import jdk.jshell.Snippet;
 
+/**
+ * Confere a transformacao do nome da casa sem abrir o jogo: le o proprio RiteRenderer.java, extrai a
+ * rotacao e a escala aplicadas ao texto, e testa 8 angulos de camera x 5 inclinacoes.
+ *
+ * <p>Pega duas coisas que um print nao pega: o texto nascer <b>de costas</b> (lido espelhado) e a
+ * sombra da fonte cair <b>na frente</b> das letras. As duas acontecem se o componente Y do billboard
+ * perder a meia volta que a orientacao da camera do jogo carrega.</p>
+ *
+ * <p>Rodar da raiz do monorepo — o segundo argumento e o jar do JOML que o Gradle ja baixou:</p>
+ *
+ * <pre>
+ * java aurorion-ethereal/src/test/rite-title/RiteTitleProbe.java  *     aurorion-ethereal/src/main/java/com/aurorion/ethereal/client/RiteRenderer.java  *     "$(find ~/.gradle/caches/modules-2 -name 'joml-*.jar' | grep -v sources | head -1)"
+ * </pre>
+ */
 class RiteTitleProbe {
     public static void main(String[] args) throws Exception {
         String source = Files.readString(Path.of(args[0]));

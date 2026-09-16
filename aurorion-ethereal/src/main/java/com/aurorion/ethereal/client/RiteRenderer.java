@@ -127,7 +127,11 @@ public final class RiteRenderer {
             // So o eixo Y. Com a rotacao inteira da camera o nome tombava junto com a mira de quem
             // olhava e, de perto ou de baixo, escorregava para fora do selo — cada espectador via o
             // nome num lugar. Travando a inclinacao, ele fica em pe e ancorado acima da cabeca.
-            pose.mulPose(ROTATION.rotationY(-event.getCamera().getYRot() * Mth.DEG_TO_RAD));
+            //
+            // O Mth.PI nao e enfeite: a orientacao da camera do jogo e rotationYXZ(PI - yaw, -pitch, 0),
+            // entao a meia volta faz parte do componente Y. Sem ela o texto nascia de costas — lia-se
+            // espelhado e a sombra da fonte caia na frente das letras em vez de atras.
+            pose.mulPose(ROTATION.rotationY(Mth.PI - event.getCamera().getYRot() * Mth.DEG_TO_RAD));
             float scale = Math.min(.115F, 8F / Math.max(1, rite.titleWidth)) * overshoot;
             float strength = arriving * rite.fade(partial);
             VertexConsumer halo = buffers.getBuffer(GLOW);

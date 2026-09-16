@@ -1,1 +1,39 @@
 apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// O reset dos dados do telefone (extrato do banco, teto de PIX do dia, agenda de contas e numero)
+// e testado fora do JUnit: o RunPhoneResetTests compila o MattupolisPhoneCompat contra stubs das
+// classes de Minecraft, porque carregar a classe de verdade arrastaria o FML inteiro para dentro do
+// teste so para reescrever um .properties.
+//
+// A tarefa existe porque o teste sozinho nao rodava em build nenhum: ficava no repositorio como um
+// arquivo que alguem precisava lembrar de executar na mao. Preso ao 'check', uma regressao no reset
+// quebra o build em vez de aparecer no servidor.
+def phoneResetLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(21)
+}
+
+def phoneResetMarker = layout.buildDirectory.file('phone-reset-test.ok')
+
+tasks.register('phoneResetTest', Exec) {
+    group = 'verification'
+    description = 'Regressao do reset de dados do telefone (banco, PIX, contatos e numero).'
+
+    // O launcher roda da raiz do monorepo porque o RunPhoneResetTests resolve os fontes por
+    // caminho relativo ('aurorion-essentials/src/...').
+    workingDir = rootProject.projectDir
+    executable = phoneResetLauncher.get().executablePath.asFile.absolutePath
+    args 'aurorion-essentials/src/test/phone-reset/RunPhoneResetTests.java'
+
+    inputs.file('src/test/phone-reset/RunPhoneResetTests.java')
+    inputs.file('src/main/java/com/aurorion/essentials/compat/MattupolisPhoneCompat.java')
+    inputs.file('src/test/java/com/aurorion/essentials/compat/MattupolisPhoneCompatDataTest.java')
+    outputs.file(phoneResetMarker)
+
+    doLast {
+        def marker = phoneResetMarker.get().asFile
+        marker.parentFile.mkdirs()
+        marker.text = 'ok'
+    }
+}
+
+tasks.named('check') { dependsOn 'phoneResetTest' }
