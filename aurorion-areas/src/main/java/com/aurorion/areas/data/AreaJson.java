@@ -61,13 +61,15 @@ public final class AreaJson {
         JsonArray array = new JsonArray();
         for (AreaShape shape : shapes) {
             JsonObject json = new JsonObject();
+            // points() reconstroi a lista a partir dos vetores do caminho quente: uma chamada por forma.
+            List<Point2> vertices = shape.points();
             json.addProperty("min_y", shape.bounds().minY()); json.addProperty("max_y", shape.bounds().maxY());
             if (shape.isCircle()) {
                 json.addProperty("radius", shape.radius());
-                json.addProperty("x", shape.points().getFirst().x()); json.addProperty("z", shape.points().getFirst().z());
+                json.addProperty("x", vertices.getFirst().x()); json.addProperty("z", vertices.getFirst().z());
             } else {
                 JsonArray points = new JsonArray();
-                for (Point2 p : shape.points()) { JsonArray pair = new JsonArray(); pair.add(p.x()); pair.add(p.z()); points.add(pair); }
+                for (Point2 p : vertices) { JsonArray pair = new JsonArray(); pair.add(p.x()); pair.add(p.z()); points.add(pair); }
                 json.add("points", points);
             }
             array.add(json);

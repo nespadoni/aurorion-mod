@@ -90,6 +90,37 @@ class AreaPolicyTest {
         assertFalse(restored.volume().contains(0, 25, 0));
         assertTrue(restored.volume().contains(0, 40, 0));
     }
+    @Test void reusedResolutionRefreshesDefaultsAfterStaffEdits() {
+        var data = new AreaData();
+        var out = new ResolvedRules();
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertTrue(out.allows(AreaRule.FLIGHT));
+        var forest = ResourceLocation.parse("aurorion_areas:floresta_negra");
+        data.setDefaults(WORLD, new AreaRules(Map.of("voo", Decision.DENY), forest, 2, 1.5));
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertFalse(out.allows(AreaRule.FLIGHT));
+        assertEquals(forest, out.ambience());
+        assertEquals(2, out.mobHealth());
+        assertEquals(1.5, out.mobDamage());
+        data.setDefaults(WORLD, AreaRules.INHERIT);
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertTrue(out.allows(AreaRule.FLIGHT));
+        assertEquals(AreaRules.NO_AMBIENCE, out.ambience());
+        assertEquals(1, out.mobHealth());
+        assertEquals(1, out.mobDamage());
+    }
+    @Test void reusedResolutionDoesNotKeepAnotherCharactersExceptions() {
+        var data = new AreaData();
+        data.put(region("school", 10, 100, rules("voo", Decision.DENY)).withException(ALICE, "voo", true));
+        var out = new ResolvedRules();
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertTrue(out.allows(AreaRule.FLIGHT));
+        data.resolve(WORLD, 0, 50, 0, BOB, out);
+        assertFalse(out.allows(AreaRule.FLIGHT));
+        data.clearCharacter(ALICE);
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertFalse(out.allows(AreaRule.FLIGHT));
+    }
     @Test void bvhMatchesExhaustiveResolutionAcrossManyRegions() {
         var regions = new ArrayList<AreaRegion>();
         for (int i = 0; i < 40; i++) regions.add(new AreaRegion("r" + i, "region " + i, WORLD, i % 7, i % 9 != 0,

@@ -30,6 +30,36 @@ class AreaGeometryTest {
         assertFalse(volume.contains(2, 25, 0)); // Hole boundaries are also excluded.
         assertTrue(volume.contains(0, 31, 0));
     }
+    /** A tolerancia de borda e guardada ao quadrado por aresta; a escala por comprimento deve sobreviver. */
+    @Test void bordersCountAsInsideOnShortAndVeryLongEdges() {
+        var small = AreaShape.polygon(List.of(new Point2(0, 0), new Point2(2, 0), new Point2(2, 2), new Point2(0, 2)), 0, 10);
+        assertTrue(small.contains(1, 5, 0));      // sobre a aresta curta
+        assertTrue(small.contains(2, 5, 2));      // sobre o vertice
+        assertFalse(small.contains(1, 5, -0.001));
+
+        var long_ = AreaShape.polygon(List.of(new Point2(0, 0), new Point2(10_000, 0),
+                new Point2(10_000, 10), new Point2(0, 10)), 0, 10);
+        assertTrue(long_.contains(5_000, 5, 0));  // aresta de 10000 blocos
+        assertTrue(long_.contains(5_000, 5, 5));
+        assertFalse(long_.contains(5_000, 5, -0.001));
+
+        // Longe da origem, onde o produto cruzado cresce junto com as coordenadas.
+        var far = AreaShape.polygon(List.of(new Point2(2_000_000, 2_000_000), new Point2(2_000_040, 2_000_000),
+                new Point2(2_000_040, 2_000_040), new Point2(2_000_000, 2_000_040)), 0, 10);
+        assertTrue(far.contains(2_000_020, 5, 2_000_000));
+        assertTrue(far.contains(2_000_020, 5, 2_000_020));
+        assertFalse(far.contains(2_000_020, 5, 1_999_999));
+    }
+    /** points() reconstroi a lista a partir dos vetores internos; persistencia e previa dependem dela. */
+    @Test void verticesSurviveTheFlattenedStorage() {
+        var vertices = List.of(new Point2(-3.5, 7.25), new Point2(11, -2), new Point2(4, 9.75));
+        var shape = AreaShape.polygon(vertices, 0, 10);
+        assertEquals(vertices, shape.points());
+        assertEquals(3, shape.vertexCount());
+        var circle = AreaShape.circle(6.5, -1.25, 4, 0, 10);
+        assertEquals(List.of(new Point2(6.5, -1.25)), circle.points());
+        assertEquals(1, circle.vertexCount());
+    }
     @Test void invalidContoursAreRejectedBeforePublishing() {
         assertThrows(IllegalArgumentException.class, () -> AreaShape.polygon(
                 List.of(new Point2(0, 0), new Point2(4, 4), new Point2(0, 4), new Point2(4, 0)), 0, 10));

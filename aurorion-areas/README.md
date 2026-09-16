@@ -3,7 +3,7 @@
 Áreas narrativas administradas pela staff para Minecraft 1.21.1 / NeoForge 21.1.248.
 Depende de `aurorion-core`. Módulo incluído no monorepo e descoberto automaticamente por `aurorion-runs`.
 
-**Estado:** código escrito e revisado estaticamente. Build, testes e Minecraft **não foram executados**, conforme solicitado para esta máquina de desenvolvimento. Há testes escritos em `src/test`; a validação com o modpack real ainda é necessária.
+**Estado:** revisão e build validados em 15/09/2026 com Java 21. `gradlew.bat buildAll --console=plain` concluído com sucesso; 20 testes do módulo passaram, e os relatórios do monorepo somam 120 testes sem falhas. JAR instalável em `../build/jars-servidor/aurorion_areas-neoforge-1.21.1-0.1.0.jar`. Minecraft não foi iniciado nesta validação; a conferência com o modpack real ainda é necessária.
 
 ## O que está implementado
 
@@ -71,7 +71,7 @@ Crie a vila da mesma forma e aplique `aurorion_areas:vila`.
 | `/area adicionar <id>` | Acrescenta a seleção à união de formas da área |
 | `/area recortar <id>` | Subtrai a seleção de todas as partes da área |
 | `/area remover_forma <id> parte\|recorte <índice>` | Corrige uma forma já salva; índice começa em 1 |
-| `/area visualizar [id]` | Mostra a seleção ou uma área por 30 segundos |
+| `/area visualizar [id]` | Desenha o contorno da seleção ou de uma área por 30 segundos |
 | `/area ver <id>` | Lista formas, alturas, regras e exceções |
 | `/area listar` | Lista áreas de todas as dimensões |
 | `/area remover <id>` | Remove a definição da área |
@@ -80,7 +80,9 @@ A seleção permanece disponível depois de criar/adicionar/recortar. `altura` a
 
 Recortes pertencem à mesma área e retiram **todas** as regras dessa área naquela posição. Para liberar só magia, use outra área com prioridade maior. Um recorte não remove a proteção de outra área sobreposta.
 
-Os previews mostram contornos na altura onde você pediu a visualização, limitada às alturas de cada forma. Azul indica partes; vermelho indica recortes. São amostras limitadas, não um desenho de cada bloco; consulte os limites verticais com `ver`. Nenhum bloco do mundo é modificado.
+`/area visualizar` desenha o contorno **cravado no mundo**: ele não acompanha a câmera nem sai de dentro do personagem. Azul indica partes; vermelho indica recortes. As linhas fortes marcam o piso e o teto reais de cada forma e aparecem a qualquer distância; a parede translúcida entre elas acompanha a sua altura, aparecendo numa faixa de 24 blocos acima e abaixo da câmera, para mostrar o limite de onde você está em vez de uma torre de 400 blocos. O contorno atravessa blocos de propósito: dentro de um prédio, um limite escondido atrás da parede não ajuda a conferir nada. Nenhum bloco do mundo é modificado.
+
+O desenho exige o módulo `aurorion_areas` **no cliente**. Quem não o tem recebe a prévia antiga por partículas, e o próprio comando avisa que é por isso que o contorno sólido não apareceu.
 
 Limites: 512 áreas; 32 formas por área (partes + recortes); 128 vértices por polígono; raio de 0,5 a 100.000; alturas de -2048 a 2048. Polígonos cruzados e degenerados são rejeitados.
 
@@ -115,7 +117,7 @@ Remova com `false`. O nome é o da conta Minecraft (também aceita seletores de 
 
 NPCs e outras entidades não recebem restrições de voo/magia. Fake players também têm bypass. Para NPCs que usam tipos classificados como monstros, há a tag de tipos `aurorion_areas:exempt_entities` e a tag individual de entidade `aurorion_areas_npc`. A tag individual deve estar definida **antes do spawn** quando a área impede monstros (por exemplo, no NBT de invocação do NPC).
 
-Espectadores e, por padrão, staff em criativo ignoram restrições pessoais e ambientes. `/area aqui` mostra esse bypass. Para avaliar a experiência real, consulte um jogador de sobrevivência ou desative `creativeStaffBypass` pela configuração do servidor.
+Espectadores e, por padrão, staff em criativo ignoram restrições pessoais e ambientes. **Esta é a causa mais comum de "criei a área e nada acontece":** quem acabou de criar a área quase sempre está em criativo, e por isso continua voando dentro dela. `/area criar` e `/area mundo` avisam na hora quando você está nessa situação, e `/area aqui` mostra o bypass a qualquer momento. Para avaliar a experiência real, consulte um jogador de sobrevivência ou desative `creativeStaffBypass` pela configuração do servidor.
 
 ## Floresta Negra e exterior
 
@@ -187,7 +189,7 @@ Limites de ambiente: intervalos 1–3600 segundos; até 32 sons; volume 0,01–2
 - **Zona segura:** bloqueia novos hostis pelos eventos de spawn/entrada, dano hostil e aquisição de alvo protegido. Não apaga mobs já salvos nem vasculha chunks. Mobs carregados de disco, inclusive os pré-gerados pelo worldgen, são preservados; alvos já adquiridos podem continuar sendo perseguidos, mas o dano hostil é vetado.
 - **Força:** vale para novos monstros. Mobs existentes não são recalculados ao atravessar fronteiras ou mudar um preset. O multiplicador de dano acompanha a entidade causadora, incluindo projéteis com dono reconhecido.
 - **NPCs:** continuam com suas mecânicas; classifique NPCs de tipo hostil pelas exceções de entidade antes do spawn.
-- **Cliente:** regras, sons e poções são do servidor; neblina e sombra periférica precisam deste módulo no cliente. O payload é opcional e só é enviado a quem negociou o canal. Neblina de água/lava e neblina já mais densa são preservadas.
+- **Cliente:** regras, sons e poções são do servidor; neblina, sombra periférica e o contorno de `/area visualizar` precisam deste módulo no cliente. Os payloads são opcionais e só são enviados a quem negociou o canal. Neblina de água/lava e neblina já mais densa são preservadas.
 
 Tags para datapack (pastas singulares do Minecraft 1.21):
 
@@ -229,12 +231,16 @@ As aspas permitem `:` no argumento. A regra só passa a afetar uma profissão qu
 
 Geometria, regras de mundo e exceções ficam no SavedData `aurorion_areas_regions` do overworld, separadas por dimensão. O conteúdo JSON é armazenado como bytes UTF-8 em NBT para não depender do limite de strings NBT. Salvamento segue o autosave do mundo; seleções e previews são temporários.
 
+Se as definições não puderem ser lidas (JSON inválido, versão desconhecida ou formato NBT inesperado), o NBT original é preservado e a edição fica bloqueada. Nenhuma área parcialmente carregada entra em vigor. O erro aparece no log; é preciso corrigir o arquivo e reiniciar o servidor. Resets de personagem também ficam pendentes para que as exceções antigas sejam removidas após o reparo.
+
 Índice espacial de caixas por dimensão (BVH), reconstruído apenas ao editar. Não há índice proporcional ao tamanho da área nem carregamento de chunks. Cada jogador reutiliza sua resolução de regras; a geometria só é consultada novamente quando a posição ou o cadastro muda. Sons/ataques usam relógios por jogador, e não buscas de entidades.
 
-A prévia emite no máximo 96 partículas privadas a cada 10 ticks por administrador, por 30 segundos. Estado visual de tamanho fixo é enviado na mudança e nos pulsos. Nenhuma lista de áreas ou posições de outros jogadores é sincronizada ao cliente.
+Polígonos guardam coordenadas em arrays e calculam a tolerância das bordas na criação, evitando recalcular o comprimento das arestas a cada consulta. Eventos de dano e alvo reutilizam as regras do jogador; os padrões imutáveis da dimensão também são reutilizados. Prévia inativa retorna imediatamente, sem consultar o mapa de administradores.
+
+O contorno é **um único pacote** para o administrador que pediu, com a geometria daquela área apenas, e nada mais trafega durante os 30 segundos: a animação é toda local. A geometria por quadro é orçada — com muitas formas, a banda vertical engrossa e os círculos perdem lados, em vez de o número de vértices crescer junto. Sem o módulo cliente, a prévia cai para no máximo 96 partículas privadas a cada 10 ticks. Estado visual de tamanho fixo é enviado na mudança e nos pulsos. Nenhuma lista de áreas ou posições de outros jogadores é sincronizada ao cliente.
 
 ## Validação no ambiente do pack
 
-Os testes escritos cobrem concavidade, bordas, alturas, recortes, rejeição de contornos inválidos, precedência, herança, exceções, reset de personagem, dimensões, serialização e comparação do índice com resolução exaustiva.
+Os 20 testes do módulo cobrem concavidade, bordas, alturas, recortes, rejeição de contornos inválidos, precedência, herança, exceções, reset de personagem, dimensões, serialização e comparação do índice com resolução exaustiva. Incluem atualização dos padrões em resultados reutilizados, isolamento das exceções por personagem, preservação de dados ilegíveis e rejeição de carregamento parcial.
 
 Quando o código for levado ao ambiente de execução, conferir escola/sala/exterior, entrada voando de elytra, personagem autorizado, NPC voando, Iron's Spells com conjuração em andamento, spawn natural/ovo/spawner, proteção contra projéteis hostis, entrada/saída da floresta, reload e reconexão. Confirmar os efeitos visuais com os shaders e os demais mods de neblina do pack.

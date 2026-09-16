@@ -5,6 +5,7 @@ import com.aurorion.areas.api.AreaApi;
 import com.aurorion.areas.config.AreasConfig;
 import com.aurorion.areas.data.*;
 import com.aurorion.areas.geometry.*;
+import com.aurorion.areas.network.*;
 import com.aurorion.areas.profile.*;
 import com.aurorion.areas.region.AreaRegion;
 import com.aurorion.areas.rules.*;
@@ -27,6 +28,7 @@ public final class AreaCommands {
     private static final Map<UUID, AreaPreview> PREVIEWS = new HashMap<>();
     private static final DynamicCommandExceptionType ERROR = new DynamicCommandExceptionType(value -> Component.literal(value.toString()));
     private static final List<String> RULES = Arrays.stream(AreaRule.ALL).map(AreaRule::key).toList();
+    private static final int PREVIEW_TICKS = 600;
     private AreaCommands() {}
     @FunctionalInterface private interface Action { String execute(CommandContext<CommandSourceStack> c) throws CommandSyntaxException; }
     private static Command<CommandSourceStack> run(Action action) {
@@ -139,13 +141,11 @@ public final class AreaCommands {
         })));
         root.then(literal("visualizar").executes(run(c -> {
             var p = c.getSource().getPlayerOrException(); var s = selection(c);
-            PREVIEWS.put(p.getUUID(), new AreaPreview(p, s.dimension, new AreaVolume(List.of(s.shape()), List.of())));
-            return "Contorno da seleção por 30 segundos, somente para você.";
+            return show(p, s.dimension, new AreaVolume(List.of(s.shape()), List.of()), "Contorno da seleção");
         })).then(area().executes(run(c -> {
             var p = c.getSource().getPlayerOrException(); var r = region(c);
             if (!r.dimension().equals(p.level().dimension().location())) throw new IllegalArgumentException("Vá à dimensão da área para visualizar.");
-            PREVIEWS.put(p.getUUID(), new AreaPreview(p, r.dimension(), r.volume()));
-            return "Contorno por 30 segundos: azul = partes; vermelho = recortes. Alturas em /area ver.";
+            return show(p, r.dimension(), r.volume(), "Contorno de " + r.id());
         }))));
         root.then(literal("remover").then(area().executes(run(c -> {
             var region = region(c); data(c).delete(region.id()); audit(c);
@@ -193,7 +193,7 @@ public final class AreaCommands {
         if (data(c).all().stream().anyMatch(r -> r.id().equals(id))) throw new IllegalArgumentException("Já existe uma área com esse id.");
         return update(c, new AreaRegion(id, id, s.dimension, 0, true,
                 new AreaVolume(List.of(s.shape()), List.of()), AreaRules.INHERIT, Map.of()),
-                "Área criada. Aplique /area perfil ou /area regra para definir seu comportamento.");
+                "Área criada. Aplique /area perfil ou /area regra para definir seu comportamento." + bypassNotice(c));
     }
     private static String append(CommandContext<CommandSourceStack> c, boolean hole) throws CommandSyntaxException {
         var r = region(c); var s = selection(c);
@@ -205,7 +205,8 @@ public final class AreaCommands {
     }
     private static String defaults(CommandContext<CommandSourceStack> c, AreaRules rules) {
         data(c).setDefaults(c.getSource().getLevel().dimension().location(), rules);
-        audit(c); return "Regras de fundo desta dimensão atualizadas. Áreas explícitas continuam tendo precedência.";
+        audit(c);
+        return "Regras de fundo desta dimensão atualizadas. Áreas explícitas continuam tendo precedência." + bypassNotice(c);
     }
     private static String exception(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         var region = region(c);
@@ -255,12 +256,54 @@ public final class AreaCommands {
     }
     private static void shapeDescription(StringBuilder out, String label, int i, AreaShape shape) {
         out.append("\n").append(label).append(" ").append(i + 1).append(": ")
-                .append(shape.isCircle() ? "círculo r=" + shape.radius() : "polígono de " + shape.points().size() + " pontos")
+                .append(shape.isCircle() ? "círculo r=" + shape.radius() : "polígono de " + shape.vertexCount() + " pontos")
                 .append(" | Y ").append(shape.bounds().minY()).append(" a ").append(shape.bounds().maxY())
                 .append(" | X ").append(shape.bounds().minX()).append(" a ").append(shape.bounds().maxX())
                 .append(" | Z ").append(shape.bounds().minZ()).append(" a ").append(shape.bounds().maxZ());
     }
+    /**
+     * Contorno sólido para quem tem o módulo cliente; partículas para quem não tem.
+     *
+     * <p>O canal é opcional, então um cliente sem o mod simplesmente não receberia nada — e a staff
+     * ficaria olhando para o nada sem saber por quê. O aviso é a diferença entre "não funciona" e
+     * "falta o módulo aqui".
+     */
+    private static String show(ServerPlayer player, ResourceLocation dimension, AreaVolume volume, String what) {
+        if (AreaNetwork.hasOutlineChannel(player)) {
+            PREVIEWS.remove(player.getUUID());
+            AreaNetwork.send(player, outline(dimension, volume));
+            return what + " por 30 segundos, somente para você. Azul = partes, vermelho = recortes;"
+                    + " as linhas fortes são o piso e o teto de cada forma, e a parede aparece em volta da sua altura.";
+        }
+        PREVIEWS.put(player.getUUID(), new AreaPreview(player, dimension, volume));
+        return what + " por 30 segundos, em partículas: seu cliente não tem o módulo aurorion_areas,"
+                + " então o contorno sólido não pode ser desenhado. Instale-o para ver o limite inteiro.";
+    }
+    private static AreaOutlinePayload outline(ResourceLocation dimension, AreaVolume volume) {
+        List<AreaOutlinePayload.Shape> shapes = new ArrayList<>();
+        for (AreaShape shape : volume.parts()) shapes.add(outlineShape(shape, false));
+        for (AreaShape shape : volume.holes()) shapes.add(outlineShape(shape, true));
+        return new AreaOutlinePayload(dimension, PREVIEW_TICKS, shapes);
+    }
+    private static AreaOutlinePayload.Shape outlineShape(AreaShape shape, boolean hole) {
+        var points = shape.points();
+        double[] xs = new double[points.size()], zs = new double[points.size()];
+        for (int i = 0; i < points.size(); i++) { xs[i] = points.get(i).x(); zs[i] = points.get(i).z(); }
+        return new AreaOutlinePayload.Shape(hole, shape.bounds().minY(), shape.bounds().maxY(), shape.radius(), xs, zs);
+    }
+    /**
+     * Quem cria a área quase sempre é staff em criativo — e staff em criativo ignora as próprias
+     * regras por padrão. Sem este aviso, o teste seguinte é voar dentro da escola, conseguir, e
+     * concluir que a área não funciona.
+     */
+    private static String bypassNotice(CommandContext<CommandSourceStack> c) {
+        ServerPlayer player = c.getSource().getPlayer();
+        if (player == null || !AreaApi.bypass(player)) return "";
+        return "\nAVISO: você tem bypass agora (criativo da staff ou espectador), então as regras desta área"
+                + " não vão te afetar. Entre em sobrevivência ou peça a um jogador para testar.";
+    }
     public static void tickPreview(ServerPlayer player) {
+        if (PREVIEWS.isEmpty()) return; // Roda por jogador por tick; no caso normal nao ha previa alguma.
         var preview = PREVIEWS.get(player.getUUID());
         if (preview != null && !preview.tick(player)) PREVIEWS.remove(player.getUUID());
     }

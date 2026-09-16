@@ -71,7 +71,11 @@ public final class RiteRenderer {
         int accent = reveal >= 0 ? rite.accent : 0xFFF7DF;
         PoseStack pose = event.getPoseStack();
         pose.pushPose();
-        pose.last().pose().set(event.getModelViewMatrix());
+        // O PoseStack do evento chega em identidade e a rotacao da camera ja esta na pilha global do
+        // RenderSystem (LevelRenderer faz matrix4fstack.mul(frustumMatrix) antes de renderizar).
+        // getModelViewMatrix() e justamente esse frustumMatrix: carrega-lo aqui girava o selo uma
+        // segunda vez, e era por isso que ele acompanhava a mira em vez de ficar cravado no chao.
+        // So a translacao relativa a camera e necessaria; o resto do metodo desenha em espaco de mundo.
         pose.translate(x - camera.x, y - camera.y + 0.045, z - camera.z);
         var buffers = minecraft.renderBuffers().bufferSource();
         float radius = 2.3F * (0.4F + 0.6F * formed);

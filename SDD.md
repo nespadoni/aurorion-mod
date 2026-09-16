@@ -1187,3 +1187,9 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
   com no maximo 96 amostras por emissao. Nao ha ferramenta de claim para jogadores.
 - Limites de vertices, partes, areas e regras sao validados antes de publicar o novo indice.
   Profiles narrativos sao datapack; /reload atualiza quem esta dentro sem resetar prazos por passo.
+- Poligonos guardam coordenadas e tolerancias de borda em arrays calculados na criacao; consultas
+  nao recalculam comprimentos de arestas. Dano e alvo reutilizam as regras do jogador, com a mesma
+  invalidacao por posicao/revisao; os padroes imutaveis da dimensao tambem sao reaproveitados.
+- Falha de leitura das definicoes preserva o NBT original inteiro e bloqueia todas as edicoes,
+  inclusive a limpeza de excecoes no reset transacional. Nenhuma area parcialmente lida entra em
+  vigor. A copia defensiva existe apenas no caminho de erro, sem custo adicional por tick.
