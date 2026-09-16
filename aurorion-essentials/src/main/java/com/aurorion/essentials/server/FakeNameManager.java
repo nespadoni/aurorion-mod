@@ -75,7 +75,23 @@ public final class FakeNameManager {
         }
 
         PacketDistributor.sendToAllPlayers(new UpdateFakeNamePayload(player, Optional.ofNullable(fakeName).map(FakeName::raw)));
+        forgetCachedDisplayName(server, player);
         refreshTabList(server, player);
+    }
+
+    /**
+     * Derruba o {@code displayname} que o NeoForge guarda dentro do proprio {@code Player}.
+     *
+     * <p>Sobrescrever {@code getName()} no mixin nao basta: {@code Player#getDisplayName()} calcula
+     * o nome <b>uma vez</b> e guarda num campo, que so zera em {@code refreshDisplayName()}. Quem
+     * chamasse primeiro — e no login sempre chama alguem — congelava o nick da Mojang, e dali em
+     * diante toda mensagem construida sobre {@code getDisplayName()} (anuncio de conquista, retorno
+     * de comando, mensagem de morte, e a maior parte dos mods) mostrava o nick real enquanto a
+     * plaqueta sobre a cabeca, que le {@code getName()}, ja mostrava o nome do personagem.</p>
+     */
+    private static void forgetCachedDisplayName(MinecraftServer server, UUID player) {
+        ServerPlayer serverPlayer = server.getPlayerList().getPlayer(player);
+        if (serverPlayer != null) serverPlayer.refreshDisplayName();
     }
 
     /**
@@ -110,6 +126,9 @@ public final class FakeNameManager {
 
         if (ownRaw != null) {
             PacketDistributor.sendToAllPlayers(new UpdateFakeNamePayload(player.getUUID(), Optional.of(ownRaw)));
+            // O nome so entra no registry agora, entao o que tiver sido calculado durante o login
+            // ainda e o nick da Mojang.
+            player.refreshDisplayName();
             refreshTabList(server, player.getUUID());
         }
     }

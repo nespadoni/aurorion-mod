@@ -1,0 +1,16 @@
+{
+  "commands.aurorion_economia.quantiaInvalida": "Quantia inválida. Use óbolos com no máximo uma casa depois da vírgula — por exemplo 12, 12,3 ou 0,5 (1 óbolo = 10 fragmentos).",
+
+  "commands.aurorion_economia.saldo.self": "Você tem %s.",
+  "commands.aurorion_economia.saldo.other": "%s tem %s.",
+
+  "commands.aurorion_economia.pagar.sent": "Você pagou %s para %s.",
+  "commands.aurorion_economia.pagar.received": "Você recebeu %s de %s.",
+  "commands.aurorion_economia.pagar.insufficient": "Saldo insuficiente: você tem %s.",
+  "commands.aurorion_economia.pagar.self": "Não dá para pagar a si mesmo.",
+  "commands.aurorion_economia.pagar.targetFull": "A conta de destino não comporta esse valor.",
+
+  "commands.aurorion_economia.economia.dar": "Criados %s para %s. Saldo agora: %s.",
+  "commands.aurorion_economia.economia.tirar": "Retirados %s de %s. Saldo agora: %s.",
+  "commands.aurorion_economia.economia.definir": "Saldo de %2$s definido em %1$s. Saldo agora: %3$s."
+}

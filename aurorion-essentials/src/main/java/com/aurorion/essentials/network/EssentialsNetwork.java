@@ -32,6 +32,7 @@ public final class EssentialsNetwork {
         context.enqueueWork(() -> {
             FakeNameRegistry.clear();
             payload.names().forEach((uuid, raw) -> FakeNameRegistry.put(uuid, FakeName.parse(raw)));
+            com.aurorion.essentials.client.FakeNameDisplayRefresh.refreshAll();
         });
     }
 
@@ -43,6 +44,7 @@ public final class EssentialsNetwork {
             } else {
                 FakeNameRegistry.remove(payload.player());
             }
+            com.aurorion.essentials.client.FakeNameDisplayRefresh.refresh(payload.player());
         });
     }
 }

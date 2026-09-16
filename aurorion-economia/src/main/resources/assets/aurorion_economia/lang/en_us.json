@@ -1,0 +1,16 @@
+{
+  "commands.aurorion_economia.quantiaInvalida": "Invalid amount. Use obols with at most one decimal place - for example 12, 12.3 or 0.5 (1 obol = 10 fragments).",
+
+  "commands.aurorion_economia.saldo.self": "You have %s.",
+  "commands.aurorion_economia.saldo.other": "%s has %s.",
+
+  "commands.aurorion_economia.pagar.sent": "You paid %s to %s.",
+  "commands.aurorion_economia.pagar.received": "You received %s from %s.",
+  "commands.aurorion_economia.pagar.insufficient": "Not enough money: you have %s.",
+  "commands.aurorion_economia.pagar.self": "You cannot pay yourself.",
+  "commands.aurorion_economia.pagar.targetFull": "The destination account cannot hold that much.",
+
+  "commands.aurorion_economia.economia.dar": "Created %s for %s. Balance is now %s.",
+  "commands.aurorion_economia.economia.tirar": "Removed %s from %s. Balance is now %s.",
+  "commands.aurorion_economia.economia.definir": "Set %2$s's balance to %1$s. Balance is now %3$s."
+}

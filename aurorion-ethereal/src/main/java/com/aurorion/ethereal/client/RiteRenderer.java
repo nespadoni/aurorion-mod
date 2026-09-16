@@ -134,9 +134,18 @@ public final class RiteRenderer {
             pose.mulPose(ROTATION.rotationY(Mth.PI - event.getCamera().getYRot() * Mth.DEG_TO_RAD));
             float scale = Math.min(.115F, 8F / Math.max(1, rite.titleWidth)) * overshoot;
             float strength = arriving * rite.fade(partial);
+            // Fundo da escrita. Precisa ser tinta translucida (RUNIC), e nao luz (GLOW): o halo soma
+            // no que ja esta na tela, e somar luz a um ceu claro continua claro — o nome da casa,
+            // que e desenhado na cor dela, sumiria contra o dia. A placa escura e o que garante
+            // contraste em qualquer hora e em qualquer cenario atras do jogador.
+            VertexConsumer plate = buffers.getBuffer(RUNIC);
+            panel(plate, pose.last().pose(), rite.titleWidth * scale * .58F + .34F,
+                    scale * 10F, -scale * 4.5F, 0x080B18, .62F * strength, -.01F);
+            buffers.endBatch(RUNIC);
+
             VertexConsumer halo = buffers.getBuffer(GLOW);
             panel(halo, pose.last().pose(), rite.titleWidth * scale * .62F + .45F,
-                    scale * 13F, -scale * 4.5F, main, .34F * strength);
+                    scale * 13F, -scale * 4.5F, main, .34F * strength, .02F);
             buffers.endBatch(GLOW);
             pose.scale(scale, -scale, scale);
             int alpha = Math.max(4, Math.round(255 * strength));
@@ -280,22 +289,28 @@ public final class RiteRenderer {
      * metodo roda a cada frame durante a coroacao, e a meta de zero alocacao por frame da SDD §2
      * vale aqui mesmo com uma cena unica na tela.
      */
+    /**
+     * Retangulo com as bordas laterais desbotando para transparente.
+     *
+     * <p>O {@code z} decide o lado do texto em que ele cai: positivo fica entre a escrita e quem
+     * olha (halo somando luz por cima), negativo fica atras dela (a placa de fundo).</p>
+     */
     private static void panel(VertexConsumer out, Matrix4f m, float halfWidth, float halfHeight,
-                              float centerY, int color, float alpha) {
+                              float centerY, int color, float alpha, float z) {
         float core = halfWidth * .5F;
         int off = argb(color, 0), full = argb(color, alpha);
         for (int i = 0; i < 3; i++) {
             float x1 = i == 0 ? -halfWidth : i == 1 ? -core : core;
             float x2 = i == 0 ? -core : i == 1 ? core : halfWidth;
             int left = i == 0 ? off : full, right = i == 2 ? off : full;
-            out.addVertex(m, x1, centerY - halfHeight, .02F).setColor(off);
-            out.addVertex(m, x2, centerY - halfHeight, .02F).setColor(off);
-            out.addVertex(m, x2, centerY, .02F).setColor(right);
-            out.addVertex(m, x1, centerY, .02F).setColor(left);
-            out.addVertex(m, x1, centerY, .02F).setColor(left);
-            out.addVertex(m, x2, centerY, .02F).setColor(right);
-            out.addVertex(m, x2, centerY + halfHeight, .02F).setColor(off);
-            out.addVertex(m, x1, centerY + halfHeight, .02F).setColor(off);
+            out.addVertex(m, x1, centerY - halfHeight, z).setColor(off);
+            out.addVertex(m, x2, centerY - halfHeight, z).setColor(off);
+            out.addVertex(m, x2, centerY, z).setColor(right);
+            out.addVertex(m, x1, centerY, z).setColor(left);
+            out.addVertex(m, x1, centerY, z).setColor(left);
+            out.addVertex(m, x2, centerY, z).setColor(right);
+            out.addVertex(m, x2, centerY + halfHeight, z).setColor(off);
+            out.addVertex(m, x1, centerY + halfHeight, z).setColor(off);
         }
     }
 

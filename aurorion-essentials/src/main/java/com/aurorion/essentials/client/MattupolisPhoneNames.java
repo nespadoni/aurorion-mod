@@ -34,7 +34,8 @@ public final class MattupolisPhoneNames {
     private static final long REFRESH_INTERVAL_MS = 1000L;
 
     private static ClientPacketListener connection;
-    private static long refreshedAt = Long.MIN_VALUE;
+    private static boolean indexed;
+    private static long refreshedAt;
 
     private MattupolisPhoneNames() {}
 
@@ -63,11 +64,12 @@ public final class MattupolisPhoneNames {
         if (connection != current) {
             BY_NICK.clear();
             connection = current;
-            refreshedAt = Long.MIN_VALUE;
+            indexed = false;
         }
 
         long now = Util.getMillis();
-        if (now - refreshedAt < REFRESH_INTERVAL_MS) return;
+        if (!needsRefresh(indexed, refreshedAt, now)) return;
+        indexed = true;
         refreshedAt = now;
 
         // Acrescenta sem limpar: a agenda do telefone continua listando quem saiu no meio da sessao,
@@ -77,5 +79,17 @@ public final class MattupolisPhoneNames {
             var profile = info.getProfile();
             BY_NICK.put(profile.getName(), profile.getId());
         }
+    }
+
+    /**
+     * Um "ja montei alguma vez" explicito em vez de um instante inicial sentinela.
+     *
+     * <p>A versao anterior comecava com {@code refreshedAt = Long.MIN_VALUE} para forcar a primeira
+     * montagem, e {@code now - Long.MIN_VALUE} estourava o {@code long}: a diferenca voltava
+     * negativa, ficava eternamente abaixo do intervalo, e o indice nunca era montado. O celular
+     * mostrava o nick de todo mundo porque o mapa estava sempre vazio.</p>
+     */
+    static boolean needsRefresh(boolean alreadyIndexed, long lastRefresh, long now) {
+        return !alreadyIndexed || now - lastRefresh >= REFRESH_INTERVAL_MS;
     }
 }
