@@ -30,12 +30,16 @@ O que **não** veio do original e foi escrito para o Aurorion:
   disponibilizar o código-fonte correspondente e manter os avisos de copyright.
 - Mudanças relevantes devem ficar registradas — é para isso que serve este arquivo.
 
-## Cinzel (fonte do `aurorion-limbo`)
+## Cinzel (fonte do `aurorion-limbo` e do `aurorion-profissoes`)
 
 `assets/aurorion_limbo/font/cinzel.ttf` é a [Cinzel](https://github.com/NDISCOVER/Cinzel),
 **Copyright 2020 The Cinzel Project Authors**, licenciada sob a **SIL Open Font License 1.1**.
 O arquivo entra no jar sem modificação, e a licença completa viaja junto em
 `assets/aurorion_limbo/font/OFL-Cinzel.txt`.
+
+O `aurorion-profissoes` também distribui a fonte sem alterações em
+`assets/aurorion_profissoes/font/cinzel.ttf`, acompanhada de `OFL-Cinzel.txt` na mesma pasta.
+A cópia da licença deste módulo veio do [repositório oficial da Cinzel](https://github.com/NDISCOVER/Cinzel/blob/master/OFL.txt).
 
 ### O que a OFL exige de nós
 

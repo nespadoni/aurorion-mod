@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.aurorion.profissoes.mixin.spoil",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "FoodDecayMixin",
+    "FoodMergeMixin",
+    "FoodMergeRecipeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

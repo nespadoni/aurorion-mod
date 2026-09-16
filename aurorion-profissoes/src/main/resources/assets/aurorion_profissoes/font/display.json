@@ -1,0 +1,6 @@
+{
+  "providers": [
+    { "type": "ttf", "file": "aurorion_profissoes:cinzel.ttf", "shift": [0, 0], "size": 11, "oversample": 2 },
+    { "type": "reference", "id": "minecraft:default" }
+  ]
+}

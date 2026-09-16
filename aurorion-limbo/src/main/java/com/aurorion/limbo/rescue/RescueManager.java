@@ -166,29 +166,57 @@ public final class RescueManager {
     public static boolean enterPassage(ServerPlayer player, UUID target) {
         MinecraftServer server = player.server;
         ServerLevel limbo = server.getLevel(LimboManager.dimension());
-        if (limbo == null || player.level().dimension() == LimboManager.dimension()) return false;
+        if (limbo == null) {
+            return refuse(player, "a dimensao de exilio '" + LimboManager.dimension().location()
+                    + "' nao existe neste servidor; confira exileDimension em config/aurorion/vidas-server.toml");
+        }
+        if (player.level().dimension() == LimboManager.dimension()) return false;
 
         // Exilado nao usa passagem de resgate para sair do proprio exilio.
         if (LivesManager.isExiled(server, player.getUUID())) return false;
 
         BlockPos arrival = arrivalNear(server, limbo, target);
-        if (arrival == null) return false;
+        if (arrival == null) return refuse(player, "nao achei chegada segura no exilio");
 
         ForgottenDoor.authorize(player, limbo.dimension());
         try {
             var moved = player.changeDimension(new DimensionTransition(limbo, arrival.getBottomCenter(),
                     Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
-            if (moved == null || moved.level() != limbo) return false;
+            // changeDimension devolve null quando alguem cancela EntityTravelToDimensionEvent. O
+            // suspeito numero um e o aurorion_portais: ele trata como controlada toda dimensao fora
+            // de freeDimensions e, com lockUnscheduledDimensions=true, uma dimensao sem linha de
+            // horario fica trancada para sempre. A travessia cai aqui, o jogador nao viaja e nao
+            // recebe Vinculo nenhum — e ate aqui isso acontecia em silencio absoluto.
+            if (moved == null || moved.level() != limbo) {
+                return refuse(player, "a viagem para '" + limbo.dimension().location() + "' foi cancelada por outro"
+                        + " sistema (trava de dimensao do aurorion_portais?). O custo ja foi cobrado e a passagem"
+                        + " continua aberta");
+            }
         } finally {
             ForgottenDoor.clear();
         }
 
         ServerPlayer arrived = server.getPlayerList().getPlayer(player.getUUID());
-        if (arrived != null) {
-            giveBonds(arrived);
-            LimboManager.narrator().passageCrossed(arrived);
+        if (arrived == null) {
+            return refuse(player, "o jogador saiu da lista do servidor durante a travessia");
         }
+        giveBonds(arrived);
+        LimboManager.narrator().passageCrossed(arrived);
         return true;
+    }
+
+    /**
+     * Uma travessia que nao aconteceu nunca pode ser silenciosa.
+     *
+     * <p>Quem pagou uma vida e andou ate a passagem precisa saber por que nada aconteceu, e a staff
+     * precisa do motivo no log — sem isso o sintoma que chega e "o mod nao entrega o Vinculo", que
+     * manda procurar o defeito no lugar errado: a entrega esta certa, ela so nunca foi alcancada.
+     */
+    private static boolean refuse(ServerPlayer player, String reason) {
+        AurorionLimbo.LOGGER.error("Resgate: travessia de {} falhou — {}.",
+                player.getGameProfile().getName(), reason);
+        player.displayClientMessage(LimboText.passageFailed(), true);
+        return false;
     }
 
     /**
@@ -211,17 +239,32 @@ public final class RescueManager {
 
     private static void giveBonds(ServerPlayer player) {
         int count = LimboConfig.BOND_COUNT.get();
+        int dropped = 0;
         for (int i = 0; i < count; i++) {
             ItemStack bond = new ItemStack(LimboItems.SOUL_BOND.get());
             if (!player.getInventory().add(bond)) {
                 player.drop(bond, false);
+                dropped++;
             }
         }
 
-        // A entrega acontece imediatamente depois de changeDimension, fora do fluxo comum de coleta.
-        // O inventario do servidor ja esta correto, mas sem este broadcast o cliente pode continuar
-        // mostrando o snapshot anterior ate outra alteracao de slot ou uma reconexao.
-        player.inventoryMenu.broadcastChanges();
+        // Reenvio COMPLETO, e nao o diff de broadcastChanges().
+        //
+        // A entrega acontece no tique seguinte a changeDimension, que acabou de fazer duas coisas: o
+        // cliente recriou o jogador ao receber o ClientboundRespawnPacket, e o servidor mandou, por
+        // sendAllPlayerInfo, um snapshot do inventario AINDA SEM os Vinculos. broadcastChanges() so
+        // manda a diferenca contra esse snapshot; se ela se perder nessa janela, o item fica correto
+        // no servidor e invisivel na tela — e o sintoma que chega e "o mod nao entrega o Vinculo".
+        // Um ClientboundContainerSetContentPacket a mais por resgate custa nada e fecha a janela.
+        player.inventoryMenu.sendAllDataToRemote();
+
+        // O log existe para separar de uma vez as duas causas possiveis deste sintoma: se a contagem
+        // aqui for a esperada, o item ESTA no servidor e o problema e de sincronia ou de quem olhou;
+        // se vier zero, a falha e na entrega. Sem isto, as duas se parecem do lado de fora.
+        AurorionLimbo.LOGGER.info(
+                "Resgate: {} recebeu Vinculo(s) — configurado={}, no inventario={}, caidos no chao={}.",
+                player.getGameProfile().getName(), count,
+                player.getInventory().countItem(LimboItems.SOUL_BOND.get()), dropped);
     }
 
     // --- Concluir ------------------------------------------------------------------------------

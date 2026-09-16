@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.aurorion.profissoes.mixin.lso",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BodyPartMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

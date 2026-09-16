@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.aurorion.profissoes.mixin.quality",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "QualityUtilsMixin",
+    "CookedQualityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

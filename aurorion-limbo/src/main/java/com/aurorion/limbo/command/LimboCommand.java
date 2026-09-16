@@ -1,6 +1,17 @@
 package com.aurorion.limbo.command;
 
 import com.aurorion.limbo.AurorionLimbo;
+import com.aurorion.limbo.config.LimboConfig;
+import com.aurorion.limbo.oracle.OracleData;
+import com.aurorion.limbo.oracle.OracleRotation;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.SharedSuggestionProvider;
+import org.jetbrains.annotations.Nullable;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
@@ -77,7 +88,29 @@ public final class LimboCommand {
                     if (player == null) return 0;
                     LimboNetwork.openOracle(player);
                     return 1;
-                }));
+                })
+                // Os ramos abaixo sao de staff. A raiz continua sem exigencia de permissao de
+                // proposito (o dialogo do ADM a executa), entao a trava vai em cada ramo.
+                .then(Commands.literal("local")
+                        .requires(source -> source.hasPermission(STAFF_LEVEL))
+                        .then(Commands.literal("ponto")
+                                .then(Commands.argument("nome", StringArgumentType.word())
+                                        .executes(LimboCommand::addSpot)))
+                        .then(Commands.literal("listar").executes(LimboCommand::listSpots))
+                        .then(Commands.literal("remover")
+                                .then(Commands.argument("nome", StringArgumentType.word())
+                                        .suggests(LimboCommand::suggestSpots)
+                                        .executes(LimboCommand::removeSpot))))
+                .then(Commands.literal("onde")
+                        .requires(source -> source.hasPermission(STAFF_LEVEL))
+                        .executes(LimboCommand::whereIsOracle))
+                .then(Commands.literal("mover")
+                        .requires(source -> source.hasPermission(STAFF_LEVEL))
+                        .executes(context -> moveOracle(context, null))
+                        .then(Commands.argument("nome", StringArgumentType.word())
+                                .suggests(LimboCommand::suggestSpots)
+                                .executes(context -> moveOracle(context,
+                                        StringArgumentType.getString(context, "nome"))))));
 
         event.getDispatcher().register(Commands.literal("limbo")
                 .requires(source -> source.hasPermission(STAFF_LEVEL))
@@ -292,6 +325,99 @@ public final class LimboCommand {
         return server.getProfileCache() == null
                 ? "?"
                 : server.getProfileCache().get(id).map(GameProfile::getName).orElse("?");
+    }
+
+    // --- O Oraculo itinerante -------------------------------------------------------------------
+
+    private static CompletableFuture<Suggestions> suggestSpots(CommandContext<CommandSourceStack> context,
+                                                               SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(
+                OracleData.get(context.getSource().getServer()).all().stream().map(OracleData.Spot::name),
+                builder);
+    }
+
+    /** Grava exatamente onde a staff esta, inclusive para que lado olha. */
+    private static int addSpot(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        String name = StringArgumentType.getString(context, "nome");
+        OracleData data = OracleData.get(player.server);
+        OracleData.Spot spot = new OracleData.Spot(name, player.level().dimension().location(),
+                player.blockPosition(), player.getYRot());
+        if (!data.add(spot)) {
+            context.getSource().sendFailure(literal("ja existe um ponto com esse nome, ou a lista chegou"
+                    + " ao limite de " + OracleData.MAX_SPOTS + " nome=" + name));
+            return 0;
+        }
+        context.getSource().sendSuccess(() -> literal("ponto cadastrado nome=" + name
+                + " " + spot.pos().getX() + " " + spot.pos().getY() + " " + spot.pos().getZ()
+                + " em " + spot.dimension() + " total=" + data.all().size()), true);
+        return 1;
+    }
+
+    private static int removeSpot(CommandContext<CommandSourceStack> context) {
+        String name = StringArgumentType.getString(context, "nome");
+        OracleData data = OracleData.get(context.getSource().getServer());
+        if (!data.remove(name)) {
+            context.getSource().sendFailure(literal("nao existe ponto nome=" + name));
+            return 0;
+        }
+        context.getSource().sendSuccess(() -> literal("ponto removido nome=" + name
+                + " restam=" + data.all().size()), true);
+        return 1;
+    }
+
+    private static int listSpots(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        OracleData data = OracleData.get(source.getServer());
+        List<OracleData.Spot> spots = data.all();
+        OracleData.Spot current = data.currentSpot();
+        source.sendSuccess(() -> literal("oraculo " + FORMAT + " pontos=" + spots.size()
+                + " hora_da_rotacao=" + LimboConfig.ORACLE_ROTATION_HOUR.get()), false);
+        for (OracleData.Spot spot : spots) {
+            boolean here = current != null && current.name().equals(spot.name());
+            source.sendSuccess(() -> literal("ponto nome=" + spot.name()
+                    + " " + spot.pos().getX() + " " + spot.pos().getY() + " " + spot.pos().getZ()
+                    + " em " + spot.dimension() + " sorteado_hoje=" + (here ? "sim" : "nao")), false);
+        }
+        return spots.size();
+    }
+
+    private static int whereIsOracle(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        OracleData data = OracleData.get(source.getServer());
+        OracleData.Spot current = data.currentSpot();
+        source.sendSuccess(() -> literal("oraculo " + FORMAT
+                + " ponto=" + (current == null ? "nenhum_sorteado" : current.name())
+                + " posicao=" + OracleRotation.describe(source.getServer())
+                + " pontos=" + data.all().size()), false);
+        return 1;
+    }
+
+    /** Sorteio manual, para testar a mecanica sem esperar a virada do dia. */
+    private static int moveOracle(CommandContext<CommandSourceStack> context, @Nullable String name) {
+        CommandSourceStack source = context.getSource();
+        OracleData data = OracleData.get(source.getServer());
+        OracleData.Spot forced = null;
+        if (name != null) {
+            forced = data.spot(name);
+            if (forced == null) {
+                source.sendFailure(literal("nao existe ponto nome=" + name));
+                return 0;
+            }
+        } else if (data.all().isEmpty()) {
+            source.sendFailure(literal("nenhum ponto cadastrado; use /oraculo local ponto <nome>"));
+            return 0;
+        }
+        OracleData.Spot moved = OracleRotation.rotate(source.getServer(), data, forced);
+        if (moved == null) {
+            source.sendFailure(literal("sem efeito motivo=sem_oraculo_no_mundo_ou_dimensao_ausente"
+                    + " invoque um com /summon aurorion_limbo:oraculo"));
+            return 0;
+        }
+        source.sendSuccess(() -> literal("oraculo movido ponto=" + moved.name()
+                + " " + moved.pos().getX() + " " + moved.pos().getY() + " " + moved.pos().getZ()
+                + " em " + moved.dimension()), true);
+        return 1;
     }
 
     private static Component literal(String text) {

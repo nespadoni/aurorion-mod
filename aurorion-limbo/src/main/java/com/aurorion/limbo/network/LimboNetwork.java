@@ -94,11 +94,10 @@ public final class LimboNetwork {
 
     /** Um Oraculo a menos de 8 blocos. O mesmo alcance que o vanilla usa para interagir com bau. */
     private static boolean nearOracle(ServerPlayer player) {
-        String tag = LimboConfig.ORACLE_TAG.get();
         return !player.level()
                 .getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
                         player.getBoundingBox().inflate(8.0D),
-                        entity -> entity.getTags().contains(tag))
+                        com.aurorion.limbo.oracle.OracleEntity::isOracle)
                 .isEmpty();
     }
 

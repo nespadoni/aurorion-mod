@@ -29,6 +29,7 @@ public final class LimboConfig {
     public static final ModConfigSpec.IntValue PASSAGE_MINUTES;
     public static final ModConfigSpec.IntValue BOND_COUNT;
     public static final ModConfigSpec.ConfigValue<String> ORACLE_TAG;
+    public static final ModConfigSpec.IntValue ORACLE_ROTATION_HOUR;
     public static final ModConfigSpec.ConfigValue<String> ORACLE_DIALOGUE;
 
     public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
@@ -189,6 +190,16 @@ public final class LimboConfig {
                         "   NoAI:1b,Silent:1b,PersistenceRequired:1b,Invulnerable:1b}"
                 )
                 .define("tagDoOraculo", "aurorion_oraculo");
+
+        ORACLE_ROTATION_HOUR = BUILDER
+                .comment(
+                        "Hora (0-23) em que o Oraculo sorteia um novo lugar entre os pontos cadastrados.",
+                        "E o relogio REAL da maquina do servidor, nao o do Minecraft: o tempo do jogo pula",
+                        "com cama e /time, e uma rotacao presa a ele trairia o combinado com os jogadores.",
+                        "",
+                        "Cadastre os pontos andando ate cada um e rodando /oraculo local ponto <nome>."
+                )
+                .defineInRange("horaDaRotacao", 0, 0, 23);
 
         ORACLE_DIALOGUE = BUILDER
                 .comment(

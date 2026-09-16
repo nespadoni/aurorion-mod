@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "com.aurorion.profissoes.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AnvilMenuMixin",
+    "RepairRecipeMixin",
+    "GrindstoneMenuMixin",
+    "EnchantmentMenuMixin",
+    "BrewingStandMixin",
+    "CampfireMixin",
+    "EnchantmentRepairMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

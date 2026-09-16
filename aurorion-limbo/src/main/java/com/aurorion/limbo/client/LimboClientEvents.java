@@ -43,6 +43,8 @@ public final class LimboClientEvents {
         public static void register(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(com.aurorion.limbo.registry.LimboEntities.RESCUE_PORTAL.get(),
                     RescuePortalRenderer::new);
+            event.registerEntityRenderer(com.aurorion.limbo.registry.LimboEntities.ORACLE.get(),
+                    OracleRenderer::new);
         }
     }
 }

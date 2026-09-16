@@ -60,10 +60,15 @@ public class AurorionLimbo {
         com.aurorion.core.character.CharacterGate.deferWhile(
                 com.aurorion.limbo.finale.FinaleManager::isViewing);
 
-        // Conteudo do resgate: um item e uma entidade temporaria. O Oraculo nao entra aqui de
-        // proposito — ele e uma tag num mob que ja existe, e nao um registro novo.
+        // Conteudo do resgate: um item e uma entidade temporaria, mais o Oraculo. Ele deixou de ser
+        // so uma tag quando ganhou corpo e skin proprios — modelo e textura nao cabem num dado. A tag
+        // continua valendo para mobs marcados pela staff; ver OracleEntity.isOracle.
         LimboItems.ITEMS.register(modEventBus);
         LimboEntities.ENTITIES.register(modEventBus);
         LimboSounds.SOUNDS.register(modEventBus);
+
+        modEventBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) ->
+                event.put(LimboEntities.ORACLE.get(),
+                        com.aurorion.limbo.oracle.OracleEntity.attributes().build()));
     }
 }

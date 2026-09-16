@@ -270,6 +270,51 @@ A fonte é **dado, não código** — trocar é substituir o `.ttf` e a entrada 
 por resource pack sem tocar no jar. Se for modificá-la, o nome reservado "Cinzel" não pode
 acompanhar a versão modificada; ver [CREDITS.md](../CREDITS.md).
 
+### O Oráculo itinerante
+
+O Oráculo tem **corpo próprio**: entidade `aurorion_limbo:oraculo`, humanoide, com a skin em
+`assets/aurorion_limbo/textures/entity/oraculo.png`. Trocar a aparência é trocar esse PNG — o modelo
+reaproveita a camada `ModelLayers.PLAYER` do vanilla, então não há definição de modelo para mexer.
+
+Ele **não nasce sozinho**. A staff invoca um:
+
+```mcfunction
+/summon aurorion_limbo:oraculo
+```
+
+O contrato antigo continua valendo: um mob comum com a tag `aurorion_oraculo` também atende, e
+`OracleEntity.isOracle` é o único lugar que decide isso. Mundos onde a staff já marcou um esqueleto
+seguem funcionando sem mudança.
+
+**Cadastrar os lugares da rotação** — vá até cada ponto e grave:
+
+| Comando | Efeito |
+|---|---|
+| `/oraculo local ponto <nome>` | Grava sua posição e direção como ponto de rotação |
+| `/oraculo local listar` | Lista os pontos e marca o sorteado de hoje |
+| `/oraculo local remover <nome>` | Remove um ponto |
+| `/oraculo onde` | Diz em que ponto ele está e a posição real dele |
+| `/oraculo mover [nome]` | Sorteia na hora, ou força um ponto — para testar sem esperar o dia virar |
+
+Todos exigem permissão de staff. A raiz `/oraculo`, sem argumento, continua **sem** exigência de
+permissão, porque é ela que o diálogo do ADM executa; a trava dela é de posição, não de permissão.
+
+Os pontos ficam no SavedData `aurorion_limbo_oraculo`, não na config: coordenada é dado de mundo, e
+cadastrar andando até o lugar é melhor que digitar número em TOML. Limite de 64 pontos.
+
+**A rotação** acontece uma vez por dia, na hora real definida em `horaDaRotacao` (padrão `0`, ou
+seja meia-noite). É o relógio da máquina do servidor, não o do Minecraft — o tempo do jogo pula com
+cama e `/time`, e uma rotação presa a ele apareceria duas vezes numa noite e nenhuma na outra.
+
+O dia é guardado como número, não como "já rodei hoje": um servidor que passou a madrugada desligado
+volta, percebe que o dia mudou e sorteia na hora. O sorteio evita repetir o lugar de ontem quando há
+mais de um ponto. Na primeiríssima partida ele só marca o dia, sem teleportar nada de surpresa.
+
+**O resgate acompanha a rotação.** É um Oráculo só, e ele muda de lugar. Vale lembrar que o exílio
+tem prazo (`horasDePrazo`, padrão 48h): quem tem alguém no Limbo precisa achar o Oráculo dentro
+desse prazo. Se isso se mostrar duro na prática, as saídas são anunciar a posição a cada rotação ou
+manter um segundo Oráculo fixo com a tag — os dois continuam funcionando sem mudar código.
+
 ### O Oráculo e o padrão dos próximos NPCs
 
 O ADM conduz a conversa escrita do Oráculo. O arquivo entregue pelo mod é

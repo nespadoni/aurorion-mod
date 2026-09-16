@@ -20,6 +20,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Vidas | [aurorion-vidas/](aurorion-vidas/) | Vidas limitadas por jogador, contador no HUD acima da fome, e exílio no Nether para quem zerar |
 | Aurorion Limbo | [aurorion-limbo/](aurorion-limbo/) | A dimensão de exílio e o **prazo** que corre nela; a Porta do Esquecido para quem ninguém foi buscar, a **morte definitiva** com epílogo, e a auditoria que a staff lê por RCON ou webhook |
 | Aurorion Personagem | [aurorion-personagem/](aurorion-personagem/) | Nome e sobrenome numa tela no primeiro login, e a troca de personagem depois da morte definitiva: identidade nova, progressão zerada, conta preservada |
+| Aurorion Profissões | [aurorion-profissoes/](aurorion-profissoes/) | Médico, ferreiro, cozinheiro e arcanista: uma profissão por personagem, atendimento entre jogadores por interface e integrações com LSO, Quality Food e FoodSpoil |
 
 ### Conteúdo x comportamento
 

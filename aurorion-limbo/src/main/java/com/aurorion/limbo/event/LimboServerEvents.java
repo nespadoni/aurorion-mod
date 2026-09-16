@@ -237,7 +237,7 @@ public final class LimboServerEvents {
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!event.getTarget().getTags().contains(LimboConfig.ORACLE_TAG.get())) return;
+        if (!com.aurorion.limbo.oracle.OracleEntity.isOracle(event.getTarget())) return;
 
         // Dialogo primeiro: e ele que da personalidade ao Oraculo. A lista e o que o ADM nao
         // consegue mostrar, e uma escolha do dialogo a abre rodando /oraculo.
@@ -256,6 +256,7 @@ public final class LimboServerEvents {
         FinaleManager.sweep(event.getServer());
         LimboEnvironment.tick(event.getServer());
         LimboManager.sweep(event.getServer());
+        com.aurorion.limbo.oracle.OracleRotation.tick(event.getServer());
         if (++cleanupCounter >= 60) {
             cleanupCounter = 0;
             ForgottenDoor.cleanPending(event.getServer());

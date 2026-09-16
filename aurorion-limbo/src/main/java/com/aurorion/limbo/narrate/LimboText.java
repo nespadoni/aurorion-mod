@@ -93,6 +93,17 @@ public final class LimboText {
         return Component.translatable("aurorion_limbo.vinculo.nao_exilado");
     }
 
+    /**
+     * A travessia falhou por um motivo que o jogador nao causou e nao resolve sozinho.
+     *
+     * <p>O detalhe tecnico (qual sistema barrou, qual dimensao) vai para o log da staff, e nao para a
+     * tela: para quem esta na passagem, o que importa e saber que o custo nao se perdeu no vazio e
+     * que ha alguem a chamar.
+     */
+    public static MutableComponent passageFailed() {
+        return Component.translatable("aurorion_limbo.passagem.falhou");
+    }
+
     public static MutableComponent oracleTooFar() {
         return Component.translatable("aurorion_limbo.oraculo.longe");
     }

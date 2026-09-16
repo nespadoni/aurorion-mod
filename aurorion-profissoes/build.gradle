@@ -1,0 +1,30 @@
+apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// Jars opcionais somente para validar o pack local, sem embutir dependencias no artefato.
+dependencies {
+    ['lsoJar', 'qualityFoodJar', 'foodSpoilJar'].each { key ->
+        if (providers.gradleProperty(key).isPresent()) {
+            runtimeOnly files(providers.gradleProperty(key).get())
+        }
+    }
+}
+
+sourceSets { gameTest }
+configurations.gameTestImplementation.extendsFrom(configurations.implementation)
+configurations.gameTestCompileOnly.extendsFrom(configurations.compileOnly)
+configurations.gameTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+neoForge {
+    addModdingDependenciesTo sourceSets.gameTest
+    mods { create('aurorion_profissoes_tests') { sourceSet sourceSets.gameTest } }
+    runs {
+        client { loadedMods = [mods.aurorion_profissoes, mods.aurorion_core] }
+        server { loadedMods = [mods.aurorion_profissoes, mods.aurorion_core] }
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gameTest
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'aurorion_profissoes_tests'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+}
+dependencies { gameTestImplementation sourceSets.main.output }

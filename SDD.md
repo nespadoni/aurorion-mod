@@ -1193,3 +1193,26 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
 - Falha de leitura das definicoes preserva o NBT original inteiro e bloqueia todas as edicoes,
   inclusive a limpeza de excecoes no reset transacional. Nenhuma area parcialmente lida entra em
   vigor. A copia defensiva existe apenas no caminho de erro, sem custo adicional por tick.
+
+## 16. aurorion-profissoes — especialidades e atendimento
+
+- Uma profissao por personagem, atribuida pela staff e apagada no CharacterResetEvent. O modulo
+  depende somente do Core; LSO, Quality Food e FoodSpoil sao pontes opcionais, verificadas contra
+  os jars 2.4.7.2, 2.3.6 e 1.1.7 fornecidos pelo dono. Binarios externos nao entram na distribuicao.
+- Primeiros socorros continuam disponiveis. Lesoes graves do LSO ficam marcadas no proprio membro
+  e primeiros socorros estabilizam ate metade da saude; tratamento medico remove essa limitacao.
+  A marca acompanha o NBT do LSO. Nao existe outro tick nem varredura de jogadores para ferimentos.
+- Bigorna exige ferreiro. Reparo por combinacao na grade/rebolo e desativado; desencantar um unico
+  item continua permitido. Mending comum nao repara; apenas equipamento autorizado pela staff.
+  Encantamentos comuns param no nivel configurado; aplicar livros avancados e tarefa do arcanista,
+  perto da mesa. Pocoes basicas continuam livres; aprimoramentos usam atendimento junto ao suporte.
+- Qualidade e conservacao pertencem ao alimento produzido, nao a quem o carrega. Transferir comida
+  nunca rebaixa o trabalho do cozinheiro nem renova a validade. Automacao sem autor produz comida
+  comum. FoodSpoil calcula a validade; a ponte multiplica a taxa ja existente, sem tick adicional.
+- Shift + interacao com outro jogador abre os servicos dele; uma tecla abre o proprio oficio.
+  Pedidos entre pessoas exigem aceite do profissional. O servidor valida alcance, dimensao,
+  profissao, bancada, inventario, prazo e token descartavel novamente no aceite. Sem custodia de
+  itens ou moeda nesta fase. Nao ha comando de atendimento para jogadores.
+- Sessoes sao limitadas a uma por jogador, expiram e somem no logout/parada/reset. Rede e snapshot
+  limitado apenas ao abrir/agir. UI usa NpcPanelScreen do Core. Eventos de autorizacao/conclusao
+  oferecem pontos para a futura economia; autorizacao nao deve cobrar antes do resultado.

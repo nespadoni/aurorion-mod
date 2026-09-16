@@ -1,6 +1,7 @@
 package com.aurorion.limbo.registry;
 
 import com.aurorion.limbo.AurorionLimbo;
+import com.aurorion.limbo.oracle.OracleEntity;
 import com.aurorion.limbo.rescue.RescuePortalEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -32,6 +33,24 @@ public final class LimboEntities {
                     .fireImmune()
                     .noSummon()
                     .build("passagem"));
+
+    /**
+     * O Oraculo. {@code MISC} pelo mesmo motivo da passagem: ele nao nasce por spawn natural, nao
+     * conta para o limite de mobs do servidor e nao entra na conta de dificuldade — a staff invoca um
+     * e a rotacao diaria o leva de um ponto a outro.
+     *
+     * <p>{@code updateInterval} alto porque ele <b>nao se move</b> sozinho: so muda de lugar por
+     * teleporte, que e sincronizado a parte. Mandar posicao tres vezes por segundo para um NPC parado
+     * e trafego jogado fora (SDD 7.3).
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<OracleEntity>> ORACLE =
+            ENTITIES.register("oraculo", () -> EntityType.Builder
+                    .of(OracleEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.8F)
+                    .clientTrackingRange(10)
+                    .updateInterval(20)
+                    .fireImmune()
+                    .build("oraculo"));
 
     private LimboEntities() {
     }
