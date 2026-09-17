@@ -259,7 +259,7 @@ public final class RankingData extends SavedData {
             case DEATHS -> ranking.deaths();
             case DUEL_WINS -> ranking.duelWins();
             case MISSIONS -> ranking.missions();
-            case TOP_HOUSES, WORST_HOUSES -> 0;
+            case TOP_HOUSES, WORST_HOUSES, RICHEST_HOUSES, RICHEST_PLAYERS -> 0;
         };
     }
 

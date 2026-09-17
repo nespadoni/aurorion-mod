@@ -23,6 +23,6 @@ public final class EconomiaCharacterReset {
 
     @SubscribeEvent
     public static void onReset(CharacterResetEvent event) {
-        WalletData.get(event.server()).setBalance(event.account(), 0L);
+        Wallet.set(event.server(), event.account(), 0L);
     }
 }

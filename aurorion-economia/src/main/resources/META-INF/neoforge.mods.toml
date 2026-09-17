@@ -9,8 +9,8 @@ version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "${mod_authors}"
 description = '''${mod_description}'''
-# Saldo, comandos e a ponte do banco do telefone sao todos de servidor. Um cliente sem o mod entra
-# num servidor com ele sem problema.
+# Um cliente sem o mod ainda pode entrar, mas o menu Shift+G e as confirmacoes visuais exigem o
+# modulo nos dois lados; comandos administrativos continuam funcionando somente no servidor.
 displayTest = "IGNORE_ALL_VERSION"
 
 [[dependencies.${mod_id}]]

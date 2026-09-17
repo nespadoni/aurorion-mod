@@ -1,4 +1,8 @@
 {
+  "gui.aurorion_ethereal.mode.richest_houses": "Casas mais ricas",
+  "gui.aurorion_ethereal.mode.richest_players": "Personagens mais ricos",
+  "aurorion_ethereal.board.line.richest_houses": "%1$s. %2$s  %3$s",
+  "aurorion_ethereal.board.line.richest_players": "%1$s. %2$s  %3$s",
   "itemGroup.aurorion_ethereal": "Aurorion — Ethereal",
   "block.aurorion_ethereal.aeonic_projector": "Projetor Aeônico",
   "gui.aurorion_ethereal.house.title": "As Casas de Ethereal",

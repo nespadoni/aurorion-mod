@@ -30,7 +30,7 @@ As contas usam uma chave tipada, em vez de UUID solto:
 - `HOUSE:<houseId>` — cofre de cada Casa;
 - `ESCROW:<purposeId>` — custódia temporária para atendimento, contrato ou mercado.
 
-O personagem, e não a conta Minecraft, é a identidade econômica. A bolsa inicial de 8 Óbolos é
+O personagem, e não a conta Minecraft, é a identidade econômica. A bolsa inicial de 4 Óbolos é
 concedida uma única vez por `characterId`, com operação idempotente registrada como emissão.
 
 ## 3. Persistência e auditoria
@@ -80,7 +80,8 @@ fragmentos; o resto é distribuído em ordem determinística de UUID.
 - Pagamento direto e venda no mercado não recebem esse imposto de Casa.
 - Metade do imposto semanal da Casa vira dividendo entre membros elegíveis, em partes iguais, com
   teto de 2 Óbolos por pessoa. O restante permanece no cofre.
-- Cada cofre tem limite configurável; excedente segue a regra explícita de queima do documento.
+- Cada cofre tem limite por upgrade (100/250/500/1.000 Óbolos). Quando estiver cheio, o imposto
+  excedente não é cobrado e permanece com o jogador; reduzir o nível nunca destrói saldo.
 - Propriedade referencia o ID de uma área do `aurorion-areas`, sua zona e área calculada quando o
   cadastro muda. Nunca percorre os blocos da região para cobrar manutenção.
 - Atrasos e perdão administrativo são estados e operações auditáveis, nunca edição silenciosa de
@@ -88,8 +89,12 @@ fragmentos; o resto é distribuído em ordem determinística de UUID.
 
 ## 6. Profissões e pagamentos entre jogadores
 
-A UI de serviços do `aurorion-profissoes` será o primeiro consumidor. Ao aceitar uma proposta, a
-economia reserva o valor numa conta `ESCROW` ligada ao UUID do atendimento. O evento
+O fluxo universal já começa no menu configurável **Shift+G**: o jogador mira outro jogador, escolhe
+**Fazer cobrança**, informa o valor e o alvo recebe a decisão de pagar ou recusar. Não exige
+profissão. Alcance, mira, linha de visão, valor, prazo e token são sempre revalidados no servidor.
+
+A integração futura dos serviços do `aurorion-profissoes` será outro consumidor do mesmo menu. Ao
+aceitar uma proposta de serviço, a economia reserva o valor numa conta `ESCROW` ligada ao UUID do atendimento. O evento
 `ServiceEvent.Completed` libera o valor ao profissional. Cancelamento, expiração, logout ou falha
 de validação devolvem a reserva ao cliente.
 
@@ -111,11 +116,12 @@ por jogadores.
 
 ## 8. UI
 
-O celular continua sendo a entrada principal. A evolução prevista é:
+O Shift+G é a entrada rápida para interações presenciais; o celular continua sendo a entrada para
+carteira e operações remotas. A evolução prevista é:
 
-1. carteira com saldo e extrato curto;
-2. confirmação de pagamento com destinatário, serviço e valor;
-3. tela de proposta/aceite das profissões;
+1. menu presencial, cobrança, aceite e comprovante;
+2. carteira com saldo e extrato curto;
+3. propostas específicas de profissão dentro do mesmo menu;
 4. painel da Casa e fechamento semanal;
 5. contratos, projetos, propriedades e mercado;
 6. painel administrativo com oferta, emissão, queima e operações de correção auditadas.
@@ -130,7 +136,7 @@ servidor; a UI nunca envia saldo final nem decide autorização.
 - `AccountKey`, `LedgerEntry`, `EconomyOperation` e `EconomyService`;
 - migração dos saldos atuais para contas de personagem;
 - emissão, queima, transferência, idempotência e oferta total;
-- bolsa inicial de 8 Óbolos uma vez por personagem;
+- bolsa inicial de 4 Óbolos uma vez por personagem;
 - extrato curto e auditoria JSONL.
 
 ### Fase 2 — carteira e pagamento

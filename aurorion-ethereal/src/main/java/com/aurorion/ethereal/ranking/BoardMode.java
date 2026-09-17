@@ -19,7 +19,9 @@ public enum BoardMode {
     WORST_PLAYERS("worst_players", "◇", false, true),
     MISSIONS("missions", "✎", false, false),
     DEATHS("deaths", "☠", false, false),
-    DUEL_WINS("duel_wins", "⚔", false, false);
+    DUEL_WINS("duel_wins", "⚔", false, false),
+    RICHEST_HOUSES("richest_houses", "$", true, false),
+    RICHEST_PLAYERS("richest_players", "$", false, false);
 
     private final String id;
     private final String icon;

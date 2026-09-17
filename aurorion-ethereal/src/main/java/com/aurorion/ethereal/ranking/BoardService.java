@@ -53,6 +53,12 @@ public final class BoardService {
         MinecraftServer server = level.getServer();
         BoardMode mode = projector.mode();
 
+        if (mode == BoardMode.RICHEST_HOUSES || mode == BoardMode.RICHEST_PLAYERS) {
+            projector.setRenderedLines(EconomyBoardBridge.lines(
+                    server, mode, AeonicProjectorBlockEntity.MAX_LINES));
+            return;
+        }
+
         List<RankedEntry> ranking = RankingData.get(server).top(
                 mode, AeonicProjectorBlockEntity.MAX_LINES, HouseData.get(server), HouseCatalog.all());
 
@@ -91,5 +97,10 @@ public final class BoardService {
     public static void refreshPoints(MinecraftServer server) {
         refresh(server, BoardMode.TOP_PLAYERS, BoardMode.WORST_PLAYERS,
                 BoardMode.TOP_HOUSES, BoardMode.WORST_HOUSES);
+    }
+
+    /** Chamada pela ponte opcional do mod de economia, somente quando algum saldo muda. */
+    public static void refreshEconomy(MinecraftServer server) {
+        refresh(server, BoardMode.RICHEST_HOUSES, BoardMode.RICHEST_PLAYERS);
     }
 }

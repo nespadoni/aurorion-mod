@@ -1,4 +1,7 @@
 {
+  "key.categories.aurorion_economia": "Aurorion — Economy",
+  "key.aurorion_economia.interact": "Player interaction menu",
+
   "commands.aurorion_economia.quantiaInvalida": "Invalid amount. Use obols with at most one decimal place - for example 12, 12.3 or 0.5 (1 obol = 10 fragments).",
 
   "commands.aurorion_economia.saldo.self": "You have %s.",

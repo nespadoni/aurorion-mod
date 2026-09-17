@@ -1228,3 +1228,15 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
 - Servicos de profissao reservam o pagamento no aceite e so liberam na conclusao; cancelamento ou
   expiracao devolve a reserva. UI e celular sao o fluxo comum; comandos ficam administrativos.
 - O contrato detalhado, formulas, fases e integracoes estao em `aurorion-economia/ECONOMIA.md`.
+- Shift+G abre um menu de interacao com o jogador sob a mira; a tecla e o modificador sao
+  configuraveis. Cobranca e uma opcao universal, independente de profissao. O servidor revalida
+  alvo, alcance, linha de visao, valor, prazo e token no aceite; fechar a tela equivale a recusar.
+- Cobrancas pendentes nao possuem tick. Ha no maximo uma por cobrador e por pagador, e prazos sao
+  removidos na proxima acao, logout, respawn ou parada do servidor.
+- Cada ID de personagem recebe 4 Obolos uma unica vez no evento de nascimento. A concessao e
+  persistida separadamente do UUID da conta para reconexao nunca duplicar a bolsa e um personagem
+  realmente novo poder recebe-la apos a morte definitiva.
+- Cofres das Casas guardam Fragmentos no mesmo SavedData da carteira, com capacidades de 100, 250,
+  500 e 1.000 Obolos (inicial, I, II e III). Deposito devolve o excedente ao chamador; reduzir nivel
+  nunca queima saldo silenciosamente. Rankings economicos atualizam Projetores Aeonicos carregados
+  apenas quando algum saldo muda, por ponte opcional entre os mods.

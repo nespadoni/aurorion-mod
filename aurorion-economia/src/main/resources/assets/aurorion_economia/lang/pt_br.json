@@ -1,4 +1,7 @@
 {
+  "key.categories.aurorion_economia": "Aurorion — Economia",
+  "key.aurorion_economia.interact": "Menu de interação com jogador",
+
   "commands.aurorion_economia.quantiaInvalida": "Quantia inválida. Use óbolos com no máximo uma casa depois da vírgula — por exemplo 12, 12,3 ou 0,5 (1 óbolo = 10 fragmentos).",
 
   "commands.aurorion_economia.saldo.self": "Você tem %s.",

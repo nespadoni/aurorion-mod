@@ -13,6 +13,8 @@ import java.util.UUID;
  * <p>Thread do servidor apenas, como o {@code SavedData} que ela usa.</p>
  */
 public final class Wallet {
+    public static final long STARTER_BALANCE = 4L * Money.FRAGMENTS_PER_OBOLO;
+
     private Wallet() {
     }
 
@@ -22,7 +24,8 @@ public final class Wallet {
 
     /** Define um saldo exato. Negativo vira zero. Uso de staff. */
     public static void set(MinecraftServer server, UUID player, long fragments) {
-        WalletData.get(server).setBalance(player, Math.min(Math.max(fragments, 0L), Money.MAX));
+        if (WalletData.get(server).setBalance(player, Math.min(Math.max(fragments, 0L), Money.MAX)))
+            EconomyProjectorNotifier.refresh(server);
     }
 
     /**
@@ -37,7 +40,7 @@ public final class Wallet {
                 ? Math.min(before + Math.min(fragments, Money.MAX), Money.MAX)
                 : Math.max(before + fragments, 0L);
 
-        data.setBalance(player, after);
+        if (data.setBalance(player, after)) EconomyProjectorNotifier.refresh(server);
         return after;
     }
 
@@ -55,6 +58,14 @@ public final class Wallet {
 
         data.setBalance(from, fromBalance - amount);
         data.setBalance(to, toBalance + amount);
+        EconomyProjectorNotifier.refresh(server);
         return result;
+    }
+
+    /** Bolsa de nascimento: quatro Obolos, uma vez por ID de personagem. */
+    public static boolean grantStarter(MinecraftServer server, UUID characterId, UUID account) {
+        boolean granted = WalletData.get(server).grantStarter(characterId, account, STARTER_BALANCE);
+        if (granted) EconomyProjectorNotifier.refresh(server);
+        return granted;
     }
 }

@@ -2,13 +2,16 @@ package com.aurorion.economia.command;
 
 import com.aurorion.economia.AurorionEconomia;
 import com.aurorion.economia.money.Money;
+import com.aurorion.economia.server.HouseTreasury;
 import com.aurorion.economia.server.Wallet;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,7 +39,8 @@ public final class EconomiaCommand {
                 .then(action("definir", (server, player, amount) -> {
                     Wallet.set(server, player.getUUID(), amount);
                     return amount;
-                })));
+                }))
+                .then(houseCommands()));
     }
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> action(
@@ -57,6 +61,77 @@ public final class EconomiaCommand {
                 "commands.aurorion_economia.economia." + action,
                 Money.describe(amount), target.getDisplayName(), Money.describe(after)), true);
         return 1;
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> houseCommands() {
+        return Commands.literal("casa")
+                .then(Commands.argument("casa", ResourceLocationArgument.id())
+                        .then(Commands.literal("saldo").executes(EconomiaCommand::houseBalance))
+                        .then(Commands.literal("dar")
+                                .then(Commands.argument("quantia", StringArgumentType.word())
+                                        .executes(context -> houseMoney(context, "dar"))))
+                        .then(Commands.literal("tirar")
+                                .then(Commands.argument("quantia", StringArgumentType.word())
+                                        .executes(context -> houseMoney(context, "tirar"))))
+                        .then(Commands.literal("definir")
+                                .then(Commands.argument("quantia", StringArgumentType.word())
+                                        .executes(context -> houseMoney(context, "definir"))))
+                        .then(Commands.literal("cofre")
+                                .then(Commands.argument("nivel", IntegerArgumentType.integer(0, HouseTreasury.MAX_LEVEL))
+                                        .executes(EconomiaCommand::houseVault))));
+    }
+
+    private static int houseBalance(CommandContext<CommandSourceStack> context) {
+        var server = context.getSource().getServer();
+        var house = ResourceLocationArgument.getId(context, "casa");
+        long balance = HouseTreasury.balance(server, house);
+        long capacity = HouseTreasury.capacity(server, house);
+        int level = HouseTreasury.vaultLevel(server, house);
+        context.getSource().sendSuccess(() -> Component.literal(
+                "Casa " + house + ": " + Money.describe(balance) + " / " + Money.describe(capacity)
+                        + " (cofre nível " + level + ")."), false);
+        return (int)Math.min(balance, Integer.MAX_VALUE);
+    }
+
+    private static int houseMoney(CommandContext<CommandSourceStack> context, String action) {
+        var server = context.getSource().getServer();
+        var house = ResourceLocationArgument.getId(context, "casa");
+        long amount = MoneyArgument.get(context, "quantia");
+        long balance;
+        if (action.equals("dar")) {
+            HouseTreasury.Deposit deposit = HouseTreasury.deposit(server, house, amount);
+            balance = deposit.balance();
+            if (deposit.overflow() > 0) context.getSource().sendFailure(Component.literal(
+                    "O cofre atingiu a capacidade; " + Money.describe(deposit.overflow()) + " não entrou."));
+        } else if (action.equals("tirar")) {
+            if (!HouseTreasury.withdraw(server, house, amount)) {
+                context.getSource().sendFailure(Component.literal("O cofre não possui esse valor."));
+                return 0;
+            }
+            balance = HouseTreasury.balance(server, house);
+        } else {
+            balance = HouseTreasury.set(server, house, amount);
+        }
+        long result = balance;
+        context.getSource().sendSuccess(() -> Component.literal(
+                "Cofre de " + house + ": " + Money.describe(result) + "."), true);
+        return 1;
+    }
+
+    private static int houseVault(CommandContext<CommandSourceStack> context) {
+        var server = context.getSource().getServer();
+        var house = ResourceLocationArgument.getId(context, "casa");
+        int requested = IntegerArgumentType.getInteger(context, "nivel");
+        int level = HouseTreasury.setVaultLevel(server, house, requested);
+        if (level != requested) {
+            context.getSource().sendFailure(Component.literal(
+                    "Não é possível reduzir o nível: o saldo atual ultrapassa a nova capacidade."));
+            return 0;
+        }
+        context.getSource().sendSuccess(() -> Component.literal(
+                "Cofre de " + house + " definido no nível " + level + ", capacidade "
+                        + Money.describe(HouseTreasury.capacity(server, house)) + "."), true);
+        return level + 1;
     }
 
     @FunctionalInterface
