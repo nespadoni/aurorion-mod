@@ -196,10 +196,11 @@ public class LimboGameTests {
                 @Override public boolean shouldInformAdmins() { return false; }
             };
             var source = server.createCommandSourceStack().withSource(capture);
-            helper.assertTrue(server.getCommands().getDispatcher().execute("limbo relatorio", source) == 2,
-                    "Relatorio deve retornar os dois exilados");
+            int reported = server.getCommands().getDispatcher().execute("limbo relatorio", source);
+            helper.assertTrue(reported == 2,
+                    "Relatorio deve retornar os dois exilados (retornou " + reported + "; linhas=" + response + ")");
             helper.assertTrue(response.size() == 3 && response.getFirst().startsWith("limbo v1 exilados=2 "),
-                    "Contrato RCON: cabecalho e uma linha por jogador");
+                    "Contrato RCON: cabecalho e uma linha por jogador (linhas=" + response + ")");
             LimboManager.sweep(server); // arma as duas portas
             first.awardStat(Stats.WALK_ONE_CM, 200);
             second.awardStat(Stats.WALK_ONE_CM, 200);

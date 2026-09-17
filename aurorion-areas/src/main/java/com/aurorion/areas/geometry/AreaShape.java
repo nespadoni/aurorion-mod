@@ -6,6 +6,11 @@ import java.util.List;
 /** Circulo exato ou poligono simples (inclusive concavo), extrudido entre duas alturas. */
 public final class AreaShape {
     public static final int MAX_VERTICES = 128;
+    /**
+     * Limite defensivo para dados digitados ou importados. Nao pode ser 2048: o modpack usa
+     * Higher Heights 4064 e a selecao nasce com o teto real da dimensao.
+     */
+    public static final double MAX_ABS_HEIGHT = 30_000_000D;
     private static final double EPSILON = 1e-7;
     private static final double EPSILON_SQUARED = EPSILON * EPSILON;
     /**
@@ -19,8 +24,10 @@ public final class AreaShape {
     private final Bounds bounds;
 
     private AreaShape(List<Point2> points, double radius, double minY, double maxY) {
-        if (!Double.isFinite(minY) || !Double.isFinite(maxY) || minY >= maxY || minY < -2048 || maxY > 2048) {
-            throw new IllegalArgumentException("Alturas devem satisfazer -2048 <= minimo < maximo <= 2048.");
+        if (!Double.isFinite(minY) || !Double.isFinite(maxY) || minY >= maxY
+                || minY < -MAX_ABS_HEIGHT || maxY > MAX_ABS_HEIGHT) {
+            throw new IllegalArgumentException(
+                    "Alturas devem ser finitas e satisfazer minimo < maximo (limite absoluto 30000000).");
         }
         int count = points.size();
         xs = new double[count];

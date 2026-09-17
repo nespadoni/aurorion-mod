@@ -7,6 +7,8 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * O Oraculo, agora com corpo proprio: humanoide, com a skin do servidor, para ser reconhecivel de
@@ -62,4 +64,23 @@ public class OracleEntity extends PathfinderMob {
     /** Sem gravidade nem deriva: o ponto cadastrado e exatamente onde ele fica. */
     @Override public boolean isNoGravity() { return true; }
     @Override public boolean canBeLeashed() { return false; }
+
+    /** Olhar reativo barato: uma busca na lista de jogadores da dimensao a cada 5 ticks. */
+    @Override public void tick() {
+        super.tick();
+        if (level() instanceof ServerLevel level && tickCount % 5 == 0) {
+            ServerPlayer nearest = null;
+            double best = 25.0D;
+            for (ServerPlayer player : level.players()) {
+                if (!player.isAlive() || player.isSpectator()) continue;
+                double distance = distanceToSqr(player);
+                if (distance <= best) { best = distance; nearest = player; }
+            }
+            if (nearest != null) {
+                lookAt(nearest, 30.0F, 30.0F);
+                setYHeadRot(getYRot());
+                setYBodyRot(getYRot());
+            }
+        }
+    }
 }

@@ -282,6 +282,13 @@ Ele **não nasce sozinho**. A staff invoca um:
 /summon aurorion_limbo:oraculo
 ```
 
+O chunk do Oráculo pode descarregar quando ninguém está perto, mas isso não cancela a rotação.
+Ao mover, o servidor recupera a entidade pelo UUID salvo e cria um ticket temporário somente para o
+chunk antigo. Como entidades são lidas de forma assíncrona, o destino pendente fica salvo e é
+concluído assim que o NPC reaparece no índice, inclusive após reinício; nenhuma ilha fica carregada
+permanentemente. Se o Oráculo estiver a até 5 blocos de um jogador, ele olha para o jogador mais
+próximo; essa busca roda uma vez a cada 5 ticks e percorre apenas a lista de jogadores da dimensão.
+
 O contrato antigo continua valendo: um mob comum com a tag `aurorion_oraculo` também atende, e
 `OracleEntity.isOracle` é o único lugar que decide isso. Mundos onde a staff já marcou um esqueleto
 seguem funcionando sem mudança.

@@ -40,7 +40,9 @@ public final class PhoneBankBridge {
     private static boolean resolved;
     private static Constructor<?> snapshotConstructor;
     private static Constructor<?> actionConstructor;
-    private static Method recordTransfer;
+    private static Method recordTransferDetailed;
+    private static Method recordTransferWithNote;
+    private static Method recordTransferLegacy;
     private static Method syncToPlayer;
 
     private PhoneBankBridge() {
@@ -88,7 +90,15 @@ public final class PhoneBankBridge {
      */
     private static void record(ServerPlayer payer, ServerPlayer target, long amount, String note) {
         try {
-            recordTransfer.invoke(null, payer, target, amount, note == null ? "" : note);
+            String cleanNote = note == null ? "" : note;
+            if (recordTransferDetailed != null) {
+                recordTransferDetailed.invoke(null, payer, target.getUUID(), target.getGameProfile().getName(),
+                        amount, "obolos", cleanNote, Money.describe(amount));
+            } else if (recordTransferWithNote != null) {
+                recordTransferWithNote.invoke(null, payer, target, amount, "obolos", cleanNote);
+            } else {
+                recordTransferLegacy.invoke(null, payer, target, amount, "obolos");
+            }
             syncToPlayer.invoke(null, payer);
             syncToPlayer.invoke(null, target);
         } catch (ReflectiveOperationException e) {
@@ -117,7 +127,11 @@ public final class PhoneBankBridge {
             actionConstructor = store.getClassLoader()
                     .loadClass(STORE + "$ActionResult")
                     .getDeclaredConstructor(boolean.class, String.class);
-            recordTransfer = store.getMethod("recordTransfer",
+            recordTransferDetailed = findMethod(store, "recordTransfer",
+                    ServerPlayer.class, java.util.UUID.class, String.class, long.class, String.class, String.class, String.class);
+            recordTransferWithNote = findMethod(store, "recordTransfer",
+                    ServerPlayer.class, ServerPlayer.class, long.class, String.class, String.class);
+            recordTransferLegacy = store.getMethod("recordTransfer",
                     ServerPlayer.class, ServerPlayer.class, long.class, String.class);
             syncToPlayer = store.getMethod("syncToPlayer", ServerPlayer.class);
 
@@ -136,6 +150,14 @@ public final class PhoneBankBridge {
                             + "desligado. Conferir PhoneBankServerStore nesta versao do telefone.", e);
             snapshotConstructor = null;
             return false;
+        }
+    }
+
+    private static Method findMethod(Class<?> owner, String name, Class<?>... parameterTypes) {
+        try {
+            return owner.getMethod(name, parameterTypes);
+        } catch (NoSuchMethodException ignored) {
+            return null;
         }
     }
 }

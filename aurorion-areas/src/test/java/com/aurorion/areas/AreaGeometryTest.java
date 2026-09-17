@@ -13,6 +13,11 @@ class AreaGeometryTest {
         assertFalse(shape.contains(14, 70, -16));
         assertFalse(shape.contains(10, 80.01, -20));
     }
+    @Test void acceptsTheHigherHeightsDimensionCeiling() {
+        var shape = AreaShape.circle(0, 0, 10, -64, 4064);
+        assertTrue(shape.contains(0, 4064, 0));
+        assertFalse(shape.contains(0, 4064.01, 0));
+    }
     @Test void concaveSchoolAnnexDoesNotProtectItsBoundingBoxNotch() {
         var shape = AreaShape.polygon(List.of(new Point2(0, 0), new Point2(8, 0), new Point2(8, 2),
                 new Point2(2, 2), new Point2(2, 8), new Point2(0, 8)), 0, 100);
@@ -67,6 +72,8 @@ class AreaGeometryTest {
                 List.of(new Point2(0, 0), new Point2(1, 1), new Point2(2, 2)), 0, 10));
         assertThrows(IllegalArgumentException.class, () -> AreaShape.circle(0, 0, Double.NaN, 0, 10));
         assertThrows(IllegalArgumentException.class, () -> AreaShape.circle(0, 0, 1, 10, 10));
+        assertThrows(IllegalArgumentException.class, () -> AreaShape.circle(
+                0, 0, 1, -AreaShape.MAX_ABS_HEIGHT - 1, 10));
         assertThrows(IllegalArgumentException.class, () -> new Point2(Double.POSITIVE_INFINITY, 0));
         assertThrows(IllegalArgumentException.class, () -> new AreaVolume(List.of(), List.of()));
     }

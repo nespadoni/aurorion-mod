@@ -6,6 +6,10 @@
   "mixins": [
     "PhoneBankMixin"
   ],
+  "client": [
+    "PhoneBankClientMixin",
+    "PhoneBankReceiptClientMixin"
+  ],
   "injectors": {
     "defaultRequire": 0
   }

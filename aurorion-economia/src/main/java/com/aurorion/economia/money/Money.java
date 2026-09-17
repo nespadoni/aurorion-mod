@@ -104,7 +104,7 @@ public final class Money {
     }
 
     /** Recusa do parser. Nao estende {@code CommandSyntaxException} para o tipo servir fora de comando. */
-    public static final class MoneyFormatException extends IllegalArgumentException {
+    public static final class MoneyFormatException extends NumberFormatException {
         public MoneyFormatException(String input) {
             super(input);
         }

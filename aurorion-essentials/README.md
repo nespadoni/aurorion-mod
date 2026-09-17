@@ -132,9 +132,9 @@ exemplo, um servidor com fazenda de XP grande pode querer limpar só os itens e 
 - A limpeza em si (`EntityCleanup#run`) é O(entidades removidas), e só roda no tick em que o
   intervalo fecha — mesmo num pico de milhares de itens dropados (fazenda grande rodando a hora
   toda), remover cada um é só marcar `discard()`, sem lógica pesada por entidade.
-- `discard()` (não `remove()`) marca a entidade para remoção; a remoção de fato do armazenamento
-  da `ServerLevel` acontece depois, no tick da própria level — por isso é seguro chamar durante a
-  iteração de `level.getEntities().getAll()`, sem `ConcurrentModificationException`.
+- A limpeza coleta os alvos e só chama `discard()` depois da iteração. Isso evita invalidar o
+  iterador do armazenamento interno de entidades, algo que ocorre com otimizações de
+  armazenamento do NeoForge/C2ME e pode derrubar o servidor durante um ciclo de limpeza.
 
 ## Status
 

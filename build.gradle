@@ -10,3 +10,28 @@ tasks.register('buildAll') {
     description = 'Builda o jar de todos os mods Aurorion.'
     dependsOn subprojects.findAll { it.name != 'aurorion-runs' }.collect { "${it.path}:build" }
 }
+
+// Jars de terceiros que o servidor usa remendados. Ficam versionados em build/vendor-backups
+// (o original ao lado do remendo, para auditar a diferenca) e sao copiados para jars-servidor a
+// cada build: o diretorio e saida das tarefas 'jar', entao o Gradle apaga dali tudo que nao
+// reconhece como saida propria — sem esta copia, o c2me remendado sumia a cada build e a pasta
+// que vai para o servidor subia incompleta.
+//
+// O remendo do c2me tira o modulo interno de iluminacao (ScalableLux) e a ponte dele, que
+// derrubava o cliente no carregamento. O resto do C2ME continua igual.
+tasks.register('copiarJarsDeTerceiros', Copy) {
+    group = 'aurorion'
+    description = 'Copia os jars de terceiros remendados para build/jars-servidor.'
+    from(layout.buildDirectory.dir('vendor-backups')) {
+        include 'c2me-neoforge-mc1.21.1-0.4.0-alpha.0.120-sem-scalablelux.jar'
+        rename { name -> name.replace('-sem-scalablelux.jar', '.jar') }
+    }
+    into layout.buildDirectory.dir('jars-servidor')
+}
+
+tasks.named('buildAll') { finalizedBy 'copiarJarsDeTerceiros' }
+subprojects.each { sub ->
+    sub.plugins.withId('java') {
+        sub.tasks.matching { it.name == 'jar' }.configureEach { finalizedBy ':copiarJarsDeTerceiros' }
+    }
+}

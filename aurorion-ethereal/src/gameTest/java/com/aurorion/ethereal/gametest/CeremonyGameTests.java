@@ -43,7 +43,12 @@ public final class CeremonyGameTests {
             selected.player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 1200, 1));
             var dispatcher = server.getCommands().getDispatcher();
             var staff = server.createCommandSourceStack();
-            helper.assertTrue(dispatcher.execute("casa definir EtherealChosen aurorion_ethereal:nyx", staff) == 1,
+            // Seletor, e nao o nick cru: o GameProfileArgument resolve nome offline pelo
+            // getProfileCache(), que o GameTestServer nao tem (fica null). Em producao o nick
+            // funciona; aqui so o seletor chega na lista de jogadores. O que o teste cobre e o
+            // comando, nao a traducao nick -> perfil, que e do vanilla.
+            helper.assertTrue(dispatcher.execute(
+                    "casa definir @a[name=EtherealChosen,limit=1] aurorion_ethereal:nyx", staff) == 1,
                     "Staff cadastra a casa");
             helper.assertTrue(!BindingRite.isBusy(), "Cadastrar nao inicia cena");
             helper.assertTrue(nyx.equals(HouseManager.houseIdOf(server, selected.player.getUUID())),
@@ -62,7 +67,8 @@ public final class CeremonyGameTests {
             helper.assertTrue(HouseManager.houseIdOf(server, viewer.player.getUUID()) == null,
                     "Recusar a segunda cena nao atribui uma casa por engano");
             viewer.player.setPos(selected.player.getX() + 150, selected.player.getY(), selected.player.getZ());
-            helper.assertTrue(dispatcher.execute("casa cerimonia cancelar EtherealChosen", staff) == 1,
+            helper.assertTrue(dispatcher.execute(
+                    "casa cerimonia cancelar @a[name=EtherealChosen,limit=1]", staff) == 1,
                     "Staff cancela a cena");
             RitePayload end = lastRite(viewer.channel);
             helper.assertTrue(end != null && !end.active(), "Cancelamento alcanca quem ja se afastou");

@@ -2,6 +2,7 @@ package com.aurorion.economia.compat;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
@@ -32,10 +33,39 @@ class PhoneBankContractTest {
             assertMethod(store, "transfer",
                     "(" + PLAYER + "Ljava/lang/String;JLjava/lang/String;)L" + STORE + "$ActionResult;");
             assertMethod(store, "recordTransfer", "(" + PLAYER + PLAYER + "JLjava/lang/String;)V");
+            assertMethod(store, "recordTransfer",
+                    "(" + PLAYER + "Ljava/util/UUID;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
             assertMethod(store, "syncToPlayer", "(" + PLAYER + ")V");
 
             assertMethod(read(phone, STORE + "$BankSnapshot"), "<init>", "(ZLjava/lang/String;JLjava/lang/String;)V");
             assertMethod(read(phone, STORE + "$ActionResult"), "<init>", "(ZLjava/lang/String;)V");
+        }
+    }
+
+    @Test
+    void theClientScreensStillExposeTheHooksUsedByTheReadabilityMixins() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            ClassNode bank = read(phone, "com/mattupolis/phone/client/gui/PhoneBankScreen");
+            assertMethod(bank, "sendTransfer", "()V");
+            assertMethod(bank, "updateInputPositions", "(II)V");
+            assertMethod(bank, "drawConfirmation", "(Lnet/minecraft/client/gui/GuiGraphics;II)V");
+            assertMethod(bank, "drawToast", "(Lnet/minecraft/client/gui/GuiGraphics;II)V");
+            assertMethod(bank, "drawRoundRect", "(Lnet/minecraft/client/gui/GuiGraphics;IIIIII)V");
+            assertMethod(bank, "confirmTransfer", "()V");
+            assertInvocation(bank, "sendTransfer", "()V", "java/lang/Long", "parseLong",
+                    "(Ljava/lang/String;)J");
+
+            ClassNode receipt = read(phone, "com/mattupolis/phone/client/gui/PhoneBankTransactionDetailScreen");
+            assertMethod(receipt, "drawDetail", "(Lnet/minecraft/client/gui/GuiGraphics;II)V");
+            assertMethod(receipt, "drawRow",
+                    "(Lnet/minecraft/client/gui/GuiGraphics;IIILjava/lang/String;Ljava/lang/String;I)V");
+            assertMethod(receipt, "drawRoundRect", "(Lnet/minecraft/client/gui/GuiGraphics;IIIIII)V");
+            assertInvocation(receipt, "drawDetail", "(Lnet/minecraft/client/gui/GuiGraphics;II)V",
+                    receipt.name, "drawRow",
+                    "(Lnet/minecraft/client/gui/GuiGraphics;IIILjava/lang/String;Ljava/lang/String;I)V");
+
+            assertShadowFieldsExist(readMixin("PhoneBankClientMixin"), bank);
+            assertShadowFieldsExist(readMixin("PhoneBankReceiptClientMixin"), receipt);
         }
     }
 
@@ -91,6 +121,40 @@ class PhoneBankContractTest {
     private static void assertMethod(ClassNode node, String name, String descriptor) {
         assertTrue(node.methods.stream().anyMatch(m -> m.name.equals(name) && m.desc.equals(descriptor)),
                 node.name + "." + name + descriptor);
+    }
+
+    private static void assertInvocation(ClassNode node, String methodName, String methodDescriptor,
+                                         String owner, String calledName, String calledDescriptor) {
+        var method = node.methods.stream().filter(m -> m.name.equals(methodName) && m.desc.equals(methodDescriptor))
+                .findFirst().orElseThrow();
+        for (var instruction : method.instructions) {
+            if (instruction instanceof org.objectweb.asm.tree.MethodInsnNode call
+                    && call.owner.equals(owner) && call.name.equals(calledName) && call.desc.equals(calledDescriptor)) return;
+        }
+        throw new AssertionError(node.name + "." + methodName + " nao chama " + owner + "." + calledName + calledDescriptor);
+    }
+
+    private static void assertShadowFieldsExist(ClassNode mixin, ClassNode target) {
+        for (var field : mixin.fields) {
+            if (!hasAnnotation(field.invisibleAnnotations, "Lorg/spongepowered/asm/mixin/Shadow;")) continue;
+            assertTrue(target.fields.stream().anyMatch(candidate -> candidate.name.equals(field.name)
+                            && candidate.desc.equals(field.desc)),
+                    "@Shadow " + mixin.name + "." + field.name + field.desc + " nao existe diretamente em " + target.name);
+        }
+    }
+
+    private static boolean hasAnnotation(java.util.List<AnnotationNode> annotations, String descriptor) {
+        return annotations != null && annotations.stream().anyMatch(annotation -> annotation.desc.equals(descriptor));
+    }
+
+    private static ClassNode readMixin(String simpleName) throws IOException {
+        try (var input = PhoneBankContractTest.class.getResourceAsStream(
+                "/com/aurorion/economia/mixin/" + simpleName + ".class")) {
+            assertNotNull(input, simpleName);
+            ClassNode node = new ClassNode();
+            new ClassReader(input).accept(node, 0);
+            return node;
+        }
     }
 
     private static ClassNode read(ZipFile phone, String internalName) throws IOException {

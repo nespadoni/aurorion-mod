@@ -17,8 +17,10 @@ final class AreaSelection {
         maxY = player.level().getMaxBuildHeight();
     }
     void heights(double min, double max) {
-        if (min < -2048 || max > 2048 || min >= max || !Double.isFinite(min) || !Double.isFinite(max))
-            throw new IllegalArgumentException("Use -2048 <= mínimo < máximo <= 2048.");
+        if (min < -AreaShape.MAX_ABS_HEIGHT || max > AreaShape.MAX_ABS_HEIGHT || min >= max
+                || !Double.isFinite(min) || !Double.isFinite(max))
+            throw new IllegalArgumentException(
+                    "Use mínimo < máximo; ambos devem estar entre -30000000 e 30000000.");
         minY = min; maxY = max;
     }
     void point(double x, double z) {

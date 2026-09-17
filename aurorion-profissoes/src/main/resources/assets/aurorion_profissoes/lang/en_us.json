@@ -1,4 +1,5 @@
 {
   "key.aurorion_profissoes.open": "Open my profession",
-  "key.categories.aurorion": "Aurorion"
+  "key.categories.aurorion": "Aurorion",
+  "message.aurorion_profissoes.enchant.third_option_requires_arcanist": "The third enchanting-table option requires the Arcanist profession."
 }

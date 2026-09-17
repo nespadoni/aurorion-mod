@@ -1216,3 +1216,15 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
 - Sessoes sao limitadas a uma por jogador, expiram e somem no logout/parada/reset. Rede e snapshot
   limitado apenas ao abrir/agir. UI usa NpcPanelScreen do Core. Eventos de autorizacao/conclusao
   oferecem pontos para a futura economia; autorizacao nao deve cobrar antes do resultado.
+
+## 17. aurorion-economia — livro-caixa e ciclo semanal
+
+- Toda alteracao de saldo passa por uma operacao atomica e idempotente do servidor, classificada
+  como transferencia, emissao ou queima. Valores sao inteiros em fragmentos e nunca negativos.
+- Saldos ficam em contas tipadas de personagem, Academia, Greymor, Casas e custodia. Um unico
+  SavedData mantem saldos, oferta, fechamento e janela recente; o log completo e somente auditoria.
+- O fechamento semanal e dirigido por eventos de atividade e por indices persistidos. Nao existe
+  varredura economica por tick, por chunk ou pelos blocos de uma propriedade.
+- Servicos de profissao reservam o pagamento no aceite e so liberam na conclusao; cancelamento ou
+  expiracao devolve a reserva. UI e celular sao o fluxo comum; comandos ficam administrativos.
+- O contrato detalhado, formulas, fases e integracoes estao em `aurorion-economia/ECONOMIA.md`.

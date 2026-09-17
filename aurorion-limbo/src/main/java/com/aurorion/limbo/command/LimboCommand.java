@@ -414,9 +414,12 @@ public final class LimboCommand {
                     + " invoque um com /summon aurorion_limbo:oraculo"));
             return 0;
         }
-        source.sendSuccess(() -> literal("oraculo movido ponto=" + moved.name()
+        boolean queued = data.pendingSpot() != null && data.pendingSpot().name().equals(moved.name());
+        source.sendSuccess(() -> literal((queued ? "oraculo movimento_agendado ponto=" : "oraculo movido ponto=")
+                + moved.name()
                 + " " + moved.pos().getX() + " " + moved.pos().getY() + " " + moved.pos().getZ()
-                + " em " + moved.dimension()), true);
+                + " em " + moved.dimension()
+                + (queued ? "; sera concluido assim que o chunk antigo carregar" : "")), true);
         return 1;
     }
 

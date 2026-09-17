@@ -68,6 +68,6 @@
   "commands.aurorion_ethereal.cerimonia.busy": "A ceremony is already running. Wait for it to finish or cancel it before calling the next person.",
   "commands.aurorion_ethereal.cerimonia.unavailable": "The participant must be online and alive to start the ceremony.",
   "commands.aurorion_ethereal.cerimonia.started": "Ceremony started for %s.",
-  "aurorion_ethereal.rite.invocation": "The Aether recognizes your essence?",
+  "aurorion_ethereal.rite.invocation": "The Aion recognizes your essence?",
   "aurorion_ethereal.rite.welcome": "YOUR PLACE IN ETHEREAL"
 }

@@ -26,6 +26,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -225,11 +226,10 @@ public final class LimboServerEvents {
     /**
      * Clique direito num mob com a tag do Oraculo abre a tela do resgate.
      *
-     * <p><b>Nao registramos entidade propria de proposito.</b> Um esqueleto com a tag
-     * {@code aurorion_oraculo} ja e um Oraculo, e qualquer mob do modpack tambem pode ser — sem
-     * modelo, sem renderer, sem IA, sem ovo de spawn e sem conteudo novo que fique preso no save para
-     * sempre (SDD §6.1). E a mesma ideia da tag de altar do {@code aurorion_ethereal}: o acoplamento
-     * e um dado, nunca uma classe.
+     * <p>O Oraculo registrado tem corpo e renderer proprios. Um mob comum com a tag
+     * {@code aurorion_oraculo} continua sendo aceito para preservar mundos antigos e cenarios de
+     * staff; a tag continua sendo o contrato de reconhecimento, enquanto a entidade nova cuida do
+     * visual e da persistencia.
      *
      * <p>Cancelamos o evento para o clique nao virar outra coisa — trocar de item, montar, abrir o
      * inventario do mob. Sem isso, um Oraculo num mob montavel viraria um cavalo.
@@ -246,6 +246,14 @@ public final class LimboServerEvents {
         }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
+    }
+
+    /** Guarda a identidade e a ultima posicao do Oraculo para a proxima rotacao offline. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onOracleJoin(EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof com.aurorion.limbo.oracle.OracleEntity oracle
+                && event.getLevel() instanceof ServerLevel level)
+            com.aurorion.limbo.oracle.OracleData.get(level.getServer()).remember(oracle);
     }
 
     @SubscribeEvent

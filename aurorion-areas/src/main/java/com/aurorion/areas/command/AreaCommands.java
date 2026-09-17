@@ -68,8 +68,10 @@ public final class AreaCommands {
             SELECTIONS.put(p.getUUID(), s);
             return "Círculo selecionado no seu X/Z, raio " + s.radius + ". Ajuste /area altura se necessário.";
         }))));
-        root.then(literal("altura").then(argument("min", DoubleArgumentType.doubleArg(-2048, 2048))
-                .then(argument("max", DoubleArgumentType.doubleArg(-2048, 2048)).executes(run(c -> {
+        root.then(literal("altura").then(argument("min", DoubleArgumentType.doubleArg(
+                        -AreaShape.MAX_ABS_HEIGHT, AreaShape.MAX_ABS_HEIGHT))
+                .then(argument("max", DoubleArgumentType.doubleArg(
+                        -AreaShape.MAX_ABS_HEIGHT, AreaShape.MAX_ABS_HEIGHT)).executes(run(c -> {
                     var s = selection(c); s.heights(DoubleArgumentType.getDouble(c, "min"), DoubleArgumentType.getDouble(c, "max"));
                     return "Alturas da seleção: " + s.minY + " a " + s.maxY + ".";
                 })))));

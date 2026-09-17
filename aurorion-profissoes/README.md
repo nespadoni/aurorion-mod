@@ -102,8 +102,10 @@ finalização pela UI; o marcador de conservação ainda é aplicado nos eventos
 
 ## Arcanista
 
-- Qualquer personagem pode usar a mesa de encantamentos, com nível máximo **III** por encantamento.
-- Arcanistas recebem as opções normais da mesa sem esse corte, até o limite configurado.
+- Qualquer personagem pode usar as duas primeiras opções da mesa de encantamentos, com nível máximo
+  **III** por encantamento. A terceira opção aparece bloqueada e explica que exige um arcanista.
+- Arcanistas podem usar as três opções normais da mesa sem esse corte, até o limite configurado.
+- A escolha também é validada pelo servidor; alterar o cliente ou forjar o pacote não libera a terceira opção.
 - Na UI, o arcanista inscreve os encantamentos de um **livro encantado real**, consumindo-o,
   sobre equipamento compatível ou livro comum. Exige mesa a até 3 blocos e **2 níveis de XP
   por nível acrescentado**. Não cria níveis que não existam no livro e não combina livros iguais.

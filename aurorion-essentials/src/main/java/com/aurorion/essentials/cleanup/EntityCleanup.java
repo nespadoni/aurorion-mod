@@ -9,6 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * O trabalho de verdade, chamado no maximo 1x por ciclo (ver {@link CleanupScheduler}) — nunca em
@@ -50,15 +52,18 @@ public final class EntityCleanup {
     private static int clean(ServerLevel level, boolean cleanItems, boolean cleanOrbs) {
         int removed = 0;
 
-        // discard() so marca a entidade para remocao; a remocao de fato do storage acontece
-        // depois, no tick da propria level — seguro chamar durante a iteracao.
+        // Nao chame discard() dentro desta iteracao. O armazenamento de entidades usado por
+        // NeoForge/C2ME pode remover a entrada imediatamente, invalidando o iterador (e causando
+        // ArrayIndexOutOfBoundsException em Int2ObjectLinkedOpenHashMap). A limpeza roda raramente,
+        // entao esta lista temporaria e o custo seguro correto.
+        List<Entity> doomed = new ArrayList<>();
         for (Entity entity : level.getEntities().getAll()) {
             boolean shouldRemove = (cleanItems && entity instanceof ItemEntity)
                     || (cleanOrbs && entity instanceof ExperienceOrb);
-            if (shouldRemove) {
-                entity.discard();
-                removed++;
-            }
+            if (shouldRemove) doomed.add(entity);
+        }
+        for (Entity entity : doomed) {
+            if (!entity.isRemoved()) { entity.discard(); removed++; }
         }
         return removed;
     }

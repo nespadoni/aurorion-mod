@@ -18,9 +18,8 @@ import net.minecraft.resources.ResourceLocation;
  * isso que faz a fileira acompanhar a barra de fome quando algo entra ou sai da pilha (montar num
  * cavalo, bolhas de ar), em vez de sobrepor.
  *
- * <p>A camada e registrada <em>acima</em> de {@code FOOD_LEVEL}, que no vanilla mora dentro do grupo
- * condicional {@code playerHealthComponents}. Entrar nesse grupo da de graca dois comportamentos
- * certos: some em criativo/espectador (junto com vida e fome) e some com o HUD escondido no F1.
+ * <p>A camada e registrada <em>acima</em> de {@code FOOD_LEVEL}, mas uma camada de mod nao herda a
+ * condicao interna que esconde o HUD vanilla. O estado de F1 e conferido no inicio do render.
  *
  * <p>Custo por frame: nenhuma alocacao e no maximo {@code maxLives} blits de 9x9 — e nada quando o
  * servidor ainda nao informou as vidas (SDD §2, zero alocacao no caminho quente do cliente).
@@ -46,12 +45,11 @@ public final class LivesHudLayer implements LayeredDraw.Layer {
 
     @Override
     public void render(GuiGraphics graphics, DeltaTracker delta) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.options.hideGui || minecraft.player == null) return;
         if (!LivesClientConfig.SHOW_HUD.get()) return;
         // max = 0 significa "servidor nao falou nada" — melhor nao desenhar que desenhar chutando.
         if (!ClientLives.known()) return;
-
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null) return;
 
         Gui gui = minecraft.gui;
         int right = graphics.guiWidth() / 2 + 91;

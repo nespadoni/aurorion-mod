@@ -58,6 +58,31 @@ class PhoneMixinContractTest {
         }
     }
 
+    /**
+     * O mesmo erro que derrubou o cliente no banco: {@code @Shadow} de um campo que o alvo apenas
+     * herda. O Mixin exige o campo declarado na propria classe, e aqui {@code defaultRequire} e 1,
+     * entao a falha e fatal em vez de silenciosa.
+     */
+    @Test
+    void shadowedFieldsAreDeclaredByTheTargetItselfAndNotInherited() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            for (String name : List.of("PhoneContactNameMixin", "PhoneCallingNameMixin", "PhoneIncomingNameMixin")) {
+                ClassNode mixin = readMixin(name);
+                ClassNode type = readPhoneClass(phone, targets(mixin).getFirst());
+                for (var field : mixin.fields) {
+                    if (!hasAnnotation(field.invisibleAnnotations, "Lorg/spongepowered/asm/mixin/Shadow;")) continue;
+                    assertTrue(type.fields.stream().anyMatch(candidate -> candidate.name.equals(field.name)
+                                    && candidate.desc.equals(field.desc)),
+                            name + ": @Shadow " + field.name + field.desc + " nao e declarado por " + type.name);
+                }
+            }
+        }
+    }
+
+    private static boolean hasAnnotation(List<AnnotationNode> annotations, String descriptor) {
+        return annotations != null && annotations.stream().anyMatch(annotation -> annotation.desc.equals(descriptor));
+    }
+
     private static ZipFile phoneJar() throws IOException {
         String path = System.getenv("AURORION_PHONE_JAR");
         assumeTrue(path != null && !path.isBlank(), "Defina AURORION_PHONE_JAR para validar a versao instalada do telefone.");

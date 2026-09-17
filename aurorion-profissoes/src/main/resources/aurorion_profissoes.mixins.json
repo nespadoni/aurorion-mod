@@ -11,6 +11,9 @@
     "CampfireMixin",
     "EnchantmentRepairMixin"
   ],
+  "client": [
+    "EnchantmentScreenMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

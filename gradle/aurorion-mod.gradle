@@ -160,3 +160,14 @@ tasks.named('jar', Jar).configure {
         ])
     }
 }
+
+// O mundo do gameTest e descartavel por contrato, mas o run reaproveita o mesmo diretorio entre
+// execucoes. Sem apagar, o SavedData de uma rodada sobrevive para a proxima — exilados com UUID
+// sorteado e personagens mortos iam se acumulando ate quebrar todo teste que afirma o estado
+// inteiro (o relatorio do Limbo chegou a listar 14 exilados de rodadas velhas). Apagar aqui e o
+// que torna "mundo descartavel" verdade, em vez de renomear a mao para world-stale-*.
+tasks.matching { it.name == 'runGameTestServer' }.configureEach {
+    doFirst {
+        delete file('run/gameTestServer/world')
+    }
+}

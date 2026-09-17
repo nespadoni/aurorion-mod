@@ -16,6 +16,11 @@ public final class SpecialtyRules {
     public static boolean smith(Player player) {
         return !ProfessionsConfig.enabled() || ProfessionApi.staff(player) || ProfessionApi.has(player, Profession.SMITH);
     }
+    public static boolean canUseTableOption(Player player, int option) {
+        if (option < 0 || option >= 3) return false;
+        return !ProfessionsConfig.enabled() || ProfessionApi.staff(player)
+                || EnchantingTablePolicy.canUseOption(ProfessionApi.of(player), option);
+    }
     public static boolean adminMending(ItemStack stack) {
         var data = stack.get(DataComponents.CUSTOM_DATA);
         return data != null && data.getUnsafe().getBoolean(ADMIN_MENDING);

@@ -3,7 +3,9 @@
 Áreas narrativas administradas pela staff para Minecraft 1.21.1 / NeoForge 21.1.248.
 Depende de `aurorion-core`. Módulo incluído no monorepo e descoberto automaticamente por `aurorion-runs`.
 
-**Estado:** revisão e build validados em 15/09/2026 com Java 21. `gradlew.bat buildAll --console=plain` concluído com sucesso; 20 testes do módulo passaram, e os relatórios do monorepo somam 120 testes sem falhas. JAR instalável em `../build/jars-servidor/aurorion_areas-neoforge-1.21.1-0.1.0.jar`. Minecraft não foi iniciado nesta validação; a conferência com o modpack real ainda é necessária.
+**Estado:** revisão e build validados em 16/09/2026. `gradlew.bat buildAll` concluiu com sucesso;
+21 testes do módulo passaram e os relatórios atuais do monorepo somam 154 testes sem falhas. JAR
+instalável em `../build/jars-servidor/aurorion_areas-neoforge-1.21.1-0.2.0.jar`.
 
 ## O que está implementado
 
@@ -33,7 +35,9 @@ Posicione-se no centro da escola e use um raio adequado ao mapa:
 /area visualizar escola
 ```
 
-O círculo usa seu X/Z como centro. Para bloquear voo também acima do teto de construção, escolha um teto maior, por exemplo `/area altura -2048 2048` **antes de criar a área**. Os limites de Y são inclusivos.
+O círculo usa seu X/Z como centro. A seleção já nasce usando a altura completa da dimensão — inclusive
+o teto Y 4064 do Higher Heights. Para escolher outra faixa, use `/area altura <mínimo> <máximo>`
+**antes de criar a área**. Os limites de Y são inclusivos.
 
 Para uma sala irregular, inicie uma seleção e caminhe pelos cantos do contorno em ordem:
 
@@ -84,7 +88,8 @@ Recortes pertencem à mesma área e retiram **todas** as regras dessa área naqu
 
 O desenho exige o módulo `aurorion_areas` **no cliente**. Quem não o tem recebe a prévia antiga por partículas, e o próprio comando avisa que é por isso que o contorno sólido não apareceu.
 
-Limites: 512 áreas; 32 formas por área (partes + recortes); 128 vértices por polígono; raio de 0,5 a 100.000; alturas de -2048 a 2048. Polígonos cruzados e degenerados são rejeitados.
+Limites: 512 áreas; 32 formas por área (partes + recortes); 128 vértices por polígono; raio de 0,5 a
+100.000; alturas absolutas de até 30.000.000. Polígonos cruzados e degenerados são rejeitados.
 
 ## Prioridades, regras e exceções
 
