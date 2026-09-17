@@ -2,6 +2,7 @@ package com.aurorion.ethereal.registry;
 
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
+import com.aurorion.ethereal.block.entity.HouseMuralBlockEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -14,6 +15,10 @@ public final class EtherealBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AeonicProjectorBlockEntity>> AEONIC_PROJECTOR =
             BLOCK_ENTITIES.register("aeonic_projector", () -> BlockEntityType.Builder.of(
                     AeonicProjectorBlockEntity::new, EtherealBlocks.AEONIC_PROJECTOR.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HouseMuralBlockEntity>> HOUSE_MURAL =
+            BLOCK_ENTITIES.register("house_mural", () -> BlockEntityType.Builder.of(
+                    HouseMuralBlockEntity::new, EtherealBlocks.HOUSE_MURAL.get()).build(null));
 
     private EtherealBlockEntities() {
     }

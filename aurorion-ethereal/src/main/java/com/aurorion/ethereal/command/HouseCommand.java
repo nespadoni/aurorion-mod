@@ -2,10 +2,13 @@ package com.aurorion.ethereal.command;
 
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
+import com.aurorion.ethereal.block.entity.HouseMuralBlockEntity;
 import com.aurorion.ethereal.house.House;
 import com.aurorion.ethereal.house.HouseCatalog;
 import com.aurorion.ethereal.house.HouseManager;
+import com.aurorion.ethereal.house.HouseUpgradeData;
 import com.mojang.authlib.GameProfile;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -19,6 +22,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -58,6 +65,17 @@ public final class HouseCommand {
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
                                 .executes(HouseCommand::clear)))
+                .then(Commands.literal("mural")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("vincular")
+                                .then(Commands.argument("casa", ResourceLocationArgument.id())
+                                        .suggests(HOUSE_SUGGESTIONS)
+                                        .executes(HouseCommand::linkMural)))
+                        .then(Commands.literal("protetor")
+                                .then(Commands.argument("casa", ResourceLocationArgument.id())
+                                        .suggests(HOUSE_SUGGESTIONS)
+                                        .then(Commands.argument("nivel", IntegerArgumentType.integer(0, 2))
+                                                .executes(HouseCommand::setProtector)))))
                 .then(Commands.literal("cerimonia")
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.literal("cancelar")
@@ -174,6 +192,49 @@ public final class HouseCommand {
             }
         }
         return changed;
+    }
+
+    private static int linkMural(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ResourceLocation houseId = ResourceLocationArgument.getId(context, "casa");
+        House house = HouseCatalog.get(houseId);
+        if (house == null) {
+            context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.casa.unknown", houseId.toString()));
+            return 0;
+        }
+
+        Vec3 eye = player.getEyePosition();
+        BlockHitResult hit = player.level().clip(new ClipContext(eye,
+                eye.add(player.getLookAngle().scale(8.0D)),
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
+        if (hit.getType() != HitResult.Type.BLOCK
+                || !(player.level().getBlockEntity(hit.getBlockPos()) instanceof HouseMuralBlockEntity mural)) {
+            context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.mural.look_at"));
+            return 0;
+        }
+
+        mural.link(houseId);
+        context.getSource().sendSuccess(() -> Component.translatable(
+                "commands.aurorion_ethereal.mural.linked", house.coloredName()), true);
+        return 1;
+    }
+
+    private static int setProtector(CommandContext<CommandSourceStack> context) {
+        ResourceLocation houseId = ResourceLocationArgument.getId(context, "casa");
+        House house = HouseCatalog.get(houseId);
+        if (house == null) {
+            context.getSource().sendFailure(Component.translatable(
+                    "commands.aurorion_ethereal.casa.unknown", houseId.toString()));
+            return 0;
+        }
+        int level = IntegerArgumentType.getInteger(context, "nivel");
+        int applied = HouseUpgradeData.get(context.getSource().getServer())
+                .setProtectorLevel(houseId, level);
+        context.getSource().sendSuccess(() -> Component.translatable(
+                "commands.aurorion_ethereal.mural.protector", house.coloredName(), applied), true);
+        return 1;
     }
 
     // --- Cerimonia -----------------------------------------------------------------------------

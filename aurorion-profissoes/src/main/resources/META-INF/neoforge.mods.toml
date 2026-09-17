@@ -30,6 +30,14 @@ versionRange = "[0.1.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
+# Atendimentos presenciais aparecem exclusivamente no menu Shift+G da Economia.
+[[dependencies.${mod_id}]]
+modId = "aurorion_economia"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
 [[mixins]]
 config = "aurorion_profissoes.mixins.json"
 

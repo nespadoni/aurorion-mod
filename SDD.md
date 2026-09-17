@@ -1209,7 +1209,8 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
 - Qualidade e conservacao pertencem ao alimento produzido, nao a quem o carrega. Transferir comida
   nunca rebaixa o trabalho do cozinheiro nem renova a validade. Automacao sem autor produz comida
   comum. FoodSpoil calcula a validade; a ponte multiplica a taxa ja existente, sem tick adicional.
-- Shift + interacao com outro jogador abre os servicos dele; uma tecla abre o proprio oficio.
+- Shift+G olhando para outro jogador abre o menu presencial da Economia; quando o alvo oferece um
+  oficio, o atendimento aparece ali. Os gatilhos antigos (J e agachar+interagir) foram removidos.
   Pedidos entre pessoas exigem aceite do profissional. O servidor valida alcance, dimensao,
   profissao, bancada, inventario, prazo e token descartavel novamente no aceite. Sem custodia de
   itens ou moeda nesta fase. Nao ha comando de atendimento para jogadores.
@@ -1240,3 +1241,8 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
   500 e 1.000 Obolos (inicial, I, II e III). Deposito devolve o excedente ao chamador; reduzir nivel
   nunca queima saldo silenciosamente. Rankings economicos atualizam Projetores Aeonicos carregados
   apenas quando algum saldo muda, por ponte opcional entre os mods.
+- O Mural da Casa e um bloco vinculavel pela staff e uma visao do estado global da Casa: saldo do
+  cofre, nivel e upgrades nao pertencem ao bloco nem ao jogador. O Protetor Arcano usa recarga real
+  persistida (I: 30 dias; II: 14 dias, ambos configuraveis), permite a qualquer membro conceder uma
+  vida a um personagem vivo inclusive no Limbo e notifica todos os administradores online, alem de
+  registrar auditoria no log. Toda validacao ocorre por clique/pacote; nao existe trabalho por tick.

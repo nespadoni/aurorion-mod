@@ -3,12 +3,14 @@ package com.aurorion.ethereal.event;
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.EtherealTags;
 import com.aurorion.ethereal.block.AeonicProjectorBlock;
+import com.aurorion.ethereal.block.HouseMuralBlock;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
 import com.aurorion.ethereal.ceremony.BindingRite;
 import com.aurorion.ethereal.config.EtherealConfig;
 import com.aurorion.ethereal.house.HouseCatalog;
 import com.aurorion.ethereal.house.HouseManager;
+import com.aurorion.ethereal.house.HouseMuralManager;
 import com.aurorion.ethereal.house.PendingSelections;
 import com.aurorion.ethereal.network.EtherealNetwork;
 import com.aurorion.ethereal.ranking.BoardMode;
@@ -74,6 +76,12 @@ public final class EtherealServerEvents {
         if (state.getBlock() instanceof AeonicProjectorBlock) {
             consume(event);
             openProjector(player, pos);
+            return;
+        }
+
+        if (state.getBlock() instanceof HouseMuralBlock) {
+            consume(event);
+            HouseMuralManager.open(player, pos);
             return;
         }
 

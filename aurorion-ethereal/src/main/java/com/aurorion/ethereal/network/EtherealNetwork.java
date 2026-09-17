@@ -4,6 +4,7 @@ import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
 import com.aurorion.ethereal.client.EtherealClientNetwork;
 import com.aurorion.ethereal.house.HouseManager;
+import com.aurorion.ethereal.house.HouseMuralManager;
 import com.aurorion.ethereal.ranking.BoardMode;
 import com.aurorion.ethereal.ranking.BoardService;
 import net.minecraft.core.BlockPos;
@@ -51,9 +52,17 @@ public final class EtherealNetwork {
                 EtherealNetwork::handleRite);
         registrar.playToClient(OpenProjectorConfigPayload.TYPE, OpenProjectorConfigPayload.STREAM_CODEC,
                 EtherealNetwork::handleOpenProjectorConfig);
+        registrar.playToClient(HouseMuralPayloads.Open.TYPE, HouseMuralPayloads.Open.STREAM_CODEC,
+                EtherealNetwork::handleOpenMural);
+        registrar.playToClient(HouseMuralPayloads.OpenTargets.TYPE, HouseMuralPayloads.OpenTargets.STREAM_CODEC,
+                EtherealNetwork::handleOpenProtectorTargets);
 
         registrar.playToServer(ChooseHousePayload.TYPE, ChooseHousePayload.STREAM_CODEC, EtherealNetwork::handleChoose);
         registrar.playToServer(SaveProjectorConfigPayload.TYPE, SaveProjectorConfigPayload.STREAM_CODEC, EtherealNetwork::handleSaveProjector);
+        registrar.playToServer(HouseMuralPayloads.OpenProtector.TYPE, HouseMuralPayloads.OpenProtector.STREAM_CODEC,
+                EtherealNetwork::handleOpenProtector);
+        registrar.playToServer(HouseMuralPayloads.GrantLife.TYPE, HouseMuralPayloads.GrantLife.STREAM_CODEC,
+                EtherealNetwork::handleGrantLife);
     }
 
     // --- Ponta cliente --------------------------------------------------------------------------
@@ -86,12 +95,32 @@ public final class EtherealNetwork {
         EtherealClientNetwork.openProjectorConfig(payload, context);
     }
 
+    private static void handleOpenMural(HouseMuralPayloads.Open payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        EtherealClientNetwork.openMural(payload, context);
+    }
+
+    private static void handleOpenProtectorTargets(HouseMuralPayloads.OpenTargets payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        EtherealClientNetwork.openProtectorTargets(payload, context);
+    }
+
 
     // --- Casas e cerimonia ---------------------------------------------------------------------
 
     private static void handleChoose(ChooseHousePayload payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
         context.enqueueWork(() -> HouseManager.choose(player, payload.house()));
+    }
+
+    private static void handleOpenProtector(HouseMuralPayloads.OpenProtector payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        context.enqueueWork(() -> HouseMuralManager.openProtector(player, payload.pos()));
+    }
+
+    private static void handleGrantLife(HouseMuralPayloads.GrantLife payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        context.enqueueWork(() -> HouseMuralManager.grantLife(player, payload.pos(), payload.target()));
     }
 
     // --- Projetor Aeonico ------------------------------------------------------------------------

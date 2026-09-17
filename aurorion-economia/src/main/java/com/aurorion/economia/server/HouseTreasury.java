@@ -1,6 +1,7 @@
 package com.aurorion.economia.server;
 
 import com.aurorion.economia.money.Money;
+import com.aurorion.economia.config.EconomyConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
@@ -19,6 +20,27 @@ public final class HouseTreasury {
     }
 
     private HouseTreasury() { }
+
+    public static int protectorLevel(MinecraftServer server, ResourceLocation house) {
+        return WalletData.get(server).houseProtectorLevel(house);
+    }
+
+    public static void setProtectorLevel(MinecraftServer server, ResourceLocation house, int level) {
+        WalletData.get(server).setHouseProtectorLevel(house, level);
+    }
+
+    public static long upgradePrice(boolean protector, int level) {
+        return EconomyConfig.price(protector, level);
+    }
+
+    public static boolean buyUpgrade(MinecraftServer server, ResourceLocation house,
+                                     boolean protector, int nextLevel, long quotedCost) {
+        long cost = upgradePrice(protector, nextLevel);
+        if (cost < 0 || quotedCost != cost) return false;
+        boolean bought = WalletData.get(server).buyUpgrade(house, protector, nextLevel, cost);
+        if (bought) EconomyProjectorNotifier.refresh(server);
+        return bought;
+    }
 
     public static long balance(MinecraftServer server, ResourceLocation house) {
         return WalletData.get(server).houseBalance(house);

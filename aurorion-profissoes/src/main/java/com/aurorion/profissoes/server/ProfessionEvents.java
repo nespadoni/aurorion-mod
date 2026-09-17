@@ -37,13 +37,6 @@ public final class ProfessionEvents {
         ServiceManager.forget(event.account());
         if (event.player() != null) ProfessionsNetwork.sync(event.player());
     }
-    @SubscribeEvent public static void interaction(PlayerInteractEvent.EntityInteract event) {
-        if (!ProfessionsConfig.enabled() || event.getHand() != InteractionHand.MAIN_HAND || !event.getEntity().isShiftKeyDown()
-                || !(event.getTarget() instanceof net.minecraft.world.entity.player.Player)) return;
-        event.setCanceled(true); event.setCancellationResult(InteractionResult.SUCCESS);
-        if (event.getEntity() instanceof ServerPlayer customer && event.getTarget() instanceof ServerPlayer professional)
-            ServiceManager.open(customer, professional);
-    }
     @SubscribeEvent public static void anvil(PlayerInteractEvent.RightClickBlock event) {
         if (!ProfessionsConfig.enabled() || !event.getLevel().getBlockState(event.getPos()).is(BlockTags.ANVIL)
                 || SpecialtyRules.smith(event.getEntity())) return;

@@ -1,5 +1,6 @@
 package com.aurorion.economia.server;
 
+import com.aurorion.economia.api.InteractionMenuEvent;
 import com.aurorion.economia.money.Money;
 import com.aurorion.economia.money.Transfer;
 import com.aurorion.economia.network.EconomyPayloads;
@@ -8,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -43,25 +45,33 @@ public final class ChargeManager {
                     "O outro jogador não possui a interface de cobrança instalada.", false);
             return;
         }
+        InteractionMenuEvent.Collect event = new InteractionMenuEvent.Collect(charger, target);
+        event.add("charge", "Fazer cobrança",
+                "Informe um valor; o outro jogador poderá pagar ou recusar.", true);
+        NeoForge.EVENT_BUS.post(event);
+        var options = event.options().stream().map(option -> new EconomyPayloads.OpenMenu.Option(
+                option.action(), option.title(), option.detail(), option.enabled())).toList();
         PacketDistributor.sendToPlayer(charger, new EconomyPayloads.OpenMenu(
-                target.getUUID(), displayName(target), java.util.List.of(
-                new EconomyPayloads.OpenMenu.Option("charge", "Fazer cobrança",
-                        "Informe um valor; o outro jogador poderá pagar ou recusar.", true))));
+                target.getUUID(), displayName(target), options));
     }
 
     public static void select(ServerPlayer charger, UUID targetId, String action) {
-        if (!"charge".equals(action)) {
-            status(charger, "Opção indisponível", "Essa interação não está disponível.", false);
-            return;
-        }
         ServerPlayer target = charger.server.getPlayerList().getPlayer(targetId);
         String refusal = validatePair(charger, target, true);
         if (refusal != null) {
             status(charger, "Cobrança indisponível", refusal, false);
             return;
         }
-        PacketDistributor.sendToPlayer(charger,
-                new EconomyPayloads.OpenComposer(target.getUUID(), displayName(target)));
+        if ("charge".equals(action)) {
+            PacketDistributor.sendToPlayer(charger,
+                    new EconomyPayloads.OpenComposer(target.getUUID(), displayName(target)));
+            return;
+        }
+
+        InteractionMenuEvent.Action event = new InteractionMenuEvent.Action(charger, target, action);
+        NeoForge.EVENT_BUS.post(event);
+        if (!event.handled())
+            status(charger, "Opção indisponível", "Essa interação não está disponível.", false);
     }
 
     public static void submit(ServerPlayer charger, UUID targetId, String amountText) {
@@ -132,16 +142,18 @@ public final class ChargeManager {
     }
 
     public static void forget(UUID player) {
+        LandSaleManager.forget(player);
         CHARGES.remove(player);
         LAST_OPEN.remove(player);
     }
 
     public static void clear() {
+        LandSaleManager.clear();
         CHARGES.clear();
         LAST_OPEN.clear();
     }
 
-    private static String validatePair(ServerPlayer charger, ServerPlayer payer, boolean requireAim) {
+    public static String validatePair(ServerPlayer charger, ServerPlayer payer, boolean requireAim) {
         if (charger == null || payer == null) return "O outro jogador não está mais disponível.";
         if (charger == payer) return "Não é possível cobrar a si mesmo.";
         if (charger instanceof FakePlayer || payer instanceof FakePlayer

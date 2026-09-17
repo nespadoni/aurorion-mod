@@ -4,6 +4,7 @@ import com.aurorion.core.data.PlayerMapNbt;
 import com.aurorion.core.data.SavedDataAccess;
 import com.aurorion.economia.AurorionEconomia;
 import com.aurorion.economia.money.Money;
+import com.aurorion.economia.land.LandDeed;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -41,8 +42,11 @@ public class WalletData extends SavedData {
     /** IDs de personagem, nao UUIDs de conta: cada nova historia recebe a bolsa uma vez. */
     private final Set<UUID> starterGrants = new HashSet<>();
     private final Map<ResourceLocation, HouseState> houses = new HashMap<>();
+    private final Map<UUID, LandDeed> deeds = new HashMap<>();
+    private Tag unreadableDeeds;
+    public static final int MAX_DEEDS = 4096;
 
-    record HouseState(long balance, int vaultLevel) { }
+    record HouseState(long balance, int vaultLevel, int protectorLevel) { }
 
     public static WalletData get(MinecraftServer server) {
         return ACCESS.get(server);
@@ -63,7 +67,24 @@ public class WalletData extends SavedData {
             if (id == null) continue;
             long balance = Math.min(Math.max(entry.getLong(KEY_BALANCE), 0L), Money.MAX);
             int vaultLevel = Math.max(0, Math.min(entry.getInt(KEY_VAULT_LEVEL), HouseTreasury.MAX_LEVEL));
-            if (balance > 0 || vaultLevel > 0) data.houses.put(id, new HouseState(balance, vaultLevel));
+            int protectorLevel = Math.max(0, Math.min(entry.getInt("ProtectorLevel"), 2));
+            if (balance > 0 || vaultLevel > 0 || protectorLevel > 0)
+                data.houses.put(id, new HouseState(balance, vaultLevel, protectorLevel));
+        }
+        try {
+            if (tag.contains("LandDeeds") && !tag.contains("LandDeeds", Tag.TAG_LIST))
+                throw new IllegalArgumentException("Invalid LandDeeds tag");
+            ListTag deeds = tag.getList("LandDeeds", Tag.TAG_COMPOUND);
+            if (deeds.size() > MAX_DEEDS) throw new IllegalArgumentException("Too many deeds");
+            for (int i = 0; i < deeds.size(); i++) {
+                LandDeed deed = LandDeed.load(deeds.getCompound(i));
+                if (data.deeds.putIfAbsent(deed.id(), deed) != null)
+                    throw new IllegalArgumentException("Duplicate deed");
+            }
+        } catch (RuntimeException exception) {
+            data.deeds.clear();
+            data.unreadableDeeds = tag.get("LandDeeds").copy();
+            AurorionEconomia.LOGGER.error("Land registry is unreadable. Sales disabled; original data preserved.", exception);
         }
         return data;
     }
@@ -78,9 +99,16 @@ public class WalletData extends SavedData {
             entry.putString(KEY_HOUSE_ID, id.toString());
             entry.putLong(KEY_BALANCE, state.balance());
             entry.putInt(KEY_VAULT_LEVEL, state.vaultLevel());
+            entry.putInt("ProtectorLevel", state.protectorLevel());
             houses.add(entry);
         });
         tag.put(KEY_HOUSES, houses);
+        if (unreadableDeeds != null) tag.put("LandDeeds", unreadableDeeds.copy());
+        else {
+            ListTag deeds = new ListTag();
+            this.deeds.values().forEach(deed -> deeds.add(deed.save()));
+            tag.put("LandDeeds", deeds);
+        }
         return tag;
     }
 
@@ -120,6 +148,22 @@ public class WalletData extends SavedData {
         return Map.copyOf(balances);
     }
 
+    public java.util.Collection<LandDeed> deeds() { return java.util.List.copyOf(deeds.values()); }
+
+    public boolean canSell(LandDeed deed) {
+        return unreadableDeeds == null && deeds.size() < MAX_DEEDS && !deeds.containsKey(deed.id())
+                && deeds.values().stream().noneMatch(deed::overlaps);
+    }
+
+    /** Payment is a sink: no broker commission. Title and debit persist in the same save. */
+    public boolean buyLand(UUID payer, LandDeed deed) {
+        if (balance(payer) < deed.paid() || !canSell(deed)) return false;
+        deeds.put(deed.id(), deed);
+        setBalance(payer, balance(payer) - deed.paid());
+        setDirty();
+        return true;
+    }
+
     long houseBalance(ResourceLocation house) {
         HouseState state = houses.get(house);
         return state == null ? 0L : state.balance();
@@ -131,25 +175,45 @@ public class WalletData extends SavedData {
     }
 
     boolean setHouseBalance(ResourceLocation house, long balance) {
-        HouseState before = houses.getOrDefault(house, new HouseState(0L, 0));
+        HouseState before = houses.getOrDefault(house, new HouseState(0L, 0, 0));
         long safe = Math.min(Math.max(balance, 0L), Money.MAX);
         if (before.balance() == safe) return false;
-        putHouse(house, new HouseState(safe, before.vaultLevel()));
+        putHouse(house, new HouseState(safe, before.vaultLevel(), before.protectorLevel()));
         return true;
     }
 
     boolean setHouseVaultLevel(ResourceLocation house, int level) {
-        HouseState before = houses.getOrDefault(house, new HouseState(0L, 0));
+        HouseState before = houses.getOrDefault(house, new HouseState(0L, 0, 0));
         int safe = Math.max(0, Math.min(level, HouseTreasury.MAX_LEVEL));
         if (before.vaultLevel() == safe) return false;
         if (before.balance() > HouseTreasury.capacityForLevel(safe)) return false;
-        putHouse(house, new HouseState(before.balance(), safe));
+        putHouse(house, new HouseState(before.balance(), safe, before.protectorLevel()));
         return true;
     }
 
     private void putHouse(ResourceLocation house, HouseState state) {
-        if (state.balance() == 0L && state.vaultLevel() == 0) houses.remove(house);
+        if (state.balance() == 0L && state.vaultLevel() == 0 && state.protectorLevel() == 0) houses.remove(house);
         else houses.put(house, state);
         setDirty();
+    }
+
+    int houseProtectorLevel(ResourceLocation house) {
+        return houses.getOrDefault(house, new HouseState(0, 0, 0)).protectorLevel();
+    }
+
+    void setHouseProtectorLevel(ResourceLocation house, int level) {
+        HouseState before = houses.getOrDefault(house, new HouseState(0, 0, 0));
+        putHouse(house, new HouseState(before.balance(), before.vaultLevel(), Math.clamp(level, 0, 2)));
+    }
+
+    /** Balance and acquired level share the same SavedData and change together. */
+    boolean buyUpgrade(ResourceLocation house, boolean protector, int nextLevel, long cost) {
+        HouseState before = houses.getOrDefault(house, new HouseState(0, 0, 0));
+        int level = protector ? before.protectorLevel() : before.vaultLevel();
+        if (cost < 0 || cost > Money.MAX || nextLevel != level + 1
+                || nextLevel > (protector ? 2 : 3) || before.balance() < cost) return false;
+        putHouse(house, new HouseState(before.balance() - cost,
+                protector ? before.vaultLevel() : nextLevel, protector ? nextLevel : before.protectorLevel()));
+        return true;
     }
 }

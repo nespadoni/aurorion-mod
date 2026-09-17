@@ -1,13 +1,15 @@
 # Aurorion Profissões
 
-Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. Primeira fase das mecânicas de ofício,
-sem moeda ou cobrança. Instalar **no servidor e nos clientes**, junto com `aurorion-core`.
+Minecraft 1.21.1 / NeoForge 21.1.248 / Java 21. Mecânicas de ofício integradas ao menu
+presencial do `aurorion-economia`. Instalar **no servidor e nos clientes**, junto com os dois mods.
 Os JARs dos mods integrados continuam separados; nenhum é embutido neste módulo.
 
 ## Uso pelos jogadores
 
-- **J** abre os serviços do próprio personagem. A tecla pode ser alterada em Controles.
-- **Agachar + botão direito em outro jogador** abre os serviços dele.
+- **Shift+G**, olhando para outro jogador, abre o menu presencial configurável da Economia.
+- Quando o alvo é médico, ferreiro, cozinheiro ou arcanista, o menu oferece o atendimento dele.
+- O corretor está cadastrado como profissão; a seleção e venda retangular de terrenos entra na
+  próxima etapa da integração territorial.
 - O cliente segura o equipamento, alimento ou poção na **mão principal**.
 - O profissional segura os materiais na **mão secundária**. O painel explica o que falta.
 - O cliente escolhe; o profissional recebe uma janela para **aceitar ou recusar**.
@@ -31,6 +33,7 @@ Comandos **somente de staff**, nível de permissão 2:
 /profissao definir <jogador> ferreiro
 /profissao definir <jogador> cozinheiro
 /profissao definir <jogador> arcanista
+/profissao definir <jogador> corretor
 /profissao definir <jogador> nenhuma
 /profissao ver <jogador>
 /profissao mending_adm true

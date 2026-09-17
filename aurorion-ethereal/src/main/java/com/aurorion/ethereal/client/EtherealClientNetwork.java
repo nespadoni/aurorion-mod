@@ -1,11 +1,14 @@
 package com.aurorion.ethereal.client;
 
 import com.aurorion.ethereal.client.gui.HouseSelectionScreen;
+import com.aurorion.ethereal.client.gui.HouseMuralScreen;
+import com.aurorion.ethereal.client.gui.ProtectorTargetScreen;
 import com.aurorion.ethereal.client.gui.ProjectorConfigScreen;
 import com.aurorion.ethereal.network.HouseChoiceResultPayload;
 import com.aurorion.ethereal.network.OpenHouseSelectionPayload;
 import com.aurorion.ethereal.network.OpenProjectorConfigPayload;
 import com.aurorion.ethereal.network.RitePayload;
+import com.aurorion.ethereal.network.HouseMuralPayloads;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -55,5 +58,13 @@ public final class EtherealClientNetwork {
 
     public static void openProjectorConfig(OpenProjectorConfigPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> Minecraft.getInstance().setScreen(new ProjectorConfigScreen(payload)));
+    }
+
+    public static void openMural(HouseMuralPayloads.Open payload, IPayloadContext context) {
+        context.enqueueWork(() -> Minecraft.getInstance().setScreen(new HouseMuralScreen(payload)));
+    }
+
+    public static void openProtectorTargets(HouseMuralPayloads.OpenTargets payload, IPayloadContext context) {
+        context.enqueueWork(() -> Minecraft.getInstance().setScreen(new ProtectorTargetScreen(payload)));
     }
 }

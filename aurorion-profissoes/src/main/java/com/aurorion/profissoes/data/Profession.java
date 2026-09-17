@@ -4,7 +4,8 @@ import java.util.Locale;
 
 public enum Profession {
     NONE("nenhuma", "Sem profissão"), DOCTOR("medico", "Médico"),
-    SMITH("ferreiro", "Ferreiro"), CHEF("cozinheiro", "Cozinheiro"), ARCANIST("arcanista", "Arcanista");
+    SMITH("ferreiro", "Ferreiro"), CHEF("cozinheiro", "Cozinheiro"),
+    ARCANIST("arcanista", "Arcanista"), BROKER("corretor", "Corretor");
     private final String id, label;
     Profession(String id, String label) { this.id = id; this.label = label; }
     public String id() { return id; }

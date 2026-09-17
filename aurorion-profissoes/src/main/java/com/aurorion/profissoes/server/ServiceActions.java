@@ -28,7 +28,7 @@ public final class ServiceActions {
             case SMITH -> List.of("repair");
             case CHEF -> List.of("finish_food");
             case ARCANIST -> List.of("enchant", "potion_strength", "potion_duration");
-            case NONE -> List.of();
+            case NONE, BROKER -> List.of();
         };
     }
     public static String title(String action) {

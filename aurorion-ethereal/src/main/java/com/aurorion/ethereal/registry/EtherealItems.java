@@ -11,6 +11,9 @@ public final class EtherealItems {
     public static final DeferredItem<BlockItem> AEONIC_PROJECTOR =
             ITEMS.registerSimpleBlockItem(EtherealBlocks.AEONIC_PROJECTOR);
 
+    public static final DeferredItem<BlockItem> HOUSE_MURAL =
+            ITEMS.registerSimpleBlockItem(EtherealBlocks.HOUSE_MURAL);
+
     private EtherealItems() {
     }
 }

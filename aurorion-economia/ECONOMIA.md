@@ -93,8 +93,10 @@ O fluxo universal já começa no menu configurável **Shift+G**: o jogador mira 
 **Fazer cobrança**, informa o valor e o alvo recebe a decisão de pagar ou recusar. Não exige
 profissão. Alcance, mira, linha de visão, valor, prazo e token são sempre revalidados no servidor.
 
-A integração futura dos serviços do `aurorion-profissoes` será outro consumidor do mesmo menu. Ao
-aceitar uma proposta de serviço, a economia reserva o valor numa conta `ESCROW` ligada ao UUID do atendimento. O evento
+A abertura dos serviços do `aurorion-profissoes` já é outro consumidor do mesmo menu; os gatilhos
+antigos por J e agachar+interagir foram removidos. A etapa financeira do atendimento ainda precisa
+da custódia: ao aceitar uma proposta de serviço, a economia reservará o valor numa conta `ESCROW`
+ligada ao UUID do atendimento. O evento
 `ServiceEvent.Completed` libera o valor ao profissional. Cancelamento, expiração, logout ou falha
 de validação devolvem a reserva ao cliente.
 

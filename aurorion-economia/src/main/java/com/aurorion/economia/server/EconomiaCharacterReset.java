@@ -23,6 +23,7 @@ public final class EconomiaCharacterReset {
 
     @SubscribeEvent
     public static void onReset(CharacterResetEvent event) {
+        ChargeManager.forget(event.account());
         Wallet.set(event.server(), event.account(), 0L);
     }
 }

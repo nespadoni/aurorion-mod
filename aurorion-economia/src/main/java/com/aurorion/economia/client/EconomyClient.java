@@ -6,6 +6,9 @@ import com.aurorion.economia.client.gui.ChargeComposerScreen;
 import com.aurorion.economia.client.gui.EconomyStatusScreen;
 import com.aurorion.economia.client.gui.InteractionMenuScreen;
 import com.aurorion.economia.network.EconomyPayloads;
+import com.aurorion.economia.network.LandPayloads;
+import com.aurorion.economia.client.gui.LandComposerScreen;
+import com.aurorion.economia.client.gui.LandApprovalScreen;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -33,6 +36,13 @@ public final class EconomyClient {
             "key.categories.aurorion_economia");
 
     private EconomyClient() { }
+
+    public static void openLand(LandPayloads.Open payload) {
+        Minecraft.getInstance().setScreen(new LandComposerScreen(payload));
+    }
+    public static void approveLand(LandPayloads.Approval payload) {
+        Minecraft.getInstance().setScreen(new LandApprovalScreen(payload));
+    }
 
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {

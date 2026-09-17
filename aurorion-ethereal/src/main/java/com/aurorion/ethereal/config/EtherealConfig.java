@@ -15,6 +15,8 @@ public final class EtherealConfig {
     public static final ModConfigSpec.BooleanValue CEREMONY_REQUIRED;
     public static final ModConfigSpec.BooleanValue ALLOW_RECHOOSE;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_IN_CHAT;
+    public static final ModConfigSpec.IntValue PROTECTOR_I_COOLDOWN_DAYS;
+    public static final ModConfigSpec.IntValue PROTECTOR_II_COOLDOWN_DAYS;
 
     public static final ModConfigSpec SPEC;
 
@@ -46,6 +48,19 @@ public final class EtherealConfig {
                         "chat ja e barulhento — desligue se a vinculacao virar rotina em vez de evento."
                 )
                 .define("announceInChat", true);
+
+        BUILDER.pop();
+
+        BUILDER.comment("Upgrades coletivos das Casas, acessados pelo Mural da Casa.")
+                .push("houseUpgrades");
+
+        PROTECTOR_I_COOLDOWN_DAYS = BUILDER
+                .comment("Recarga do Protetor Arcano I, em dias reais.")
+                .defineInRange("protectorICooldownDays", 30, 1, 365);
+
+        PROTECTOR_II_COOLDOWN_DAYS = BUILDER
+                .comment("Recarga do Protetor Arcano II, em dias reais.")
+                .defineInRange("protectorIICooldownDays", 14, 1, 365);
 
         BUILDER.pop();
 

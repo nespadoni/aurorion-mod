@@ -3,6 +3,7 @@ package com.aurorion.economia.network;
 import com.aurorion.economia.AurorionEconomia;
 import com.aurorion.economia.client.EconomyClient;
 import com.aurorion.economia.server.ChargeManager;
+import com.aurorion.economia.server.LandSaleManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,7 +17,21 @@ public final class EconomyNetwork {
 
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar("2");
+        registrar.playToServer(LandPayloads.Submit.TYPE, LandPayloads.Submit.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player)
+                context.enqueueWork(() -> LandSaleManager.submit(player, payload));
+        });
+        registrar.playToServer(LandPayloads.Respond.TYPE, LandPayloads.Respond.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player)
+                context.enqueueWork(() -> LandSaleManager.respond(player, payload.token(), payload.accept()));
+        });
+        registrar.playToClient(LandPayloads.Open.TYPE, LandPayloads.Open.CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> EconomyClient.openLand(payload));
+        });
+        registrar.playToClient(LandPayloads.Approval.TYPE, LandPayloads.Approval.CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> EconomyClient.approveLand(payload));
+        });
         registrar.playToServer(EconomyPayloads.OpenRequest.TYPE, EconomyPayloads.OpenRequest.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer player)

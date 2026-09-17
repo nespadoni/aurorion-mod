@@ -16,7 +16,10 @@ public final class EtherealCreativeTab {
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.aurorion_ethereal"))
                     .icon(() -> EtherealItems.AEONIC_PROJECTOR.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> output.accept(EtherealItems.AEONIC_PROJECTOR.get()))
+                    .displayItems((parameters, output) -> {
+                        output.accept(EtherealItems.AEONIC_PROJECTOR.get());
+                        output.accept(EtherealItems.HOUSE_MURAL.get());
+                    })
                     .build());
 
     private EtherealCreativeTab() {

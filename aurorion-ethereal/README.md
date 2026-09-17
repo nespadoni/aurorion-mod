@@ -1,7 +1,7 @@
 # Aurorion Ethereal
 
-O mod central de Ethereal: **as cinco casas**, a **Cerimônia de Vinculação** e o **Projetor Aeônico**
-num jar só.
+O mod central de Ethereal: **as cinco casas**, a **Cerimônia de Vinculação**, o **Projetor Aeônico**
+e o **Mural das Casas** num jar só.
 
 Os três sistemas moram juntos porque são o mesmo dado visto de três ângulos: a casa de um jogador
 decide o que a cerimônia grava; os pontos de cada jogador com casa somam no total da casa; o projetor
@@ -203,6 +203,22 @@ um aluno mexe no painel da casa dele, e é por isso que este mod e o das casas s
 
 Quem dá e tira ponto é o `/pontos`, como no mod de referência — o projetor só exibe.
 
+## O Mural da Casa
+
+O bloco provisório `aurorion_ethereal:house_mural` é vinculado pela staff a uma Casa. O bloco não
+possui saldo nem upgrade próprio: todos os murais vinculados à mesma Casa mostram o mesmo cofre e o
+mesmo estado persistente. Membros abrem com botão direito; staff pode abrir para inspeção.
+
+A área proibida do mural começa selada. O nível do Protetor é liberado pela staff enquanto os custos
+de compra ainda não foram definidos. No nível I, uma Casa concede uma vida a cada 30 dias; no II, a
+cada 14 dias. Qualquer membro pode escolher um personagem vivo, inclusive alguém com zero vidas no
+Limbo. A confirmação exige dois cliques, o servidor reconfere tudo, todos os administradores online
+recebem um alerta e o uso fica registrado no log. Nenhuma pessoa perde uma vida no código.
+
+O cofre é lido opcionalmente do `aurorion-economia` e a concessão usa opcionalmente o
+`aurorion-vidas`; sem um desses módulos, a parte correspondente aparece indisponível sem impedir o
+Ethereal de iniciar.
+
 ### Sem GeckoLib
 
 No original, o corpo do projetor era um modelo animado desenhado a cada frame por GeckoLib. Aqui ele
@@ -223,6 +239,10 @@ travar a atualização do pack inteiro.
 /casa ver <jogador>               -> a casa de alguem, mesmo offline                 (nivel 2)
 /casa definir <jogador> <casa>    -> atribui, ignorando cerimonia e lotacao          (nivel 2)
 /casa limpar <jogador>            -> tira da casa                                    (nivel 2)
+
+# Olhando para o bloco provisório do mural, a até 8 blocos:
+/casa mural vincular <casa>       -> vincula o mural à Casa indicada                  (nivel 2)
+/casa mural protetor <casa> <0-2> -> define o nível liberado do Protetor Arcano       (nivel 2)
 
 /casa cerimonia <jogador> [casa]             -> revela a casa cadastrada (ou atribui a informada)           (nivel 2)
 /casa cerimonia cancelar <jogador>           -> corta o rito, ou tira ele da fila     (nivel 2)
@@ -250,6 +270,10 @@ e somente começa quando a staff executa o comando.
 ceremonyRequired = true   # false = o altar volta a abrir a grade e o jogador escolhe sozinho
 allowRechoose    = false  # true deixa o jogador refazer a vinculacao
 announceInChat   = true   # anuncia no chat quando alguem e acolhido por uma casa
+
+[houseUpgrades]
+protectorICooldownDays  = 30
+protectorIICooldownDays = 14
 ```
 
 `ceremonyRequired = false` é a saída para quando não houver staff para conduzir as cerimônias: o
