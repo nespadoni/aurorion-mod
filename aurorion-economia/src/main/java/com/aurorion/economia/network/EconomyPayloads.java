@@ -20,7 +20,7 @@ public final class EconomyPayloads {
     }
 
     public record OpenRequest(UUID target) implements CustomPacketPayload {
-        public static final Type<OpenRequest> TYPE = type("charge_open_request");
+        public static final Type<OpenRequest> TYPE = EconomyPayloads.type("charge_open_request");
         public static final StreamCodec<RegistryFriendlyByteBuf, OpenRequest> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> buf.writeUUID(value.target),
                 buf -> new OpenRequest(buf.readUUID()));
@@ -35,7 +35,7 @@ public final class EconomyPayloads {
             if (options.size() > 8) throw new IllegalArgumentException("Too many interaction options");
         }
 
-        public static final Type<OpenMenu> TYPE = type("interaction_open_menu");
+        public static final Type<OpenMenu> TYPE = EconomyPayloads.type("interaction_open_menu");
         public static final StreamCodec<RegistryFriendlyByteBuf, OpenMenu> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> {
                     buf.writeUUID(value.target);
@@ -62,7 +62,7 @@ public final class EconomyPayloads {
     }
 
     public record MenuAction(UUID target, String action) implements CustomPacketPayload {
-        public static final Type<MenuAction> TYPE = type("interaction_menu_action");
+        public static final Type<MenuAction> TYPE = EconomyPayloads.type("interaction_menu_action");
         public static final StreamCodec<RegistryFriendlyByteBuf, MenuAction> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> { buf.writeUUID(value.target); buf.writeUtf(value.action, 48); },
                 buf -> new MenuAction(buf.readUUID(), buf.readUtf(48)));
@@ -70,7 +70,7 @@ public final class EconomyPayloads {
     }
 
     public record OpenComposer(UUID target, String targetName) implements CustomPacketPayload {
-        public static final Type<OpenComposer> TYPE = type("charge_open_composer");
+        public static final Type<OpenComposer> TYPE = EconomyPayloads.type("charge_open_composer");
         public static final StreamCodec<RegistryFriendlyByteBuf, OpenComposer> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> { buf.writeUUID(value.target); buf.writeUtf(value.targetName, 80); },
                 buf -> new OpenComposer(buf.readUUID(), buf.readUtf(80)));
@@ -78,7 +78,7 @@ public final class EconomyPayloads {
     }
 
     public record Submit(UUID target, String amount) implements CustomPacketPayload {
-        public static final Type<Submit> TYPE = type("charge_submit");
+        public static final Type<Submit> TYPE = EconomyPayloads.type("charge_submit");
         public static final StreamCodec<RegistryFriendlyByteBuf, Submit> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> { buf.writeUUID(value.target); buf.writeUtf(value.amount, 32); },
                 buf -> new Submit(buf.readUUID(), buf.readUtf(32)));
@@ -87,7 +87,7 @@ public final class EconomyPayloads {
 
     public record OpenApproval(UUID token, String chargerName, long amount, long balance)
             implements CustomPacketPayload {
-        public static final Type<OpenApproval> TYPE = type("charge_open_approval");
+        public static final Type<OpenApproval> TYPE = EconomyPayloads.type("charge_open_approval");
         public static final StreamCodec<RegistryFriendlyByteBuf, OpenApproval> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> {
                     buf.writeUUID(value.token);
@@ -100,7 +100,7 @@ public final class EconomyPayloads {
     }
 
     public record Respond(UUID token, boolean accepted) implements CustomPacketPayload {
-        public static final Type<Respond> TYPE = type("charge_respond");
+        public static final Type<Respond> TYPE = EconomyPayloads.type("charge_respond");
         public static final StreamCodec<RegistryFriendlyByteBuf, Respond> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> { buf.writeUUID(value.token); buf.writeBoolean(value.accepted); },
                 buf -> new Respond(buf.readUUID(), buf.readBoolean()));
@@ -108,7 +108,7 @@ public final class EconomyPayloads {
     }
 
     public record Status(String title, String message, boolean success) implements CustomPacketPayload {
-        public static final Type<Status> TYPE = type("charge_status");
+        public static final Type<Status> TYPE = EconomyPayloads.type("charge_status");
         public static final StreamCodec<RegistryFriendlyByteBuf, Status> STREAM_CODEC = StreamCodec.of(
                 (buf, value) -> {
                     buf.writeUtf(value.title, 96);

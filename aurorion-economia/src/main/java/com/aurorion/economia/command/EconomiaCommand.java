@@ -93,7 +93,8 @@ public final class EconomiaCommand {
         return (int)Math.min(balance, Integer.MAX_VALUE);
     }
 
-    private static int houseMoney(CommandContext<CommandSourceStack> context, String action) {
+    private static int houseMoney(CommandContext<CommandSourceStack> context, String action)
+            throws CommandSyntaxException {
         var server = context.getSource().getServer();
         var house = ResourceLocationArgument.getId(context, "casa");
         long amount = MoneyArgument.get(context, "quantia");
