@@ -10,7 +10,11 @@ import java.util.UUID;
 /** Destino reutilizavel de consulta: nenhuma lista ou decisao nasce por movimento do jogador. */
 public final class ResolvedRules {
     private final boolean[] allowed = new boolean[AreaRule.ALL.length];
-    private final AreaRegion[] owners = new AreaRegion[AreaRule.ALL.length + 3];
+    /**
+     * Cinco regras + ambiente + vida + dano + casa dona. Um vetor so para o {@code reset} continuar
+     * sendo um {@code Arrays.fill} unico por tick, em vez de um campo por assunto.
+     */
+    private final AreaRegion[] owners = new AreaRegion[AreaRule.ALL.length + 4];
     /**
      * Padrao da dimensao ja traduzido. {@link AreaRules} e imutavel e {@code AreaData} devolve sempre
      * a mesma instancia ate a staff mudar o fundo, entao o {@code reset} de cada tick vira um
@@ -24,6 +28,7 @@ public final class ResolvedRules {
     private AreaRegion top;
     private ResourceLocation ambience;
     private double mobHealth, mobDamage;
+    @Nullable private AreaRegion houseArea;
 
     public void reset(AreaRules defaults, @Nullable UUID actor) {
         if (defaults != cachedDefaults) {
@@ -36,6 +41,7 @@ public final class ResolvedRules {
         this.actor = actor;
         Arrays.fill(owners, null);
         top = null;
+        houseArea = null;
         System.arraycopy(base, 0, allowed, 0, base.length);
         ambience = baseAmbience;
         mobHealth = baseHealth;
@@ -62,11 +68,29 @@ public final class ResolvedRules {
         if (rules.mobDamage() >= 0 && region.beats(owners[offset + 2])) {
             owners[offset + 2] = region; mobDamage = rules.mobDamage();
         }
+        // A dona da casa resolve como o ambiente: entre areas de casa sobrepostas, vale a de maior
+        // prioridade. Assim uma sala interna pode trocar a dona de um trecho da casa maior.
+        if (region.house() != null && region.beats(owners[offset + 3])) {
+            owners[offset + 3] = region; houseArea = region;
+        }
     }
     public boolean allows(AreaRule rule) { return allowed[rule.ordinal()]; }
     @Nullable public AreaRegion owner(AreaRule rule) { return owners[rule.ordinal()]; }
     @Nullable public AreaRegion top() { return top; }
     public ResourceLocation ambience() { return ambience; }
+    /**
+     * A area de casa que vale nesta posicao, ou {@code null} se nenhuma casa e dona daqui.
+     *
+     * <p>Sai da mesma resolucao que o tick do jogador ja fez: a barreira de casa nao percorre a
+     * arvore nem testa poligono de novo (SDD §2, nada novo por jogador por tick).
+     */
+    @Nullable public AreaRegion houseArea() { return houseArea; }
+    /**
+     * A area que definiu o ambiente desta posicao, ou {@code null} quando ele veio do padrao da
+     * dimensao. Serve para o aviso a staff dizer <em>onde</em> a pessoa entrou com o nome que a
+     * propria staff deu ao lugar, em vez do id do ambiente.
+     */
+    @Nullable public AreaRegion ambienceArea() { return owners[AreaRule.ALL.length]; }
     public double mobHealth() { return mobHealth; }
     public double mobDamage() { return mobDamage; }
 }

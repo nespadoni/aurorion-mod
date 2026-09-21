@@ -14,7 +14,9 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class AreaNetwork {
     private AreaNetwork() {}
     @SubscribeEvent public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1").optional();
+        // Versao 2: o AreaStatePayload ganhou o apagao. O canal e opcional, entao um cliente com o
+        // jar antigo nao negocia e simplesmente fica sem neblina/sombra — nunca uma desconexao.
+        var registrar = event.registrar("2").optional();
         registrar.playToClient(AreaStatePayload.TYPE, AreaStatePayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (FMLEnvironment.dist == Dist.CLIENT)

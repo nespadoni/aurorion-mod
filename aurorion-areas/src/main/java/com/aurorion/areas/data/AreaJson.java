@@ -33,6 +33,7 @@ public final class AreaJson {
         json.addProperty("id", region.id()); json.addProperty("name", region.name());
         json.addProperty("dimension", region.dimension().toString());
         json.addProperty("priority", region.priority()); json.addProperty("enabled", region.enabled());
+        if (region.house() != null) json.addProperty("house", region.house().toString());
         json.add("parts", writeShapes(region.volume().parts()));
         json.add("holes", writeShapes(region.volume().holes()));
         json.add("rules", writeRules(region.rules()));
@@ -51,11 +52,14 @@ public final class AreaJson {
             for (JsonElement key : entry.getValue().getAsJsonArray()) keys.add(key.getAsString());
             exceptions.put(UUID.fromString(entry.getKey()), keys);
         }
+        // Ausente e o caso normal e o caso antigo: area sem dona. Um save anterior a este campo
+        // carrega sem conversao nenhuma.
         return new AreaRegion(json.get("id").getAsString(), json.get("name").getAsString(),
                 ResourceLocation.parse(json.get("dimension").getAsString()), json.get("priority").getAsInt(),
                 json.get("enabled").getAsBoolean(),
                 new AreaVolume(readShapes(json.getAsJsonArray("parts")), readShapes(json.getAsJsonArray("holes"))),
-                readRules(json.getAsJsonObject("rules")), exceptions);
+                readRules(json.getAsJsonObject("rules")), exceptions,
+                json.has("house") ? ResourceLocation.parse(json.get("house").getAsString()) : null);
     }
     private static JsonArray writeShapes(List<AreaShape> shapes) {
         JsonArray array = new JsonArray();

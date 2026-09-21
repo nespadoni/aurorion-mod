@@ -31,9 +31,31 @@ risco de o servidor não subir é péssimo negócio.
 | [`config/DerivedConfig`](src/main/java/com/aurorion/core/config/DerivedConfig.java) | 2 | Valor caro derivado de config, recalculado sozinho |
 | [`text/TimeFormat`](src/main/java/com/aurorion/core/text/TimeFormat.java) | 1 | Duração e data como `Component` traduzível |
 
-`TimeFormat` é a única exceção à regra das duas cópias: é puro, sem dependências, e formatar duração
-é o tipo de coisa que o próximo mod vai querer. Se em seis meses ainda tiver um usuário só, ele volta
-para o `aurorion-portais`.
+`TimeFormat` é a única **utilidade** que entrou sem duas cópias: é pura, sem dependências, e formatar
+duração é o tipo de coisa que o próximo mod vai querer. Se em seis meses ainda tiver um usuário só,
+ela volta para o `aurorion-portais`. (Os contratos entre mods são outra categoria — ver a seção
+abaixo; eles não são utilidade e a regra das cópias não se aplica a eles.)
+
+
+## A outra coisa que mora aqui: contratos entre mods
+
+`character/` e `house/` não deduplicam nada — eles são **perguntas que um mod faz e outro responde**,
+sem que os dois se conheçam:
+
+| Contrato | Quem responde | Quem pergunta |
+|---|---|---|
+| [`character/CharacterGate`](src/main/java/com/aurorion/core/character/CharacterGate.java) | `aurorion-personagem` | `aurorion-limbo` |
+| [`house/HouseGate`](src/main/java/com/aurorion/core/house/HouseGate.java) | `aurorion-ethereal` | `aurorion-areas` |
+
+A alternativa seria um mod importar o outro — o que torna um obrigatório para o outro, contra a
+[SDD §3](../SDD.md) — ou alcançá-lo por reflexão, como se faz com mod de terceiro. Entre dois mods
+nossos, um contrato tipado e conferido pelo compilador ganha das duas opções.
+
+O teste de entrada continua sendo o mesmo: **o que acontece se quem usar esquecer da parte dele?**
+Se ninguém chamar `HouseGate.provide`, `installed()` responde `false` e quem pergunta trata isso como
+"não há sistema de casas" — e avisa no log. O que **não** pode acontecer é o silêncio ambíguo: se o
+gate respondesse só `null`, "não há casas" e "esta pessoa não tem casa" seriam a mesma resposta, e o
+`aurorion-areas` muraria o mapa inteiro por um jar faltando.
 
 ## O princípio que guia o resto
 
@@ -73,10 +95,12 @@ segura de qualquer lugar — a escrita continua sendo só no reload, na thread d
 ## Estrutura
 
 ```
+character/ CharacterGate, CharacterData, ... — contrato do criador de personagens
 config/    DerivedConfig
 data/      SavedDataAccess, PlayerMapNbt
 datapack/  DatapackRegistry
 event/     CoreServerEvents   — o único listener, e existe para os outros não precisarem
+house/     HouseGate          — contrato do sistema de casas
 level/     SafeSpot
 text/      TimeFormat
 ```

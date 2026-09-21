@@ -16,7 +16,9 @@ import net.neoforged.neoforge.client.event.*;
 public final class AreaClient {
     private static ResourceLocation dimension;
     private static float targetFog, lastFogDistance, fogWeight, vignette, pulseStrength;
-    private static int color, pulseRemaining;
+    /** Apagao: o que esta na tela agora e o alvo que o servidor mandou para este pulso. */
+    private static float blackout, blackoutStrength;
+    private static int color, pulseRemaining, blackoutRemaining;
     private static boolean flightBlocked;
     private AreaClient() {}
     public static void accept(AreaStatePayload payload) {
@@ -25,7 +27,9 @@ public final class AreaClient {
         if (targetFog > 0) { lastFogDistance = targetFog; color = payload.fogColor(); }
         flightBlocked = payload.flightBlocked();
         pulseStrength = Float.isFinite(payload.vignette()) ? Math.clamp(payload.vignette(), 0, .9F) : 0;
+        blackoutStrength = Float.isFinite(payload.blackout()) ? Math.clamp(payload.blackout(), 0, 1) : 0;
         pulseRemaining = Math.clamp(payload.pulseTicks(), 0, 600);
+        blackoutRemaining = Math.clamp(payload.blackoutTicks(), 0, 600);
     }
     private static boolean current() {
         var level = Minecraft.getInstance().level;
@@ -34,10 +38,15 @@ public final class AreaClient {
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
         if (mc.isPaused()) return;
-        if (!current()) { fogWeight = 0; vignette = 0; return; }
+        if (!current()) { fogWeight = 0; vignette = 0; blackout = 0; return; }
         fogWeight += ((targetFog > 0 ? 1 : 0) - fogWeight) * .08F;
         if (pulseRemaining > 0) pulseRemaining--;
+        if (blackoutRemaining > 0) blackoutRemaining--;
         vignette += ((pulseRemaining > 0 ? pulseStrength : 0) - vignette) * .15F;
+        // O apagao fecha mais devagar do que abre: cair na escuridao em dois segundos assusta,
+        // voltar dela no mesmo tempo parece um piscar de olhos e desmancha o susto.
+        float target = blackoutRemaining > 0 ? blackoutStrength : 0;
+        blackout += (target - blackout) * (target > blackout ? .10F : .04F);
         // Avoid re-triggering local elytra animation while the server vetoes it.
         if (flightBlocked && mc.player != null) {
             if (mc.player.isFallFlying()) mc.player.stopFallFlying();
@@ -46,6 +55,7 @@ public final class AreaClient {
     }
     @SubscribeEvent public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
         dimension = null; targetFog = 0; fogWeight = 0; vignette = 0; pulseRemaining = 0; flightBlocked = false;
+        blackout = 0; blackoutStrength = 0; blackoutRemaining = 0;
     }
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void fog(ViewportEvent.RenderFog event) {
@@ -67,10 +77,24 @@ public final class AreaClient {
         event.setGreen(event.getGreen() + (((color >> 8 & 255) / 255F) - event.getGreen()) * blend);
         event.setBlue(event.getBlue() + (((color & 255) / 255F) - event.getBlue()) * blend);
     }
+    /**
+     * Sombra periferica e apagao, nesta ordem: o apagao vem por cima porque ele engole a sombra
+     * quando chega perto de 1, e nao o contrario.
+     *
+     * <p>{@code hideGui} nao esconde nada disto de proposito — quem aperta F1 dentro da floresta nao
+     * deveria ganhar visao noturna de brinde. O que ele faz e nao desenhar quando nao ha nada a
+     * desenhar, que e o caso em 99% do tempo de jogo.
+     */
     @SubscribeEvent public static void overlay(RenderGuiEvent.Post event) {
-        if (!current() || vignette < .005F || Minecraft.getInstance().options.hideGui) return;
+        // As duas decisoes vem antes de pedir o GuiGraphics: no quadro comum nao ha nada a desenhar,
+        // e este metodo roda a cada quadro de quem ja recebeu qualquer estado de area.
+        boolean showBlackout = blackout >= .005F;
+        boolean showVignette = vignette >= .005F && !Minecraft.getInstance().options.hideGui;
+        if (!current() || !showBlackout && !showVignette) return;
         var gui = event.getGuiGraphics();
         int width = gui.guiWidth(), height = gui.guiHeight();
+        if (showBlackout) gui.fill(0, 0, width, height, (int) (blackout * 255) << 24);
+        if (!showVignette) return;
         // Fixed 12 rectangles: soft peripheral shadow, no image allocation or per-frame particles.
         for (int i = 0; i < 3; i++) {
             int marginX = width * i / 24, marginY = height * i / 24;

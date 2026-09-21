@@ -3,14 +3,31 @@
     "events": [
       "minecraft:block.grass.step",
       "minecraft:block.gravel.step",
+      "minecraft:block.wood.step",
+      "minecraft:block.bamboo.break",
       "minecraft:entity.vex.ambient",
       "minecraft:entity.allay.ambient_without_item",
       "minecraft:entity.warden.listening",
-      "minecraft:ambient.soul_sand_valley.additions"
+      "minecraft:entity.warden.nearby_close",
+      "minecraft:entity.warden.heartbeat",
+      "minecraft:entity.ghast.ambient",
+      "minecraft:entity.enderman.stare",
+      "minecraft:entity.phantom.ambient",
+      "minecraft:entity.skeleton.step",
+      "minecraft:entity.wolf.growl",
+      "minecraft:entity.fox.screech",
+      "minecraft:ambient.cave",
+      "minecraft:ambient.soul_sand_valley.additions",
+      "minecraft:ambient.basalt_deltas.additions",
+      "minecraft:ambient.nether_wastes.additions",
+      "minecraft:block.sculk_sensor.clicking",
+      "minecraft:block.sculk_shrieker.shriek",
+      "minecraft:block.wet_grass.break",
+      "minecraft:entity.player.breath"
     ],
     "interval": {
-      "min_seconds": 7,
-      "max_seconds": 16
+      "min_seconds": 5,
+      "max_seconds": 13
     },
     "volume": 0.65,
     "pitch": 0.7,
@@ -20,6 +37,8 @@
     "darkness_seconds": 5,
     "blindness_seconds": 2,
     "vignette": 0.65,
+    "blackout": 0.92,
+    "blackout_seconds": 5,
     "interval": {
       "min_seconds": 20,
       "max_seconds": 38
@@ -36,5 +55,80 @@
   "fog": {
     "distance": 26,
     "color": "#102019"
+  },
+  "dread": {
+    "ramp_seconds": 300,
+    "damage_scale": 5.0,
+    "interval_scale": 0.35,
+    "darkness_bonus_seconds": 9,
+    "blindness_bonus_seconds": 5,
+    "vignette_bonus": 0.3,
+    "fog_scale": 0.3,
+    "lethal_after_seconds": 420
+  },
+  "spawns": {
+    "entities": [
+      { "id": "minecraft:phantom",                       "weight": 3, "flying": true },
+      { "id": "born_in_chaos_v1:corpse_fly",             "weight": 2, "flying": true },
+      { "id": "born_in_chaos_v1:restless_spirit",        "weight": 3 },
+      { "id": "alexscaves:gloomoth",                     "weight": 1, "flying": true },
+
+      { "id": "born_in_chaos_v1:decaying_zombie",        "weight": 3, "from": 0.35 },
+      { "id": "born_in_chaos_v1:dread_hound",            "weight": 3, "from": 0.35 },
+      { "id": "born_in_chaos_v1:decrepit_skeleton",      "weight": 2, "from": 0.35 },
+      { "id": "mowziesmobs:foliaath",                    "weight": 2, "from": 0.35 },
+      { "id": "alexscaves:watcher",                      "weight": 2, "from": 0.35 },
+
+      { "id": "born_in_chaos_v1:nightmare_stalker",      "weight": 3, "from": 0.7 },
+      { "id": "born_in_chaos_v1:seared_spirit",          "weight": 2, "from": 0.7 },
+      { "id": "born_in_chaos_v1:skeleton_thrasher",      "weight": 2, "from": 0.7 },
+      { "id": "born_in_chaos_v1:mother_spider",          "weight": 1, "from": 0.7 },
+      { "id": "alexscaves:forsaken",                     "weight": 1, "from": 0.85 }
+    ],
+    "interval": {
+      "min_seconds": 28,
+      "max_seconds": 55
+    },
+    "min_distance": 9,
+    "max_distance": 22,
+    "max_nearby": 7,
+    "count": 1,
+    "peak_count": 3,
+    "start_after_seconds": 45,
+    "hunt_from": 0.5
+  },
+  "alert": {
+    "enter": true,
+    "exit": true,
+    "lethal": true,
+    "cooldown_seconds": 120
+  },
+  "whispers": {
+    "lines": [
+      "Eu deveria sair daqui.",
+      "Por que estou com essa sensação de estar sendo perseguido?",
+      "Isso foi um passo. Não foi o meu.",
+      "As árvores não estavam assim quando eu entrei.",
+      "Alguém falou meu nome?",
+      "Não olha para trás.",
+      "Já passei por aqui. Tenho certeza que já passei por aqui.",
+      "Está mais escuro do que deveria.",
+      "Meu peito está apertado.",
+      "Volta. Volta agora.",
+      "Tem alguma coisa respirando perto do meu ouvido.",
+      "Eu não consigo lembrar de que lado eu vim.",
+      "Se eu correr, ela corre também.",
+      "Só mais um pouco e eu saio. Só mais um pouco.",
+      "Por favor. Por favor, que seja só o vento.",
+      "Ela sabe que eu estou aqui.",
+      "Meus pés estão pesados.",
+      "Não era para eu ter entrado."
+    ],
+    "interval": {
+      "min_seconds": 22,
+      "max_seconds": 48
+    },
+    "color": "#8A7F9B",
+    "peak_color": "#9E2B2B"
   }
 }

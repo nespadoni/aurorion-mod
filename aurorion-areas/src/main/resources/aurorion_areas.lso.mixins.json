@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.aurorion.areas.mixin.lso",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "CanteenFillMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

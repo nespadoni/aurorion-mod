@@ -113,7 +113,7 @@ public final class AreaData extends SavedData {
             Map<UUID, Set<String>> exceptions = new HashMap<>(region.exceptions());
             exceptions.remove(actor);
             regions.put(region.id(), new AreaRegion(region.id(), region.name(), region.dimension(), region.priority(),
-                    region.enabled(), region.volume(), region.rules(), exceptions));
+                    region.enabled(), region.volume(), region.rules(), exceptions, region.house()));
             changed = true;
         }
         if (changed) changed();
@@ -137,6 +137,21 @@ public final class AreaData extends SavedData {
         AreaIndex index = indexes.get(dimension);
         AreaRegion owner = index == null ? null : index.owner(x, y, z, key, actor);
         return (owner == null ? defaults(dimension).flag(key) : owner.decision(key, actor)) != Decision.DENY;
+    }
+    /**
+     * O inverso de {@link #allows}: verdadeiro <b>somente</b> onde alguma area concede a regra
+     * explicitamente.
+     *
+     * <p>As duas leituras existem porque as duas semanticas existem. {@code allows} serve a
+     * <em>proibicao</em> — voo e permitido no mundo inteiro ate alguem negar. {@code granted} serve a
+     * <em>concessao</em> — agua pura nao existe em lugar nenhum ate alguem conceder. Usar
+     * {@code allows} para uma concessao daria o poder ao mapa inteiro por omissao, que e o pior
+     * default possivel.
+     */
+    public boolean granted(ResourceLocation dimension, double x, double y, double z, @Nullable UUID actor, String key) {
+        AreaIndex index = indexes.get(dimension);
+        AreaRegion owner = index == null ? null : index.owner(x, y, z, key, actor);
+        return (owner == null ? defaults(dimension).flag(key) : owner.decision(key, actor)) == Decision.ALLOW;
     }
     public AreaRules defaults(ResourceLocation dimension) { return defaults.getOrDefault(dimension, AreaRules.INHERIT); }
     public AreaRegion require(String id) {

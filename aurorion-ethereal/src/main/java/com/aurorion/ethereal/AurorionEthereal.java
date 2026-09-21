@@ -1,17 +1,27 @@
 package com.aurorion.ethereal;
 
 import com.aurorion.core.config.AurorionConfigs;
+import com.aurorion.core.house.HouseGate;
 import com.aurorion.ethereal.config.EtherealConfig;
+import com.aurorion.ethereal.house.House;
+import com.aurorion.ethereal.house.HouseCatalog;
+import com.aurorion.ethereal.house.HouseManager;
 import com.aurorion.ethereal.registry.EtherealBlockEntities;
 import com.aurorion.ethereal.registry.EtherealBlocks;
 import com.aurorion.ethereal.registry.EtherealCreativeTab;
 import com.aurorion.ethereal.registry.EtherealItems;
 import com.mojang.logging.LogUtils;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import org.slf4j.Logger;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * O mod central de Ethereal: casas, Cerimonia de Vinculacao e placares num jar so.
@@ -44,5 +54,31 @@ public final class AurorionEthereal {
         EtherealCreativeTab.TABS.register(modBus);
 
         AurorionConfigs.register(container, ModConfig.Type.SERVER, EtherealConfig.SPEC);
+
+        // Publica "em que casa esta este jogador" para o resto do ecossistema (SDD 3.1). Continua
+        // valendo que este mod nao conhece nenhum outro: quem pergunta fala com o core, nao conosco,
+        // e um pack sem o mod que pergunta nao muda nada aqui.
+        HouseGate.provide(new HouseGate.Houses() {
+            @Override
+            public ResourceLocation of(MinecraftServer server, UUID player) {
+                return HouseManager.houseIdOf(server, player);
+            }
+
+            @Override
+            public List<ResourceLocation> ids() {
+                return HouseCatalog.ids();
+            }
+
+            @Override
+            public boolean exists(ResourceLocation house) {
+                return HouseCatalog.get(house) != null;
+            }
+
+            @Override
+            public Component nameOf(ResourceLocation house) {
+                House found = HouseCatalog.get(house);
+                return found == null ? null : found.coloredName();
+            }
+        });
     }
 }

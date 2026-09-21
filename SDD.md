@@ -43,7 +43,16 @@ A troca foi feita de olhos abertos, contra uma duplicação que já tinha custo 
 existia escrito **duas vezes**, em `aurorion-portais` e `aurorion-vidas`. Duas cópias de uma
 checagem de segurança são duas chances de consertar só uma quando o bug aparecer.
 
-O critério para algo entrar no core é estreito de propósito: **já estava duplicado**. Utilidade que
+Há uma segunda categoria no core que não é utilidade nenhuma: **contratos entre mods**.
+`CharacterGate` e `HouseGate` não deduplicam nada — são perguntas que um mod faz e outro responde,
+sem que os dois se conheçam (`aurorion-ethereal` publica em que casa está um jogador; o
+`aurorion-areas` pergunta, para barrar a entrada nas áreas de casa). A alternativa seria um mod
+importar o outro, tornando um obrigatório para o outro contra a §3, ou alcançá-lo por reflexão como
+se faz com mod de terceiro. O mesmo teste de desenho se aplica: se ninguém registrar a resposta,
+`installed()` responde `false` e quem pergunta trata isso como "não há sistema" — nunca como "esta
+pessoa não tem casa", que muraria o mapa por um jar faltando.
+
+O critério para uma **utilidade** entrar no core é estreito de propósito: **já estava duplicado**. Utilidade que
 só um mod usa fica no mod, senão a biblioteca vira depósito de código especulativo — que é o modo
 clássico de uma camada compartilhada piorar a manutenção em vez de melhorar.
 
@@ -207,6 +216,28 @@ lugar do jogo — chat, morte, conquista, join/leave, nametag, tab list).
   qualquer coisa que um jogador colocou de propósito. Igual à meta da seção 2 de nunca interferir
   fora do escopo próprio: um "cleanup" que remove mais do que isso é fácil de errar e caro de
   debugar num modpack pesado com dezenas de outros mods manipulando entidades.
+
+### 5.5 Privacidade dos avisos: três estados, não um booleano
+
+- **Entrada/saída, conquista e morte querem coisas diferentes, e um booleano não conseguia dizer
+  isso.** As duas primeiras somem para todo mundo (são ruído e meta-gaming); a morte precisa
+  continuar chegando a quem modera, porque num servidor com sistema de vidas (§9) o registro de quem
+  morreu é informação de moderação. Daí `EVERYONE`/`ADMINS`/`NOBODY` no lugar de "esconder sim ou
+  não" — que na prática tinha dois significados diferentes e escolhia um deles por acidente.
+- **Quatro `@Redirect`, um único lugar que decide quem recebe.** O vanilla não expõe evento
+  cancelável para nenhuma dessas mensagens, então o redirect é obrigatório; o que é escolha é os
+  quatro chamarem o mesmo `PrivacyMessages.broadcast` em vez de cada mixin repetir a regra.
+- **A tela de morte de quem morreu não passa por aqui.** Ela vai pelo
+  `ClientboundPlayerCombatKillPacket`, direto ao jogador, antes do broadcast. Esconder a morte dos
+  outros nunca pode virar esconder do próprio — a pessoa ficaria sem saber o que a matou.
+- **Os alvos dos quatro redirects são conferidos por teste, contra o bytecode do NeoForge.** Com
+  `defaultRequire: 1`, um alvo perdido não degrada: derruba o servidor no boot. O mais frágil é o da
+  conquista, que mora num método sintético de lambda (`lambda$award$2`) cujo número muda se alguém
+  acrescentar uma lambda antes dela. Um teste de ASM é barato; descobrir isso no boot de um servidor
+  de 80 pessoas, não.
+- **`/ajuda` registra no log mesmo quando ninguém recebe.** Um pedido de socorro que não encontra
+  operador online não pode sumir sem rastro — sem o log, a única evidência de que o comando funcionou
+  era alguém ter visto a mensagem na hora, e é exatamente por isso que ele "parecia não funcionar".
 
 ## 6. Conteúdo x comportamento — `aurorion-aeonita` e `aurorion-ethereal`
 
@@ -1194,6 +1225,130 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
   inclusive a limpeza de excecoes no reset transacional. Nenhuma area parcialmente lida entra em
   vigor. A copia defensiva existe apenas no caminho de erro, sem custo adicional por tick.
 
+### 15.1 A barreira de casa — modo de jogo, não permissão
+
+- **Quem passa é decidido pelo modo de jogo, e não pelo nível de OP.** Criativo atravessa qualquer
+  casa; sobrevivência não atravessa nenhuma — com ou sem OP nos dois casos. É a única regra do
+  módulo que ignora o `creativeStaffBypass`, e a diferença é deliberada: as outras regras são
+  ferramenta de moderação (voo, magia, PvP), a barreira é **ficção do mundo**. Um administrador
+  jogando participa da ficção; um administrador construindo, não. O modo de jogo já é exatamente
+  essa distinção, e não precisa de um segundo interruptor para expressá-la.
+- **A dona da casa sai da resolução que o tick já faz.** Ela ocupa mais um lugar no vetor de donos
+  do `ResolvedRules`, ao lado de ambiente, vida e dano — então uma área de casa não custa travessia
+  de árvore nem teste de polígono a mais por jogador por tick (§2). A casa *do jogador* só é
+  consultada quando ele está de fato dentro de uma área de casa, e a consulta é um `HashMap#get`.
+- **O empurrão é um teleporte por travessia, não por tick.** O destino é a posição de um tick
+  atrás, e o `absMoveTo` do vanilla já move o jogador do lado do servidor — então no tick seguinte
+  ele está fora e não há segundo pacote. Com 80 jogadores encostando numa parede, o custo é
+  proporcional a *cruzar o limite*, não a insistir nele.
+- **A checagem é por posição, nunca por porta.** Elytra, pérola, `/tp` e queda batem na mesma
+  parede sem uma linha de código por caso.
+- **Nenhum congelamento.** A regra é "não terminar um tick dentro", e não "não se mover": a pessoa
+  perde menos de um passo e continua andando para qualquer outro lado. Um jogador imobilizado por
+  uma regra de território seria indistinguível de um servidor travado, que é o mesmo raciocínio da
+  §4.5 sobre recusar em silêncio.
+- **Sem sistema de casas instalado, a barreira não barra ninguém** e diz por quê no log. O contrário
+  — "ninguém tem casa, logo ninguém entra" — muraria o mapa inteiro por um jar faltando. Por isso o
+  `HouseGate` do core distingue *não há sistema* de *esta pessoa não tem casa*; um `null` só não
+  bastaria (§3.1: o desenho tem que falhar de forma legível).
+- **O passe de visitante não é cadastro novo.** Reaproveita as exceções por UUID que já existiam,
+  com a chave `casa` — o que dá de graça o autocomplete, o limite por área e a limpeza no
+  `CharacterResetEvent`.
+
+### 15.3 Concessão e proibição são leituras opostas do mesmo cadastro
+
+- **`allows` e `granted` percorrem o mesmo índice e discordam no silêncio.** As cinco regras nativas
+  são *proibições*: valem no mapa inteiro até alguém negar, então "ninguém opinou" é sim. Água tratada
+  é uma *concessão*: ela não existe em lugar nenhum até alguém permitir, e "ninguém opinou" é não.
+  Usar a leitura errada não quebra nada visível — daria água pura ao mapa inteiro por omissão, que é o
+  pior default possível e só apareceria em jogo. É a única coisa que um teste conseguia pegar, e pega.
+- **Duas concessões, porque "onde" e "de que torneira" são perguntas diferentes.** `agua_pura` trata
+  toda a água de dentro; `agua_pura_pia` trata só o que sai de um bloco da tag. Sem a segunda, marcar
+  a torneira do refeitório como potável sem tornar o lago do pátio potável junto exigiria desenhar uma
+  área minúscula em cima de cada pia — e a Academia tem dezenas delas. A tag responde "o que é
+  encanamento"; a área responde "onde o encanamento é confiável". Nenhuma das duas responde a outra.
+- **Quem purifica é o lugar, não o item.** O LSO já resolve isso pelo lado errado: o encantamento
+  `Purity` purifica qualquer água, inclusive a do rio, e com isso apaga a diferença entre lugar seguro
+  e lugar perigoso — a mecânica que este módulo existe para sustentar. Uma regra de área mantém a
+  decisão onde ela é conteúdo editável pela staff.
+- **O gancho é o `fill`, não o clique.** Enganchar no `useOn` teria falso positivo óbvio: clicar numa
+  parede com um cantil de água de rio na mão também termina dentro da área, e a água velha seria
+  purificada sem ninguém ter enchido nada. Pelo `fill` passam todos os caminhos de enchimento —
+  inclusive a integração de pia do Refurbished, e inclusive uma que o LSO acrescente depois.
+- **O preço do `fill` é não receber jogador nem posição**, e o troco é um trinco de um tick: o evento
+  de clique guarda quem e onde, e o `fill` só o aceita se o tick bater. Um tick é a duração exata da
+  interação — o que impede um `fill` de automação ou de comando de pegar carona num clique antigo.
+- **Um trinco que guarda entidade solta a referência.** O trinco é um campo estático apontando para um
+  `ServerPlayer`, e um campo estático não morre com o jogador: sem soltar, o último que clicou em
+  qualquer coisa ficaria vivo em memória depois de desconectar, com inventário, conexão e mundo
+  pendurados nele, até alguém clicar de novo. Duas travas independentes, como no `SavedDataAccess`
+  (§3.1): consome ao usar, e limpa no logout.
+- **O clique direito entra no listener que já existia.** É um dos eventos mais frequentes de um
+  servidor cheio; um listener novo por evento seriam duas chamadas extras por clique de cada um dos 80
+  jogadores para fazer o que cabe numa linha.
+
+### 15.2 A escalada da Floresta Negra
+
+- **Tudo é multiplicador do que já está configurado, não um segundo conjunto de valores.** O
+  ambiente continua descrito uma vez; o bloco `dread` só diz o quanto aquilo aperta no auge. Assim
+  um ambiente sem `dread` se comporta exatamente como antes do campo existir, e a escalada não
+  duplica nenhum número.
+- **O medo é um contador de ticks por jogador, e nada mais.** Um `long++` no tick de quem está
+  dentro de um perfil ativo, mais três `float` derivados dele. Não há entidade, scheduler, nem
+  varredura — a mesma restrição de §2 que já valia para os três relógios do ambiente.
+- **A neblina reaperta em degraus de meio bloco, no máximo uma vez por segundo.** Escalar um valor
+  contínuo e mandá-lo por tick seria um pacote por jogador por tick dentro da floresta; o degrau é
+  o que transforma uma escalada contínua em O(poucos pacotes) por permanência.
+- **As frases são texto literal do datapack, não chave de tradução.** Mesmo motivo de os sons serem
+  ids soltos (§4.4): escrever uma frase nova é editar JSON e dar `/reload`. E o servidor manda o
+  texto pronto, então a frase aparece igual para quem não tem o módulo no cliente.
+- **O apagão tem duração própria, separada do Darkness.** Ele nasce do medo (zero na entrada) em vez
+  de só crescer com ele, e dura 5 segundos mesmo quando o Darkness do pulso dura 14. Um apagão que
+  cobrisse o pulso inteiro, com criatura em cima, deixaria de ser susto e viraria impossibilidade de
+  jogar — e a diferença entre as duas coisas é o produto. Fecha rápido e abre devagar pela mesma
+  razão: sair do escuro no mesmo tempo em que se entrou desmancha o susto.
+- **As criaturas nascem por jogador, não por chunk.** Não é spawn natural: não toca no
+  `NaturalSpawner`, não ocupa cota de mob do chunk e não depende de luz nem de bioma — é uma leva
+  colocada perto de *uma pessoa* porque ela está ali há tempo demais. Continua passando pelo
+  `EntityJoinLevelEvent` do próprio módulo, então a regra `monstros` da área e os multiplicadores de
+  vida/dano valem para elas sem nenhuma linha a mais.
+- **Três travas contra o exército, porque uma sozinha falharia.** Teto de criaturas *nossas* vivas
+  por jogador (contado antes de criar qualquer coisa, então o caso "teto cheio" custa uma consulta e
+  nada mais); nenhuma marcada como persistente, então o despawn do vanilla limpa a floresta quando
+  ninguém está nela; e `getChunkNow` em vez de `getChunk`, porque procurar lugar num chunk
+  descarregado o *geraria* na thread do servidor (§2).
+- **A tabela de criaturas tem camadas, não só quantidade.** O que nasce aos seis minutos não é o
+  mesmo que nasce ao entrar. É o que faz a floresta piorar de *tipo*, e não virar a mesma coisa
+  repetida mais vezes.
+- **Id de criatura de mod ausente é ignorado em silêncio**, igual aos sons (§4.4): a mesma lista
+  serve a um pack com Born in Chaos e a um sem ele. Por isso há um `minecraft:phantom` na camada de
+  entrada — alguma coisa tem que aparecer mesmo num pack sem mod de monstro nenhum.
+- **`EventHooks.finalizeMobSpawn`, não `Mob#finalizeSpawn`.** O método do vanilla é `@OverrideOnly` no
+  NeoForge; chamá-lo direto pularia o `FinalizeSpawnEvent`, que é onde os outros mods do pack ajustam
+  equipamento e variante. Num modpack pesado, pular o hook alheio é como o módulo passa a ser o
+  responsável por bugs que não são dele.
+- **A voz vai para a barra de ação, nunca para o chat.** Uma frase a cada meio minuto por pessoa,
+  no chat de 80 jogadores, seria histórico entupido; na barra de ação ela some sozinha — mesma
+  decisão do aviso de limpeza da §5.4.
+- **A escalada de dano termina antes da letalidade, e isso é o desenho.** O dano chega ao auge aos
+  5 minutos (`ramp_seconds: 300`) e a morte só entra aos 7 (`lethal_after_seconds: 420`). Os dois
+  minutos de diferença são o aviso: a pessoa apanhando forte na neblina fechada, sabendo que algo
+  mudou, antes de o lugar poder cobrar uma vida. Ligar os dois no mesmo instante transformaria a
+  escalada num interruptor.
+- **Matar aqui gasta uma vida (§9), então a morte não pode ser silenciosa.** Daí o bloco `alert` do
+  ambiente: quem tem OP é avisado na entrada, na virada para letal e na saída. É o único aviso deste
+  módulo que vai para o **chat** em vez da barra de ação — todos os outros somem sozinhos porque se
+  repetem; este precisa ficar no histórico, para quem entra na conta depois ver que alguém entrou na
+  floresta e não saiu. Vai também para o log, porque um aviso que ninguém estava online para ver não
+  pode desaparecer (mesma razão do `/ajuda`, §5.5).
+- **Desconectar lá dentro fecha o aviso.** Sem isso a pessoa ficaria "lá dentro" para sempre no
+  histórico de quem modera — e sair pela desconexão é exatamente o que alguém faria para escapar de
+  um lugar que mata.
+- **O aviso mora no ambiente, não na área.** Quem é perigoso é o ambiente; uma staff que criar três
+  manchas de floresta não deveria ligar o aviso três vezes. A área entra só como nome do lugar na
+  mensagem. E a carência por jogador existe porque quem fica em cima da linha da fronteira viraria
+  uma metralhadora no chat de quem modera — o mesmo raciocínio de ruído da §5.4.
+
 ## 16. aurorion-profissoes — especialidades e atendimento
 
 - Uma profissao por personagem, atribuida pela staff e apagada no CharacterResetEvent. O modulo
@@ -1217,6 +1372,26 @@ carregando sozinho e falando com o altar por tag, nunca por import — mas é um
 - Sessoes sao limitadas a uma por jogador, expiram e somem no logout/parada/reset. Rede e snapshot
   limitado apenas ao abrir/agir. UI usa NpcPanelScreen do Core. Eventos de autorizacao/conclusao
   oferecem pontos para a futura economia; autorizacao nao deve cobrar antes do resultado.
+
+### 16.1 Remendar bug de terceiro: quando, e com que compromisso
+
+O `aurorion-profissoes` corrige um bug do FoodSpoil 1.1.7 — comida congelada tem todo o tempo de
+congelamento cobrado de uma vez ao descongelar, e vira carne podre na hora. A correção mora aqui
+porque este módulo **já** tem mixins nesse mod; criar um jar remendado seria uma quarta cópia para
+manter sincronizada a cada atualização, e o mesmo problema que a §3.2 resolveu nos `build.gradle`.
+
+- **O gancho é o evento, não os lugares que o disparam.** O mod descongela em três handlers
+  diferentes; o `@Inject` fica em `FoodData.setState`, por onde os três passam. Três injeções seriam
+  três alvos para quebrar numa atualização, e ainda deixariam de fora um quarto handler futuro.
+- **O remendo escreve o mínimo.** Só o campo do tempo (`SnapshotTime`), nunca o frescor. Se uma
+  versão nova do FoodSpoil corrigir isso, a correção dela grava o mesmo valor e as duas convivem em
+  vez de brigarem.
+- **O interruptor não passa pelo `enabled` do módulo.** Desligar profissões não pode devolver um bug
+  de outro mod: são dois assuntos, e juntá-los num booleano só transforma "quero testar sem
+  profissões" em "meu congelador voltou a estragar comida".
+- **Um teste verifica que o bug ainda existe na origem.** Parece estranho, e o contrário é pior: um
+  remendo que ninguém lembra de tirar vira código que sobrevive ao problema que o justificava.
+  Quando a origem corrigir, o teste falha dizendo exatamente isso.
 
 ## 17. aurorion-economia — livro-caixa e ciclo semanal
 

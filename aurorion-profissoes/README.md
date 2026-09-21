@@ -103,6 +103,38 @@ considera as taxas diferentes; o empilhamento de preparos iguais pelo inventári
 Sem FoodSpoil não há deterioração adicional. Sem Quality Food não há qualidade premium nem
 finalização pela UI; o marcador de conservação ainda é aplicado nos eventos vanilla suportados.
 
+### Remendo: comida congelada apodrecia ao descongelar
+
+O FoodSpoil **1.1.7** tem um bug que este módulo corrige, e que não tem nada a ver com profissões:
+congelar não parava o relógio, só escondia o resultado.
+
+Em `FoodData.calculateFreshness`, os estados `FROZEN` e `THAWING` devolvem 100% sem calcular nada.
+O frescor real sai de `SnapshotFreshness − (agora − SnapshotTime) × taxa`. Ao **congelar**, o mod
+grava um snapshot correto; ao **descongelar** — nos três lugares onde isso acontece
+(`onContainerClose`, `onPlayerTick` e `processContainerThawing`) — ele faz só
+`setState(FRESH)` + `setThawStart(0)` e **nunca reancora o `SnapshotTime`**.
+
+Resultado: no instante em que sai do congelamento, todo o tempo que a comida passou congelada é
+cobrado de uma vez. Com a taxa padrão (0,3% por minuto de MC = **6% por dia de jogo**), 100% de
+frescor somem em ~17 dias de jogo — que são **menos de 6 horas de servidor no ar**. Ou seja: qualquer
+comida que passe uma noite congelada sai do congelador em 0% e vira carne podre na hora, pelo
+`RottenConversionHandler`. Num servidor 24/7 esse é o caso normal, não a exceção.
+
+O remendo é um `@Inject` em `FoodData.setState`: ao sair de `FROZEN`/`THAWING`, reancora o
+`SnapshotTime` para agora e **mantém** o `SnapshotFreshness` gravado no congelamento. A comida volta
+do congelador com o frescor que entrou. Escrevemos só o campo do tempo, para conviver com uma
+eventual correção oficial.
+
+Fica em `setState`, e não nos três handlers, porque a troca de estado é o evento — os handlers são
+só quem o dispara, e um quarto que apareça numa versão nova passa pelo mesmo lugar.
+
+`fixFoodSpoilThaw` desliga o remendo. Ele **não** passa por `enabled`: desligar profissões não pode
+devolver o bug do congelador.
+
+O `FoodSpoilContractTest` valida os três pontos contra o jar instalado, inclusive que a origem
+**ainda** não corrigiu o bug — se corrigir, o teste falha avisando que o remendo pode ser apagado.
+Ele é pulado sem `AURORION_FOODSPOIL_JAR`.
+
 ## Arcanista
 
 - Qualquer personagem pode usar as duas primeiras opções da mesa de encantamentos, com nível máximo
@@ -133,6 +165,7 @@ Config nativa em `config/aurorion/profissoes-server.toml`:
 | `firstAidCeiling` | 0.5 |
 | `chefFoodDecayMultiplier` | 0.5 |
 | `amateurFoodDecayMultiplier` | 2.0 |
+| `fixFoodSpoilThaw` | `true` |
 
 `ProfessionApi` consulta o ofício. `ServiceEvent.Validate` permite vetar um atendimento antes
 do consumo; `ServiceEvent.Completed` informa sua conclusão com identificador único.

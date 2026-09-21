@@ -5,7 +5,8 @@
   "mixins": [
     "FoodDecayMixin",
     "FoodMergeMixin",
-    "FoodMergeRecipeMixin"
+    "FoodMergeRecipeMixin",
+    "FoodThawMixin"
   ],
   "injectors": {
     "defaultRequire": 1

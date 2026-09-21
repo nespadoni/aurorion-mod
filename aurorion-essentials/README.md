@@ -6,6 +6,8 @@ Comandos essenciais de servidor para o ecossistema Aurorion. Features:
   do jogo.
 - **cleanup periódico** — limpa itens dropados e orbs de XP de tempos em tempos, avisando pouco
   antes.
+- **privacidade dos avisos** — quem vê entrada/saída, conquista e morte no chat.
+- **`/ajuda`** — pedido de socorro do jogador, entregue a quem está moderando.
 
 ## Uso
 
@@ -15,6 +17,7 @@ Comandos essenciais de servidor para o ecossistema Aurorion. Features:
 /fakename clear                         -> limpa o proprio nome falso
 /fakename clear <jogador>               -> limpa o de outro jogador (nivel 2+)
 /realname <nomeFalso>                   -> revela o nome real por tras de um nome falso (nivel 2+)
+/ajuda <o que aconteceu>                -> avisa todos os administradores online
 ```
 
 Códigos de cor no estilo Bukkit (`&` + `0-9a-fk-or`) são traduzidos para formatação de verdade
@@ -25,6 +28,66 @@ por trecho, então funciona igual em chat, tab list e nametag.
 jogador (`/fakename clear <jogador>`) e descobrir quem está por trás de um nome falso (`/realname`)
 exigem nível de operador 2+ — a segunda é deliberadamente uma ferramenta de moderação, não algo
 disponível para jogadores comuns.
+
+## Privacidade dos avisos do chat
+
+Num servidor de 80 pessoas, os avisos automáticos do Minecraft são duas coisas ao mesmo tempo:
+ruído e **meta-gaming**. Saber quem acabou de entrar, quem morreu e quem desbloqueou o quê é
+informação que os personagens não deveriam ter.
+
+Config em `config/aurorion/essentials-privacy.toml`. Três valores possíveis: `EVERYONE` (padrão do
+Minecraft), `ADMINS` (só OP nível 2+) e `NOBODY`.
+
+| Chave | Padrão | O que é |
+|---|---|---|
+| `joinLeaveMessages` | `NOBODY` | "Fulano entrou/saiu do jogo" |
+| `advancementMessages` | `NOBODY` | "Fulano completou a conquista..." |
+| `deathMessages` | `ADMINS` | "Fulano foi morto por..." |
+| `restrictPrivateMessages` | `true` | `/msg`, `/tell` e `/w` só para operadores |
+
+**A morte é `ADMINS`, e não `NOBODY`, de propósito.** Num servidor com sistema de vidas, o registro
+de quem morreu é informação de moderação — o que não se quer é o chat de todo mundo acompanhando.
+
+**O que não muda:**
+
+- Quem morreu **continua vendo a causa da morte** na própria tela. Essa mensagem vai pelo
+  `ClientboundPlayerCombatKillPacket`, direto para o jogador, e não passa por esta config.
+- O **toast de conquista** (o avisinho no canto da tela) continua aparecendo para quem
+  desbloqueou — ele nunca foi um broadcast.
+- O **log do servidor** continua registrando tudo.
+
+Os quatro pontos de interceptação são `@Redirect` em mixin, e não listeners, porque **o vanilla não
+expõe nenhum evento cancelável para essas mensagens**. Os quatro chamam o mesmo
+`PrivacyMessages.broadcast`: a regra de quem recebe mora num lugar só.
+
+> **Atenção ao atualizar:** `hideJoinLeaveMessages` e `hideAdvancementMessages` eram booleanos e
+> viraram os três estados acima. O NeoForge não migra chave que mudou de tipo — ele reescreve o
+> arquivo com os padrões e registra a correção no log. Os padrões já são o comportamento desejado;
+> só precisa reeditar quem tinha mudado os valores de propósito.
+
+> **Fora do escopo desta config:** o `aurorion-vidas` faz os próprios anúncios de perda de vida e
+> exílio, com as chaves `announceLifeLoss` e `announceExile` na config dele. São mensagens do
+> sistema de vidas, não do vanilla, e se desligam por lá.
+
+## `/ajuda`
+
+```
+/ajuda fiquei preso dentro de uma parede
+```
+
+Monta um aviso com **nome real, fakename, descrição e localização** e manda para todo operador
+online. O fakename aparece ao lado do nome real justamente porque quem modera precisa dos dois.
+
+- `/ajuda` sozinho **responde com o modo de usar**, em vez do "Unknown or incomplete command" em
+  vermelho do Brigadier — que é indistinguível de um comando que não existe.
+- **Todo pedido vai para o log do servidor**, com nome, coordenada e quantos administradores foram
+  avisados. Sem isso, um pedido feito de madrugada sumia sem deixar rastro, e a única forma de saber
+  se o comando funcionou era alguém ter visto na hora.
+- Sem operador online, a resposta ("peça no Discord") sai em dourado e não em vermelho de erro: o
+  pedido foi aceito e registrado, só não há quem atenda agora.
+
+O destinatário é quem tem **OP nível 2+** (`ops.json`). Um administrador que não esteja opado não
+recebe o aviso — se ninguém receber, é o primeiro lugar para olhar.
 
 ## O que muda de nome (e o que não muda, de propósito)
 
@@ -61,7 +124,10 @@ mixin/       PlayerNameMixin — unico ponto de injeção, em Player#getName()/g
 server/      FakeNameData (persistência), FakeNameManager (validação + broadcast + refresh da
              tab list), FakeNameEvents (join/leave)
 network/     SyncFakeNamesPayload (snapshot no login), UpdateFakeNamePayload (delta na troca)
-command/     FakeNameCommand, RealNameCommand
+privacy/     Visibility (EVERYONE/ADMINS/NOBODY), PrivacyConfig, PrivacyMessages (regra de quem
+             recebe, em um lugar só — os quatro mixins de privacidade chamam este)
+help/        HelpRequestManager (monta e entrega o aviso de /ajuda)
+command/     FakeNameCommand, RealNameCommand, AjudaCommand
 ```
 
 **Por que um mixin em vez de um evento do NeoForge:** não existe um hook de "nome exibido" no
@@ -138,26 +204,24 @@ exemplo, um servidor com fazenda de XP grande pode querer limpar só os itens e 
 
 ## Status
 
-Escrito contra NeoForge 21.1 seguindo os mesmos padrões de API já usados e conferidos no
-`aurorion-talk` deste monorepo (`DeferredRegister`, `PayloadRegistrar`, `PacketDistributor`,
-`SavedData`, mixins). **Ainda não compilado** — mesma limitação de rede documentada no
-`aurorion-talk/README.md`. Pontos de maior risco para conferir na primeira máquina com rede
-liberada:
+Versão 0.3.0. Compila e os testes do módulo passam; as versões anteriores já rodam na VPS, então o
+fakename, o cleanup e o esconderijo de entrada/saída e conquista estão confirmados em jogo.
 
-- Assinatura exata de `Player#getTabListDisplayName()` (existe, mas não foi conferida contra
-  bytecode real desta versão).
-- Construtor de `ClientboundPlayerInfoUpdatePacket(EnumSet<Action>, Collection<ServerPlayer>)`
-  usado em `FakeNameManager#refreshTabList`.
-- Confirmar que `multiplayer.player.joined`/`.left`, mensagens de morte e broadcast de conquista
-  realmente usam `getDisplayName()` nesta versão (é o padrão documentado de versões recentes, mas
-  vale ver no jogo).
-- Nome exato do evento de tick do servidor (`net.neoforged.neoforge.event.tick.ServerTickEvent.Post`)
-  usado pelo `CleanupScheduler` — a API de tick foi reformulada numa versão recente do NeoForge e
-  pode ter mudado de nome entre patches do 21.1.
-- `Level#getEntities()` retornando um `LevelEntityGetter` com `getAll()` — confirmar que o método
-  se chama exatamente assim nesta versão.
+O que entrou nesta versão e ainda precisa de uma passada no servidor:
+
+- **Mensagem de morte para admin.** O `@Redirect` mira o único
+  `PlayerList.broadcastSystemMessage(Component;Z)` presente no bytecode de `ServerPlayer#die`
+  (conferido com `javap` no NeoForge 21.1.248). Conferir que quem morreu continua vendo a causa na
+  tela de morte e que um OP recebe a linha no chat.
+- **Migração da config de privacidade.** Na primeira subida, conferir no log que o
+  `essentials-privacy.toml` foi reescrito com as três chaves novas — as antigas eram booleanas.
+- **Times de scoreboard.** Se o servidor passar a usar times com `deathMessageVisibility` diferente
+  de `ALWAYS`, as duas rotas de time do `die` saem por fora desta config.
+- **`/ajuda`.** Conferir com um jogador não-OP e com nenhum OP online, e checar a linha
+  correspondente no log do servidor nos dois casos.
 
 ```bash
+./gradlew :aurorion-essentials:build
 ./gradlew :aurorion-essentials:runClient
 ./gradlew :aurorion-essentials:runServer
 ```

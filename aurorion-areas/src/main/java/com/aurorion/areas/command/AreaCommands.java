@@ -2,6 +2,7 @@ package com.aurorion.areas.command;
 
 import com.aurorion.areas.AurorionAreas;
 import com.aurorion.areas.api.AreaApi;
+import com.aurorion.areas.compat.LsoThirstCompat;
 import com.aurorion.areas.config.AreasConfig;
 import com.aurorion.areas.data.*;
 import com.aurorion.areas.geometry.*;
@@ -10,6 +11,8 @@ import com.aurorion.areas.profile.*;
 import com.aurorion.areas.region.AreaRegion;
 import com.aurorion.areas.rules.*;
 import com.aurorion.areas.server.AreaRuntime;
+import com.aurorion.areas.server.HouseBarrier;
+import com.aurorion.core.house.HouseGate;
 import com.mojang.brigadier.*;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -20,6 +23,7 @@ import net.minecraft.commands.arguments.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import static net.minecraft.commands.Commands.*;
 
@@ -27,7 +31,15 @@ public final class AreaCommands {
     private static final Map<UUID, AreaSelection> SELECTIONS = new HashMap<>();
     private static final Map<UUID, AreaPreview> PREVIEWS = new HashMap<>();
     private static final DynamicCommandExceptionType ERROR = new DynamicCommandExceptionType(value -> Component.literal(value.toString()));
-    private static final List<String> RULES = Arrays.stream(AreaRule.ALL).map(AreaRule::key).toList();
+    /**
+     * O que o autocomplete de {@code /area regra} e {@code /area excecao} oferece: as regras nativas
+     * mais o passe de visitante da barreira de casa, que nao e um {@link AreaRule} porque nao tem
+     * decisao propria por area — ele so existe para ser liberado em cima de uma area de casa.
+     */
+    private static final List<String> RULES = java.util.stream.Stream.concat(
+            Arrays.stream(AreaRule.ALL).map(AreaRule::key),
+            java.util.stream.Stream.of(HouseBarrier.PASS_RULE,
+                    LsoThirstCompat.PURE_WATER, LsoThirstCompat.PURE_WATER_TAP)).toList();
     private static final int PREVIEW_TICKS = 600;
     private AreaCommands() {}
     @FunctionalInterface private interface Action { String execute(CommandContext<CommandSourceStack> c) throws CommandSyntaxException; }
@@ -50,6 +62,7 @@ public final class AreaCommands {
                         /area prioridade <id> <n> | ambiente <id> <perfil>|nenhum|herdar
                         /area monstros <id> vida|dano <fator> | excecao <id> <jogador> <regra> true|false
                         /area nome <id> <nome> | ativar <id> true|false | mundo <perfil>|herdar
+                        /area casa <id> <casa>|nenhum
                         /area aqui [jogador] | ver <id> | listar | visualizar [id] | remover <id>
                         """));
         root.then(literal("selecao").executes(run(c -> start(c.getSource().getPlayerOrException()))));
@@ -93,6 +106,11 @@ public final class AreaCommands {
                 .executes(run(c -> update(c, region(c).withName(StringArgumentType.getString(c, "nome")), "Nome atualizado."))))));
         root.then(literal("ativar").then(area().then(argument("ativo", BoolArgumentType.bool())
                 .executes(run(c -> update(c, region(c).withEnabled(BoolArgumentType.getBool(c, "ativo")), "Ativação atualizada."))))));
+        root.then(literal("casa").then(area()
+                .then(literal("nenhum").executes(run(c -> house(c, null))))
+                .then(argument("casa", ResourceLocationArgument.id())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggestResource(HouseGate.ids(), b))
+                        .executes(run(c -> house(c, ResourceLocationArgument.getId(c, "casa")))))));
         root.then(literal("perfil").then(area().then(presetArgument().executes(run(c -> {
             var region = region(c);
             return update(c, region.withRules(preset(c).rules()), "Regras substituídas pelo perfil selecionado.");
@@ -138,7 +156,9 @@ public final class AreaCommands {
             if (list.isEmpty()) return "Nenhuma área criada.";
             StringBuilder out = new StringBuilder("Áreas (" + list.size() + "):");
             for (var a : list) out.append("\n").append(a.id()).append(" | ").append(a.dimension())
-                    .append(" | prioridade ").append(a.priority()).append(a.enabled() ? "" : " | DESATIVADA");
+                    .append(" | prioridade ").append(a.priority())
+                    .append(a.house() == null ? "" : " | casa " + a.house())
+                    .append(a.enabled() ? "" : " | DESATIVADA");
             return out.toString();
         })));
         root.then(literal("visualizar").executes(run(c -> {
@@ -202,6 +222,25 @@ public final class AreaCommands {
         if (!r.dimension().equals(s.dimension)) throw new IllegalArgumentException("Seleção e área devem estar na mesma dimensão.");
         return update(c, r.withVolume(r.volume().append(s.shape(), hole)), hole ? "Recorte adicionado." : "Parte adicionada.");
     }
+    /**
+     * Vincula a area a uma casa — ou tira o vinculo com {@code nenhum}.
+     *
+     * <p>Um id que o catalogo de casas nao conhece e recusado <b>quando ha catalogo</b>. Sem o mod de
+     * casas instalado o comando aceita e avisa, em vez de recusar: um pack montado sem o Ethereal nao
+     * pode impedir a staff de deixar o mapa pronto para quando ele voltar.
+     */
+    private static String house(CommandContext<CommandSourceStack> c, @Nullable ResourceLocation id) {
+        var region = region(c);
+        if (id == null) return update(c, region.withHouse(null), "Área não pertence mais a casa nenhuma.");
+        if (!HouseGate.installed()) {
+            return update(c, region.withHouse(id), "Área vinculada à casa " + id + "."
+                    + "\nAVISO: nenhum mod de casas está instalado, então a barreira não barra"
+                    + " ninguém até o aurorion_ethereal voltar ao pack.");
+        }
+        if (!HouseGate.exists(id)) throw new IllegalArgumentException("Casa inexistente: " + id);
+        return update(c, region.withHouse(id), "Área vinculada à casa " + id
+                + ". Só quem é dessa casa atravessa o limite; criativo passa sempre, sobrevivência nunca.");
+    }
     private static String ambience(CommandContext<CommandSourceStack> c, ResourceLocation id) {
         var r = region(c); return update(c, r.withRules(r.rules().withAmbience(id)), "Ambiente atualizado.");
     }
@@ -237,7 +276,20 @@ public final class AreaCommands {
                     .append(" <- ").append(owner == null ? "padrão da dimensão" : owner.id());
         }
         out.append("\nambiente: ").append(rules.ambience()).append(" | vida x").append(rules.mobHealth())
-                .append(" | dano x").append(rules.mobDamage()).append("\nÁreas sobrepostas:");
+                .append(" | dano x").append(rules.mobDamage());
+        var houseArea = rules.houseArea();
+        if (houseArea == null) {
+            out.append("\ncasa: nenhuma área de casa aqui");
+        } else {
+            var mine = HouseGate.of(p.server, p.getUUID());
+            out.append("\ncasa: ").append(houseArea.house())
+                    .append(" (área ").append(houseArea.id()).append(")")
+                    .append(" | casa do jogador: ").append(mine == null ? "nenhuma" : mine.toString())
+                    .append(HouseBarrier.bypass(p) ? " | passa (criativo/espectador)"
+                            : houseArea.house().equals(mine) ? " | pode entrar" : " | BARRADO");
+            if (!HouseGate.installed()) out.append("\nAVISO: nenhum mod de casas instalado; a barreira está inativa.");
+        }
+        out.append("\nÁreas sobrepostas:");
         for (var area : data.all()) if (area.enabled() && area.dimension().equals(p.level().dimension().location())
                 && area.volume().contains(p.getX(), p.getY(), p.getZ())) out.append(" ").append(area.id());
         return out.toString();
@@ -245,6 +297,7 @@ public final class AreaCommands {
     private static String describe(AreaRegion area) {
         StringBuilder out = new StringBuilder(area.id()).append(" — ").append(area.name()).append("\n")
                 .append(area.dimension()).append(" | prioridade ").append(area.priority()).append(" | ativa ").append(area.enabled())
+                .append(area.house() == null ? "" : " | casa " + area.house())
                 .append("\nRegras: ").append(AreaJson.writeRules(area.rules())).append("\nFormas (índices começam em 1):");
         for (int i = 0; i < area.volume().parts().size(); i++) shapeDescription(out, "parte", i, area.volume().parts().get(i));
         for (int i = 0; i < area.volume().holes().size(); i++) shapeDescription(out, "recorte", i, area.volume().holes().get(i));

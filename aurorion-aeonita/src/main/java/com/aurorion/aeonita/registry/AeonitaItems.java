@@ -25,15 +25,18 @@ public final class AeonitaItems {
     public static final DeferredItem<BlockItem> SELECTION_ALTAR = ITEMS.registerSimpleBlockItem(AeonitaBlocks.SELECTION_ALTAR);
 
     /**
-     * As capas do uniforme da escola, uma por casa de Ethereal.
+     * As capas do uniforme da escola: uma preta para quem ainda nao tem casa, e uma por casa de
+     * Ethereal.
      *
-     * <p>A ordem segue o campo {@code order} das casas no datapack do {@code aurorion-ethereal},
-     * para a aba do criativo sair na mesma ordem que o altar mostra. E so ordem: este mod nao le
-     * aquele datapack nem depende dele para nada (ver {@link UniformCapeItem}).
+     * <p>A ordem das cinco casas segue o campo {@code order} delas no datapack do
+     * {@code aurorion-ethereal}, para a aba do criativo sair na mesma ordem que o altar mostra; a
+     * capa sem casa vem antes por ser a que se veste antes de escolher. E so ordem: este mod nao
+     * le aquele datapack nem depende dele para nada (ver {@link UniformCapeItem}).
      *
      * <p>O nome do arquivo de textura e o proprio argumento, entao registrar uma capa nova e uma
      * linha aqui mais um PNG em {@code textures/entity/armor/uniform_cape/}.
      */
+    public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_SEM_CASA = uniformCape("sem_casa");
     public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_VENTHRA = uniformCape("venthra");
     public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_SYLVARA = uniformCape("sylvara");
     public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_NYX = uniformCape("nyx");

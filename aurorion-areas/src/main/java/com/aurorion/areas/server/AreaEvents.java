@@ -3,6 +3,7 @@ package com.aurorion.areas.server;
 import com.aurorion.areas.AurorionAreas;
 import com.aurorion.areas.api.AreaApi;
 import com.aurorion.areas.command.AreaCommands;
+import com.aurorion.areas.compat.LsoThirstCompat;
 import com.aurorion.areas.config.AreasConfig;
 import com.aurorion.areas.data.AreaData;
 import com.aurorion.areas.profile.AreaProfiles;
@@ -40,7 +41,10 @@ public final class AreaEvents {
         AreaRuntime.forget(event.account());
     }
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
-        AreaRuntime.forget(event.getEntity().getUUID()); AreaCommands.forget(event.getEntity().getUUID());
+        if (event.getEntity() instanceof ServerPlayer player) AreaRuntime.logout(player);
+        else AreaRuntime.forget(event.getEntity().getUUID());
+        AreaCommands.forget(event.getEntity().getUUID());
+        LsoThirstCompat.forget(event.getEntity());
     }
     @SubscribeEvent public static void login(PlayerEvent.PlayerLoggedInEvent event) { AreaRuntime.forget(event.getEntity().getUUID()); }
     @SubscribeEvent public static void respawn(PlayerEvent.PlayerRespawnEvent event) { AreaRuntime.forget(event.getEntity().getUUID()); }
@@ -132,12 +136,18 @@ public final class AreaEvents {
         if (AreaApi.allows(player, rule)) return false;
         AreaRuntime.denyNotice(player, rule); return true;
     }
+    // Clique direito e um dos eventos mais frequentes de um servidor cheio, entao o modulo usa UM
+    // listener por evento. A ponte de agua do LSO entra aqui em vez de num listener proprio: dois
+    // listeners a mais seriam duas chamadas extras por clique de cada um dos 80 jogadores, para
+    // fazer o que cabe numa linha no listener que ja existia.
     @SubscribeEvent public static void item(PlayerInteractEvent.RightClickItem event) {
+        LsoThirstCompat.beginInteraction(event.getEntity(), null);
         if (event.getEntity() instanceof ServerPlayer p && blocked(p, event.getItemStack())) {
             event.setCancellationResult(InteractionResult.FAIL); event.setCanceled(true);
         }
     }
     @SubscribeEvent public static void block(PlayerInteractEvent.RightClickBlock event) {
+        LsoThirstCompat.beginInteraction(event.getEntity(), event.getPos());
         if (event.getEntity() instanceof ServerPlayer p && blocked(p, event.getItemStack())) {
             event.setCancellationResult(InteractionResult.FAIL); event.setCanceled(true);
         }

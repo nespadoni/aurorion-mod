@@ -30,8 +30,12 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.1.0,)"
+versionRange = "[0.2.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
-
+# Agua tratada nas areas que concedem a regra 'agua_pura'. Sem o LSO no pack, este config nao e
+# carregado e nada aqui existe -- o resto do modulo funciona igual.
+[[mixins]]
+config = "aurorion_areas.lso.mixins.json"
+requiredMods = ["legendarysurvivaloverhaul"]

@@ -1,6 +1,7 @@
 package com.aurorion.areas;
 
 import com.aurorion.areas.compat.IronSpellsCompat;
+import com.aurorion.areas.compat.LsoThirstCompat;
 import com.aurorion.areas.config.AreasConfig;
 import com.aurorion.core.config.AurorionConfigs;
 import com.mojang.logging.LogUtils;
@@ -17,6 +18,9 @@ public final class AurorionAreas {
     public static final Logger LOGGER = LogUtils.getLogger();
     public AurorionAreas(IEventBus bus, ModContainer container) {
         AurorionConfigs.register(container, ModConfig.Type.SERVER, AreasConfig.SPEC);
-        bus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(IronSpellsCompat::register));
+        bus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(() -> {
+            IronSpellsCompat.register();
+            LsoThirstCompat.register();
+        }));
     }
 }

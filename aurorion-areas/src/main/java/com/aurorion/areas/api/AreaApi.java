@@ -39,6 +39,17 @@ public final class AreaApi {
         return !(entity.level() instanceof ServerLevel level)
                 || allowsAt(level, entity.getX(), entity.getY(), entity.getZ(), entity.getUUID(), rule.key());
     }
+    /**
+     * Poder que so existe onde uma area concede, em vez de restricao que vale ate alguem negar.
+     *
+     * <p>E a consulta certa para uma regra que <b>da</b> alguma coisa (a agua pura da Academia, por
+     * exemplo): sem area que conceda, a resposta e nao. Nao ha bypass de criativo — quem concede e o
+     * lugar, nao a permissao de quem esta nele.
+     */
+    public static boolean grantedAt(ServerLevel level, double x, double y, double z, @Nullable UUID actor, String key) {
+        return AreasConfig.ENABLED.get()
+                && AreaData.get(level.getServer()).granted(level.dimension().location(), x, y, z, actor, key);
+    }
     /** Raw location policy, including a character's explicit exceptions but without creative bypass. */
     public static boolean allowsAt(ServerLevel level, double x, double y, double z, @Nullable UUID actor, String key) {
         return !AreasConfig.ENABLED.get()

@@ -121,6 +121,53 @@ class AreaPolicyTest {
         data.resolve(WORLD, 0, 50, 0, ALICE, out);
         assertFalse(out.allows(AreaRule.FLIGHT));
     }
+    /**
+     * Concessao e proibicao sao leituras opostas do mesmo cadastro, e trocar uma pela outra nao
+     * quebra nada visivel: daria agua pura ao mapa inteiro por omissao, que e o pior default
+     * possivel e so apareceria em jogo.
+     */
+    @Test void grantedIsOptInWhileAllowsIsOptOut() {
+        var data = new AreaData();
+        String key = "agua_pura";
+
+        // Sem area nenhuma: 'allows' diz sim (nada proibiu), 'granted' diz nao (ninguem concedeu).
+        assertTrue(data.allows(WORLD, 0, 50, 0, ALICE, key));
+        assertFalse(data.granted(WORLD, 0, 50, 0, ALICE, key));
+
+        data.put(region("academia", 10, 50, rules(key, Decision.ALLOW)));
+        assertTrue(data.granted(WORLD, 0, 50, 0, ALICE, key));
+        assertFalse(data.granted(WORLD, 200, 50, 0, ALICE, key), "fora da area a concessao acaba");
+
+        // Uma area interna de prioridade maior pode tirar a concessao de um trecho.
+        data.put(region("laboratorio", 20, 5, rules(key, Decision.DENY)));
+        assertFalse(data.granted(WORLD, 0, 50, 0, ALICE, key));
+        assertTrue(data.granted(WORLD, 10, 50, 0, ALICE, key));
+
+        // Desativar a area que concede tira a concessao junto.
+        data.put(data.require("academia").withEnabled(false));
+        assertFalse(data.granted(WORLD, 10, 50, 0, ALICE, key));
+    }
+
+    /** Excecao individual concede a uma pessoa so, sem abrir a area inteira. */
+    @Test void aGrantCanBeGivenToOneCharacterOnly() {
+        var data = new AreaData();
+        String key = "agua_pura";
+        data.put(region("poco", 10, 20, AreaRules.INHERIT).withException(ALICE, key, true));
+        assertTrue(data.granted(WORLD, 0, 50, 0, ALICE, key));
+        assertFalse(data.granted(WORLD, 0, 50, 0, BOB, key));
+        assertFalse(data.granted(WORLD, 0, 50, 0, null, key));
+    }
+
+    /** O padrao da dimensao tambem pode conceder — util para um mundo inteiro de agua tratada. */
+    @Test void aDimensionDefaultCanGrantToo() {
+        var data = new AreaData();
+        String key = "agua_pura";
+        assertFalse(data.granted(WORLD, 0, 50, 0, ALICE, key));
+        data.setDefaults(WORLD, AreaRules.INHERIT.withFlag(key, Decision.ALLOW));
+        assertTrue(data.granted(WORLD, 0, 50, 0, ALICE, key));
+        assertFalse(data.granted(ResourceLocation.parse("minecraft:the_nether"), 0, 50, 0, ALICE, key));
+    }
+
     @Test void bvhMatchesExhaustiveResolutionAcrossManyRegions() {
         var regions = new ArrayList<AreaRegion>();
         for (int i = 0; i < 40; i++) regions.add(new AreaRegion("r" + i, "region " + i, WORLD, i % 7, i % 9 != 0,

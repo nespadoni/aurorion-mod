@@ -10,6 +10,7 @@
   "commands.aurorion_essentials.realname.found": "%s is really %s.",
   "commands.aurorion_essentials.realname.notFound": "No online player is currently using the fake name \"%s\".",
 
+  "commands.aurorion_essentials.ajuda.usage": "Use /ajuda <what is wrong>. Example: /ajuda I am stuck inside a wall.",
   "commands.aurorion_essentials.ajuda.sent": "Help request sent to %s online admin(s).",
   "commands.aurorion_essentials.ajuda.noOp": "No admin is online right now. Please ask for help on our Discord.",
   "commands.aurorion_essentials.ajuda.notify.header": "Help request",

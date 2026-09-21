@@ -311,6 +311,13 @@ EtherealTags a tag de altares
   recalcula no evento que mudou o dado, percorrendo O(projetores carregados daquela meta). O original
   tinha um `serverTick` por bloco comparando um contador de geração a cada segundo — um projetor que
   ninguém olhava custava tick igual ([SDD §10.1](../SDD.md)).
+- **A casa de um jogador é publicada por um contrato do core, não por import.** O
+  `aurorion-areas` precisa saber em que casa alguém está para barrar a entrada nas áreas de casa, e
+  os dois mods continuam sem se conhecer: este registra um `HouseGate.Houses` no
+  [`aurorion-core`](../aurorion-core/README.md) na construção do mod, e quem pergunta fala com o
+  core. Nada muda aqui num pack que não tenha o mod que pergunta, e nada quebra lá num pack que não
+  tenha este — `HouseGate.installed()` responde `false` e a barreira fica inativa, avisando no log.
+  Continua valendo a regra de que este mod não depende de nenhum outro mod Aurorion além do core.
 - **Toda gravação de casa passa por `HouseManager.bind`.** Não é organização: como o total de uma
   casa é a soma dos membros, **entrar ou sair de uma casa muda o painel** mesmo sem nenhum ponto ter
   mudado. Deixar esse refresh a cargo de cada chamador seria a armadilha do "quebra silenciosamente
