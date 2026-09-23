@@ -1,0 +1,30 @@
+{
+  "spell.aurorion_magia.dolor_cruciatus": "Dolor Cruciatus",
+  "spell.aurorion_magia.dolor_cruciatus.guide": "Canalize dor pura num alvo à vista. Enquanto durar, ele sangra rápido e a agonia não o deixa andar nem pular.",
+  "spell.aurorion_magia.imperium_mentis": "Imperium Mentis",
+  "spell.aurorion_magia.imperium_mentis.guide": "Imponha sua vontade a uma mente. Criaturas passam a lutar por você; pessoas perdem o rumo, não conseguem conjurar nem usar o que têm nas mãos.",
+
+  "death.attack.aurorion_magia.dolor_cruciatus": "%1$s sucumbiu à dor imposta por %2$s",
+  "death.attack.aurorion_magia.dolor_cruciatus.item": "%1$s sucumbiu à dor imposta por %2$s usando %3$s",
+
+  "effect.aurorion_magia.cruciatus": "Cruciatus",
+  "effect.aurorion_magia.dominado": "Dominado",
+  "effect.aurorion_magia.desorientado": "Desorientado",
+
+  "ui.aurorion_magia.dano_por_segundo": "%s de dano por segundo",
+  "ui.aurorion_magia.alcance": "Alcance: %s blocos",
+  "ui.aurorion_magia.dominio": "Domínio de criaturas: %s",
+  "ui.aurorion_magia.desorientacao": "Desorientação de pessoas: %s",
+
+  "aurorion_magia.nao_liberada": "Você ainda não aprendeu %s.",
+  "aurorion_magia.inscricao_negada": "Você não pode inscrever %s: essa magia não foi ensinada a você.",
+  "aurorion_magia.mente_turva": "Sua mente não é sua. Nenhuma magia responde.",
+  "aurorion_magia.aprendeu": "Você aprendeu: %s",
+  "aurorion_magia.esqueceu": "Você não domina mais: %s",
+
+  "commands.aurorion_magia.magia_desconhecida": "Magia desconhecida: %s",
+  "commands.aurorion_magia.escola_desconhecida": "Escola desconhecida: %s",
+  "commands.aurorion_magia.liberado": "%s liberado para %s de %s jogador(es).",
+  "commands.aurorion_magia.bloqueado": "%s bloqueado para %s de %s jogador(es).",
+  "commands.aurorion_magia.lista": "%s — escolas: %s | magias: %s"
+}

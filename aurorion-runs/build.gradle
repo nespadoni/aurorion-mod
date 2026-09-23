@@ -9,12 +9,17 @@ plugins {
 
 // Os mods do ecossistema sao todos os subprojetos menos este. Um mod novo
 // incluido no settings.gradle da raiz entra aqui sozinho.
-def modProjects = rootProject.subprojects.findAll { it != project }
+def otherProjects = rootProject.subprojects.findAll { it != project }
 
-// Abaixo lemos sourceSets e mod_id dos outros subprojetos em tempo de
-// configuracao, entao eles precisam estar avaliados antes deste projeto
-// (a ordem alfabetica sozinha nao garante isso).
-modProjects.each { evaluationDependsOn(it.path) }
+// Abaixo lemos sourceSets, mod_id e aurorion_runs_skip dos outros subprojetos
+// em tempo de configuracao, entao eles precisam estar avaliados antes deste
+// projeto (a ordem alfabetica sozinha nao garante isso).
+otherProjects.each { evaluationDependsOn(it.path) }
+
+// Excecao: quem declara aurorion_runs_skip=true no proprio gradle.properties. E o caso de um mod que
+// exige outro mod de terceiros pesado (o aurorion-magia exige o Iron's Spells e toda a arvore dele):
+// com ele aqui, o FML recusaria abrir o run inteiro por dependencia obrigatoria ausente.
+def modProjects = otherProjects.findAll { it.findProperty('aurorion_runs_skip') != 'true' }
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)

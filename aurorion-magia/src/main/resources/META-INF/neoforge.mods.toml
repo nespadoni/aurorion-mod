@@ -1,0 +1,51 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+# Sem displayTest IGNORE: as magias e os efeitos entram em registros sincronizados com o cliente
+# (o de magias do Iron's e o de MobEffect do vanilla). Cliente sem o mod nao consegue entrar.
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# AFTER: o registro de magias do Iron's precisa existir antes de o nosso DeferredRegister apontar para ele.
+[[dependencies.${mod_id}]]
+modId = "irons_spellbooks"
+type = "required"
+versionRange = "1.21.1-3.16.0"
+ordering = "AFTER"
+side = "BOTH"
+
+# Opcional. Sem ele o bloqueio continua valendo (o gate de conjuracao e nosso); com ele, o livro de
+# pesquisa, o scroll e a inscricao passam a mostrar como "nao aprendida" toda magia nao liberada.
+[[dependencies.${mod_id}]]
+modId = "irons_restrictions"
+type = "optional"
+versionRange = "1.21.1-5.2.0"
+ordering = "AFTER"
+side = "BOTH"

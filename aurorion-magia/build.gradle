@@ -1,0 +1,21 @@
+apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// Iron's Spells 'n Spellbooks e uma dependencia de COMPILACAO de verdade aqui, diferente da ponte
+// reflexiva do aurorion-areas: as magias estendem AbstractSpell, e isso nao tem como ser reflexivo.
+//
+// O jar vem da pasta de referencia do servidor (a mesma versao que roda em producao), e nao de um
+// maven: assim o que compila e exatamente o que o pack carrega. Para apontar para outro jar:
+//     -PironsSpellbooksJar=C:/caminho/irons_spellbooks-1.21.1-X.jar
+//
+// compileOnly e nao modLibraries: o Iron's arrasta Curios, GeckoLib, PlayerAnimator e Caelus em
+// runtime. Quem instala o pack ja instala todos eles; empacotar ou reexportar aqui so criaria uma
+// segunda copia para o FML reclamar.
+def ironsSpellbooksJar = providers.gradleProperty('ironsSpellbooksJar')
+        .orElse("$rootDir/mod-servidor-referencia/irons_spellbooks-1.21.1-3.16.3.jar")
+
+dependencies {
+    compileOnly files(ironsSpellbooksJar.get())
+    // Tipos do GeckoLib aparecem em assinaturas publicas do Iron's (AnimationHolder). Declarado so para
+    // o javac resolver essas assinaturas; a mesma versao que o aurorion-aeonita ja usa.
+    compileOnly "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+}

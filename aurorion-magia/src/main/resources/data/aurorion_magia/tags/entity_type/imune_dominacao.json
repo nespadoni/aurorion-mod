@@ -1,0 +1,11 @@
+{
+  "values": [
+    { "id": "#c:bosses", "required": false },
+    "minecraft:warden",
+    "minecraft:elder_guardian",
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:hoglin",
+    "minecraft:zoglin"
+  ]
+}

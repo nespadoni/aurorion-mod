@@ -1,0 +1,30 @@
+{
+  "spell.aurorion_magia.dolor_cruciatus": "Dolor Cruciatus",
+  "spell.aurorion_magia.dolor_cruciatus.guide": "Channel pure pain into a target in sight. While it lasts, they bleed quickly and the agony keeps them from walking or jumping.",
+  "spell.aurorion_magia.imperium_mentis": "Imperium Mentis",
+  "spell.aurorion_magia.imperium_mentis.guide": "Impose your will on a mind. Creatures fight for you; people lose their bearings and cannot cast or use what they hold.",
+
+  "death.attack.aurorion_magia.dolor_cruciatus": "%1$s succumbed to the pain inflicted by %2$s",
+  "death.attack.aurorion_magia.dolor_cruciatus.item": "%1$s succumbed to the pain inflicted by %2$s using %3$s",
+
+  "effect.aurorion_magia.cruciatus": "Cruciatus",
+  "effect.aurorion_magia.dominado": "Dominated",
+  "effect.aurorion_magia.desorientado": "Disoriented",
+
+  "ui.aurorion_magia.dano_por_segundo": "%s damage per second",
+  "ui.aurorion_magia.alcance": "Range: %s blocks",
+  "ui.aurorion_magia.dominio": "Creature domination: %s",
+  "ui.aurorion_magia.desorientacao": "Player disorientation: %s",
+
+  "aurorion_magia.nao_liberada": "You have not learned %s yet.",
+  "aurorion_magia.inscricao_negada": "You cannot inscribe %s: this spell was not taught to you.",
+  "aurorion_magia.mente_turva": "Your mind is not your own. No spell answers.",
+  "aurorion_magia.aprendeu": "You learned: %s",
+  "aurorion_magia.esqueceu": "You no longer command: %s",
+
+  "commands.aurorion_magia.magia_desconhecida": "Unknown spell: %s",
+  "commands.aurorion_magia.escola_desconhecida": "Unknown school: %s",
+  "commands.aurorion_magia.liberado": "%s unlocked for %s of %s player(s).",
+  "commands.aurorion_magia.bloqueado": "%s locked for %s of %s player(s).",
+  "commands.aurorion_magia.lista": "%s — schools: %s | spells: %s"
+}
