@@ -4,6 +4,7 @@ import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.utils.command.ModCommandArguments;
 import com.aurorion.utils.config.AbductionConfig;
 import com.aurorion.utils.entity.ModEntities;
+import com.aurorion.utils.freeze.FreezeEffects;
 import com.aurorion.utils.sound.ModSounds;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
@@ -26,6 +27,7 @@ public class AurorionUtils {
 
     public AurorionUtils(IEventBus modEventBus, ModContainer container) {
         ModEntities.ENTITY_TYPES.register(modEventBus);
+        FreezeEffects.EFFECTS.register(modEventBus);
         ModSounds.SOUND_EVENTS.register(modEventBus);
         ModCommandArguments.COMMAND_ARGUMENT_TYPES.register(modEventBus);
         AurorionConfigs.register(container, ModConfig.Type.SERVER, AbductionConfig.SPEC);

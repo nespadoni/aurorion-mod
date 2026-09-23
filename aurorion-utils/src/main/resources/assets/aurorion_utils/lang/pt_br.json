@@ -7,8 +7,13 @@
 
   "argument.aurorion_utils.cor.invalid": "Cor de feixe inválida: %s (use um nome da lista ou um hexadecimal RRGGBB)",
 
-  "commands.aurorion_utils.freeze.success": "%s jogador(es) congelado(s).",
+  "commands.aurorion_utils.freeze.success": "%s de %s jogador(es) congelado(s) até o /unfreeze.",
+  "commands.aurorion_utils.freeze.success.timed": "%s de %s jogador(es) congelado(s) por %s segundo(s).",
   "commands.aurorion_utils.unfreeze.success": "%s jogador(es) descongelado(s).",
+
+  "aurorion_utils.congelado": "Você está congelado.",
+  "aurorion_utils.descongelado": "Você pode se mover de novo.",
+  "effect.aurorion_utils.congelado": "Congelado",
 
   "subtitles.aurorion_utils.abduction_beam": "Feixe de abdução",
 

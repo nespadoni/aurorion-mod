@@ -12,9 +12,13 @@ imobiliza jogadores de verdade, pra uso geral (ex: pausar todo mundo num evento)
 /abduzir <jogador> <destino>  -> abduz <jogador> até a posição de <destino> (outro jogador online)
 /abduzir voltar <jogador>     -> leva <jogador> de volta pra onde foi abduzido da última vez
 
-/freeze <jogadores>            -> imobiliza (aceita nome, @a, @e[team=...], etc.)
+/freeze <jogadores>            -> congela até o /unfreeze (sobrevive a morte e relog)
+/freeze <jogadores> <segundos> -> congela por um tempo e solta sozinho
 /unfreeze <jogadores>          -> libera
 ```
+
+`<jogadores>` aceita qualquer seletor do jogo: nome, `@a`, `@a[team=casa]`, `@p`,
+`@a[distance=..20]`.
 
 Nível de operador 2 em toda a árvore — são ferramentas de staff, não algo auto-aplicável.
 
@@ -43,13 +47,42 @@ fase ASCEND, não precisa esperar o RETRACT cosmético terminar).
 
 ### Imobilidade real (abdução e /freeze)
 
-Nem a abdução (fases HOLD/ASCEND) nem o `/freeze` usam `MobEffect` pra imobilizar. Os dois montam
-o jogador numa entidade invisível parada (`FreezeAnchorEntity`, ou a própria `AbductionBeamEntity`
-no caso da abdução) — montaria é mecanismo nativo do jogo: não anda, não pula, mas continua
-olhando livremente ao redor, e nada como um balde de leite tem qualquer efeito sobre isso, porque
-não é um efeito. As duas features são propositalmente independentes (entidades e classes
-diferentes) — `/unfreeze` nunca consegue desmontar alguém no meio de uma abdução por engano, e
-vice-versa.
+A abdução (fases HOLD/ASCEND) monta o jogador no próprio feixe e não usa efeito.
+
+O `/freeze` é um congelamento completo, "como se as teclas não funcionassem". O congelado só
+consegue olhar em volta.
+
+| O que | Como |
+|---|---|
+| Não sai do lugar, nem no ar | Montado numa `FreezeAnchorEntity` invisível e parada, em pé (não sentado) |
+| Não anda, não pula, não agacha, não corre | O cliente zera o input de movimento; o servidor recusa o desmonte por Shift |
+| Não bate, não usa, não quebra, não coloca | Eventos de interação, ataque, bloco e uso recusados no servidor |
+| Não troca de slot, não solta item, não troca de mão, não abre inventário | O cliente consome as teclas; um item jogado com Q volta ao inventário |
+| Mob congelado não ataca nem anda | Perde a IA enquanto durar; o estado anterior (`NoAI`) é devolvido no fim |
+| Continua | Olhar, chat, comandos, voz, menu de pausa, F5 |
+
+O estado "congelado" é o efeito `aurorion_utils:congelado`, e ele **não tem cura**: nem leite nem
+totem o removem (e congelado nem consegue beber). A decisão antiga de "montaria, não efeito"
+existia justamente por causa do leite. A montaria continua sendo o que prende; o efeito é o
+estado que o servidor, o cliente e outros mods consultam. O congelado só sai por:
+- `/unfreeze`;
+- fim do tempo;
+- `/effect clear` da staff.
+
+Por que o freeze antigo "não funcionava direito": ele só montava a pessoa na âncora, e **agachar
+desmonta** no Minecraft. Um Shift e acabou. Nada impedia bater, usar item ou trocar de slot.
+
+- **Morte:** o freeze sem prazo é lembrado (`FreezeData`) e reaplicado no respawn.
+- **Relog:** o efeito vai no save do jogador, e o tick do efeito (1×/s, só no congelado) monta de
+  novo.
+- **`/tp` da staff:** mesma coisa, o tick monta de novo onde a pessoa estiver.
+- **Reset de personagem:** solta.
+
+Quem vê de fora percebe o congelado: aparece um anel de geada no chão, em volta dele, com flocos
+caindo. Quem está congelado vê uma borda de geada na tela.
+
+**Outros mods congelam aplicando o efeito** pelo id `aurorion_utils:congelado`, sem importar
+classe nenhuma daqui. O Tempus Sistere do `aurorion-magia` usa isso: é o mesmo freeze, em área.
 
 ## Configuração
 
@@ -67,7 +100,7 @@ beamColorRgb = "9B30FF"
 invisibilityDurationTicks = 60
 ```
 
-`/freeze` não tem config própria — não há nada nele que faça sentido customizar por servidor.
+`/freeze` não tem config própria. O tempo é argumento do comando.
 
 ## Som
 
@@ -79,15 +112,17 @@ O `.ogg` do feixe **não vem com o código**. `assets/aurorion_utils/sounds.json
 
 ```
 entity/      AbductionBeamEntity (ancora visual + montaria + repulsao),
-             FreezeAnchorEntity (ancora invisivel generica, so montaria), ModEntities (registro)
+             FreezeAnchorEntity (montaria invisivel do freeze + geada no cliente), ModEntities (registro)
 client/      AbductionBeamRenderer (reaproveita BeaconRenderer.renderBeaconBeam),
-             FreezeAnchorRenderer (no-op — nunca aparece), UtilsClientEvents (registro)
+             FreezeAnchorRenderer (anel de geada aos pes), FreezeClientEvents (teclado travado),
+             FrostLayer (geada na tela do congelado), UtilsClientEvents (registro)
 sound/       ModSounds (registro do SoundEvent)
 abduction/   AbductionManager (maquina de estados HOLD/ASCEND/RETRACT), AbductionTicker,
              ActiveAbduction (estado em memoria de uma abducao rolando),
              AbductionOriginData (persistencia da origem, pro /abduzir voltar),
              TeleportSpot (posicao + dimensao + olhar)
-freeze/      FreezeManager (freeze/unfreeze via montaria)
+freeze/      FreezeManager (congelar/soltar, montaria, IA do mob), FrozenEffect (estado, sem cura),
+             FreezeEffects (registro), FreezeEvents (tudo que o congelado nao pode), FreezeData (freeze sem prazo)
 command/     AbductionCommand, FreezeCommand
 config/      AbductionConfig
 ```
@@ -98,8 +133,9 @@ config/      AbductionConfig
   no MCreator) usava blocos posicionados com base na posição do jogador — dava bugs de alinhamento
   e o efeito às vezes não desaparecia. Uma entidade tem ciclo de vida próprio (spawna, é dona da
   sua fase atual, se descarta sozinha): não há como "esquecer" de limpar.
-- **Montaria, não `MobEffect`, pra imobilidade.** Ver "Imobilidade real" acima — decisão explícita
-  do usuário pra não depender de algo que um balde de leite desfaz.
+- **Montaria prende, efeito sem cura marca o estado.** Ver "Imobilidade real" acima. A decisão
+  original (não depender de algo que um balde de leite desfaz) continua valendo: o efeito não tem
+  cura, e a montaria continua sendo o que segura no lugar.
 - **`FreezeAnchorEntity` e `AbductionBeamEntity` são classes irmãs, não uma herda da outra.** As
   duas usam a mesma ideia (montar numa âncora parada), mas têm ciclos de vida opostos quando
   ficam sem passageiro: a âncora de freeze se descarta sozinha nesse momento (`tick()` verifica);
@@ -150,3 +186,24 @@ deste monorepo. **Ainda não compilado** — mesma limitação de rede documenta
 ./gradlew :aurorion-utils:runClient
 ./gradlew :aurorion-utils:runServer
 ```
+
+### Validar o `/freeze`
+
+- [ ] `/freeze Nome`, `/freeze @a`, `/freeze @a[team=casa]` e `/freeze @a 10` (solta sozinho).
+- [ ] Congelado:
+  - não anda, não pula, não agacha;
+  - **Shift não desmonta**;
+  - não corre, não bate, não usa item, não quebra nem coloca bloco;
+  - não troca slot (números e roda), não troca de mão, não abre inventário;
+  - Q devolve o item.
+- [ ] Congelado olha em volta livremente, fica **em pé** (não sentado) e ainda usa chat, comandos
+  e voz.
+- [ ] Aviso "Você está congelado." aparece no lugar do "Aperte Shift para desmontar".
+- [ ] Balde de leite e totem não soltam; `/effect clear` solta.
+- [ ] Relogar congelado volta congelado.
+- [ ] Morrer congelado (sem prazo) renasce congelado.
+- [ ] `/tp` da staff num congelado: ele vai e é preso de novo no destino.
+- [ ] Mob congelado pelo Tempus Sistere não ataca e volta ao normal no fim, e mob que já era NoAI
+  continua NoAI.
+- [ ] Anel de geada visível para os outros; geada na tela do congelado.
+- [ ] `/abduzir` continua funcionando (usa o feixe dele, não a âncora do freeze).

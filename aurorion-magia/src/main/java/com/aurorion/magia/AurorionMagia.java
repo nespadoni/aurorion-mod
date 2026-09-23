@@ -3,6 +3,7 @@ package com.aurorion.magia;
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.magia.config.MagiaClientConfig;
 import com.aurorion.magia.config.MagiaConfig;
+import com.aurorion.magia.registry.MagiaCreativeTabs;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.registry.MagiaSpells;
 import com.mojang.logging.LogUtils;
@@ -37,6 +38,7 @@ public class AurorionMagia {
     public AurorionMagia(IEventBus modEventBus, ModContainer container) {
         MagiaSpells.SPELLS.register(modEventBus);
         MagiaEffects.EFFECTS.register(modEventBus);
+        MagiaCreativeTabs.TABS.register(modEventBus);
 
         AurorionConfigs.register(container, ModConfig.Type.SERVER, MagiaConfig.SPEC);
         AurorionConfigs.register(container, ModConfig.Type.CLIENT, MagiaClientConfig.SPEC);

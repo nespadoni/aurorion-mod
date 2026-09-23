@@ -1,6 +1,9 @@
 package com.aurorion.magia.config;
 
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.ModConfigSpec;
+
+import java.util.List;
 
 /** Config do servidor, em {@code config/aurorion/magia-server.toml}. */
 public final class MagiaConfig {
@@ -8,6 +11,7 @@ public final class MagiaConfig {
 
     public static final ModConfigSpec.BooleanValue STAFF_BYPASS;
     public static final ModConfigSpec.BooleanValue AUTHORITATIVE;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> FORBIDDEN_SPELLS;
     public static final ModConfigSpec.IntValue DOMINATION_RADIUS;
 
     public static final ModConfigSpec SPEC;
@@ -29,6 +33,16 @@ public final class MagiaConfig {
                         "false: o aprendido por fora continua valendo junto com as liberacoes do Aurorion.",
                         "Com true, deixe DefaultLearntSpells vazio no config do Iron's Restrictions.")
                 .define("authoritative", true);
+
+        FORBIDDEN_SPELLS = BUILDER
+                .comment(
+                        "Magias proibidas alem das do Aurorion (que ja vem marcadas). Proibida nao vem junto",
+                        "com a escola: so '/aurorion spells unlock spell <id>' a concede, uma a uma.",
+                        "O bloqueio de craft e de loot so vale para as magias do Aurorion; para as de outros",
+                        "addons, desligue 'allowCrafting' no config de magia do Iron's.",
+                        "Ids completos, ex.: [\"irons_spellbooks:black_hole\"]")
+                .defineListAllowEmpty("forbiddenSpells", List.of(), () -> "irons_spellbooks:black_hole",
+                        value -> value instanceof String id && ResourceLocation.tryParse(id) != null);
 
         BUILDER.pop();
         BUILDER.comment("Imperium Mentis.").push("imperium");

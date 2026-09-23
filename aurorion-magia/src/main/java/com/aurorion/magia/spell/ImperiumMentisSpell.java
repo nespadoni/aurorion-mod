@@ -1,22 +1,16 @@
 package com.aurorion.magia.spell;
 
-import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
-import io.redspace.ironsspellbooks.api.config.DefaultConfig;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.SchoolRegistry;
-import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastSource;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import io.redspace.ironsspellbooks.api.util.Utils;
-import io.redspace.ironsspellbooks.capabilities.magic.TargetEntityCastData;
-import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -49,39 +43,16 @@ import java.util.Optional;
  * <p>Escola padrao Eldritch (a mais proxima de "mente" no Iron's); ajustavel pelo config de magias do
  * Iron's.
  */
-public final class ImperiumMentisSpell extends AbstractSpell {
+public final class ImperiumMentisSpell extends AurorionSpell {
     private static final int RANGE = 16;
-    private static final float AIM_ASSIST = 0.3f;
-
-    private final ResourceLocation spellId = AurorionMagia.id("imperium_mentis");
-    private final DefaultConfig defaultConfig = new DefaultConfig()
-            .setMinRarity(SpellRarity.EPIC)
-            .setSchoolResource(SchoolRegistry.ELDRITCH_RESOURCE)
-            .setMaxLevel(3)
-            .setCooldownSeconds(45)
-            .build();
 
     public ImperiumMentisSpell() {
+        super("imperium_mentis", SchoolRegistry.ELDRITCH_RESOURCE, SpellRarity.EPIC, 3, 45, CastType.LONG);
         this.baseSpellPower = 1;
         this.spellPowerPerLevel = 1;
         this.baseManaCost = 60;
         this.manaCostPerLevel = 15;
         this.castTime = 30;
-    }
-
-    @Override
-    public ResourceLocation getSpellResource() {
-        return spellId;
-    }
-
-    @Override
-    public DefaultConfig getDefaultConfig() {
-        return defaultConfig;
-    }
-
-    @Override
-    public CastType getCastType() {
-        return CastType.LONG;
     }
 
     @Override
@@ -110,14 +81,13 @@ public final class ImperiumMentisSpell extends AbstractSpell {
 
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return Utils.preCastTargetHelper(level, entity, playerMagicData, this, RANGE, AIM_ASSIST, true,
-                target -> target != entity && !DamageSources.isFriendlyFireBetween(entity, target));
+        return aim(level, entity, playerMagicData, RANGE, false, target -> true);
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            LivingEntity target = resolveTarget(serverLevel, entity, playerMagicData);
+            LivingEntity target = target(serverLevel, entity, playerMagicData);
             if (target != null && target.isAlive()) {
                 imperium(entity, target, spellLevel);
             }
@@ -151,13 +121,5 @@ public final class ImperiumMentisSpell extends AbstractSpell {
     /** 4 s no nivel 1, +1 s por nivel. Curto de proposito: contra jogador, perder o controle irrita rapido. */
     private static int disorientationTicks(int spellLevel) {
         return 80 + 20 * (spellLevel - 1);
-    }
-
-    @Nullable
-    private static LivingEntity resolveTarget(ServerLevel level, LivingEntity caster, @Nullable MagicData magicData) {
-        if (magicData != null && magicData.getAdditionalCastData() instanceof TargetEntityCastData data) {
-            return data.getTarget(level);
-        }
-        return caster instanceof Mob mob ? mob.getTarget() : null;
     }
 }

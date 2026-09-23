@@ -49,3 +49,29 @@ type = "optional"
 versionRange = "1.21.1-5.2.0"
 ordering = "AFTER"
 side = "BOTH"
+
+# Opcional. Com ele, Genua Flecte forca a pose de joelhos (emote embutido no nosso jar); sem ele, o
+# ajoelhado fica agachado.
+[[dependencies.${mod_id}]]
+modId = "emotecraft"
+type = "optional"
+versionRange = "[2.4.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+# Opcional. Com ele, Vox Interdicta corta o microfone do alvo; sem ele, corta so o chat e a magia.
+[[dependencies.${mod_id}]]
+modId = "voicechat"
+type = "optional"
+versionRange = "1.21.1-2.5.0"
+ordering = "NONE"
+side = "BOTH"
+
+# Opcional. O Tempus Sistere congela com o freeze do /freeze (efeito aurorion_utils:congelado: montaria,
+# teclado zerado, acoes recusadas). Sem ele, cai na estase deste mod, que so tira andar e pular.
+[[dependencies.${mod_id}]]
+modId = "aurorion_utils"
+type = "optional"
+versionRange = "[0.1.0,)"
+ordering = "NONE"
+side = "BOTH"

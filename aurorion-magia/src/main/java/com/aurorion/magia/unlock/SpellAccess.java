@@ -1,6 +1,7 @@
 package com.aurorion.magia.unlock;
 
 import com.aurorion.magia.config.MagiaConfig;
+import com.aurorion.magia.spell.AurorionSpell;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
@@ -45,9 +46,26 @@ public final class SpellAccess {
     public static boolean canCast(ServerPlayer player, @Nullable AbstractSpell spell) {
         if (spell == null || spell == SpellRegistry.none()) return true;
         if (bypasses(player)) return true;
-        if (grantsOf(player).allows(spell.getSpellResource(), schoolOf(spell))) return true;
-        return !MagiaConfig.AUTHORITATIVE.get()
+        if (granted(grantsOf(player), spell)) return true;
+        // Aprendido por fora (manuscrito, eldritch) nunca vale para magia proibida.
+        return !MagiaConfig.AUTHORITATIVE.get() && !isForbidden(spell)
                 && MagicData.getPlayerMagicData(player).getSyncedData().isSpellLearned(spell);
+    }
+
+    /**
+     * Magia proibida: as do Aurorion marcadas como tal (Tempus Sistere, Mortem Dico, Dolor Universus)
+     * e as que a staff listar em {@code forbiddenSpells}. So a liberacao da propria magia as concede —
+     * nunca a da escola.
+     */
+    public static boolean isForbidden(AbstractSpell spell) {
+        return spell instanceof AurorionSpell ours && ours.isForbidden()
+                || MagiaConfig.FORBIDDEN_SPELLS.get().contains(spell.getSpellId());
+    }
+
+    private static boolean granted(SpellGrants grants, AbstractSpell spell) {
+        return isForbidden(spell)
+                ? grants.allowsForbidden(spell.getSpellResource())
+                : grants.allows(spell.getSpellResource(), schoolOf(spell));
     }
 
     public static boolean bypasses(ServerPlayer player) {
@@ -74,7 +92,7 @@ public final class SpellAccess {
 
         for (AbstractSpell spell : SpellRegistry.REGISTRY) {
             if (spell == SpellRegistry.none()) continue;
-            boolean allowed = everything || grants.allows(spell.getSpellResource(), schoolOf(spell));
+            boolean allowed = everything || granted(grants, spell);
             boolean learned = synced.isSpellLearned(spell);
             if (allowed) {
                 official.add(spell);

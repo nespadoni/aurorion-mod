@@ -47,6 +47,19 @@ class SpellGrantsTest {
     }
 
     @Test
+    void escolaNaoConcedeMagiaProibida() {
+        ResourceLocation universus = ResourceLocation.parse("aurorion_magia:dolor_universus");
+        SpellGrants grants = new SpellGrants();
+        grants.grant(GrantKind.SCHOOL, BLOOD);
+
+        assertTrue(grants.allows(universus, BLOOD));
+        assertFalse(grants.allowsForbidden(universus));
+
+        grants.grant(GrantKind.SPELL, universus);
+        assertTrue(grants.allowsForbidden(universus));
+    }
+
+    @Test
     void grantERevokeDizemSeMudaram() {
         SpellGrants grants = new SpellGrants();
 

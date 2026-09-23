@@ -1,13 +1,10 @@
 package com.aurorion.magia.spell;
 
-import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
-import io.redspace.ironsspellbooks.api.config.DefaultConfig;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.SchoolRegistry;
-import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastSource;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.api.spells.SpellAnimations;
@@ -15,11 +12,9 @@ import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import io.redspace.ironsspellbooks.api.util.AnimationHolder;
 import io.redspace.ironsspellbooks.api.util.Utils;
 import io.redspace.ironsspellbooks.capabilities.magic.MagicManager;
-import io.redspace.ironsspellbooks.capabilities.magic.TargetEntityCastData;
 import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -57,44 +52,21 @@ import java.util.Optional;
  *
  * <p>A escola padrao e Sangue; a staff muda pelo config de magias do Iron's, sem recompilar.
  */
-public final class DolorCruciatusSpell extends AbstractSpell {
+public final class DolorCruciatusSpell extends AurorionSpell {
     private static final int RANGE = 20;
-    private static final float AIM_ASSIST = 0.35f;
     /** Alcance para manter a canalizacao: um pouco de folga sobre o de mirar. */
     private static final double KEEP_RANGE_SQR = (RANGE * 1.25) * (RANGE * 1.25);
     private static final int EFFECT_TICKS = MagicManager.CONTINUOUS_CAST_TICK_INTERVAL + 5;
     private static final int PULSES_PER_SECOND = 20 / MagicManager.CONTINUOUS_CAST_TICK_INTERVAL;
 
-    private final ResourceLocation spellId = AurorionMagia.id("dolor_cruciatus");
-    private final DefaultConfig defaultConfig = new DefaultConfig()
-            .setMinRarity(SpellRarity.EPIC)
-            .setSchoolResource(SchoolRegistry.BLOOD_RESOURCE)
-            .setMaxLevel(5)
-            .setCooldownSeconds(35)
-            .build();
-
     public DolorCruciatusSpell() {
+        super("dolor_cruciatus", SchoolRegistry.BLOOD_RESOURCE, SpellRarity.EPIC, 5, 35, CastType.CONTINUOUS);
         this.baseSpellPower = 2;
         this.spellPowerPerLevel = 1;
         this.baseManaCost = 6;
         this.manaCostPerLevel = 2;
         // Em magia continua, castTime e a duracao maxima da canalizacao: 4 segundos.
         this.castTime = 80;
-    }
-
-    @Override
-    public ResourceLocation getSpellResource() {
-        return spellId;
-    }
-
-    @Override
-    public DefaultConfig getDefaultConfig() {
-        return defaultConfig;
-    }
-
-    @Override
-    public CastType getCastType() {
-        return CastType.CONTINUOUS;
     }
 
     @Override
@@ -132,14 +104,13 @@ public final class DolorCruciatusSpell extends AbstractSpell {
 
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return Utils.preCastTargetHelper(level, entity, playerMagicData, this, RANGE, AIM_ASSIST, true,
-                target -> target != entity && !DamageSources.isFriendlyFireBetween(entity, target));
+        return aim(level, entity, playerMagicData, RANGE, false, target -> true);
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            LivingEntity target = resolveTarget(serverLevel, entity, playerMagicData);
+            LivingEntity target = target(serverLevel, entity, playerMagicData);
             if (target != null && inReach(entity, target)) {
                 pulse(entity, target, spellLevel);
             }
@@ -165,15 +136,6 @@ public final class DolorCruciatusSpell extends AbstractSpell {
 
     private float pulseDamage(int spellLevel, @Nullable LivingEntity caster) {
         return getSpellPower(spellLevel, caster) * 0.5f;
-    }
-
-    @Nullable
-    private static LivingEntity resolveTarget(ServerLevel level, LivingEntity caster, @Nullable MagicData magicData) {
-        if (magicData != null && magicData.getAdditionalCastData() instanceof TargetEntityCastData data) {
-            return data.getTarget(level);
-        }
-        // Mob conjurador (os magos do Iron's) nao passa pelo preCastTargetHelper: mira o alvo da IA.
-        return caster instanceof Mob mob ? mob.getTarget() : null;
     }
 
     private static boolean inReach(LivingEntity caster, LivingEntity target) {

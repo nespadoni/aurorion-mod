@@ -3,9 +3,13 @@ package com.aurorion.magia.client;
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.config.MagiaClientConfig;
 import com.aurorion.magia.registry.MagiaEffects;
+import com.mojang.blaze3d.shaders.FogShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.world.level.material.FogType;
+import net.neoforged.fml.ModList;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -13,6 +17,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
@@ -40,12 +45,50 @@ public final class MagiaClientEvents {
 
     @EventBusSubscriber(modid = AurorionMagia.MOD_ID, value = Dist.CLIENT)
     public static final class GameBus {
+        /** Alcance da neblina no centro da zona do Lux Vorata, em blocos. */
+        private static final float DARK_FOG_DISTANCE = 5F;
+        private static final boolean EMOTECRAFT = ModList.get().isLoaded("emotecraft");
+
         private GameBus() {
         }
 
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             ClientSpellVisuals.tick();
+        }
+
+        /** Selos, aneis e correntes. Sai na primeira linha quando nao ha visual ativo. */
+        @SubscribeEvent
+        public static void onRenderLevel(RenderLevelStageEvent event) {
+            SigilRenderer.render(event);
+        }
+
+        /**
+         * Lux Vorata: dentro da zona, a neblina fecha em volta de quem esta la. Respeita neblina ja
+         * mais densa (agua, lava, cegueira, a floresta do {@code aurorion-areas}).
+         */
+        @SubscribeEvent
+        public static void onRenderFog(ViewportEvent.RenderFog event) {
+            if (event.getCamera().getFluidInCamera() != FogType.NONE
+                    || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN) return;
+            float weight = ClientSpellVisuals.darkness(event.getCamera().getPosition());
+            if (weight < .001F) return;
+            float far = event.getFarPlaneDistance();
+            float distance = far + (Math.min(far, DARK_FOG_DISTANCE) - far) * weight;
+            event.setFarPlaneDistance(distance);
+            event.setNearPlaneDistance(Math.min(event.getNearPlaneDistance(), distance * .1F));
+            event.setFogShape(FogShape.SPHERE);
+            event.setCanceled(true);
+        }
+
+        @SubscribeEvent
+        public static void onFogColor(ViewportEvent.ComputeFogColor event) {
+            if (event.getCamera().getFluidInCamera() != FogType.NONE) return;
+            float weight = ClientSpellVisuals.darkness(event.getCamera().getPosition()) * .9F;
+            if (weight < .001F) return;
+            event.setRed(event.getRed() * (1 - weight) + .02F * weight);
+            event.setGreen(event.getGreen() * (1 - weight));
+            event.setBlue(event.getBlue() * (1 - weight) + .04F * weight);
         }
 
         /**
@@ -74,9 +117,11 @@ public final class MagiaClientEvents {
          */
         @SubscribeEvent
         public static void onMovementInput(MovementInputUpdateEvent event) {
+            Input input = event.getInput();
+            // Genua Flecte sem Emotecraft: o ajoelhado fica agachado, e todos veem.
+            if (!EMOTECRAFT && event.getEntity().hasEffect(MagiaEffects.KNEELING)) input.shiftKeyDown = true;
             if (!event.getEntity().hasEffect(MagiaEffects.DISORIENTED)) return;
 
-            Input input = event.getInput();
             input.forwardImpulse = -input.forwardImpulse;
             input.leftImpulse = -input.leftImpulse;
             boolean up = input.up;

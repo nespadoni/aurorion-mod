@@ -34,6 +34,14 @@ public final class SpellGrants {
         return spells.contains(spell) || school != null && schools.contains(school);
     }
 
+    /**
+     * Magia proibida: so a liberacao da propria magia conta. Liberar a escola inteira nunca entrega
+     * uma magia proibida junto.
+     */
+    public boolean allowsForbidden(ResourceLocation spell) {
+        return spells.contains(spell);
+    }
+
     /** @return se mudou alguma coisa. */
     public boolean grant(GrantKind kind, ResourceLocation id) {
         return mutable(kind).add(id);

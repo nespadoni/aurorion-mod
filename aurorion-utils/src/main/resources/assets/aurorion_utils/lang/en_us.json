@@ -7,8 +7,13 @@
 
   "argument.aurorion_utils.cor.invalid": "Unknown beam color: %s (use a name from the list or an RRGGBB hex)",
 
-  "commands.aurorion_utils.freeze.success": "%s player(s) frozen.",
+  "commands.aurorion_utils.freeze.success": "%s of %s player(s) frozen until /unfreeze.",
+  "commands.aurorion_utils.freeze.success.timed": "%s of %s player(s) frozen for %s second(s).",
   "commands.aurorion_utils.unfreeze.success": "%s player(s) unfrozen.",
+
+  "aurorion_utils.congelado": "You are frozen.",
+  "aurorion_utils.descongelado": "You can move again.",
+  "effect.aurorion_utils.congelado": "Frozen",
 
   "subtitles.aurorion_utils.abduction_beam": "Abduction beam",
 
