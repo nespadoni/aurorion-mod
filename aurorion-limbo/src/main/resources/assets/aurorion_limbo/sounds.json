@@ -78,5 +78,32 @@
         "stream": true
       }
     ]
+  },
+  "transition.veil": {
+    "subtitle": "aurorion_limbo.subtitle.transition.veil",
+    "sounds": [
+      {
+        "name": "aurorion_limbo:epidemic/air",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "presence.whisper": {
+    "subtitle": "aurorion_limbo.subtitle.presence.whisper",
+    "sounds": [
+      {
+        "name": "aurorion_limbo:epidemic/whisper",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "door.guidance": {
+    "subtitle": "aurorion_limbo.subtitle.door.guidance",
+    "sounds": [
+      {
+        "name": "aurorion_limbo:epidemic/chime",
+        "attenuation_distance": 24
+      }
+    ]
   }
 }

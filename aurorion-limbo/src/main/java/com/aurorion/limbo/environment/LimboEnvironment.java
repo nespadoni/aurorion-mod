@@ -2,6 +2,8 @@ package com.aurorion.limbo.environment;
 
 import com.aurorion.limbo.exile.LimboManager;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.core.Holder;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -114,7 +116,8 @@ public final class LimboEnvironment {
         float volume = Mth.nextFloat(player.getRandom(), 0.55F, 0.85F);
         float pitch = Mth.nextFloat(player.getRandom(), 0.78F, 1.02F);
 
-        level.playSound(null, x, y, z, randomSound(player), SoundSource.HOSTILE, volume, pitch);
+        player.connection.send(new ClientboundSoundPacket(Holder.direct(randomSound(player)), SoundSource.HOSTILE,
+                x, y, z, volume, pitch, player.getRandom().nextLong()));
         NEXT_SOUND.put(player.getUUID(), now
                 + Mth.nextInt(player.getRandom(), SOUND_MIN_TICKS, SOUND_MAX_TICKS));
     }

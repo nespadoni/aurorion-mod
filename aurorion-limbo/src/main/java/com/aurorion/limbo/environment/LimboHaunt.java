@@ -3,6 +3,8 @@ package com.aurorion.limbo.environment;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.registry.LimboSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -117,8 +119,9 @@ public final class LimboHaunt {
 
         // Metade das vezes, sem som nenhum. Silencio e pior.
         if (random.nextBoolean()) {
-            level.playSound(null, spot.x, spot.y, spot.z, LimboSounds.AMBIENT_LIMBO.get(),
-                    SoundSource.AMBIENT, 0.22F, 0.55F + random.nextFloat() * 0.2F);
+            player.connection.send(new ClientboundSoundPacket(Holder.direct(LimboSounds.AMBIENT_LIMBO.get()),
+                    SoundSource.AMBIENT, spot.x, spot.y, spot.z, .22F,
+                    .55F + random.nextFloat() * .2F, random.nextLong()));
         }
     }
 
@@ -132,7 +135,11 @@ public final class LimboHaunt {
 
     /** So som, sem nada para ver. O mais barato e o que mais incomoda. */
     private static void whisper(ServerPlayer player, ServerLevel level, Vec3 spot, RandomSource random) {
-        level.playSound(null, spot.x, spot.y, spot.z, LimboSounds.AMBIENT_LIMBO.get(),
-                SoundSource.AMBIENT, 0.3F, 0.5F + random.nextFloat() * 0.35F);
+        // Occasional new texture; keep the existing ambient palette on the other occurrences.
+        boolean breath = random.nextInt(3) == 0;
+        var sound = breath ? LimboSounds.WHISPER.get() : LimboSounds.AMBIENT_LIMBO.get();
+        player.connection.send(new ClientboundSoundPacket(Holder.direct(sound), SoundSource.AMBIENT,
+                spot.x, spot.y, spot.z, breath ? .20F : .3F,
+                breath ? .95F : .5F + random.nextFloat() * .35F, random.nextLong()));
     }
 }

@@ -331,6 +331,22 @@ public final class SigilRenderer {
                     pose.popPose();
                 }
             }
+            case ASPECTUS_CAPTUS -> {
+                if (target == null || !(a.caster(level) instanceof LivingEntity caster)) return;
+                Vec3 eyes = target.getEyePosition(partial);
+                Vec3 captor = caster.getEyePosition(partial);
+                // O olho, de pe sobre a cabeca, encarando quem prende.
+                at(pose, camera, eyes.add(0, .75, 0));
+                faceTowards(pose, captor.subtract(eyes));
+                float open = Mth.clamp(life / 5f, 0, 1);
+                pose.scale(1, 1, open);
+                layered(out, pose, EYE, .42F, 0x8B3FC4, 0xE6D0FF, fade);
+                pose.popPose();
+                // O fio do olhar, fino, dos olhos do cativo aos do captor.
+                at(pose, camera, eyes);
+                segment(out, pose.last().pose(), Vec3.ZERO, captor.subtract(eyes), .012F, 0xB070E0, .35F * fade);
+                pose.popPose();
+            }
             case DOLOR_UNIVERSUS -> {
                 if (target == null) return;
                 at(pose, camera, target.getPosition(partial).add(0, .04, 0));

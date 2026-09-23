@@ -32,6 +32,9 @@ public final class LimboConfig {
     public static final ModConfigSpec.IntValue ORACLE_ROTATION_HOUR;
     public static final ModConfigSpec.ConfigValue<String> ORACLE_DIALOGUE;
 
+    public static final ModConfigSpec.IntValue RELIC_CHUNK_RADIUS;
+    public static final ModConfigSpec.IntValue DROP_PROTECTION_MINUTES;
+
     public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_NAMES;
 
@@ -226,11 +229,43 @@ public final class LimboConfig {
                 .define("dialogoDoOraculo", "aurorion_limbo:oraculo_do_limbo");
 
         BUILDER.pop();
+        BUILDER.comment(
+                "O espolio da morte: o Fio da Volta e o Relicario, vendidos pelo Oraculo.",
+                "Os dois so valem para a ULTIMA morte fora do Limbo, e nenhum dos dois cai quando voce morre."
+        ).push("espolio");
+
+        RELIC_CHUNK_RADIUS = BUILDER
+                .comment(
+                        "Raio, em chunks, em volta do lugar da morte onde o Relicario procura os drops.",
+                        "1 cobre uma area de 3x3 chunks (48 blocos): sobra para o que se espalhou na queda e",
+                        "para o que a agua arrastou um pouco. O que foi mais longe que isso nao volta.",
+                        "Cada chunk do raio fica carregado por alguns segundos durante o chamado, entao",
+                        "aumentar isto custa carregamento, nao so alcance."
+                )
+                .defineInRange("raioDoRelicarioEmChunks", 1, 0, 4);
+
+        DROP_PROTECTION_MINUTES = BUILDER
+                .comment(
+                        "Por quantos minutos os drops de uma morte nao somem sozinhos nem sao apagados pela",
+                        "limpeza periodica do aurorion_essentials.",
+                        "O despawn do vanilla so conta com o chunk carregado; a protecao contra a limpeza conta",
+                        "o tempo do servidor. Os dois usam este numero.",
+                        "Zero desliga: os drops voltam a sumir em 5 minutos, como no vanilla, e o Relicario",
+                        "passa a depender de sorte."
+                )
+                .defineInRange("minutosDeProtecaoDosDrops", 120, 0, 24 * 60);
+
+        BUILDER.pop();
         BUILDER.comment("O que o servidor conta, e para quem.").push("avisos");
 
+        // Chave nova ("anunciarQuedaNoChat", padrao false) no lugar de "anunciarQueda" (padrao true):
+        // a queda no Limbo e uma morte, e morte nao aparece mais para quem estava longe. Trocar a
+        // chave faz o arquivo ja gravado assumir o padrao novo sozinho.
         ANNOUNCE_FALL = BUILDER
-                .comment("Anuncia para o servidor inteiro quando alguem cai no Limbo.")
-                .define("anunciarQueda", true);
+                .comment(
+                        "Anuncia para o servidor inteiro quando alguem cai no Limbo.",
+                        "Falso (padrao): o que acontece longe de alguem nao aparece para ele.")
+                .define("anunciarQuedaNoChat", false);
 
         ANNOUNCE_NAMES = BUILDER
                 .comment(

@@ -251,7 +251,7 @@ A loja continua aberta, a menos que `fallback_blocks_trades` seja `true`. Mercad
 - `finish_food`: o mesmo acabamento do cozinheiro (Quality Food), com as mesmas exigências de lote.
 
 **Comandos** rodam como o servidor (nível 4), posicionados no jogador e com ele como executor:
-`@s` e `@p` apontam para quem pagou. Marcadores: `{player}`, `{uuid}`, `{npc}`, `{x}`, `{y}`, `{z}`.
+`@s` e `@p` apontam para quem pagou. Marcadores: `{player}`, `{uuid}`, `{npc}`, `{x}`, `{y}`, `{z}`. Como os comandos rodam com permissão 4, `{player}` só entra cru se o nome for de conta Mojang (`[A-Za-z0-9_]`, até 16); qualquer outro nome (possível em offline-mode, como `@a`) vira o UUID, para não virar seletor.
 A saída vai para o log. No tipo `command`, se **nenhum** comando der certo, o pagamento é devolvido.
 
 **Pagamento:** conferido e cobrado no mesmo tick; itens saem de qualquer slot do inventário

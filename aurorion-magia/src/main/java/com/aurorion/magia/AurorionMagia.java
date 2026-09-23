@@ -6,6 +6,7 @@ import com.aurorion.magia.config.MagiaConfig;
 import com.aurorion.magia.registry.MagiaCreativeTabs;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.registry.MagiaSpells;
+import com.aurorion.magia.registry.MagiaSounds;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -37,6 +38,7 @@ public class AurorionMagia {
 
     public AurorionMagia(IEventBus modEventBus, ModContainer container) {
         MagiaSpells.SPELLS.register(modEventBus);
+        MagiaSounds.SOUNDS.register(modEventBus);
         MagiaEffects.EFFECTS.register(modEventBus);
         MagiaCreativeTabs.TABS.register(modEventBus);
 

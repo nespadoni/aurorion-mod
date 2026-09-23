@@ -3,7 +3,7 @@ package com.aurorion.essentials.privacy;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Config do lado servidor, gravada em {@code config/aurorion/essentials-privacy.toml}. Controla
+ * Config do lado servidor, gravada em {@code config/aurorion/essentials-privacy-server.toml}. Controla
  * quem ve os avisos automaticos do jogo, para evitar meta-gaming (saber quem esta online, ver
  * conquistas alheias, acompanhar mortes) e para manter o chat limpo num servidor de 80 pessoas.
  *
@@ -40,10 +40,11 @@ public final class PrivacyConfig {
                 .defineEnum("advancementMessages", Visibility.NOBODY);
 
         DEATH_MESSAGES = BUILDER
-                .comment("\"Fulano foi morto por...\". ADMINS mantem o registro para quem modera sem",
-                        "encher o chat de todo mundo. Quem morreu continua vendo a causa na tela de morte,",
-                        "seja qual for o valor aqui.")
-                .defineEnum("deathMessages", Visibility.ADMINS);
+                .comment("ADMINS (padrao): aviso [admin] com TP e historico somente para OP nivel 2+.",
+                        "NOBODY esconde inclusive da staff. EVERYONE conserva o broadcast vanilla.",
+                        "Quem morreu continua vendo a causa na tela de morte, e o log do servidor continua",
+                        "registrando, seja qual for o valor aqui.")
+                .defineEnum("deathMessagesInChat", Visibility.ADMINS);
 
         RESTRICT_PRIVATE_MESSAGES = BUILDER
                 .comment("Restringe /msg, /tell e /w para uso exclusivo de operadores.")

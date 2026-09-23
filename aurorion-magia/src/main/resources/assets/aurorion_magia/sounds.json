@@ -1,0 +1,20 @@
+{
+  "mind.whisper": {
+    "subtitle": "aurorion_magia.subtitle.mind.whisper",
+    "sounds": [
+      {
+        "name": "aurorion_magia:epidemic/whisper",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "spell.release": {
+    "subtitle": "aurorion_magia.subtitle.spell.release",
+    "sounds": [
+      {
+        "name": "aurorion_magia:epidemic/air",
+        "attenuation_distance": 24
+      }
+    ]
+  }
+}

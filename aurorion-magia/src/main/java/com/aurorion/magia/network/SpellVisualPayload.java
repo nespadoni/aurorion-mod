@@ -98,7 +98,9 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         /** Raio verde ate o alvo e o selo da morte onde ele caiu. pos = pes do alvo, extra = altura dele. */
         MORTEM_DICO,
         /** Selo de sangue enorme sob quem conjura e feixes ate cada suspenso. Segue o conjurador; extra = raio. */
-        DOLOR_UNIVERSUS;
+        DOLOR_UNIVERSUS,
+        /** Olho sobre a cabeca do cativo e o fio do olhar ate quem o prende. */
+        ASPECTUS_CAPTUS;
 
         private static final Kind[] VALUES = values();
 

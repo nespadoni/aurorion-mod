@@ -107,9 +107,20 @@ public abstract class AurorionSpell extends AbstractSpell {
     protected boolean aim(Level level, LivingEntity caster, MagicData data, int range, boolean allowAllies,
                           Predicate<LivingEntity> filter) {
         return Utils.preCastTargetHelper(level, caster, data, this, range, AIM_ASSIST, true,
-                target -> target != caster
+                target -> target != caster && !untouchable(target)
                         && (allowAllies || !DamageSources.isFriendlyFireBetween(caster, target))
                         && filter.test(target));
+    }
+
+    /**
+     * Entidade marcada como invulneravel pela staff ou por outro mod — os NPCs de oficio do
+     * {@code aurorion-profissoes}, displays, manequins — nao e alvo de magia nenhuma. Sem isto, o Mortem
+     * Dico (que ignora invulnerabilidade de proposito) matava um NPC de loja, e o Tempus, o Imperium e
+     * a Transposicao o congelavam, dominavam ou arrastavam. Jogador fica de fora da regra: a
+     * invulnerabilidade dele e a do criativo, que tem regra propria em cada magia.
+     */
+    public static boolean untouchable(Entity entity) {
+        return entity.isInvulnerable() && !(entity instanceof Player);
     }
 
     /** O alvo escolhido na mira; para mob conjurador, o alvo da IA. */

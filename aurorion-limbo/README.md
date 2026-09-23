@@ -138,6 +138,34 @@ por consulta. Uma última linha interrompida por queda do processo é ignorada. 
 tentativas aparecem como `PRAZO_AJUSTADO` e `TENTATIVA_RESGATE`. O timestamp é o mesmo no arquivo
 e no webhook, mesmo se a entrega atrasar.
 
+## O espólio da morte — Fio da Volta e Relicário
+
+Dois itens de uso único que o Oráculo vai vender (a loja ainda não existe; por enquanto só se
+obtêm por `/give`). Os dois valem para a **última morte fora do Limbo do personagem atual** — a
+chave é o personagem, não a conta, então cada personagem de uma mesma conta tem a sua — e **não
+caem quando você morre**: estão na tag `aurorion_core:kept_on_death`, cuja regra mora no core.
+
+| Item | Id | O que faz |
+|---|---|---|
+| **Fio da Volta** | `aurorion_limbo:fio_da_volta` | Segurar por 2 s leva ao lugar exato da última morte, em qualquer dimensão |
+| **Relicário** | `aurorion_limbo:relicario` | Chama de volta para o inventário os drops daquela morte que ainda existem no mundo |
+
+- **Na morte**, o Limbo grava dimensão e posição exata, e marca cada drop (inclusive os do Curios)
+  com o id daquela morte. Os drops marcados ficam protegidos do despawn e da limpeza periódica do
+  `aurorion_essentials` por `minutosDeProtecaoDosDrops`.
+- **O Fio** leva à posição exata quando ela é segura. Quem morreu no ar, na água ou na lava vai para
+  o chão seguro mais próximo; sem chão nenhum, ou com a dimensão trancada pelo `aurorion_portais`,
+  o Fio recusa e **não é gasto**.
+- **O Relicário** chama de volta, nunca restaura: o que outro jogador pegou ficou com ele. A área da
+  morte é carregada por alguns segundos (ticket temporário), os itens marcados voltam para o
+  inventário e o que não couber cai aos pés. Se nada restou, o Relicário é devolvido.
+- Nenhum dos dois funciona no Limbo. Morrer no Limbo não substitui a morte anterior — o exilado
+  resgatado ainda pode buscar o espólio da queda.
+- Cada uso vira linha na auditoria (`FIO_USADO`, `RELICARIO_USADO`) com `morte=<id>`. O id é o
+  `DeathId` do core, o mesmo do `/deathhistory view` do essentials.
+- Quando o Relicário devolve algo, o core registra (`DeathClaims`) e o `/deathhistory restore`
+  daquela morte passa a exigir `confirm duplicar`.
+
 ## Comandos
 
 Todos são staff (nível 2).
@@ -164,10 +192,12 @@ Todos são staff (nível 2).
 | `blocosMinimo` / `blocosMaximo` | `1000` / `2000` | Intervalo do sorteio da caminhada |
 | `blocoDaMoldura` | `minecraft:crying_obsidian` | Só aparência; a saída é a proximidade |
 | `raioDaColeira` | `300` | Zero desliga |
-| `anunciarQueda` | `true` | Anuncia no servidor que alguém caiu |
+| `anunciarQuedaNoChat` | `false` | Anuncia no servidor que alguém caiu |
 | `anunciarNomes` | `false` | Se o anúncio diz **quem** caiu |
 | `webhookUrl` | `""` | Vazio desliga o push |
 | `tambemNoLog` | `true` | Repete a auditoria no log do servidor |
+| `raioDoRelicarioEmChunks` | `1` | Raio, em chunks, onde o Relicário procura os drops (1 = 3x3) |
+| `minutosDeProtecaoDosDrops` | `120` | Drops de morte não somem nem são limpos por esse tempo. Zero desliga |
 
 ⚠️ **O Limbo não recebe ninguém até você apontar o exílio para ele.** Em
 `config/aurorion_vidas-server.toml`:
@@ -179,7 +209,7 @@ exileDimension = "aurorion_limbo:limbo"
 O mod avisa no log do boot se isso não estiver feito. Não corrigimos sozinhos de propósito:
 sobrescrever a config de outro mod em silêncio é pior que o problema que resolveria.
 
-Para manter o anúncio anônimo, defina também `announceExile = false` no Vidas: o anúncio próprio
+Para manter o anúncio anônimo, defina também `announceExileInChat = false` no Vidas (já é o padrão): o anúncio próprio
 dele cita o nome e é independente de `anunciarNomes` do Limbo.
 
 ## A dimensão
@@ -420,8 +450,11 @@ narrate/   LimboNarrator (interface) → ImmersiveNarrator → NativeNarrator �
 network/   LimboNetwork, LimboStatusPayload (o painel), LimboNoticePayload (a cena)
 client/    ClientLimbo (estado da tela), LimboHudLayer, OracleScreen e LimboNpcThemes
 report/    AuditEvent, AuditLog (jsonl no save), DiscordSink (webhook assíncrono)
+recall/    DeathData (última morte por personagem), DeathRecall (marca de drops, Fio e Relicário)
+item/      SoulBondItem, ReturnThreadItem (Fio da Volta), ReliquaryItem (Relicário)
 environment/ LimboEnvironment — Darkness persistente e sons espaciais de baixa frequência
-event/     LimboServerEvents — morte, login, varredura de 1s, destrave da travessia
+event/     LimboServerEvents — morte, login, varredura de 1s, destrave da travessia;
+           RecallEvents — morte, drops e o relógio do Relicário
 command/   LimboCommand — a saída estável que o bot lê por RCON
 ```
 
@@ -452,3 +485,9 @@ E uma coisa que não é decisão, é só verificação que falta:
   primeiro item para a próxima sessão, e é rápido: ver [Como testar](#como-testar).
 
 Decisões de design e por quê: [SDD](../SDD.md).
+
+## Áudio de imersão
+
+Novos efeitos discretos do Epidemic, registros, triggers e validação pendente:
+[guia de áudio](../docs/IMMERSION-AUDIO.md). Trilha e sons anteriores preservados;
+sem compilação ou testes em jogo nesta máquina.

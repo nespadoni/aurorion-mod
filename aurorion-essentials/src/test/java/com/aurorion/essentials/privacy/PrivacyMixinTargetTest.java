@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Confere, no bytecode real do NeoForge desta build, que os quatro {@code @Redirect} de privacidade
- * ainda tem para onde apontar.
+ * Confere, no bytecode real do NeoForge desta build, que os {@code @Redirect} de privacidade
+ * ainda tem para onde apontar (seis no total: tres do {@code die}, entrada, saida e conquista).
  *
  * <p>Por que isto existe: um {@code @Redirect} que perde o alvo nao degrada — com
  * {@code defaultRequire: 1} no {@code aurorion_essentials.mixins.json}, ele <b>derruba o servidor no
@@ -34,11 +34,22 @@ class PrivacyMixinTargetTest {
     private static final String PLAYER_LIST = "net/minecraft/server/players/PlayerList";
     private static final String BROADCAST = "broadcastSystemMessage";
     private static final String BROADCAST_DESCRIPTOR = "(Lnet/minecraft/network/chat/Component;Z)V";
+    private static final String TEAM_DESCRIPTOR =
+            "(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;)V";
 
     @Test void theDeathMessageBroadcastIsStillInsideServerPlayerDie() throws IOException {
         assertEquals(1, broadcastCalls("net.minecraft.server.level.ServerPlayer", "die"),
                 "ServerPlayer#die precisa ter exatamente um broadcastSystemMessage para o DeathMessageMixin"
                         + " redirecionar. Zero = alvo sumiu; mais de um = o @Redirect pegaria os dois.");
+    }
+
+    /** As duas rotas de time do {@code die}: jogador em time com {@code deathMessageVisibility}. */
+    @Test void theTeamDeathBroadcastsAreStillInsideServerPlayerDie() throws IOException {
+        assertEquals(1, calls("net.minecraft.server.level.ServerPlayer", "die", "broadcastSystemToTeam", TEAM_DESCRIPTOR),
+                "alvo do DeathMessageMixin (so o time do morto)");
+        assertEquals(1, calls("net.minecraft.server.level.ServerPlayer", "die", "broadcastSystemToAllExceptTeam",
+                        TEAM_DESCRIPTOR),
+                "alvo do DeathMessageMixin (todos menos o time do morto)");
     }
 
     @Test void theJoinMessageBroadcastIsStillInsidePlaceNewPlayer() throws IOException {
@@ -64,7 +75,17 @@ class PrivacyMixinTargetTest {
 
     // --- Leitura do bytecode --------------------------------------------------------------------
 
+    @Test void singlePlayerSaveRemainsAvailableForDeathHistory() throws IOException {
+        MethodNode save = methodOf("net.minecraft.server.players.PlayerList", "save");
+        assertNotNull(save, "PlayerListSaveInvoker precisa de PlayerList#save");
+        assertEquals("(Lnet/minecraft/server/level/ServerPlayer;)V", save.desc);
+    }
+
     private static int broadcastCalls(String className, String methodName) throws IOException {
+        return calls(className, methodName, BROADCAST, BROADCAST_DESCRIPTOR);
+    }
+
+    private static int calls(String className, String methodName, String target, String descriptor) throws IOException {
         MethodNode method = methodOf(className, methodName);
         assertNotNull(method, className + "#" + methodName + " nao existe mais nesta versao");
 
@@ -72,8 +93,8 @@ class PrivacyMixinTargetTest {
         for (AbstractInsnNode instruction : method.instructions) {
             if (instruction instanceof MethodInsnNode call
                     && PLAYER_LIST.equals(call.owner)
-                    && BROADCAST.equals(call.name)
-                    && BROADCAST_DESCRIPTOR.equals(call.desc)) {
+                    && target.equals(call.name)
+                    && descriptor.equals(call.desc)) {
                 found++;
             }
         }

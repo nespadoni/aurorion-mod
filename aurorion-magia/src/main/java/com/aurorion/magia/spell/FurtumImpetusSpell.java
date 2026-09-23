@@ -89,7 +89,7 @@ public final class FurtumImpetusSpell extends AurorionSpell {
         if (releasing(entity, data)) {
             // Alvo opcional: sem ninguem na mira, o arranque e do proprio conjurador.
             Utils.preCastTargetHelper(level, entity, data, this, RANGE, AIM_ASSIST, false,
-                    target -> target != entity);
+                    target -> target != entity && !untouchable(target));
             return true;
         }
         Entity hit = aimAnything(level, entity);
@@ -175,7 +175,7 @@ public final class FurtumImpetusSpell extends AurorionSpell {
                 .range(RANGE)
                 .checkForBlocks(true)
                 .bbInflation(0.5f)
-                .filter(entity -> entity != caster && entity.isAlive() && !entity.isSpectator()
+                .filter(entity -> entity != caster && entity.isAlive() && !entity.isSpectator() && !untouchable(entity)
                         && (entity instanceof LivingEntity || entity instanceof Projectile || entity instanceof ItemEntity))
                 .build();
         return hit instanceof EntityHitResult entityHit ? entityHit.getEntity() : null;

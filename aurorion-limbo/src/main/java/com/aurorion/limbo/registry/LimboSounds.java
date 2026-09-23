@@ -46,6 +46,9 @@ public final class LimboSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMBIENT_LIMBO = register("ambient.limbo");
 
     public static final DeferredHolder<SoundEvent, SoundEvent> FINALE = register("finale");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VEIL = register("transition.veil");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WHISPER = register("presence.whisper");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GUIDANCE = register("door.guidance");
 
     private LimboSounds() {
     }

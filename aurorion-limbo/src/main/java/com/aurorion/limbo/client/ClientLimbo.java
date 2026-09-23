@@ -55,6 +55,7 @@ public final class ClientLimbo {
         noticeTitle = title("aurorion_limbo.title." + NOTICE_KEYS[kind]);
         noticeStart = System.nanoTime();
         revision++;
+        LimboSoundscape.notice(kind);
         var player = Minecraft.getInstance().player;
         if (player != null && kind != LimboNoticePayload.PUBLIC && kind != LimboNoticePayload.LEASH) {
             // SOUL_ESCAPE e declarado como Holder.Reference no vanilla e AMETHYST_BLOCK_CHIME como
@@ -66,6 +67,7 @@ public final class ClientLimbo {
 
     public static void tick() {
         var mc = Minecraft.getInstance();
+        LimboSoundscape.tick(stage, active(), door);
         long now = System.nanoTime();
         if (remaining >= 0 && !mc.isPaused()) {
             remaining = Math.max(0, remaining - Math.clamp((now - lastTickNanos) / 1_000_000L, 0, 5000));
@@ -117,6 +119,7 @@ public final class ClientLimbo {
         };
     }
     public static void clear() {
+        LimboSoundscape.clear();
         remaining = -1; notice = null; particleTick = 0; clockSecond = -1; revision++;
     }
 

@@ -56,11 +56,30 @@ public final class FreezeEvents {
         }
     }
 
+    /**
+     * {@code /unfreeze}, {@code /effect clear}: a pessoa sai do freeze de vez. Sem tirar da lista de
+     * "congelados sem prazo", um {@code /effect clear} soltava agora e congelava de novo no proximo
+     * respawn.
+     */
     @SubscribeEvent
     public static void onRemoved(MobEffectEvent.Remove event) {
-        if (event.getEffect().value() == FreezeEffects.FROZEN.get() && !event.getEntity().level().isClientSide) {
-            FreezeManager.release(event.getEntity());
-        }
+        if (event.getEffect().value() != FreezeEffects.FROZEN.get() || event.getEntity().level().isClientSide) return;
+        FreezeManager.release(event.getEntity());
+        if (event.getEntity() instanceof ServerPlayer player) FreezeData.get(player.server).remove(player.getUUID());
+    }
+
+    /**
+     * Prende na hora ao entrar e ao trocar de dimensao. O tick do efeito ja recoloca a montaria, mas
+     * so a cada segundo — e esse segundo livre era suficiente para dar uns passos depois de relogar.
+     */
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && FreezeManager.isFrozen(player)) FreezeManager.pin(player);
+    }
+
+    @SubscribeEvent
+    public static void onChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && FreezeManager.isFrozen(player)) FreezeManager.pin(player);
     }
 
     /** Congelado por comando sem prazo continua congelado depois de morrer. */
@@ -148,14 +167,20 @@ public final class FreezeEvents {
 
     /**
      * Jogar item fora. Cancelar o evento sozinho apagaria o item (o NeoForge ja o tirou do
-     * inventario); por isso ele volta para o inventario antes. Se nao couber, cai normalmente.
+     * inventario); por isso ele volta para o inventario antes.
+     *
+     * <p>{@code Inventory.add} pode aceitar so parte da pilha: o que coube sai da copia, e so o resto
+     * continua no item jogado. Antes, uma devolucao parcial deixava o item cair inteiro — duplicando o
+     * que ja tinha voltado para o inventario.
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onToss(ItemTossEvent event) {
         Player player = event.getPlayer();
         if (!FreezeManager.isFrozen(player) || player.level().isClientSide) return;
         ItemStack stack = event.getEntity().getItem().copy();
-        if (player.getInventory().add(stack)) event.setCanceled(true);
+        player.getInventory().add(stack);
+        if (stack.isEmpty()) event.setCanceled(true);
+        else event.getEntity().setItem(stack);
     }
 
     /** Mob congelado nao tem IA; isto cobre o resto (projetil ja lancado por um congelado, etc.). */

@@ -1421,3 +1421,17 @@ manter sincronizada a cada atualização, e o mesmo problema que a §3.2 resolve
   persistida (I: 30 dias; II: 14 dias, ambos configuraveis), permite a qualquer membro conceder uma
   vida a um personagem vivo inclusive no Limbo e notifica todos os administradores online, alem de
   registrar auditoria no log. Toda validacao ocorre por clique/pacote; nao existe trabalho por tick.
+
+
+## 18. Histórico de mortes e áudio contextual
+
+- Captura no evento de morte; confirmação do cancelamento final no fim do tick, antes de gravar.
+  Sem varredura de inventário/jogador em ticks comuns. Arquivos separados por morte e índice compacto
+  por conta; consultas paginadas não enviam o histórico inteiro ao cliente.
+- NBT dos objetos vivos só na thread do servidor; compressão/leitura/escrita numa fila dedicada limitada.
+  Restaurar exige backup e reserva persistente, revalidação de permissão/conexão/inventário e recibo.
+  NBT bruto é arquivo de diagnóstico, nunca carregado cegamente de volta no jogador.
+- Áudio novo do Limbo reutiliza avisos e assombrações existentes; sons psicológicos vão só ao dono.
+  Magias usam os efeitos já sincronizados e uma camada local limitada; nenhuma rede por tick.
+  Trilha e encerramento continuam com suas fontes originais.
+- Limites e validações: `aurorion-essentials/DEATH-HISTORY.md` e `docs/IMMERSION-AUDIO.md`.

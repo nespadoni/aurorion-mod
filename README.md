@@ -10,7 +10,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 |---|---|---|
 | Aurorion Core | [aurorion-core/](aurorion-core/) | **Biblioteca**: não adiciona nada ao jogo, mas todos os outros dependem dela |
 | Aurorion Talk | [aurorion-talk/](aurorion-talk/) | Balões de fala acima dos jogadores; tira as falas do HUD do chat e fecha o sussurro |
-| Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Comandos essenciais de servidor: `/fakename` (troca o nome exibido em todo o jogo) e cleanup periódico de itens/XP no chão |
+| Aurorion Essentials | [aurorion-essentials/](aurorion-essentials/) | Fakename, limpeza, privacidade e avisos de morte para a staff com TP e histórico recuperável |
 | Aurorion Utils | [aurorion-utils/](aurorion-utils/) | Utilitários diversos: `/abduzir` (puxa um jogador com uma animação de feixe de luz, com opção de trazer de volta) e `/freeze` (congela de verdade, com seletores e tempo opcional) |
 | Aurorion Aeonita | [aurorion-aeonita/](aurorion-aeonita/) | **Conteúdo**: itens e blocos de Aeonita, luz dinâmica, o Altar de Seleção e as capas de uniforme animadas (uma por casa) |
 | Aurorion Ethereal | [aurorion-ethereal/](aurorion-ethereal/) | **O mod central**: as cinco casas por datapack, a Cerimônia de Vinculação no altar com revelação animada, e o Projetor Aeônico com os rankings |
@@ -21,7 +21,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Limbo | [aurorion-limbo/](aurorion-limbo/) | A dimensão de exílio e o **prazo** que corre nela; a Porta do Esquecido para quem ninguém foi buscar, a **morte definitiva** com epílogo, e a auditoria que a staff lê por RCON ou webhook |
 | Aurorion Personagem | [aurorion-personagem/](aurorion-personagem/) | Nome e sobrenome numa tela no primeiro login, e a troca de personagem depois da morte definitiva: identidade nova, progressão zerada, conta preservada |
 | Aurorion Profissões | [aurorion-profissoes/](aurorion-profissoes/) | Médico, ferreiro, cozinheiro e arcanista: uma profissão por personagem, atendimento entre jogadores por interface e integrações com LSO, Quality Food e FoodSpoil |
-| Aurorion Magia | [aurorion-magia/](aurorion-magia/) | Addon do Iron's Spells: magia só com liberação da staff (`/aurorion spells`, por magia ou escola, espelhado no Iron's Restrictions) e dezesseis magias autorais (três proibidas, só por concessão da staff), com selos mágicos desenhados no cliente |
+| Aurorion Magia | [aurorion-magia/](aurorion-magia/) | Addon do Iron's Spells: magia só com liberação da staff (`/aurorion spells`, por magia ou escola, espelhado no Iron's Restrictions) e dezessete magias autorais (três proibidas, só por concessão da staff), com selos mágicos e telas de possessão desenhados no cliente |
 
 ### Conteúdo x comportamento
 
@@ -200,3 +200,6 @@ por invocação, sem mexer no arquivo global:
 `aurorion-talk` deriva do [Talk Balloons](https://github.com/CERBON-MODS/Talk-Balloons)
 (CERBON-MODS), licenciado sob **LGPL-3.0**. Por isso este repositório também é LGPL-3.0 — veja
 [LICENSE](LICENSE) e [CREDITS.md](CREDITS.md).
+
+Histórico administrativo de mortes: [guia](aurorion-essentials/DEATH-HISTORY.md).
+Áudio de imersão do Limbo e magias: [guia](docs/IMMERSION-AUDIO.md).

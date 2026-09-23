@@ -8,10 +8,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.material.FogType;
-import net.neoforged.fml.ModList;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -20,6 +23,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Tudo que as magias fazem na tela do jogador. Nenhuma destas reacoes depende de pacote nosso: o
@@ -39,7 +43,7 @@ public final class MagiaClientEvents {
 
         @SubscribeEvent
         public static void registerLayers(RegisterGuiLayersEvent event) {
-            event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, DisorientationLayer.ID, new DisorientationLayer());
+            event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, PossessionLayer.ID, new PossessionLayer());
         }
     }
 
@@ -55,6 +59,61 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             ClientSpellVisuals.tick();
+            Minecraft minecraft = Minecraft.getInstance();
+            LocalPlayer player = minecraft.player;
+            if (player == null || minecraft.level == null || minecraft.isPaused()) return;
+            forceGaze(player);
+            MagiaSoundscape.tick(player);
+        }
+
+        /**
+         * Aspectus Captus: o corpo e a cabeca do cativo viram para quem o prende, todo tick. A
+         * rotacao sai para o servidor pelo movimento normal, e os outros veem a cabeca virar. Entre
+         * um tick e outro, o mouse ainda mexe — a camera e corrigida quadro a quadro em
+         * {@link #onCameraAngles}.
+         */
+        private static void forceGaze(LocalPlayer player) {
+            float[] look = gazeAngles(player, 1.0f);
+            if (look == null) return;
+            player.setYRot(Mth.rotLerp(.65F, player.getYRot(), look[0]));
+            player.setXRot(Mth.lerp(.65F, player.getXRot(), look[1]));
+            player.setYHeadRot(player.getYRot());
+        }
+
+        /** {yaw, pitch} dos olhos do jogador ate os do captor, ou {@code null} sem Aspectus. */
+        @Nullable
+        private static float[] gazeAngles(LocalPlayer player, float partial) {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.level == null) return null;
+            Entity captor = ClientSpellVisuals.captorOf(minecraft.level, player.getId());
+            if (captor == null || !player.hasEffect(MagiaEffects.CAPTIVE)) return null;
+            Vec3 delta = captor.getEyePosition(partial).subtract(player.getEyePosition(partial));
+            double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
+            float yaw = (float) (Mth.atan2(delta.z, delta.x) * Mth.RAD_TO_DEG) - 90f;
+            float pitch = (float) -(Mth.atan2(delta.y, horizontal) * Mth.RAD_TO_DEG);
+            return new float[]{yaw, pitch};
+        }
+
+        /**
+         * Campo de visao: o olhar preso aperta (zoom no captor), o Imperium respira, a dor pulsa com o
+         * coracao, e o ajoelhado ve o mundo um pouco mais fechado. Respeita "Efeitos de distorcao".
+         */
+        @SubscribeEvent
+        public static void onFov(ViewportEvent.ComputeFov event) {
+            if (!event.usedConfiguredFov()) return;
+            Minecraft minecraft = Minecraft.getInstance();
+            LocalPlayer player = minecraft.player;
+            if (player == null) return;
+            double scale = minecraft.options.screenEffectScale().get();
+            double t = player.tickCount + event.getPartialTick();
+            double factor = 1;
+            if (player.hasEffect(MagiaEffects.CAPTIVE)) factor *= 1 - .25 * scale;
+            if (player.hasEffect(MagiaEffects.DISORIENTED)) factor *= 1 + Math.sin(t * .12) * .07 * scale;
+            if (player.hasEffect(MagiaEffects.CRUCIATUS)) {
+                factor *= 1 - Math.pow(Math.max(0, Math.sin(t * Math.PI * 2 / 10)), 6) * .06 * scale;
+            }
+            if (player.hasEffect(MagiaEffects.KNEELING)) factor *= 1 - .08 * scale;
+            if (factor != 1) event.setFOV(event.getFOV() * factor);
         }
 
         /** Selos, aneis e correntes. Sai na primeira linha quando nao ha visual ativo. */
@@ -100,12 +159,27 @@ public final class MagiaClientEvents {
         public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
-            if (player == null || !player.hasEffect(MagiaEffects.CRUCIATUS)) return;
+            if (player == null) return;
+            double t = player.tickCount + event.getPartialTick();
+            double distortion = minecraft.options.screenEffectScale().get();
 
-            double intensity = MagiaClientConfig.CAMERA_SHAKE.get() * minecraft.options.screenEffectScale().get();
+            // Olhar preso: a camera encara o captor quadro a quadro, sem o tranco do tick.
+            float[] look = gazeAngles(player, (float) event.getPartialTick());
+            if (look != null) {
+                event.setYaw(look[0]);
+                event.setPitch(look[1]);
+            }
+
+            // Imperium: a cabeca balanca devagar, como se outra pessoa a movesse.
+            if (player.hasEffect(MagiaEffects.DISORIENTED) && distortion > 0) {
+                event.setRoll((float) (event.getRoll() + Math.sin(t * .09) * 4 * distortion));
+                event.setYaw((float) (event.getYaw() + Math.sin(t * .05) * 1.5 * distortion));
+            }
+
+            if (!player.hasEffect(MagiaEffects.CRUCIATUS)) return;
+            double intensity = MagiaClientConfig.CAMERA_SHAKE.get() * distortion;
             if (intensity <= 0) return;
 
-            double t = player.tickCount + event.getPartialTick();
             event.setRoll((float) (event.getRoll() + (Math.sin(t * 2.9) * 2.2 + Math.sin(t * 7.3) * 0.9) * intensity));
             event.setYaw((float) (event.getYaw() + Math.sin(t * 3.7) * 0.7 * intensity));
             event.setPitch((float) (event.getPitch() + Math.cos(t * 4.3) * 0.7 * intensity));
@@ -134,6 +208,7 @@ public final class MagiaClientEvents {
 
         @SubscribeEvent
         public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+            MagiaSoundscape.clear();
             ClientSpellVisuals.clear();
         }
     }

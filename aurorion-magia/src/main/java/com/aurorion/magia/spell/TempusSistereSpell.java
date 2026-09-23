@@ -95,7 +95,7 @@ public final class TempusSistereSpell extends AurorionSpell {
         AABB box = caster.getBoundingBox().inflate(radius);
 
         List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class, box,
-                target -> target != caster && target.isAlive() && !target.isSpectator()
+                target -> target != caster && target.isAlive() && !target.isSpectator() && !untouchable(target)
                         && !(target instanceof Player player && player.isCreative())
                         && !Displacement.isImmune(target)
                         && target.distanceToSqr(caster) <= radiusSqr);

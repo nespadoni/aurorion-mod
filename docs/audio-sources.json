@@ -1,0 +1,52 @@
+[
+  {
+    "file": "aurorion-limbo/src/main/resources/assets/aurorion_limbo/sounds/epidemic/air.ogg",
+    "provider": "Epidemic Sound",
+    "source_id": "073cf199-3d1b-4a67-9128-a5abd13870ff",
+    "title": "Designed, Whoosh, Soft Airy",
+    "duration_seconds": 0.9,
+    "retrieved": "2026-09-23",
+    "format": "Ogg Vorbis mono 44100 Hz",
+    "processing": "90 Hz high-pass, 6.5 kHz low-pass, -24 LUFS target, fades; chime shortened to 7 s"
+  },
+  {
+    "file": "aurorion-limbo/src/main/resources/assets/aurorion_limbo/sounds/epidemic/whisper.ogg",
+    "provider": "Epidemic Sound",
+    "source_id": "def40515-46db-4e4b-811b-2d523636f9aa",
+    "title": "Designed, Eerie, Ghostly Voice Reversed 02",
+    "duration_seconds": 6.272,
+    "retrieved": "2026-09-23",
+    "format": "Ogg Vorbis mono 44100 Hz",
+    "processing": "90 Hz high-pass, 6.5 kHz low-pass, -24 LUFS target, fades; chime shortened to 7 s"
+  },
+  {
+    "file": "aurorion-limbo/src/main/resources/assets/aurorion_limbo/sounds/epidemic/chime.ogg",
+    "provider": "Epidemic Sound",
+    "source_id": "0c1ab706-6671-42b8-b6e1-8afe242e02d5",
+    "title": "Musical, Chime, Koshi Terra Chime, Ringing Bell Wind Chime 01",
+    "duration_seconds": 7.0,
+    "retrieved": "2026-09-23",
+    "format": "Ogg Vorbis mono 44100 Hz",
+    "processing": "90 Hz high-pass, 6.5 kHz low-pass, -24 LUFS target, fades; chime shortened to 7 s"
+  },
+  {
+    "file": "aurorion-magia/src/main/resources/assets/aurorion_magia/sounds/epidemic/air.ogg",
+    "provider": "Epidemic Sound",
+    "source_id": "073cf199-3d1b-4a67-9128-a5abd13870ff",
+    "title": "Designed, Whoosh, Soft Airy",
+    "duration_seconds": 0.9,
+    "retrieved": "2026-09-23",
+    "format": "Ogg Vorbis mono 44100 Hz",
+    "processing": "90 Hz high-pass, 6.5 kHz low-pass, -24 LUFS target, fades; chime shortened to 7 s"
+  },
+  {
+    "file": "aurorion-magia/src/main/resources/assets/aurorion_magia/sounds/epidemic/whisper.ogg",
+    "provider": "Epidemic Sound",
+    "source_id": "def40515-46db-4e4b-811b-2d523636f9aa",
+    "title": "Designed, Eerie, Ghostly Voice Reversed 02",
+    "duration_seconds": 6.272,
+    "retrieved": "2026-09-23",
+    "format": "Ogg Vorbis mono 44100 Hz",
+    "processing": "90 Hz high-pass, 6.5 kHz low-pass, -24 LUFS target, fades; chime shortened to 7 s"
+  }
+]

@@ -167,7 +167,7 @@ public final class DolorUniversusSpell extends AurorionSpell {
         double radiusSqr = radius * radius;
         double lift = 1.5 + 0.3 * (spellLevel - 1);
         List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class, caster.getBoundingBox().inflate(radius),
-                target -> target != caster && target.isAlive() && !target.isSpectator()
+                target -> target != caster && target.isAlive() && !target.isSpectator() && !untouchable(target)
                         && !(target instanceof Player player && player.isCreative())
                         && !Displacement.isImmune(target)
                         && target.distanceToSqr(caster) <= radiusSqr);

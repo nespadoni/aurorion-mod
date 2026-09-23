@@ -16,8 +16,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * O unico listener do {@code aurorion-core}, e ele existe para que os outros mods <b>nao</b>
- * precisem de um.
+ * O listener de ciclo de vida do {@code aurorion-core}, e ele existe para que os outros mods
+ * <b>nao</b> precisem de um. (A regra de itens mantidos na morte tem o seu, em
+ * {@code death/KeptOnDeath}.)
  *
  * <p>Antes, cada mod que guardava um {@link SavedDataAccess} tinha que lembrar de zera-lo ao parar o
  * servidor — dois dos quatro nao lembravam. Centralizar aqui transforma "cada autor precisa saber
@@ -38,6 +39,7 @@ public final class CoreServerEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         SavedDataAccess.invalidateAll();
+        com.aurorion.core.death.DeathId.reset();
     }
 
     /**

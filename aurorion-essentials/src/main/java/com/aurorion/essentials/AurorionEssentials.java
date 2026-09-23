@@ -2,6 +2,7 @@ package com.aurorion.essentials;
 
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.essentials.cleanup.CleanupConfig;
+import com.aurorion.essentials.death.DeathHistoryConfig;
 import com.aurorion.essentials.privacy.PrivacyConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.fml.ModContainer;
@@ -21,6 +22,7 @@ public class AurorionEssentials {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionEssentials(ModContainer container) {
+        AurorionConfigs.register(container, ModConfig.Type.SERVER, DeathHistoryConfig.SPEC, "death-history");
         AurorionConfigs.register(container, ModConfig.Type.SERVER, CleanupConfig.SPEC);
         AurorionConfigs.register(container, ModConfig.Type.SERVER, PrivacyConfig.SPEC, "privacy");
     }

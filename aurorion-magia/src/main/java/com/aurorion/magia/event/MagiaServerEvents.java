@@ -8,6 +8,7 @@ import com.aurorion.magia.compat.VoiceMute;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.spell.Binding;
 import com.aurorion.magia.spell.Domination;
+import com.aurorion.magia.spell.Gaze;
 import com.aurorion.magia.spell.IronBinding;
 import com.aurorion.magia.spell.Momentum;
 import com.aurorion.magia.spell.Seals;
@@ -316,6 +317,8 @@ public final class MagiaServerEvents {
             VoiceMute.unmute(entity.getUUID());
         } else if (effect == MagiaEffects.IRON_BOUND.get()) {
             IronBinding.release(entity.getUUID());
+        } else if (effect == MagiaEffects.CAPTIVE.get()) {
+            Gaze.release(entity);
         }
     }
 }

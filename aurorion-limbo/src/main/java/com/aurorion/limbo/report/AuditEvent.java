@@ -58,7 +58,11 @@ public record AuditEvent(
         /** O Vinculo de Alma foi usado no exilado. O RESGATE que fecha o registro vem logo depois. */
         VINCULO_USADO,
         /** A staff retirou do Limbo alguem que estava la sem possuir um exilio ativo. */
-        RETORNO_ADMIN
+        RETORNO_ADMIN,
+        /** O Fio da Volta levou alguem ao lugar da ultima morte. O detalhe diz onde. */
+        FIO_USADO,
+        /** O Relicario chamou de volta o espolio da ultima morte. O detalhe diz quanto voltou. */
+        RELICARIO_USADO
     }
 
     public JsonObject toJson() {
@@ -93,6 +97,8 @@ public record AuditEvent(
             case PASSAGEM_ABERTA -> "Uma passagem foi aberta para " + name + ".";
             case VINCULO_USADO -> name + " recebeu o Vinculo de Alma.";
             case RETORNO_ADMIN -> name + " foi retirado do Limbo pela staff.";
+            case FIO_USADO -> name + " usou o Fio da Volta.";
+            case RELICARIO_USADO -> name + " usou o Relicario.";
         };
         return detail.isEmpty() ? base : base + " (" + detail + ")";
     }

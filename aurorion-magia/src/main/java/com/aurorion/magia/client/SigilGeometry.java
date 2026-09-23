@@ -38,6 +38,8 @@ final class SigilGeometry {
     static final float[] SEAL_CLOCK = sealClock();
     /** Pentagrama dentro de dois aneis: Mortem Dico. */
     static final float[] SEAL_DEATH = sealDeath();
+    /** Olho amendoado com iris e raios: Aspectus Captus. */
+    static final float[] EYE = eye();
 
     private SigilGeometry() {
     }
@@ -258,6 +260,31 @@ final class SigilGeometry {
         mesh.circle(0, 0, .34F, 48);
         runes(mesh, 10, .96F, .03F);
         runes(mesh, 5, .18F, .05F);
+        return mesh.finish();
+    }
+
+    private static float[] eye() {
+        Mesh mesh = new Mesh();
+        // Palpebras: dois arcos que se encontram nas pontas.
+        int steps = 24;
+        for (int i = 0; i < steps; i++) {
+            float a = -1 + 2f * i / steps, b = -1 + 2f * (i + 1) / steps;
+            float ya = .55F * (1 - a * a), yb = .55F * (1 - b * b);
+            mesh.line(a, ya, b, yb);
+            mesh.line(a, -ya, b, -yb);
+        }
+        mesh.circle(0, 0, .38F, 32);
+        mesh.circle(0, 0, .16F, 20);
+        for (int i = 0; i < 8; i++) {
+            float angle = i * Mth.TWO_PI / 8;
+            mesh.line(.2F * Mth.cos(angle), .2F * Mth.sin(angle), .34F * Mth.cos(angle), .34F * Mth.sin(angle));
+        }
+        // Cilios caindo como lagrimas.
+        for (int i = -2; i <= 2; i++) {
+            float x = i * .3F;
+            float y = -.55F * (1 - x * x);
+            mesh.line(x, y, x * 1.1F, y - .18F);
+        }
         return mesh.finish();
     }
 

@@ -3,7 +3,6 @@
   "spell.aurorion_magia.dolor_cruciatus.guide": "Channel pure pain into a target in sight. While it lasts, they bleed quickly and the agony keeps them from walking or jumping.",
   "spell.aurorion_magia.imperium_mentis": "Imperium Mentis",
   "spell.aurorion_magia.imperium_mentis.guide": "Impose your will on a mind. Creatures fight for you; people lose their bearings and cannot cast or use what they hold.",
-
   "spell.aurorion_magia.vinculum_carnificis": "Executioner's Bond",
   "spell.aurorion_magia.vinculum_carnificis.guide": "Vinculum Carnificis. Where the target was struck becomes the anchor of an invisible chain. They may walk, fight and cast freely — but crossing the limit yanks them back, harder each time. Pearls and teleports won't save them.",
   "spell.aurorion_magia.furtum_impetus": "Stolen Momentum",
@@ -26,12 +25,10 @@
   "spell.aurorion_magia.lux_vorata.guide": "Lux Vorata. Snuffs out candles and campfires around you and leaves a thick darkness in their place for a few seconds.",
   "spell.aurorion_magia.ferrum_ligatum": "Bound Iron",
   "spell.aurorion_magia.ferrum_ligatum.guide": "Ferrum Ligatum. The target's armor and off-hand item are bound to their body: they won't come off, swap or drop.",
-
   "death.attack.aurorion_magia.dolor_cruciatus": "%1$s succumbed to the pain inflicted by %2$s",
   "death.attack.aurorion_magia.dolor_cruciatus.item": "%1$s succumbed to the pain inflicted by %2$s using %3$s",
   "death.attack.aurorion_magia.deiectio_corporis": "%1$s was driven into the ground by %2$s",
   "death.attack.aurorion_magia.deiectio_corporis.item": "%1$s was driven into the ground by %2$s using %3$s",
-
   "effect.aurorion_magia.cruciatus": "Cruciatus",
   "effect.aurorion_magia.dominado": "Dominated",
   "effect.aurorion_magia.desorientado": "Disoriented",
@@ -43,7 +40,6 @@
   "effect.aurorion_magia.silenciado": "Silenced",
   "effect.aurorion_magia.abatido": "Grounded",
   "effect.aurorion_magia.ferro_vinculado": "Bound Iron",
-
   "ui.aurorion_magia.dano_por_segundo": "%s damage per second",
   "ui.aurorion_magia.alcance": "Range: %s blocks",
   "ui.aurorion_magia.raio": "Radius: %s blocks",
@@ -59,7 +55,6 @@
   "ui.aurorion_magia.escuridao": "Darkness: %s",
   "ui.aurorion_magia.lacre_dono": "Only you can open",
   "ui.aurorion_magia.lacre_time": "You and your team can open",
-
   "aurorion_magia.nao_liberada": "You have not learned %s yet.",
   "aurorion_magia.inscricao_negada": "You cannot inscribe %s: this spell was not taught to you.",
   "aurorion_magia.mente_turva": "Your mind is not your own. No spell answers.",
@@ -78,13 +73,11 @@
   "aurorion_magia.lacre.broken": "The seal shatters.",
   "aurorion_magia.lacre.resisted": "The seal holds: a stronger hand made it.",
   "aurorion_magia.lacre.full": "There are too many seals in this world.",
-
   "commands.aurorion_magia.magia_desconhecida": "Unknown spell: %s",
   "commands.aurorion_magia.escola_desconhecida": "Unknown school: %s",
   "commands.aurorion_magia.liberado": "%s unlocked for %s of %s player(s).",
   "commands.aurorion_magia.bloqueado": "%s locked for %s of %s player(s).",
   "commands.aurorion_magia.lista": "%s — schools: %s | spells: %s",
-
   "spell.aurorion_magia.tempus_sistere": "Suspended Time",
   "spell.aurorion_magia.tempus_sistere.guide": "Tempus Sistere. Forbidden spell. Everything around you stops — people, creatures, arrows in flight — except you. No one moves, strikes or uses anything; they can only look. Radius and duration grow with mastery.",
   "spell.aurorion_magia.mortem_dico": "Final Sentence",
@@ -100,6 +93,10 @@
   "ui.aurorion_magia.morte_instantanea": "Instant death",
   "aurorion_magia.ninguem_em_volta": "There is no one around.",
   "aurorion_magia.congelado": "You are frozen.",
-
-  "itemGroup.aurorion_magia.magias": "Aurorion — Spells"
+  "itemGroup.aurorion_magia.magias": "Aurorion — Spells",
+  "spell.aurorion_magia.aspectus_captus": "Captive Gaze",
+  "spell.aurorion_magia.aspectus_captus.guide": "Aspectus Captus. \"Look at me when I speak to you.\" For a few seconds the target's gaze is locked on you: they walk slowly and can speak, but cannot look away.",
+  "effect.aurorion_magia.cativo": "Captive",
+  "aurorion_magia.subtitle.mind.whisper": "A whisper invades the mind",
+  "aurorion_magia.subtitle.spell.release": "Arcane pressure fades"
 }

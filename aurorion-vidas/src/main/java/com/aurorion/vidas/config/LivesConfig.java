@@ -61,9 +61,15 @@ public final class LivesConfig {
         BUILDER.pop();
         BUILDER.comment("Avisos.").push("avisos");
 
+        // Chave nova ("announceExileInChat", padrao false) no lugar de "announceExile" (padrao true):
+        // morte e exilio nao aparecem mais no chat de quem estava longe. Trocar a chave faz o arquivo
+        // ja gravado nos servidores assumir o padrao novo sozinho.
         ANNOUNCE_EXILE = BUILDER
-                .comment("Anuncia no chat do servidor quando alguem e exilado. Evento raro e dramatico — vale o barulho.")
-                .define("announceExile", true);
+                .comment(
+                        "Anuncia no chat de TODO MUNDO (com som) quando alguem e exilado.",
+                        "Falso (padrao): o que acontece longe de alguem nao aparece para ele. Quem foi exilado",
+                        "recebe o aviso dele de qualquer forma, em particular.")
+                .define("announceExileInChat", false);
 
         ANNOUNCE_LIFE_LOSS = BUILDER
                 .comment(

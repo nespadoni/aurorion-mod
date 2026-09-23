@@ -136,7 +136,7 @@ public final class Domination {
         if (masterEntity != null && candidate.isAlliedTo(masterEntity)) return true;
         if (candidate instanceof OwnableEntity pet && master.equals(pet.getOwnerUUID())) return true;
         if (candidate instanceof Player player && (player.isCreative() || player.isSpectator())) return true;
-        if (!candidate.attackable() || !mob.canAttack(candidate)) return true;
+        if (!candidate.attackable() || !mob.canAttack(candidate) || AurorionSpell.untouchable(candidate)) return true;
         return master.equals(masterOf(candidate));
     }
 

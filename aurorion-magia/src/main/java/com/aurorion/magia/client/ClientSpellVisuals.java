@@ -45,6 +45,8 @@ import java.util.List;
 public final class ClientSpellVisuals {
     private static final int MAX_ACTIVE = 64;
     private static final int MAX_BEAM_POINTS = 36;
+    private static final float MAX_EXTRA = 64;
+    private static final int MAX_TTL = 12_000;
 
     static final ParticleOptions BLOOD = dust(0.62f, 0.02f, 0.05f, 0.9f);
     static final ParticleOptions SHADOW = dust(0.07f, 0.0f, 0.03f, 1.1f);
@@ -74,6 +76,9 @@ public final class ClientSpellVisuals {
     public static void accept(SpellVisualPayload payload) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
+        // Um ponto que nao e numero travaria o calculo de particulas; descarta em vez de desenhar.
+        Vec3 at = payload.pos();
+        if (!Double.isFinite(at.x) || !Double.isFinite(at.y) || !Double.isFinite(at.z)) return;
 
         switch (payload.kind()) {
             case VINCULUM_SNAP -> {
@@ -142,6 +147,23 @@ public final class ClientSpellVisuals {
             if (at.distanceToSqr(eye) > maxDistance * maxDistance) continue;
             particles(level, active, target, stride, time);
         }
+    }
+
+    /** O visual deste tipo esta mirando a entidade {@code id} agora? (Mao do Algoz segurando voce.) */
+    static boolean targets(Kind kind, int id) {
+        for (Active active : ACTIVE) {
+            if (active.kind == kind && active.targetId == id) return true;
+        }
+        return false;
+    }
+
+    /** Quem prende o olhar da entidade {@code id} (Aspectus Captus), se alguem prende. */
+    @Nullable
+    static Entity captorOf(ClientLevel level, int id) {
+        for (Active active : ACTIVE) {
+            if (active.kind == Kind.ASPECTUS_CAPTUS && active.targetId == id) return active.caster(level);
+        }
+        return null;
     }
 
     /** Peso (0..1) da escuridao do Lux Vorata no ponto da camera; o maior entre as zonas ativas. */
@@ -346,6 +368,19 @@ public final class ClientSpellVisuals {
                     level.addParticle(DEATH_DARK, p.x, p.y + 0.2, p.z, 0, 0.02, 0);
                 }
             }
+            case ASPECTUS_CAPTUS -> {
+                if (target == null) return;
+                Vec3 eyes = target.getEyePosition();
+                if (a.age == 1) burst(level, eyes, VIOLET, 12 / stride + 1, 0.06);
+                if (time % (3L * stride) == 0 && a.caster(level) instanceof LivingEntity caster) {
+                    // O fio do olhar: um ponto escuro correndo dos olhos do cativo ate os do captor.
+                    Vec3 to = caster.getEyePosition();
+                    double t = (time % 12) / 12.0;
+                    Vec3 p = eyes.lerp(to, t);
+                    level.addParticle(VOID, p.x, p.y, p.z, 0, 0, 0);
+                    level.addParticle(ParticleTypes.WITCH, eyes.x, eyes.y + 0.35, eyes.z, 0, 0.01, 0);
+                }
+            }
             case DOLOR_UNIVERSUS -> {
                 if (target == null || time % (2L * stride) != 0) return;
                 double radius = a.extra;
@@ -546,9 +581,12 @@ public final class ClientSpellVisuals {
             this.casterId = payload.casterId();
             this.targetId = payload.targetId();
             this.pos = payload.pos();
-            this.extra = payload.extra();
-            this.ttl = payload.ttl();
-            this.ticksLeft = payload.ttl();
+            // Tetos defensivos: raio/intensidade ate 64 (o maior raio real e 18) e vida ate 10 min (o
+            // lacre mais longo e 9). Um valor absurdo no pacote nao vira um laco de particulas sem fim.
+            float extra = payload.extra();
+            this.extra = Float.isFinite(extra) ? Mth.clamp(extra, -MAX_EXTRA, MAX_EXTRA) : 0;
+            this.ttl = Mth.clamp(payload.ttl(), 0, MAX_TTL);
+            this.ticksLeft = this.ttl;
         }
 
         @Nullable

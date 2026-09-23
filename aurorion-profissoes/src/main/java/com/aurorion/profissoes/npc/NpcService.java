@@ -25,6 +25,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 import java.util.*;
 
 /**
@@ -55,6 +56,11 @@ public final class NpcService {
     private static final class Refusal extends RuntimeException {
         Refusal(String message) { super(message, null, false, false); }
     }
+
+    /** Nome de conta que pode ir cru num comando: o formato da Mojang. */
+    private static final Pattern SAFE_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
+    /** Acima disto, os cooldowns vencidos sao varridos antes de gravar mais um. */
+    private static final int COOLDOWN_SWEEP = 4096;
 
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
     private static final Map<String, Long> COOLDOWNS = new HashMap<>();
@@ -195,8 +201,11 @@ public final class NpcService {
                     definition.id(), service.name(), player.getGameProfile().getName());
             return Outcome.fail("O serviço não pôde ser realizado. O pagamento foi devolvido.");
         }
-        if (service.cooldownSeconds() > 0)
+        if (service.cooldownSeconds() > 0) {
+            // Sem isto o mapa so crescia (jogador x NPC x servico) ate o servidor reiniciar.
+            if (COOLDOWNS.size() >= COOLDOWN_SWEEP) COOLDOWNS.values().removeIf(until -> until <= now);
             COOLDOWNS.put(cooldownKey(player, definition, index), now + service.cooldownSeconds() * 1000L);
+        }
         player.inventoryMenu.broadcastChanges();
         AurorionProfissoes.LOGGER.info("NPC {}: servico '{}' para {} ({}).", definition.id(), service.name(),
                 player.getGameProfile().getName(), describe(entry.cost()));
@@ -270,15 +279,27 @@ public final class NpcService {
         return any;
     }
 
-    /** {@code {player}}, {@code {uuid}}, {@code {npc}}, {@code {x}}, {@code {y}}, {@code {z}}. */
+    /**
+     * {@code {player}}, {@code {uuid}}, {@code {npc}}, {@code {x}}, {@code {y}}, {@code {z}}.
+     *
+     * <p>Os comandos rodam com permissao 4, entao o que entra no texto nao pode virar sintaxe. Nome de
+     * conta Mojang e so {@code [A-Za-z0-9_]}, mas em offline-mode o vanilla aceita qualquer caractere
+     * visivel: um jogador chamado {@code @a} transformaria {@code /give {player} ...} em
+     * {@code /give @a ...}. Nome fora do padrao cai para o UUID, que o jogo tambem aceita como alvo.
+     */
     static String expand(String template, ServerPlayer player, NpcDefinition definition) {
         var pos = player.blockPosition();
-        return template.replace("{player}", player.getGameProfile().getName())
+        return template.replace("{player}", commandSafeName(player.getGameProfile().getName(), player.getUUID()))
                 .replace("{uuid}", player.getUUID().toString())
                 .replace("{npc}", definition.id())
                 .replace("{x}", Integer.toString(pos.getX()))
                 .replace("{y}", Integer.toString(pos.getY()))
                 .replace("{z}", Integer.toString(pos.getZ()));
+    }
+
+    /** O nome, se for so letras, numeros e _ (ate 16); senao o UUID. Nunca vira seletor nem sintaxe. */
+    static String commandSafeName(String name, UUID uuid) {
+        return SAFE_NAME.matcher(name).matches() ? name : uuid.toString();
     }
 
     // --- loja ----------------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 package com.aurorion.essentials.cleanup;
 
+import com.aurorion.core.level.ProtectedDrops;
 import com.aurorion.essentials.AurorionEssentials;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -58,7 +59,10 @@ public final class EntityCleanup {
         // entao esta lista temporaria e o custo seguro correto.
         List<Entity> doomed = new ArrayList<>();
         for (Entity entity : level.getEntities().getAll()) {
-            boolean shouldRemove = (cleanItems && entity instanceof ItemEntity)
+            // Drop protegido e espolio de morte que alguem ainda pode chamar de volta (Relicario do
+            // aurorion_limbo). A protecao tem prazo, entao o proximo ciclo depois dele o recolhe.
+            boolean shouldRemove = (cleanItems && entity instanceof ItemEntity item
+                    && !ProtectedDrops.isProtected(item))
                     || (cleanOrbs && entity instanceof ExperienceOrb);
             if (shouldRemove) doomed.add(entity);
         }

@@ -4,7 +4,7 @@ Addon do [Iron's Spells 'n Spellbooks](https://github.com/iron431/irons-spells-n
 Aurorion. **Nenhuma magia vem liberada**: a staff ensina magias soltas ou escolas inteiras por
 personagem, em aula, com `/aurorion spells`. O estado é espelhado no Iron's Restrictions.
 
-Dezesseis magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma **invocação** (o id). As magias
+Dezessete magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma **invocação** (o id). As magias
 servem para duelo, captura, interrogatório, perseguição, fuga, invasão e RP do dia a dia.
 
 Versões de referência (jars em `mod-servidor-referencia/`): Iron's Spells `1.21.1-3.16.3`, Iron's
@@ -90,6 +90,7 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Mão do Algoz | `manus_carnificis` | Evocação | contínua 5 s | segurar e arremessar |
 | Mão Vazia | `manus_vacua` | Evocação | instantânea | desarmar |
 | Prostração | `genua_flecte` | Eldritch | instantânea | forçar a ajoelhar |
+| Olhar Cativo | `aspectus_captus` | Eldritch | instantânea | prender o olhar em quem conjura |
 | Voz Interdita | `vox_interdicta` | Eldritch | instantânea | tirar a voz |
 | Lacre Profano | `sigillum_clausum` | Ender | instantânea | trancar porta/baú |
 | Queda Forçada | `deiectio_corporis` | Ender | instantânea | derrubar quem voa |
@@ -170,6 +171,14 @@ pula e não corre, mas **fala** e continua com as mãos livres.
 
 **Visual:** três anéis rúnicos descem sobre os ombros, fica um selo lilás no chão e sobem almas de
 tempos em tempos.
+
+### Olhar Cativo — *Aspectus Captus*
+"Olhe para mim quando eu falar com você." Por 2 s (+0,5 s por nível, 4 s no 5), a câmera e a
+cabeça do alvo ficam presas em quem conjurou. Ele anda devagar (−60%) e fala normalmente, mas não
+consegue desviar o rosto. Os outros veem a cabeça virar, porque a rotação sai do cliente do alvo
+como qualquer movimento. Em mob, a IA encara o conjurador.
+**Visual:** um olho violeta se abre sobre a cabeça do cativo, encarando o captor, com um fio de
+olhar ligando os dois. Na tela de quem está preso aparece um túnel escuro (ver "Possessão").
 
 ### Voz Interdita — *Vox Interdicta*
 Só em jogador, por 5 s + 1,25 s/nível (10 s no nível 5). Durante o efeito:
@@ -253,7 +262,7 @@ Para conceder a um personagem:
 /createScroll aurorion_magia:tempus_sistere 3        (pergaminho do nível desejado, do Iron's)
 ```
 
-No criativo, a aba **Aurorion — Magias** traz o pergaminho de cada uma das 16 magias em todos
+No criativo, a aba **Aurorion — Magias** traz o pergaminho de cada uma das 17 magias em todos
 os níveis, na ordem do registro (as proibidas por último). Ter o pergaminho não libera: conjurar
 continua exigindo a liberação, e a staff passa pelo `staffBypass`.
 
@@ -310,6 +319,25 @@ segundo, todos levam o dano ao mesmo tempo. Soltar o botão solta todo mundo.
 Os alvos são escolhidos uma vez, no início, com teto de 24.
 **Visual:** um selo de espinhos do tamanho do raio sob quem conjura, uma mancha escura de sangue no
 chão e feixes vermelho-negros da mão até cada suspenso.
+
+### Possessão: a tela de quem é controlado
+
+Quem está sob uma magia de controle vê e ouve diferente, para passar a ideia de possessão. Tudo é
+desenhado no cliente de quem é afetado (`PossessionLayer` e `MagiaClientEvents`). Não há shader, e
+por isso funciona com qualquer pacote de shaders. Não trafega nada novo pela rede. F1 não esconde o
+efeito.
+
+| Magia | Tela | Câmera | Som (só o afetado ouve) |
+|---|---|---|---|
+| Imperium Mentis | véu jade que respira, fios de marionete descendo do alto, ordens em latim surgindo e sumindo ("OBOEDI", "MEUS ES", "NON ES TUUS"...) | balança devagar, como se outro a movesse; o campo de visão respira | sussurros de caverna |
+| Dolor Cruciatus / Dolor Universus | vinheta de sangue batendo como coração, veias rachando das bordas para dentro e crescendo com o tempo | tremor, campo de visão pulsando com o coração | coração disparado |
+| Olhar Cativo | túnel escuro: só um círculo no centro fica visível | presa no captor, com zoom | coração lento |
+| Prostração | peso escuro descendo do alto, sombra lilás nas bordas | campo de visão mais fechado | almas escapando |
+| Voz Interdita | faixa negra subindo do pé da tela, com uma costura como boca fechada | — | — |
+| Mão do Algoz | bordas violeta apertando enquanto é segurado | — | — |
+
+Todos os efeitos de câmera respeitam a opção vanilla "Efeitos de distorção" (acessibilidade), e o
+tremor respeita também `cameraShake`.
 
 ### Trocar escola e outros números sem recompilar
 
@@ -429,8 +457,17 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   ponte com o Restrictions (inscrição, scroll, reconcile no login).
 
 **Por magia**
-- [ ] Aba **Aurorion — Magias** no criativo: 16 magias, todos os níveis; magia desligada no config do
+- [ ] Aba **Aurorion — Magias** no criativo: 17 magias, todos os níveis; magia desligada no config do
   Iron's some da aba.
+- [ ] Olhar Cativo:
+  - câmera presa no captor (inclusive se ele se mexer);
+  - anda devagar, fala;
+  - outros veem a cabeça virar;
+  - mob encara;
+  - olho e fio visíveis;
+  - túnel na tela do cativo.
+- [ ] Possessão: conferir cada linha da tabela "Possessão" com um segundo cliente sob cada magia.
+  Conferir também com shaders do pack, com F1 e com "Efeitos de distorção" em 0.
 - [ ] Proibidas:
   - não aparecem para craft nem em loot;
   - `unlock school irons_spellbooks:blood` **não** libera o Dolor Universus;
@@ -515,3 +552,9 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   os mesmos e serve de referência.
 - [ ] Desempenho com 20+ magias ativas na mesma área (teto de 64 visuais).
 - [ ] Ícones das magias e dos efeitos aparecem (arte provisória; troque por resource pack).
+
+## Áudio de imersão
+
+Novos efeitos discretos do Epidemic, registros, triggers e validação pendente:
+[guia de áudio](../docs/IMMERSION-AUDIO.md). Trilha e sons anteriores preservados;
+sem compilação ou testes em jogo nesta máquina.

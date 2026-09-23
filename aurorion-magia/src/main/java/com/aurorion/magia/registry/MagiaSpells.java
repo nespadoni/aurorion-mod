@@ -1,6 +1,7 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.spell.AspectusCaptusSpell;
 import com.aurorion.magia.spell.DeiectioCorporisSpell;
 import com.aurorion.magia.spell.DolorCruciatusSpell;
 import com.aurorion.magia.spell.DolorUniversusSpell;
@@ -44,6 +45,8 @@ public final class MagiaSpells {
             SPELLS.register("vinculum_carnificis", VinculumCarnificisSpell::new);
     public static final DeferredHolder<AbstractSpell, GenuaFlecteSpell> GENUA_FLECTE =
             SPELLS.register("genua_flecte", GenuaFlecteSpell::new);
+    public static final DeferredHolder<AbstractSpell, AspectusCaptusSpell> ASPECTUS_CAPTUS =
+            SPELLS.register("aspectus_captus", AspectusCaptusSpell::new);
     public static final DeferredHolder<AbstractSpell, VoxInterdictaSpell> VOX_INTERDICTA =
             SPELLS.register("vox_interdicta", VoxInterdictaSpell::new);
     public static final DeferredHolder<AbstractSpell, FerrumLigatumSpell> FERRUM_LIGATUM =

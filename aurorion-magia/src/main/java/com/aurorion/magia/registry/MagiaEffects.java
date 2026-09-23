@@ -2,6 +2,7 @@ package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.effect.BoundEffect;
+import com.aurorion.magia.effect.CaptiveEffect;
 import com.aurorion.magia.effect.CruciatusEffect;
 import com.aurorion.magia.effect.DisorientedEffect;
 import com.aurorion.magia.effect.DominatedEffect;
@@ -77,6 +78,10 @@ public final class MagiaEffects {
     /** Ferrum Ligatum: armadura e mao secundaria presas no corpo. */
     public static final DeferredHolder<MobEffect, MobEffect> IRON_BOUND = EFFECTS.register("ferro_vinculado",
             () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x8A8F99));
+
+    /** Aspectus Captus: o olhar preso em quem conjurou, andando devagar. */
+    public static final DeferredHolder<MobEffect, CaptiveEffect> CAPTIVE =
+            EFFECTS.register("cativo", CaptiveEffect::new);
 
     private MagiaEffects() {
     }

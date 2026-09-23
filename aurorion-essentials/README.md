@@ -35,18 +35,22 @@ Num servidor de 80 pessoas, os avisos automáticos do Minecraft são duas coisas
 ruído e **meta-gaming**. Saber quem acabou de entrar, quem morreu e quem desbloqueou o quê é
 informação que os personagens não deveriam ter.
 
-Config em `config/aurorion/essentials-privacy.toml`. Três valores possíveis: `EVERYONE` (padrão do
+Config em `config/aurorion/essentials-privacy-server.toml`. Três valores possíveis: `EVERYONE` (padrão do
 Minecraft), `ADMINS` (só OP nível 2+) e `NOBODY`.
 
 | Chave | Padrão | O que é |
 |---|---|---|
 | `joinLeaveMessages` | `NOBODY` | "Fulano entrou/saiu do jogo" |
 | `advancementMessages` | `NOBODY` | "Fulano completou a conquista..." |
-| `deathMessages` | `ADMINS` | "Fulano foi morto por..." |
+| `deathMessagesInChat` | `ADMINS` | "Fulano foi morto por..." (inclusive nas rotas de time do scoreboard) |
 | `restrictPrivateMessages` | `true` | `/msg`, `/tell` e `/w` só para operadores |
 
-**A morte é `ADMINS`, e não `NOBODY`, de propósito.** Num servidor com sistema de vidas, o registro
-de quem morreu é informação de moderação — o que não se quer é o chat de todo mundo acompanhando.
+**A morte é administrativa por padrão:** somente OP nível 2+ recebe
+`[admin] <causa da morte> (nome real) [TP] [Inventario]`. Jogadores comuns não recebem
+esse aviso. `NOBODY` continua disponível. Se uma versão anterior já gravou
+`deathMessagesInChat = "NOBODY"`, altere para `"ADMINS"` na config; valores existentes
+são preservados. O registro independe de `showDeathMessages` e da visibilidade de time.
+A tela de morte e o log continuam informando a causa.
 
 **O que não muda:**
 
@@ -56,9 +60,10 @@ de quem morreu é informação de moderação — o que não se quer é o chat d
   desbloqueou — ele nunca foi um broadcast.
 - O **log do servidor** continua registrando tudo.
 
-Os quatro pontos de interceptação são `@Redirect` em mixin, e não listeners, porque **o vanilla não
-expõe nenhum evento cancelável para essas mensagens**. Os quatro chamam o mesmo
-`PrivacyMessages.broadcast`: a regra de quem recebe mora num lugar só.
+Os broadcasts vanilla são interceptados por `@Redirect`: entrada, saída e conquista
+usam `PrivacyMessages.broadcast`; as três rotas de morte são bloqueadas em ADMINS/NOBODY.
+O aviso administrativo de morte vem de `DeathHistoryEvents`, após confirmar a morte e gravar
+o snapshot, sem depender do time ou da gamerule.
 
 > **Atenção ao atualizar:** `hideJoinLeaveMessages` e `hideAdvancementMessages` eram booleanos e
 > viraram os três estados acima. O NeoForge não migra chave que mudou de tipo — ele reescreve o
@@ -66,8 +71,8 @@ expõe nenhum evento cancelável para essas mensagens**. Os quatro chamam o mesm
 > só precisa reeditar quem tinha mudado os valores de propósito.
 
 > **Fora do escopo desta config:** o `aurorion-vidas` faz os próprios anúncios de perda de vida e
-> exílio, com as chaves `announceLifeLoss` e `announceExile` na config dele. São mensagens do
-> sistema de vidas, não do vanilla, e se desligam por lá.
+> exílio, com as chaves `announceLifeLoss` e `announceExileInChat` na config dele, e o
+> `aurorion-limbo` anuncia a queda com `anunciarQuedaNoChat`. Os três vêm desligados.
 
 ## `/ajuda`
 
@@ -204,7 +209,7 @@ exemplo, um servidor com fazenda de XP grande pode querer limpar só os itens e 
 
 ## Status
 
-Versão 0.3.0. Compila e os testes do módulo passam; as versões anteriores já rodam na VPS, então o
+Versão anterior 0.3.0: compilação e testes já validados; as versões anteriores já rodam na VPS, então o
 fakename, o cleanup e o esconderijo de entrada/saída e conquista estão confirmados em jogo.
 
 O que entrou nesta versão e ainda precisa de uma passada no servidor:
@@ -214,9 +219,9 @@ O que entrou nesta versão e ainda precisa de uma passada no servidor:
   (conferido com `javap` no NeoForge 21.1.248). Conferir que quem morreu continua vendo a causa na
   tela de morte e que um OP recebe a linha no chat.
 - **Migração da config de privacidade.** Na primeira subida, conferir no log que o
-  `essentials-privacy.toml` foi reescrito com as três chaves novas — as antigas eram booleanas.
+  `essentials-privacy-server.toml` foi reescrito com as três chaves novas — as antigas eram booleanas.
 - **Times de scoreboard.** Se o servidor passar a usar times com `deathMessageVisibility` diferente
-  de `ALWAYS`, as duas rotas de time do `die` saem por fora desta config.
+  de `ALWAYS`, conferir as duas rotas protegidas e o aviso administrativo único.
 - **`/ajuda`.** Conferir com um jogador não-OP e com nenhum OP online, e checar a linha
   correspondente no log do servidor nos dois casos.
 
@@ -225,3 +230,17 @@ O que entrou nesta versão e ainda precisa de uma passada no servidor:
 ./gradlew :aurorion-essentials:runClient
 ./gradlew :aurorion-essentials:runServer
 ```
+
+## Histórico administrativo de mortes
+
+Esta implementação **ainda não foi compilada nem testada em jogo**.
+Comandos, limites e roteiro de validação: [DEATH-HISTORY.md](DEATH-HISTORY.md).
+
+- `/deathhistory <nome|UUID> [pagina]`: mortes, inclusive de jogadores offline.
+- `/deathhistory view <id> [pagina]`: inventário somente para consulta.
+- `/deathhistory tp <id>`: teleporte ao local da morte.
+- `/deathhistory give <id> <indice> <destinatario> confirm`: recupera uma pilha em slot livre.
+- `/deathhistory restore <id> <destinatario> confirm`: restaura inventário, equipamento,
+  ender chest, Curios, efeitos, XP e fome, criando backup antes. O backup também aceita consulta/restauração.
+
+Tudo exige OP 2+. Não há devolução automática nem alteração de drops/keepInventory.

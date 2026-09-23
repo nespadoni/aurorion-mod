@@ -72,7 +72,7 @@ ele só precisa chamar `LivesManager.addLives(...)`.
 | `ignoreCreative` | `true` | Morte em criativo/espectador não gasta vida |
 | `exileDimension` | `"minecraft:the_nether"` | Para onde vai quem zerou |
 | `blockExileExit` | `true` | Exilado não sai nem com o trem aberto |
-| `announceExile` | `true` | Anuncia o exílio no chat do servidor |
+| `announceExileInChat` | `false` | Anuncia o exílio no chat de todo mundo (com som) |
 | `announceLifeLoss` | `false` | Anuncia **cada** vida perdida. Desligado porque com 90 jogadores morte é rotina e o vanilla já anuncia a morte |
 
 `config/aurorion_vidas-client.toml`:

@@ -3,7 +3,6 @@
   "spell.aurorion_magia.dolor_cruciatus.guide": "Canalize dor pura num alvo à vista. Enquanto durar, ele sangra rápido e a agonia não o deixa andar nem pular.",
   "spell.aurorion_magia.imperium_mentis": "Imperium Mentis",
   "spell.aurorion_magia.imperium_mentis.guide": "Imponha sua vontade a uma mente. Criaturas passam a lutar por você; pessoas perdem o rumo, não conseguem conjurar nem usar o que têm nas mãos.",
-
   "spell.aurorion_magia.vinculum_carnificis": "Vínculo do Carrasco",
   "spell.aurorion_magia.vinculum_carnificis.guide": "Vinculum Carnificis. O ponto onde o alvo foi atingido vira a âncora de uma corrente invisível. Ele anda, luta e conjura à vontade — mas quem cruza o limite é arrancado de volta, cada vez com mais força. Pérolas e teleportes não o salvam.",
   "spell.aurorion_magia.furtum_impetus": "Sequestro de Impulso",
@@ -26,12 +25,10 @@
   "spell.aurorion_magia.lux_vorata.guide": "Lux Vorata. Apaga velas e fogueiras em volta e deixa uma escuridão espessa no lugar por alguns segundos.",
   "spell.aurorion_magia.ferrum_ligatum": "Ferro Vinculado",
   "spell.aurorion_magia.ferrum_ligatum.guide": "Ferrum Ligatum. A armadura e o que está na mão secundária do alvo ficam presos ao corpo: não saem, não trocam, não caem.",
-
   "death.attack.aurorion_magia.dolor_cruciatus": "%1$s sucumbiu à dor imposta por %2$s",
   "death.attack.aurorion_magia.dolor_cruciatus.item": "%1$s sucumbiu à dor imposta por %2$s usando %3$s",
   "death.attack.aurorion_magia.deiectio_corporis": "%1$s foi cravado no chão por %2$s",
   "death.attack.aurorion_magia.deiectio_corporis.item": "%1$s foi cravado no chão por %2$s usando %3$s",
-
   "effect.aurorion_magia.cruciatus": "Cruciatus",
   "effect.aurorion_magia.dominado": "Dominado",
   "effect.aurorion_magia.desorientado": "Desorientado",
@@ -43,7 +40,6 @@
   "effect.aurorion_magia.silenciado": "Silenciado",
   "effect.aurorion_magia.abatido": "Abatido",
   "effect.aurorion_magia.ferro_vinculado": "Ferro Vinculado",
-
   "ui.aurorion_magia.dano_por_segundo": "%s de dano por segundo",
   "ui.aurorion_magia.alcance": "Alcance: %s blocos",
   "ui.aurorion_magia.raio": "Raio: %s blocos",
@@ -59,7 +55,6 @@
   "ui.aurorion_magia.escuridao": "Escuridão: %s",
   "ui.aurorion_magia.lacre_dono": "Só você abre",
   "ui.aurorion_magia.lacre_time": "Você e o seu time abrem",
-
   "aurorion_magia.nao_liberada": "Você ainda não aprendeu %s.",
   "aurorion_magia.inscricao_negada": "Você não pode inscrever %s: essa magia não foi ensinada a você.",
   "aurorion_magia.mente_turva": "Sua mente não é sua. Nenhuma magia responde.",
@@ -78,13 +73,11 @@
   "aurorion_magia.lacre.broken": "O lacre se parte.",
   "aurorion_magia.lacre.resisted": "O lacre resiste: foi feito por mão mais forte.",
   "aurorion_magia.lacre.full": "Há lacres demais neste mundo.",
-
   "commands.aurorion_magia.magia_desconhecida": "Magia desconhecida: %s",
   "commands.aurorion_magia.escola_desconhecida": "Escola desconhecida: %s",
   "commands.aurorion_magia.liberado": "%s liberado para %s de %s jogador(es).",
   "commands.aurorion_magia.bloqueado": "%s bloqueado para %s de %s jogador(es).",
   "commands.aurorion_magia.lista": "%s — escolas: %s | magias: %s",
-
   "spell.aurorion_magia.tempus_sistere": "Tempo Suspenso",
   "spell.aurorion_magia.tempus_sistere.guide": "Tempus Sistere. Magia proibida. Tudo ao seu redor para — pessoas, criaturas, flechas no ar —, menos você. Ninguém anda, bate ou usa nada; só consegue olhar. O raio e o tempo crescem com o domínio.",
   "spell.aurorion_magia.mortem_dico": "Sentença Final",
@@ -100,6 +93,10 @@
   "ui.aurorion_magia.morte_instantanea": "Morte instantânea",
   "aurorion_magia.ninguem_em_volta": "Não há ninguém em volta.",
   "aurorion_magia.congelado": "Você está congelado.",
-
-  "itemGroup.aurorion_magia.magias": "Aurorion — Magias"
+  "itemGroup.aurorion_magia.magias": "Aurorion — Magias",
+  "spell.aurorion_magia.aspectus_captus": "Olhar Cativo",
+  "spell.aurorion_magia.aspectus_captus.guide": "Aspectus Captus. \"Olhe para mim quando eu falar com você.\" Por alguns segundos, o olhar do alvo fica preso em você: ele anda devagar e fala, mas não consegue desviar o rosto.",
+  "effect.aurorion_magia.cativo": "Cativo",
+  "aurorion_magia.subtitle.mind.whisper": "Um sussurro invade a mente",
+  "aurorion_magia.subtitle.spell.release": "A pressão arcana se desfaz"
 }
