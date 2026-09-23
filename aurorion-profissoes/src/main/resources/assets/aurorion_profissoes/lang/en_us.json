@@ -1,3 +1,4 @@
 {
-  "message.aurorion_profissoes.enchant.third_option_requires_arcanist": "The third enchanting-table option requires the Arcanist profession."
+  "message.aurorion_profissoes.enchant.third_option_requires_arcanist": "The third enchanting-table option requires the Arcanist profession.",
+  "entity.aurorion_profissoes.npc": "Profession NPC"
 }

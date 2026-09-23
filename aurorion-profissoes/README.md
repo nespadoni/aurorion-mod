@@ -151,6 +151,120 @@ Ele é pulado sem `AURORION_FOODSPOIL_JAR`.
   Usa as receitas reais do jogo; não inventa amplificadores ou durações além delas.
 - Suportes automáticos também não produzem esses dois aprimoramentos.
 
+## NPCs de ofício
+
+NPCs que cobrem o atendimento **quando não há um profissional jogador por perto**. Configurados
+inteiramente no servidor, em `config/aurorion/npcs.json` — sem rebuild. Na primeira subida sem o
+arquivo, o exemplo embutido (médico, ferreiro, cozinheira, arcanista e mercador geral) é copiado.
+
+Clique direito no NPC abre a tela do ofício: **Comprar itens**, **Serviços e cuidados** e
+**Conversar**. O cliente só desenha; preço, estoque, saldo, distância (8 blocos) e regras são
+conferidos de novo no servidor a cada escolha.
+
+### Comandos da staff (nível 2)
+
+```text
+/npc criar <id>           invoca o NPC na sua posição, olhando para onde você olha
+/npc definir <id>         troca o id do NPC mais próximo (até 4 blocos)
+/npc remover              remove o NPC mais próximo (até 4 blocos); /kill também funciona
+/npc listar               ids carregados e avisos do arquivo
+/npc recarregar           relê o JSON e atualiza nome/skin dos NPCs carregados
+/npc estoque <id> repor   repõe o estoque das ofertas limitadas
+```
+
+A entidade só guarda o `id`; nome, skin, serviços e loja vêm do JSON. Editar e recarregar muda
+todos os corpos daquele id. Um JSON que nem é JSON **não** derruba os NPCs já carregados.
+
+### Plantão: o NPC não concorre com jogadores
+
+Se um jogador com a mesma `profession` estiver a até `fallback_radius` blocos do NPC (padrão 64;
+`-1` = servidor inteiro; `0` = desliga), os **serviços** ficam bloqueados e a tela diz quem procurar.
+A loja continua aberta, a menos que `fallback_blocks_trades` seja `true`. Mercadores
+(`"profession": "mercador"`) nunca bloqueiam.
+
+### Formato
+
+```json
+{
+  "npcs": [
+    {
+      "id": "medico_principal",
+      "display_name": "Médico do Vilarejo",
+      "title": "Casa de Cura",
+      "profession": "medico",
+      "skin": "meupack:textures/entity/npc/medico.png",
+      "slim_skin": false,
+      "greeting": "Sente-se. Deixe-me ver esses ferimentos.",
+      "dialogue": ["Falas mostradas em Conversar."],
+      "adm_dialogue": "",
+      "fallback_radius": 64,
+      "fallback_blocks_trades": false,
+      "services": [
+        {
+          "name": "Cura Completa",
+          "description": "Trata todas as partes do corpo.",
+          "action_type": "command",
+          "command": "bodydamage heal {player} all 100",
+          "cost_item": "minecraft:emerald",
+          "cost_amount": 5,
+          "cost_money": "2,5",
+          "cooldown_seconds": 60
+        }
+      ],
+      "trades": [
+        {
+          "id": "espada",
+          "item_id": "minecraft:diamond_sword",
+          "components": "[enchantments={levels:{\"minecraft:sharpness\":2}}]",
+          "nbt_data": "{marca:1b}",
+          "amount": 1,
+          "price_item": "minecraft:emerald",
+          "price_amount": 10,
+          "price_money": "5",
+          "max_stock": 5,
+          "restock": "daily"
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Campo | Observação |
+|---|---|
+| `profession` | `medico`, `ferreiro`, `cozinheiro`, `arcanista`, `corretor`, `mercador`/`nenhuma`. Aceita `doctor`, `blacksmith`, `chef`, `arcanist`, `alquimista`, `merchant`. |
+| `skin` | Textura 64×64 de resource pack. Vazio: Steve/Alex. Caminho inexistente aparece como textura faltando. |
+| `action_type` | `command`, `heal`, `repair`, `finish_food`. Sem o campo: `command` se houver comando. |
+| `command` / `commands` | Um texto ou lista (até 8); `/` inicial opcional. Rodam em qualquer tipo de ação. |
+| `cost_*` / `price_*` | `_item` (+ `_amount`, padrão 1) e/ou `_money` em óbolos da Economia (`"12"`, `"2,5"`). Nada: gratuito. `price_item_id` também é aceito. |
+| `max_stock` | Ou `stock_limit`. `-1` (padrão) = infinito. Estoque do NPC, compartilhado entre jogadores. |
+| `restock` | `restart` (padrão, a cada reinício), `daily` (virada do dia do relógio do servidor), `never`. |
+| `components` | Mesma sintaxe do `/give` 1.21.1, entre colchetes. |
+| `nbt_data` | SNBT (texto ou objeto) gravado em `minecraft:custom_data`. |
+| `id` da oferta | Opcional, mas recomendado: sem ele o estoque é identificado pela posição e reordenar a lista o zera. |
+
+**Ações nativas**
+
+- `heal`: vida cheia e, com o LSO, todas as partes do corpo tratadas (inclusive lesão grave).
+  Recusa se o jogador já está saudável — ninguém paga por nada.
+- `repair`: durabilidade total do equipamento na mão principal.
+- `finish_food`: o mesmo acabamento do cozinheiro (Quality Food), com as mesmas exigências de lote.
+
+**Comandos** rodam como o servidor (nível 4), posicionados no jogador e com ele como executor:
+`@s` e `@p` apontam para quem pagou. Marcadores: `{player}`, `{uuid}`, `{npc}`, `{x}`, `{y}`, `{z}`.
+A saída vai para o log. No tipo `command`, se **nenhum** comando der certo, o pagamento é devolvido.
+
+**Pagamento:** conferido e cobrado no mesmo tick; itens saem de qualquer slot do inventário
+(qualquer pilha daquele item conta). Dinheiro sai da carteira da Economia e não vai para ninguém.
+Staff em criativo não paga. A compra entra no inventário; o que não couber cai no chão.
+
+**Conversar:** com o ADM instalado e `adm_dialogue` definido (`"namespace:arquivo"`), abre a árvore
+de diálogo; senão mostra as falas de `dialogue`.
+
+Limites: 16 serviços, 32 ofertas e 16 falas por NPC. Erros no arquivo aparecem com o caminho
+(`npcs[1].trades[0].price_amount`) em `/npc recarregar`, `/npc listar` e no log; só o pedaço
+quebrado é ignorado.
+
 ## Configuração e extensão
 
 Config nativa em `config/aurorion/profissoes-server.toml`:

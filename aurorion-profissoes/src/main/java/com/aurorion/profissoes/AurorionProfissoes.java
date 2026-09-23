@@ -8,6 +8,9 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.bus.api.IEventBus;
 import com.aurorion.profissoes.loot.NoMendingLoot;
+import com.aurorion.profissoes.npc.NpcEntities;
+import com.aurorion.profissoes.npc.ProfessionNpcEntity;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import org.slf4j.Logger;
 
 @Mod(AurorionProfissoes.MOD_ID)
@@ -17,5 +20,9 @@ public final class AurorionProfissoes {
     public AurorionProfissoes(IEventBus bus, ModContainer container) {
         AurorionConfigs.register(container, ModConfig.Type.SERVER, ProfessionsConfig.SPEC);
         NoMendingLoot.REGISTRY.register(bus);
+        // NPCs de oficio: cobrem o atendimento quando nao ha um profissional jogador por perto.
+        NpcEntities.ENTITIES.register(bus);
+        bus.addListener((EntityAttributeCreationEvent event) ->
+                event.put(NpcEntities.NPC.get(), ProfessionNpcEntity.attributes().build()));
     }
 }

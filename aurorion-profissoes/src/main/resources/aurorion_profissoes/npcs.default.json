@@ -1,0 +1,179 @@
+{
+  "npcs": [
+    {
+      "id": "medico_principal",
+      "display_name": "Médico do Vilarejo",
+      "title": "Casa de Cura",
+      "profession": "medico",
+      "skin": "",
+      "slim_skin": false,
+      "greeting": "Sente-se. Deixe-me ver esses ferimentos.",
+      "dialogue": [
+        "Quando um médico da cidade está por perto, prefiro que você o procure.",
+        "Mas ninguém sai daqui sangrando enquanto eu estiver de plantão."
+      ],
+      "fallback_radius": 64,
+      "services": [
+        {
+          "name": "Cura Completa",
+          "description": "Trata todas as partes do corpo e restaura a vida.",
+          "action_type": "command",
+          "command": "bodydamage heal {player} all 100",
+          "cost_item": "minecraft:emerald",
+          "cost_amount": 5,
+          "cooldown_seconds": 60
+        },
+        {
+          "name": "Primeiros Socorros",
+          "description": "Tratamento nativo: vida e lesões do LSO.",
+          "action_type": "heal",
+          "cost_money": "2,5",
+          "cooldown_seconds": 120
+        }
+      ],
+      "trades": [
+        {
+          "id": "kit_medico",
+          "item_id": "legendarysurvivaloverhaul:medkit",
+          "amount": 1,
+          "price_item": "minecraft:emerald",
+          "price_amount": 8,
+          "max_stock": 3,
+          "restock": "daily"
+        }
+      ]
+    },
+    {
+      "id": "ferreiro_vila",
+      "display_name": "Ferreiro Mestre",
+      "title": "Forja da Vila",
+      "profession": "ferreiro",
+      "greeting": "Aço bom não se apressa. O que você precisa?",
+      "fallback_radius": 64,
+      "fallback_blocks_trades": false,
+      "services": [
+        {
+          "name": "Restaurar Equipamento",
+          "description": "Segure o equipamento danificado na mão principal.",
+          "action_type": "repair",
+          "cost_item": "minecraft:iron_ingot",
+          "cost_amount": 2
+        }
+      ],
+      "trades": [
+        {
+          "id": "espada_diamante",
+          "item_id": "minecraft:diamond_sword",
+          "amount": 1,
+          "price_item": "minecraft:emerald",
+          "price_amount": 10,
+          "max_stock": 5,
+          "restock": "restart"
+        },
+        {
+          "id": "espada_afiada",
+          "item_id": "minecraft:iron_sword",
+          "components": "[enchantments={levels:{\"minecraft:sharpness\":2}},custom_name='\"Lâmina da Vila\"']",
+          "amount": 1,
+          "price_money": "15",
+          "stock_limit": 2,
+          "restock": "daily"
+        },
+        {
+          "id": "lingotes",
+          "item_id": "minecraft:iron_ingot",
+          "amount": 8,
+          "price_item": "minecraft:emerald",
+          "price_amount": 3,
+          "max_stock": -1
+        }
+      ]
+    },
+    {
+      "id": "cozinheira_taverna",
+      "display_name": "Cozinheira da Taverna",
+      "title": "Taverna",
+      "profession": "cozinheiro",
+      "greeting": "Tem ensopado no fogo e pão saindo do forno.",
+      "services": [
+        {
+          "name": "Finalizar Prato",
+          "description": "Segure até 16 alimentos frescos na mão principal.",
+          "action_type": "finish_food",
+          "cost_item": "minecraft:honey_bottle",
+          "cost_amount": 1
+        }
+      ],
+      "trades": [
+        {
+          "item_id": "minecraft:bread",
+          "amount": 6,
+          "price_money": "1",
+          "max_stock": 32,
+          "restock": "daily"
+        }
+      ]
+    },
+    {
+      "id": "arcanista_torre",
+      "display_name": "Arcanista da Torre",
+      "title": "Torre Arcana",
+      "profession": "arcanista",
+      "greeting": "Não toque nos frascos azuis.",
+      "adm_dialogue": "",
+      "services": [
+        {
+          "name": "Bênção da Visão",
+          "description": "Visão noturna por 10 minutos.",
+          "action_type": "command",
+          "commands": [
+            "effect give {player} minecraft:night_vision 600 0 true",
+            "particle minecraft:enchant {x} {y} {z} 0.5 1 0.5 0.5 60"
+          ],
+          "cost_item": "minecraft:lapis_lazuli",
+          "cost_amount": 4,
+          "cooldown_seconds": 600
+        }
+      ],
+      "trades": [
+        {
+          "item_id": "minecraft:potion",
+          "components": "[potion_contents={potion:\"minecraft:healing\"}]",
+          "amount": 1,
+          "price_item": "minecraft:emerald",
+          "price_amount": 2,
+          "max_stock": 10,
+          "restock": "daily"
+        }
+      ]
+    },
+    {
+      "id": "mercador_geral",
+      "display_name": "Mercador Geral",
+      "title": "Empório",
+      "profession": "mercador",
+      "greeting": "De tudo um pouco, pelo preço justo.",
+      "dialogue": [
+        "As caravanas chegam toda manhã. O estoque renova de dia em dia."
+      ],
+      "trades": [
+        {
+          "item_id": "minecraft:torch",
+          "amount": 16,
+          "price_money": "0,5",
+          "max_stock": -1
+        },
+        {
+          "id": "pergaminho_marcado",
+          "item_id": "minecraft:paper",
+          "amount": 1,
+          "nbt_data": "{aurorion_pergaminho:1b}",
+          "price_item": "minecraft:emerald",
+          "price_amount": 1,
+          "max_stock": 10,
+          "restock": "daily"
+        }
+      ]
+    }
+  ]
+}

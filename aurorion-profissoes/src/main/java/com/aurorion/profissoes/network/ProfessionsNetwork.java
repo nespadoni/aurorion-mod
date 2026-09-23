@@ -3,6 +3,7 @@ package com.aurorion.profissoes.network;
 import com.aurorion.profissoes.AurorionProfissoes;
 import com.aurorion.profissoes.api.ProfessionApi;
 import com.aurorion.profissoes.data.Profession;
+import com.aurorion.profissoes.npc.NpcService;
 import com.aurorion.profissoes.server.ServiceManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -16,7 +17,14 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class ProfessionsNetwork {
     private ProfessionsNetwork() {}
     @SubscribeEvent public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        // "2": os pacotes dos NPCs de oficio entraram no protocolo.
+        var registrar = event.registrar("2");
+        registrar.playToServer(NpcActionPayload.TYPE, NpcActionPayload.STREAM_CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) context.enqueueWork(() -> NpcService.action(player, payload));
+        });
+        registrar.playToClient(NpcScreenPayload.TYPE, NpcScreenPayload.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> com.aurorion.profissoes.client.ProfessionClient.openNpc(payload));
+        });
         registrar.playToServer(ActionPayload.TYPE, ActionPayload.STREAM_CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) context.enqueueWork(() -> ServiceManager.action(player, payload));
         });
