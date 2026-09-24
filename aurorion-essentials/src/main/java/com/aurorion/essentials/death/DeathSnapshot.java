@@ -3,6 +3,8 @@ package com.aurorion.essentials.death;
 import com.aurorion.core.character.CharacterData;
 import com.aurorion.core.death.KeptOnDeath;
 import com.aurorion.essentials.AurorionEssentials;
+import com.aurorion.essentials.fakename.FakeName;
+import com.aurorion.essentials.fakename.FakeNameRegistry;
 import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -38,6 +40,15 @@ public final class DeathSnapshot {
         tag.putUUID("Id", id);
         tag.putUUID("Owner", player.getUUID());
         tag.putString("Name", player.getGameProfile().getName());
+        // O nome pelo qual as pessoas chamavam quem morreu, gravado na hora. Quem procura no
+        // historico procura por este nome, nao pelo nick da Mojang nem pela UUID — e trocar de nome
+        // amanha nao pode reescrever o que aconteceu ontem, por isso fica no snapshot e nao e lido do
+        // registro atual na hora da consulta.
+        FakeName fakeName = FakeNameRegistry.get(player.getUUID());
+        if (fakeName != null) {
+            tag.putString("FakeName", fakeName.raw());
+            tag.putString("FakeNamePlain", fakeName.plain());
+        }
         // A conta nao diz qual personagem morreu quando uma conta tem varios (staff, NPCs). find, e nao
         // current: capturar uma morte nao pode criar identidade como efeito colateral.
         CharacterData.Character character = CharacterData.get(player.server).find(player.getUUID());

@@ -4,6 +4,7 @@ import com.aurorion.core.death.DeathId;
 import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.privacy.PrivacyConfig;
 import com.aurorion.essentials.privacy.Visibility;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
@@ -108,6 +109,8 @@ public final class DeathHistoryEvents {
     private static void announce(MinecraftServer server, Pending pending, boolean saved) {
         if (PrivacyConfig.DEATH_MESSAGES.get() != Visibility.ADMINS) return;
         CompoundTag tag = pending.snapshot;
+        // Entre parenteses vai o nick da conta, e nao o nome do personagem: a mensagem de morte que vem
+        // antes ja usa o nome do personagem, e a staff precisa da conta para saber a quem recorrer.
         var message = Component.literal("[admin] ").withStyle(ChatFormatting.DARK_RED)
                 .append(pending.message.copy().withStyle(ChatFormatting.GRAY))
                 .append(Component.literal(" (" + tag.getString("Name") + ")").withStyle(ChatFormatting.DARK_GRAY));
@@ -115,6 +118,10 @@ public final class DeathHistoryEvents {
         if (saved) {
             message.append(button(" [TP]", "/deathhistory tp " + id, "Ir ao local da morte (OP 2+)"));
             message.append(button(" [Inventario]", "/deathhistory view " + id, "Consultar snapshot sem retirar itens"));
+            // Pelo nome, nao pela UUID: e assim que a staff vai procurar de novo amanha.
+            String who = tag.contains("FakeNamePlain") ? tag.getString("FakeNamePlain") : tag.getString("Name");
+            message.append(button(" [Historico]", "/deathhistory " + StringArgumentType.escapeIfRequired(who),
+                    "Todas as mortes de " + who));
         } else {
             // A direct command still enforces vanilla /execute and /tp permissions when clicked.
             String tp = "/execute in " + tag.getString("Dimension") + " run tp @s "

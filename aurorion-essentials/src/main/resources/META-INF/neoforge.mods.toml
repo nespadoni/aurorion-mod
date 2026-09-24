@@ -32,9 +32,15 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.1.0,)"
+versionRange = "[0.3.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
 [[mixins]]
 config = "${mod_id}.mixins.json"
+
+# Rede de seguranca do LivingDeathEvent, separada e nao obrigatoria: ela mexe numa linha do
+# NeoForge (CommonHooks.onLivingDeath), e se uma versao futura mudar essa linha o jogo tem de
+# subir do mesmo jeito, so sem a rede. Ver DeathListenerGuardMixin.
+[[mixins]]
+config = "${mod_id}.deathguard.mixins.json"

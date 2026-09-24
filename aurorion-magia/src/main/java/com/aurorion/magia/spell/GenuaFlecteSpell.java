@@ -31,8 +31,12 @@ import java.util.Optional;
  * Genua Flecte — "Dobre os joelhos." Prostracao.
  *
  * <p>O alvo e virado de frente para quem conjurou e cai de joelhos. Enquanto durar: quase sem andar,
- * sem pular, sem correr — mas olha em volta, fala, e continua com as maos livres. E uma magia de
- * cena: professor, vilao, cerimonia, interrogatorio.
+ * sem pular, sem correr — e, agora, <b>sem usar nada</b>: nenhuma magia sai da boca dele, e nem item,
+ * nem arco, nem escudo, nem totem responde na mao. De joelhos, o corpo e da cerimonia, nao dele. So a
+ * voz continua livre, de proposito: a magia serve para ouvir um pedido de desculpa, nao para calar.
+ *
+ * <p><b>Duas conjuracoes</b>: a primeira poe de joelhos, a segunda no mesmo alvo manda levantar. E o
+ * professor que libera o aluno, o carrasco que muda de ideia — sem esperar o tempo correr.
  *
  * <p>A pose de joelhos vem do Emotecraft quando instalado (emote embutido no jar, forcado pelo
  * servidor para todos verem); sem ele, o cliente do ajoelhado fica agachado.
@@ -62,19 +66,28 @@ public final class GenuaFlecteSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
+                Component.translatable("ui.aurorion_magia.maos_atadas"),
+                Component.translatable("ui.aurorion_magia.alternar"),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE));
     }
 
+    /** Aliado incluido: mandar levantar tambem e conjurar nele. */
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return aim(level, entity, playerMagicData, RANGE, false, target -> !Displacement.isImmune(target));
+        return aim(level, entity, playerMagicData, RANGE, true, target -> !Displacement.isImmune(target));
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
             LivingEntity target = target(serverLevel, entity, playerMagicData);
-            if (target != null) kneel(entity, target, duration(spellLevel));
+            if (target != null) {
+                if (target.hasEffect(MagiaEffects.KNEELING)) {
+                    rise(target);
+                } else {
+                    kneel(entity, target, duration(spellLevel));
+                }
+            }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
@@ -84,6 +97,10 @@ public final class GenuaFlecteSpell extends AurorionSpell {
         faceTowards(target, caster);
         if (target instanceof ServerPlayer player) {
             player.setSprinting(false);
+            // De joelhos nao se termina o que ja estava comecando: conjuracao e item em uso caem.
+            player.stopUsingItem();
+            if (MagicData.getPlayerMagicData(player).isCasting()) Utils.serverSideCancelCast(player);
+            player.displayClientMessage(Component.translatable("aurorion_magia.de_joelhos"), true);
             EmotecraftCompat.kneel(player);
         } else if (target instanceof Mob mob) {
             mob.getNavigation().stop();
@@ -91,6 +108,15 @@ public final class GenuaFlecteSpell extends AurorionSpell {
         sound(target, SoundEvents.ANVIL_LAND, 0.35f, 0.45f);
         sound(target, SoundEvents.SOUL_ESCAPE.value(), 1.0f, 0.7f);
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.GENUA_FLECTE, duration);
+    }
+
+    /** Segunda conjuracao no mesmo alvo: pode levantar. O emote para pelo fim do efeito. */
+    private static void rise(LivingEntity target) {
+        target.removeEffect(MagiaEffects.KNEELING);
+        if (target instanceof ServerPlayer player) {
+            player.displayClientMessage(Component.translatable("aurorion_magia.levante"), true);
+        }
+        sound(target, SoundEvents.ARMOR_EQUIP_LEATHER.value(), 0.8f, 1.2f);
     }
 
     /** "Cai diante do conjurador": vira o corpo e a cabeca para ele, olhando um pouco para cima. */

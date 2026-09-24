@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.aurorion.essentials.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "DeathListenerGuardMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

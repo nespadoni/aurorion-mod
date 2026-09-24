@@ -21,9 +21,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -83,10 +86,11 @@ public final class DolorUniversusSpell extends AurorionSpell {
         return SpellAnimations.ANIMATION_CONTINUOUS_OVERHEAD;
     }
 
-    @Override
-    public AnimationHolder getCastFinishAnimation() {
-        return AnimationHolder.pass();
-    }
+    // Sem getCastFinishAnimation: o padrao de magia continua no Iron's e AnimationHolder.none(), que
+    // MANDA PARAR a animacao no fim da canalizacao. Devolver pass() aqui (como este arquivo fazia)
+    // quer dizer "nao mexa na animacao", e o ClientSpellCastHelper so cancela a pose quando a
+    // conjuracao e interrompida. Quem segurava o botao ate o tempo acabar ficava com o boneco de mao
+    // estendida para sempre, ate conjurar outra coisa. Nao reponha o override.
 
     @Override
     public Optional<SoundEvent> getCastStartSound() {
@@ -156,10 +160,33 @@ public final class DolorUniversusSpell extends AurorionSpell {
                 target.addEffect(new MobEffectInstance(MagiaEffects.CRUCIATUS, EFFECT_TICKS, 0, false, false, true), entity);
             }
             sound(entity, SoundEvents.WARDEN_HEARTBEAT, 2.0f, 0.6f);
+            sound(entity, SoundEvents.RAVAGER_ROAR, 0.5f, 0.35f);
+            storm(serverLevel, entity, radius(spellLevel));
             MagiaNetwork.sendVisual(entity, entity, SpellVisualPayload.Kind.DOLOR_UNIVERSUS, EFFECT_TICKS,
                     entity.position(), radius(spellLevel));
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
+    }
+
+    /**
+     * A tempestade em volta do selo: raios <b>so visuais</b> caindo na borda, a cada pulso.
+     *
+     * <p>{@code setVisualOnly(true)} e o que faz o raio ser cenario e nao arma: nao queima bloco, nao
+     * fere ninguem, nao transforma porco em zumbi. Quem machuca e o pulso da magia, que ja tem numero
+     * proprio; o raio esta ali para a cena. Um por pulso ({@value #PULSES_PER_SECOND} por segundo), e
+     * a entidade morre sozinha em poucos ticks.
+     */
+    private static void storm(ServerLevel level, LivingEntity caster, int radius) {
+        LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
+        if (bolt == null) return;
+        double angle = level.random.nextDouble() * Math.PI * 2;
+        double distance = radius * (0.75 + level.random.nextDouble() * 0.25);
+        double x = caster.getX() + Math.cos(angle) * distance;
+        double z = caster.getZ() + Math.sin(angle) * distance;
+        bolt.moveTo(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(x), (int) Math.floor(z)), z);
+        bolt.setVisualOnly(true);
+        if (caster instanceof ServerPlayer player) bolt.setCause(player);
+        level.addFreshEntity(bolt);
     }
 
     private static Suspended gather(ServerLevel level, LivingEntity caster, int spellLevel) {

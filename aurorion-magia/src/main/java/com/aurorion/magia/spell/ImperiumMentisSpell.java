@@ -118,8 +118,14 @@ public final class ImperiumMentisSpell extends AurorionSpell {
         return 160 + 80 * (spellLevel - 1);
     }
 
-    /** 4 s no nivel 1, +1 s por nivel. Curto de proposito: contra jogador, perder o controle irrita rapido. */
+    /**
+     * 6 s no nivel 1, +2 s por nivel (10 s no 3).
+     *
+     * <p>Era 4 s, e nos testes a cena nao tinha tempo de acontecer: o alvo perdia o controle, olhava
+     * em volta sem entender e ja estava livre. Seis segundos e o minimo para uma ordem ser dada e
+     * obedecida — e continua curto o bastante para nao virar so frustracao para quem apanha.</p>
+     */
     private static int disorientationTicks(int spellLevel) {
-        return 80 + 20 * (spellLevel - 1);
+        return 120 + 40 * (spellLevel - 1);
     }
 }

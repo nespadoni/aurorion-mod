@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -54,7 +55,10 @@ import java.util.UUID;
  * metade abriria o conjunto inteiro.
  */
 public final class Seals {
+    /** Forca o lacre em blocos que a regra geral nao pega (uma porta que nao e {@code DoorBlock}). */
     public static final TagKey<Block> SEALABLE = TagKey.create(Registries.BLOCK, AurorionMagia.id("selavel"));
+    /** Nunca lacra, mesmo tendo inventario: bau do Lootr, maquina de linha de producao... */
+    public static final TagKey<Block> NOT_SEALABLE = TagKey.create(Registries.BLOCK, AurorionMagia.id("nao_selavel"));
     private static final int MAX_PER_LEVEL = 1024;
 
     private static final Map<ResourceKey<Level>, Long2ObjectMap<Seal>> BY_LEVEL = new HashMap<>();
@@ -74,11 +78,32 @@ public final class Seals {
     private Seals() {
     }
 
+    /**
+     * O que aceita lacre. A ordem importa, e a ultima linha e o que faz a magia funcionar no pack
+     * inteiro sem lista de mods:
+     *
+     * <ol>
+     *   <li>o que a tag {@code nao_selavel} proibe, nunca;</li>
+     *   <li>porta, alcapao e portao, pela classe — quase todo mod de decoracao estende as do vanilla;</li>
+     *   <li>o que a tag {@code selavel} manda, para o que nao estende;</li>
+     *   <li>qualquer bloco com {@link Container} (bau, barril, shulker e a maioria dos baus de mod);</li>
+     *   <li><b>qualquer bloco de onde um funil conseguiria tirar item</b> — e a capacidade
+     *       {@code ItemHandler} do NeoForge. Mochila do Sophisticated Backpacks no chao, barril e
+     *       cofre do Sophisticated Storage, vault do Create, bau de mod que nao usa {@code Container}:
+     *       todos expoem essa capacidade, porque sem ela nenhum cano do pack os enxergaria. Por isso a
+     *       regra pega o pack inteiro, inclusive o que ainda nao foi instalado.</li>
+     * </ol>
+     *
+     * <p>Custo: so roda na conjuracao (uma vez por lacre), nunca por tick.
+     */
     public static boolean isSealable(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
+        if (state.is(NOT_SEALABLE)) return false;
         Block block = state.getBlock();
-        return block instanceof DoorBlock || block instanceof TrapDoorBlock || block instanceof FenceGateBlock
-                || state.is(SEALABLE) || level.getBlockEntity(pos) instanceof Container;
+        if (block instanceof DoorBlock || block instanceof TrapDoorBlock || block instanceof FenceGateBlock) return true;
+        if (state.is(SEALABLE)) return true;
+        if (level.getBlockEntity(pos) instanceof Container) return true;
+        return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, (Direction) null) != null;
     }
 
     @Nullable

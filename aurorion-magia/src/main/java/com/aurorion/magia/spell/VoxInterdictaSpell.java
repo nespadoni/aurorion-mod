@@ -31,6 +31,9 @@ import java.util.List;
  * texto e recusado e nenhuma magia sai (toda conjuracao e verbal). Ele ainda anda, bate e foge.
  * "Conte para eles o que viu." — e a pessoa abre a boca, e nada.
  *
+ * <p><b>Duas conjuracoes</b>: a primeira tira a voz, a segunda no mesmo alvo devolve. Interrogatorio
+ * e isso — tirar a palavra e devolve-la quando convier, sem esperar o tempo correr.
+ *
  * <p>So em jogador: mob nao tem voz para tomar.
  */
 public final class VoxInterdictaSpell extends AurorionSpell {
@@ -52,21 +55,34 @@ public final class VoxInterdictaSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        return List.of(Component.translatable("ui.aurorion_magia.silencio", Utils.timeFromTicks(duration(spellLevel), 1)));
+        return List.of(Component.translatable("ui.aurorion_magia.silencio", Utils.timeFromTicks(duration(spellLevel), 1)),
+                Component.translatable("ui.aurorion_magia.alternar"));
     }
 
+    /** Aliado incluido: devolver a voz tambem e conjurar nele. */
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return aim(level, entity, playerMagicData, RANGE, false, target -> target instanceof Player);
+        return aim(level, entity, playerMagicData, RANGE, true, target -> target instanceof Player);
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel
                 && target(serverLevel, entity, playerMagicData) instanceof ServerPlayer target) {
-            silence(entity, target, duration(spellLevel));
+            if (target.hasEffect(MagiaEffects.SILENCED)) {
+                restore(target);
+            } else {
+                silence(entity, target, duration(spellLevel));
+            }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
+    }
+
+    /** Segunda conjuracao no mesmo alvo: pode falar. O microfone volta pelo fim do efeito. */
+    private static void restore(ServerPlayer target) {
+        target.removeEffect(MagiaEffects.SILENCED);
+        target.displayClientMessage(Component.translatable("aurorion_magia.voz_devolvida"), true);
+        sound(target, SoundEvents.AMETHYST_BLOCK_CHIME, 1.0f, 1.2f);
     }
 
     private static void silence(LivingEntity caster, ServerPlayer target, int duration) {

@@ -77,6 +77,9 @@ public final class PossessionLayer implements LayeredDraw.Layer {
         float captive = weight(player, MagiaEffects.CAPTIVE);
         if (captive > 0) tunnel(graphics, width, height, time, captive);
 
+        float alone = weight(player, MagiaEffects.SOLITARY);
+        if (alone > 0) solitude(graphics, width, height, time, alone);
+
         if (ClientSpellVisuals.targets(Kind.MANUS_GRIP, player.getId())) {
             vignette(graphics, width, height, 0x2A0E4A, .55F, .22F);
         }
@@ -130,6 +133,25 @@ public final class PossessionLayer implements LayeredDraw.Layer {
             g.fill(x - 1, y - 4, x + 1, y + 4, color);
         }
         g.fill(x0, y - 1, x0 + span, y, argb(0x2A1236, .7F * weight));
+    }
+
+    /**
+     * Mundo Vazio: nada de veu forte. A tela quase nao muda — e esse o susto.
+     *
+     * <p>So uma sombra fria nas bordas e um chiado de riscos horizontais, fraco e irregular, como um
+     * sinal ruim. A pessoa nao pode ter certeza de que levou magia: ela ve o corredor vazio e conclui
+     * sozinha que os outros foram embora. Um efeito de tela grande entregaria a mentira na hora.
+     */
+    private static void solitude(GuiGraphics g, int w, int h, float time, float weight) {
+        vignette(g, w, h, 0x05030C, .55F * weight, .26F);
+        int lines = 5;
+        for (int i = 0; i < lines; i++) {
+            // Passo primo por linha: os riscos nunca reaparecem no mesmo ritmo.
+            float phase = time * (.013F + .004F * i) + i * 7.3F;
+            int y = (int) ((phase - Math.floor(phase)) * h);
+            float alpha = .05F * weight * (1 - i / (float) lines);
+            g.fill(0, y, w, y + 1, argb(0x2A1840, alpha));
+        }
     }
 
     /** Tunel: so um circulo no centro fica aberto; o resto escurece em duas camadas suaves. */

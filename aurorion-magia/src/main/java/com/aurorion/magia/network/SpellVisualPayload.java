@@ -65,12 +65,6 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         VINCULUM,
         /** A corrente estalando: puxao ou teleporte negado. */
         VINCULUM_SNAP,
-        /** Movimento sendo sugado do alvo para a mao. */
-        FURTUM_STEAL,
-        /** Orbe de impulso girando na mao enquanto guardado. */
-        FURTUM_HELD,
-        /** Onda de choque no alvo que recebeu o impulso. pos = vetor do impulso. */
-        FURTUM_RELEASE,
         /** Dois selos do End, um em cada ponta da troca. pos = onde o conjurador estava. */
         TRANSPOSITIO,
         /** Anel telecinetico em volta do alvo segurado e os filamentos ate a mao. */
@@ -100,7 +94,15 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         /** Selo de sangue enorme sob quem conjura e feixes ate cada suspenso. Segue o conjurador; extra = raio. */
         DOLOR_UNIVERSUS,
         /** Olho sobre a cabeca do cativo e o fio do olhar ate quem o prende. */
-        ASPECTUS_CAPTUS;
+        ASPECTUS_CAPTUS,
+        /** Queda Forcada em area: onda de choque no chao. pos = centro, extra = raio. */
+        DEIECTIO_AREA,
+        /** Olhar Cativo em area: olho enorme aberto sobre quem conjurou. pos = centro, extra = raio. */
+        ASPECTUS_AREA,
+        /** Sentenca Final em area: pentagrama do tamanho do raio. pos = centro, extra = raio. */
+        MORTEM_AREA,
+        /** Mundo Vazio: veu que apaga o mundo em volta do alvo. */
+        MUNDUS_VACUUS;
 
         private static final Kind[] VALUES = values();
 
@@ -111,7 +113,8 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         /** Visuais presos a um ponto: identificados pela posicao, nao pelas entidades. */
         public boolean anchoredToPoint() {
             return this == SIGILLUM || this == SIGILLUM_DENY || this == SIGILLUM_BREAK || this == LUX_VORATA
-                    || this == TEMPUS_SISTERE || this == MORTEM_DICO;
+                    || this == TEMPUS_SISTERE || this == MORTEM_DICO
+                    || this == DEIECTIO_AREA || this == ASPECTUS_AREA || this == MORTEM_AREA;
         }
     }
 }

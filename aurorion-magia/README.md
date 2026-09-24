@@ -4,8 +4,10 @@ Addon do [Iron's Spells 'n Spellbooks](https://github.com/iron431/irons-spells-n
 Aurorion. **Nenhuma magia vem liberada**: a staff ensina magias soltas ou escolas inteiras por
 personagem, em aula, com `/aurorion spells`. O estado é espelhado no Iron's Restrictions.
 
-Dezessete magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma **invocação** (o id). As magias
-servem para duelo, captura, interrogatório, perseguição, fuga, invasão e RP do dia a dia.
+Dezessete magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma
+**invocação** (o id). As magias servem para duelo, captura, interrogatório, perseguição, fuga, invasão
+e RP do dia a dia. Quatro delas mudam de forma quando conjuradas **agachado** (ver "Agachado, em
+área"), e três se desfazem conjurando de novo no mesmo alvo (Prostração, Voz Interdita, Mundo Vazio).
 
 Versões de referência (jars em `mod-servidor-referencia/`): Iron's Spells `1.21.1-3.16.3`, Iron's
 Restrictions `1.21.1-5.2.0`, Emotecraft `2.4.12`, Simple Voice Chat `1.21.1-2.6.24`.
@@ -85,35 +87,54 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Dolor Cruciatus | `dolor_cruciatus` | Sangue | contínua 4 s | dor que paralisa |
 | Imperium Mentis | `imperium_mentis` | Eldritch | longa 1,5 s | dominar mob, desorientar jogador |
 | Vínculo do Carrasco | `vinculum_carnificis` | Sangue | instantânea | prender alguém a uma área |
-| Sequestro de Impulso | `furtum_impetus` | Evocação | instantânea, 2 fases | roubar e devolver movimento |
 | Transposição | `transpositio` | Ender | instantânea | trocar de lugar com o alvo |
 | Mão do Algoz | `manus_carnificis` | Evocação | contínua 5 s | segurar e arremessar |
 | Mão Vazia | `manus_vacua` | Evocação | instantânea | desarmar |
-| Prostração | `genua_flecte` | Eldritch | instantânea | forçar a ajoelhar |
-| Olhar Cativo | `aspectus_captus` | Eldritch | instantânea | prender o olhar em quem conjura |
-| Voz Interdita | `vox_interdicta` | Eldritch | instantânea | tirar a voz |
+| Prostração | `genua_flecte` | Eldritch | instantânea | forçar a ajoelhar, de mãos atadas |
+| Olhar Cativo | `aspectus_captus` | Eldritch | instantânea | prender o olhar de um, ou da praça |
+| Voz Interdita | `vox_interdicta` | Eldritch | instantânea | tirar e devolver a voz |
+| Mundo Vazio | `mundus_vacuus` | Eldritch | instantânea | apagar o mundo dos olhos de alguém |
 | Lacre Profano | `sigillum_clausum` | Ender | instantânea | trancar porta/baú |
-| Queda Forçada | `deiectio_corporis` | Ender | instantânea | derrubar quem voa |
-| Devorar Luz | `lux_vorata` | Eldritch | longa 1 s | apagar luzes e escurecer |
+| Queda Forçada | `deiectio_corporis` | Ender | instantânea | derrubar quem voa, ou tudo em volta |
+| Devorar Luz | `lux_vorata` | Eldritch | longa 1 s | apagar luzes e cegar quem está dentro |
 | Ferro Vinculado | `ferrum_ligatum` | Sangue | instantânea | travar a armadura |
 | Tempo Suspenso ⛔ | `tempus_sistere` | Ender | longa 1 s | congelar tudo em volta |
-| Sentença Final ⛔ | `mortem_dico` | Eldritch | instantânea | morte instantânea |
+| Sentença Final ⛔ | `mortem_dico` | Eldritch | instantânea | morte instantânea, de um ou de todos |
 | Tormento Coletivo ⛔ | `dolor_universus` | Sangue | contínua 3–7 s | Cruciatus em área, no ar |
 
 Os ids completos são `aurorion_magia:<invocação>`. Escola, nível máximo, raridade e cooldown são
 só o padrão; ver "Trocar escola" abaixo.
 
+### Agachado, em área
+
+Quatro magias têm duas formas, e o gatilho é o mesmo em todas: **conjurar agachado**.
+
+| Magia | Em pé | Agachado |
+|---|---|---|
+| Queda Forçada | um alvo mirado | onda em volta de você (6 a 14 blocos) |
+| Olhar Cativo | um alvo mirado | todos em volta (14 a 30 blocos) |
+| Sentença Final ⛔ | um alvo mirado | todos em volta (nível 2+: 8 ou 14 blocos) |
+| Mão Vazia | mão principal | mão secundária |
+
+Ninguém em volta para atingir: a magia é recusada antes de gastar mana ou entrar em recarga. Quem
+conjura nunca está na própria área, e chefes (`imune_deslocamento`), espectadores e staff em criativo
+ficam de fora das versões em área — mirados um a um, continuam valendo alvo.
+
 ### Dolor Cruciatus
 Mira do Iron's, alcance 20. Enquanto o botão fica apertado (até 4 s), dá um pulso a cada 10 ticks.
 O pulso confere se o alvo está vivo, no alcance e à vista, causa dano sem empurrão, renova o efeito
 `cruciatus` (velocidade e pulo zerados) e reenvia o feixe. O alvo jogador sente um tremor de câmera.
+**Sob tortura não se conjura nem se usa nada**: enquanto o `cruciatus` durar, o alvo não solta magia e
+nenhum item responde na mão dele — nem comida, nem arco, nem escudo, nem totem. Vale igual para o
+Tormento Coletivo, que usa o mesmo efeito.
 **Visual:** feixe em hélice vermelho e negro da mão ao peito, e um selo de espinhos sob o alvo.
 
 ### Imperium Mentis
 - **Mob:** fica `dominado` (8 s + 4 s/nível) e ataca o vivo mais próximo que não seja o mestre, um
   aliado de time, um pet do mestre ou outro dominado do mesmo mestre.
-- **Jogador:** fica `desorientado` (4 s + 1 s/nível). Os controles invertem, a tela escurece e ele
-  não usa magia nem item.
+- **Jogador:** fica `desorientado` (6 s + 2 s/nível, 10 s no 3). Os controles invertem, a tela
+  escurece e ele não usa magia nem item. Era 4 s, e nos testes a cena não tinha tempo de
+  acontecer: a pessoa perdia o controle, olhava em volta sem entender e já estava livre.
 - **Imunes:** tag `aurorion_magia:imune_dominacao`.
 - **Visual:** espiral jade/prata descendo pelo corpo, coroa rúnica girando na cabeça e um selo que
   se abre no chão.
@@ -121,27 +142,21 @@ O pulso confere se o alvo está vivo, no alcance e à vista, causa dano sem empu
 ### Vínculo do Carrasco — *Vinculum Carnificis*
 O ponto onde o alvo foi atingido vira a âncora de uma corrente de 6 blocos, por 10 s + 2 s/nível.
 - O alvo anda, bate e conjura à vontade dentro do raio.
-- Ao cruzar a borda, é puxado para a âncora. Cada puxão seguido aumenta a tensão, e o próximo vem
-  mais forte. Ficar dentro alivia a tensão.
+- Ao cruzar a borda, é puxado para a âncora **e sangra**: 3 de dano no primeiro puxão, +1 por ponto de
+  tensão, até 11 (cinco corações e meio). O dano tem intervalo próprio de 1 s, então quem insiste na
+  borda leva um golpe por segundo, e não os cinco do tick da corrente. Ele ignora armadura e escudo, e
+  a mensagem de morte nomeia quem lançou a corrente.
+- Cada puxão seguido aumenta a tensão, e o próximo vem mais forte e mais caro. Ficar dentro alivia a
+  tensão.
 - Pérola, chorus, teleporte de magia do Iron's, enderman e troca de dimensão são **cancelados** com
   o estalo da corrente. Teleporte sem evento (outro mod) que o leve para longe faz a corrente
-  arrancá-lo de volta. O `/tp` da staff passa.
+  arrancá-lo de volta **para a própria âncora** — o único ponto que a magia sabe ser chão firme,
+  porque foi de lá que o alvo foi preso. (Antes a corrente o largava num ponto qualquer da borda,
+  calculado nos três eixos: quem tinha sido teleportado para cima reaparecia no ar e despencava. Era
+  essa a queda do nada.) O `/tp` da staff passa.
 
 **Visual:** selo de elos na âncora e o círculo do limite no chão. A corrente, com elos alternados e
 núcleo escuro, só aparece quando está tensionada, e estala em vermelho a cada puxão.
-
-### Sequestro de Impulso — *Furtum Impetus*
-Usa o recast do Iron's, então o cooldown só começa depois da devolução.
-1. **Roubar:** mira uma criatura, flecha, tridente ou item em voo. O alvo para no lugar (criatura
-   fica em `estase` por meio segundo) e o impulso vai para a sua mão por até 30 s. O valor guardado
-   é a velocidade × (1,4 + 0,2/nível), no mínimo 0,6.
-   - **Sem nada na mira**, rouba o seu próprio movimento: anula o knockback que você acabou de
-     levar, ou a queda.
-2. **Devolver:** o alvo mirado recebe o impulso na direção do seu olhar. Sem alvo, você recebe o
-   impulso e sai em arranque. Empurrão forte vira arremesso, e bater em parede machuca.
-
-**Visual:** partículas sugadas do alvo para a mão, anel que se fecha nele, orbe duplo girando na
-mão enquanto o impulso está guardado e onda de choque na devolução.
 
 ### Transposição — *Transpositio*
 Troca de lugar instantânea com o alvo (alcance 24 + 6/nível). **A velocidade e a queda acumulada
@@ -164,22 +179,31 @@ mão secundária (escudo, totem, foco). O item fica 2 s sem poder ser pego. Nada
 
 ### Prostração — *Genua Flecte*
 O alvo é virado de frente para você e cai de joelhos por 5 s + 1,5 s/nível. Ele quase não anda, não
-pula e não corre, mas **fala** e continua com as mãos livres.
+pula e não corre. **As mãos também ficam atadas**: nenhum item responde (comida, arco, escudo, totem)
+e nenhuma magia sai. A voz continua livre de propósito — a magia serve para ouvir um pedido de
+desculpa, não para calar.
+- **Duas conjurações:** a segunda no mesmo alvo manda levantar. O professor que libera o aluno, o
+  carrasco que muda de ideia.
 - Com o **Emotecraft**, o servidor força o emote `Kneel down` (embutido no nosso jar) e todos veem
   a pose. O emote é reiniciado se o jogador relogar ou trocar de dimensão.
 - Sem o Emotecraft, o ajoelhado fica agachado.
 
 **Visual:** três anéis rúnicos descem sobre os ombros, fica um selo lilás no chão e sobem almas de
 tempos em tempos.
-
 ### Olhar Cativo — *Aspectus Captus*
 "Olhe para mim quando eu falar com você." Por 2 s (+0,5 s por nível, 4 s no 5), a câmera e a
 cabeça do alvo ficam presas em quem conjurou. Ele anda devagar (−60%) e fala normalmente, mas não
 consegue desviar o rosto. Os outros veem a cabeça virar, porque a rotação sai do cliente do alvo
 como qualquer movimento. Em mob, a IA encara o conjurador.
-**Visual:** um olho violeta se abre sobre a cabeça do cativo, encarando o captor, com um fio de
-olhar ligando os dois. Na tela de quem está preso aparece um túnel escuro (ver "Possessão").
 
+**Agachado, a praça inteira.** "Olhem para mim, todos vocês." Um olho enorme se abre sobre quem
+conjura e todos no raio viram o rosto para ele — 14 blocos no nível 1, +4 por nível (30 no 5), até 24
+pessoas e criaturas. É a magia de discurso, de julgamento, de entrada de vilão: ninguém consegue olhar
+para outro lado enquanto você fala.
+
+**Visual:** um olho violeta se abre sobre a cabeça do cativo, encarando o captor, com um fio de
+olhar ligando os dois. Na tela de quem está preso aparece um túnel escuro (ver "Possessão"). Em área,
+o olho é o do centro, do tamanho de um bloco e meio, com o círculo do alcance desenhado no chão.
 ### Voz Interdita — *Vox Interdicta*
 Só em jogador, por 5 s + 1,25 s/nível (10 s no nível 5). Durante o efeito:
 - o microfone no **Simple Voice Chat** não chega a ninguém (proximidade, grupo e sussurro);
@@ -188,11 +212,33 @@ Só em jogador, por 5 s + 1,25 s/nível (10 s no nível 5). Durante o efeito:
 
 O alvo ainda anda, bate e foge. O corte de voz é um plugin do Voice Chat (`AurorionVoicePlugin`) que
 consulta um mapa concorrente, porque roda na thread de áudio.
+
+**Duas conjurações:** a primeira tira a voz, a segunda no mesmo alvo devolve, sem esperar o tempo
+correr. Interrogatório é isso — tirar a palavra e devolvê-la quando convier.
 **Visual:** colar negro na garganta com anel rúnico violeta girando e fumaça escura.
 
+### Mundo Vazio — *Mundus Vacuus*
+Herdeira do antigo Sequestro de Impulso: em vez de roubar o movimento de alguém, rouba **o mundo
+inteiro** de quem olha. Só em jogador, alcance 20, por 10 s + 5 s/nível (30 s no 5).
+
+O alvo continua exatamente onde estava, e todos continuam em volta dele — mas o cliente dele **para de
+desenhar qualquer vivo**: pessoas, criaturas, montarias, nomes flutuantes. Ele fica sozinho num mundo
+vazio. Leva dano de ninguém, ouve passos de ninguém, conversa com ninguém.
+
+- **Ninguém some de verdade.** O servidor nunca deixa de saber quem está onde; o dano chega, o som
+  toca, e para todos os outros a cena é normal. O que muda é só o que aquele par de olhos vê. É por
+  isso que a magia é uma tortura e não uma vantagem: a pessoa apanha de um corredor vazio.
+- **Duas conjurações:** a segunda no mesmo alvo devolve o mundo.
+- **Não é invisibilidade.** Não há como usá-la para se esconder de alguém que você não atingiu, e ela
+  não dá vantagem nenhuma a quem conjura.
+
+**Visual:** nenhum selo brilhante — a magia é a ausência. Só um fio de runa fechando o corpo do alvo,
+uma casca escura rente a ele e, na tela dele, uma sombra fria nas bordas com um chiado de riscos.
+A tela quase não muda de propósito: se mudasse, ele saberia na hora que levou magia em vez de concluir
+sozinho que os outros foram embora.
 ### Lacre Profano — *Sigillum Clausum*
-Olhe para uma porta, alçapão, portão, baú, barril ou outro contêiner (tag `aurorion_magia:selavel`
-para blocos de outros mods) e sele. Lacrar fecha o que estiver aberto.
+Olhe para uma porta, alçapão, portão, baú, barril, **mochila no chão** ou qualquer outra coisa com
+inventário e sele. Lacrar fecha o que estiver aberto.
 
 | Nível | Quem abre | Duração |
 |---|---|---|
@@ -202,9 +248,30 @@ para blocos de outros mods) e sele. Lacrar fecha o que estiver aberto.
 
 - Conjurar no seu lacre o desfaz. No lacre de outra pessoa, com nível igual ou maior, **quebra**;
   com nível menor, o lacre resiste.
-- O lacre bloqueia abrir, quebrar e explosões.
+- O lacre bloqueia abrir, quebrar, **carregar embora** (Carry On) e explosões.
 - Staff em criativo passa.
 - Porta dupla (as duas metades) e baú duplo compartilham o lacre.
+
+#### O que aceita lacre, nos mods do pack
+
+A regra não é uma lista de mods. São cinco perguntas, na ordem:
+
+1. está na tag `aurorion_magia:nao_selavel`? então nunca — é a saída de emergência da staff;
+2. é porta, alçapão ou portão **pela classe**? quase todo mod de decoração (Macaw's, Quark,
+   FramedBlocks, Handcrafted…) estende as do vanilla, então entra aqui sem ninguém listar nada;
+3. está na tag `aurorion_magia:selavel`? entra — é para o que não estende as classes do vanilla;
+4. o bloco tem `Container`? baú, barril, shulker e a maioria dos baús de mod;
+5. **um funil conseguiria tirar item de lá?** essa é a que pega o pack inteiro. É a capacidade
+   `ItemHandler` do NeoForge, e todo bloco com inventário a expõe — senão nenhum cano, funil ou
+   máquina do pack o enxergaria. Mochila do Sophisticated Backpacks colocada no chão, barril e cofre
+   do Sophisticated Storage, item vault do Create, baús de mods que nem estão instalados ainda: todos
+   caem aqui, sem uma linha de código por mod.
+
+A conferência só roda na conjuração, uma vez por lacre — nunca por tick.
+
+**Carry On:** sair carregando o baú lacrado seria a brecha óbvia. Ele pega blocos no mesmo
+`RightClickBlock` que nós, e também em prioridade `HIGH`; entre dois listeners de mesma prioridade a
+ordem é a de registro, ou seja, sorte. Por isso o nosso está em `HIGHEST`.
 
 Os lacres ficam em memória, com teto de 1024 por dimensão, e somem no reinício do servidor. Quem
 entra na dimensão recebe os lacres ativos.
@@ -213,30 +280,45 @@ entra na dimensão recebe os lacres ativos.
 tenta abrir e se estilhaça quando é quebrado.
 
 **Limites:** redstone ainda abre porta lacrada, e funil ainda puxa de baú lacrado.
-
 ### Queda Forçada — *Deiectio Corporis*
 - **No ar** (pulo, levitação, elytra, voo de sobrevivência, preso na Mão do Algoz): tira elytra,
   levitação, queda lenta e voo, e crava o alvo para baixo. A altura vira dano de queda pelo vanilla.
 - **No chão:** dano de impacto e `abatido` (sem pular) por 1,5 s + 0,5 s/nível.
 
+**Agachado, tudo o que estiver no ar cai junto.** Não precisa mirar em ninguém: a onda abre no chão
+sob quem conjura e todos dentro do raio recebem a mesma queda ao mesmo tempo — 6 blocos no nível 1, +2
+por nível (14 no 5), até 16 alvos. É o fim de uma fuga de elytra em grupo, ou de uma invasão vindo pelo
+alto. Quem já estava no chão só leva o impacto e fica sem pular.
+
 É o contra natural das magias de movimento. Chefes são imunes.
 **Visual:** selo de espinhos que desce sobre a cabeça, rastros de vento para baixo e, ao tocar o
-chão, poeira do próprio bloco em anel com uma onda de choque.
-
+chão, poeira do próprio bloco em anel com uma onda de choque. Em área, a onda abre do centro até a
+borda rasgando o chão, e o selo de espinhos fica marcado com o tamanho do raio.
 ### Devorar Luz — *Lux Vorata*
-Raio de 5 + nível blocos em volta de quem conjura:
-- apaga velas, bolos com vela e fogueiras (tag `aurorion_magia:apagavel`; lanternas mágicas de
-  outros mods entram por datapack);
-- apaga quem estiver pegando fogo;
-- deixa uma **zona de escuridão** por 8 s + 2 s/nível. Quem está dentro enxerga uma neblina negra
-  fechando em ~5 blocos.
+Raio de 5 + nível blocos em volta de quem conjura. A primeira versão só apagava vela e fogueira, e na
+prática não acontecia nada: o lugar continuava iluminado por tocha, lanterna e lâmpada de mod, e
+ninguém sentia diferença. Agora a magia devora a luz em três camadas, e a do meio é a que importa.
 
-Não aplica Darkness em ninguém: é o ambiente que escurece. Tocha e lanterna vanilla não têm estado
-"apagada", e apagá-las exigiria quebrá-las, o que não é magia de griefing. A zona cobre esse caso.
-Respeita proteção de spawn (`mayInteract`).
+1. **Apaga o que tem como apagar.** Qualquer bloco no raio que esteja aceso (`lit` e emitindo luz) se
+   apaga: velas, bolos com vela, fogueiras, lâmpadas e lanternas de mod que usem `lit`. Nada é
+   quebrado nem sai do lugar — acende de novo com isqueiro ou redstone. Fogo no chão se apaga junto.
+   Fica de fora o que estiver na tag `aurorion_magia:inapagavel` (fornalha, lâmpada de redstone e
+   afins: apagar o forno do cozinheiro não é magia de combate). A tag `aurorion_magia:apagavel`
+   continua servindo para forçar blocos que não usam `lit`.
+2. **Cega quem está dentro.** Todos no raio, **menos quem conjurou e os aliados de time dele**,
+   recebem a **Escuridão** do vanilla pelo tempo da zona, mais um instante de Cegueira no baque. É a
+   escuridão do Warden: a tela fecha em pulsos e o mundo some, com ou sem tocha na mão. Era isto que
+   faltava — a magia agora *faz* alguma coisa com quem está ali.
+3. **Deixa a zona escura** por 8 s + 2 s/nível: neblina negra fechando em ~5 blocos, desenhada pelo
+   cliente, e quem estiver pegando fogo apaga.
+
+Tocha e lanterna do vanilla continuam sem ter estado "apagada", e apagá-las exigiria quebrá-las, o que
+não é magia de griefing — a Escuridão é o que cobre esse caso. Respeita proteção de spawn
+(`mayInteract`). Quem **entra** na zona depois da conjuração pega só a neblina, não a Escuridão: a zona
+não fica vigiando ninguém.
+
 **Visual:** a luz é sugada para o centro em fumaça, fica uma mancha escura no chão com a borda
 violeta se fechando e sobem partículas de vazio.
-
 ### Ferro Vinculado — *Ferrum Ligatum*
 Só em jogador, por 10 s + 5 s/nível. A armadura e o que estiver na mão secundária ficam presos:
 tirar pelo inventário, trocar por outra peça ou jogar fora com Q devolve a peça ao corpo. A
@@ -298,11 +380,24 @@ ignora armadura, resistência, encantamento, escudo, invulnerabilidade de criati
 mensagem de morte nomeia quem conjurou. Se algum mod ainda segurar o alvo vivo, a magia cai no
 `kill()` de verdade.
 
-É uma morte comum para todo o resto: conta vida no `aurorion-vidas` e dropa o inventário pelas
-regras normais. Tem um nível só.
-**Visual:** um raio verde da mão ao peito, um clarão com almas saindo e um **pentagrama** verde que
-fica no chão onde o alvo caiu, com lanças de luz baixando.
+**A sentença coletiva.** Do nível 2 em diante a magia tem a segunda forma: conjurada **agachada**, a
+sentença deixa de ser de um e passa a ser de todos. Um pentagrama do tamanho do raio se abre no chão e
+tudo dentro dele morre ao mesmo tempo — aliado, inimigo, bicho, sem escolher lado e sem totem.
 
+| Nível | Mirado | Agachado | Mana | Recarga |
+|---|---|---|---|---|
+| 1 | sim | — | 200 | 90 s |
+| 2 | sim | raio 8 | 300 | 90 s |
+| 3 | sim | raio 14 | 400 | 90 s |
+
+Teto de 32 sentenciados. Chefes (`imune_deslocamento`) ficam de fora **só da área**: mirados um a um,
+morrem igual — uma luta de chefe não acaba porque alguém agachou.
+
+É uma morte comum para todo o resto: conta vida no `aurorion-vidas` e dropa o inventário pelas
+regras normais.
+**Visual:** um raio verde da mão ao peito, um clarão com almas saindo e um **pentagrama** verde que
+fica no chão onde o alvo caiu, com lanças de luz baixando. Em área, o pentagrama tem o tamanho do raio,
+com dezesseis lanças de luz e as almas subindo de todo o círculo.
 ### Tormento Coletivo — *Dolor Universus* ⛔
 O Cruciatus em área. Todos no raio são **erguidos do chão** e ficam suspensos, paralisados de dor
 (velocidade e pulo zerados, câmera tremendo), enquanto quem conjura segura o botão. A cada meio
@@ -317,8 +412,13 @@ segundo, todos levam o dano ao mesmo tempo. Soltar o botão solta todo mundo.
 | 5 | 13 | 2,7 | 7 s | 6 |
 
 Os alvos são escolhidos uma vez, no início, com teto de 24.
+
+**A tempestade.** A cada pulso cai um raio **só visual** (`setVisualOnly`) na borda do selo: não queima
+bloco, não fere ninguém, não transforma porco em zumbi. Quem machuca é o pulso da magia, que já tem
+número próprio; o raio está ali para a cena, junto com o rugido grave por cima da batida de coração.
+
 **Visual:** um selo de espinhos do tamanho do raio sob quem conjura, uma mancha escura de sangue no
-chão e feixes vermelho-negros da mão até cada suspenso.
+chão, feixes vermelho-negros da mão até cada suspenso e os raios caindo em volta.
 
 ### Possessão: a tela de quem é controlado
 
@@ -335,6 +435,7 @@ efeito.
 | Prostração | peso escuro descendo do alto, sombra lilás nas bordas | campo de visão mais fechado | almas escapando |
 | Voz Interdita | faixa negra subindo do pé da tela, com uma costura como boca fechada | — | — |
 | Mão do Algoz | bordas violeta apertando enquanto é segurado | — | — |
+| Mundo Vazio | quase nada: sombra fria nas bordas e um chiado de riscos horizontais | — | — |
 
 Todos os efeitos de câmera respeitam a opção vanilla "Efeitos de distorção" (acessibilidade), e o
 tremor respeita também `cameraShake`.
@@ -353,7 +454,9 @@ mínima e cooldown saem daí. `/ironsSpellbooks config list` lista as chaves.
 | Iron's Restrictions | UI de pesquisa/scroll/inscrição mostra o que não foi liberado | o gate de conjuração continua valendo |
 | Emotecraft | pose de joelhos do Genua Flecte, vista por todos | agachado |
 | Simple Voice Chat | Vox Interdicta corta o microfone | corta só chat e magia |
-| `aurorion-utils` | Tempus Sistere usa o freeze completo do `/freeze` | só a estase (sem andar/pular) |
+| `aurorion-utils` | Tempus Sistere usa o freeze completo do `/freeze` | cai na Lentidão do vanilla (sem trava de teclado) |
+| Carry On | baú lacrado também não pode ser carregado embora | nada muda: o lacre já bloqueia abrir e quebrar |
+| Sophisticated Backpacks/Storage | mochila e cofre no chão aceitam lacre | idem: a regra é por capacidade, não por mod |
 
 - **Emotecraft:** ponte por reflexão (`compat/EmotecraftCompat`), porque os tipos vêm de um jar
   aninhado.
@@ -383,7 +486,10 @@ efeito**, que o vanilla já faz da entidade afetada, e só nela.
 | Lux Vorata | uma vez por conjuração (cooldown 30 s) | varredura da esfera, até ~5 mil posições |
 | Tempus Sistere | uma vez por conjuração (cooldown 120 s) | 1 busca no raio (teto 64); depois só o tick do efeito |
 | Mortem Dico | uma vez por conjuração | 1 raycast + 1 dano |
-| Dolor Universus | todo tick da canalização, só nos alvos dela (teto 24) | 1 vetor + 1 pacote de velocidade por alvo; 1 payload visual por pulso |
+| Dolor Universus | todo tick da canalização, só nos alvos dela (teto 24) | 1 vetor + 1 pacote de velocidade por alvo; 1 payload visual e 1 raio visual por pulso |
+| Magia em área (agachado) | uma vez por conjuração | 1 busca no raio com teto de alvos; depois só os efeitos |
+| Mundo Vazio | no feitiço; depois, no cliente do afetado | 1 consulta de efeito por corpo desenhado, só enquanto dura |
+| Varredura de modificador preso | login e renascimento | 8 consultas de atributo por jogador |
 
 ### Como os efeitos visuais são feitos sem pesar no TPS
 
@@ -433,8 +539,10 @@ Tags de datapack (`data/aurorion_magia/tags/`):
 |---|---|
 | `entity_type/imune_dominacao` | Imperium Mentis |
 | `entity_type/imune_deslocamento` | Transpositio, Mão do Algoz, Queda Forçada, Prostração |
-| `block/selavel` | Lacre Profano, além de portas, alçapões, portões e contêineres |
-| `block/apagavel` | Devorar Luz |
+| `block/selavel` | Lacre Profano: força o lacre em bloco que a regra geral não pega |
+| `block/nao_selavel` | Lacre Profano: nunca lacra, mesmo tendo inventário |
+| `block/apagavel` | Devorar Luz: força o apagamento em bloco que não usa `lit` |
+| `block/inapagavel` | Devorar Luz: nunca apaga (fornalha, lâmpada de redstone…) |
 
 ## Build
 
@@ -452,13 +560,26 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
 ## Validar no pack
 
 **Build e liberação**
-- [ ] `./gradlew :aurorion-magia:build` compila (inclui `SpellGrantsTest`, com a regra de proibidas, e `VoiceMuteTest`).
+- [ ] `./gradlew :aurorion-magia:build` compila (inclui `SpellGrantsTest`, com a regra de proibidas,
+  `VoiceMuteTest` e `MagiaAssetsTest`, que cobra ícone + nome + descrição nos dois idiomas de cada
+  magia).
+- [ ] Cliente e servidor com o **mesmo jar**: o protocolo do `SpellVisualPayload` subiu para `5` (os
+  tipos do Sequestro de Impulso saíram e quatro entraram). Jar velho de um lado não conecta.
 - [ ] `/aurorion spells unlock …`: Tab, seletores, id inexistente recusado; bloqueio sem liberação;
   ponte com o Restrictions (inscrição, scroll, reconcile no login).
 
 **Por magia**
 - [ ] Aba **Aurorion — Magias** no criativo: 17 magias, todos os níveis; magia desligada no config do
-  Iron's some da aba.
+  Iron's some da aba. O Sequestro de Impulso não aparece mais; o Mundo Vazio aparece, e a Sentença
+  Final agora tem três níveis.
+- [ ] **Agachado, em área** (Queda Forçada, Olhar Cativo, Sentença Final 2+): em pé continua pegando
+  um alvo; agachado pega todos; sem ninguém em volta, a magia é recusada sem gastar mana nem recarga.
+- [ ] **Animação da mão** (o bug que motivou tudo): segurar Dolor Cruciatus, Mão do Algoz e Tormento
+  Coletivo **até o tempo acabar sozinho** — o boneco tem de voltar ao normal. Conferir também soltando
+  o botão antes, e num segundo cliente (o bug só aparecia para quem olhava de fora).
+- [ ] **Modificador preso**: com alguém sob Cruciatus/Prostração/Olhar Cativo, derrubar o servidor no
+  braço; ao voltar, a pessoa anda normalmente (varredura do `EffectCleanup` no login). Quem já estava
+  travado pela antiga "estase" também tem de destravar no primeiro login com este jar.
 - [ ] Olhar Cativo:
   - câmera presa no captor (inclusive se ele se mexer);
   - anda devagar, fala;
@@ -484,29 +605,35 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   - mata jogador de armadura cheia, com totem na mão e em criativo; mata mob;
   - mensagem de morte com o nome de quem conjurou;
   - conta vida no `aurorion-vidas`;
-  - raio verde e pentagrama visíveis.
+  - raio verde e pentagrama visíveis;
+  - nível 1 agachado continua sendo alvo único;
+  - níveis 2 e 3 agachado matam tudo no raio (aliado incluído) e **não** matam chefe;
+  - o pentagrama gigante aparece antes de os corpos sumirem.
 - [ ] Dolor Universus:
   - todos no raio sobem e ficam suspensos;
   - dano simultâneo, câmera tremendo nos jogadores;
   - soltar o botão solta todos;
   - raio, altura, dano e canalização crescem por nível;
+  - os raios em volta **não** queimam bloco, não ferem ninguém e não convertem mob;
   - desempenho com 24 alvos.
 - [ ] Cruciatus e Imperium: comportamento anterior, agora com os selos (espinhos sob o alvo, coroa
   jade, selo que se abre no chão).
 - [ ] Vinculum:
   - puxão ao cruzar o raio, e mais forte a cada tentativa;
+  - **dano ao insistir na borda**: um golpe por segundo, crescendo com a tensão, e a mensagem de morte
+    nomeia quem lançou a corrente;
   - pérola, chorus, Blink/Teleport do Iron's e portal negados com o estalo;
   - `/tp` da staff passa;
+  - teleporte de outro mod para longe devolve o preso **à âncora**, de pé, sem queda;
   - relogar preso continua preso;
   - corrente aparece só quando tensionada.
-- [ ] Furtum Impetus:
-  - roubar de jogador correndo, mob, flecha em voo e tridente;
-  - roubar o próprio knockback e a própria queda;
-  - devolver em outro alvo e em si mesmo;
-  - cooldown só depois da devolução;
-  - timeout de 30 s limpa o ícone.
-  - Conferir se a velocidade estimada de **jogador** (andar/correr) é roubada. O servidor só a
-    estima pela diferença de posição.
+- [ ] Mundo Vazio:
+  - o alvo deixa de ver pessoas, mobs e nomes flutuantes, e continua vendo o próprio corpo em F5;
+  - quem está em volta não nota nada;
+  - o alvo continua tomando dano e ouvindo som de quem não vê;
+  - conjurar de novo nele devolve o mundo, e o fim do tempo também;
+  - relogar no meio do efeito volta com o mundo visível ou com o efeito ainda valendo, nunca com o
+    mundo apagado sem efeito.
 - [ ] Transpositio:
   - troca com jogador e com mob;
   - quem estava caindo transfere a queda;
@@ -521,23 +648,36 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
 - [ ] Genua Flecte:
   - com Emotecraft, todos veem a pose, e ela volta após relogar/trocar de dimensão;
   - sem Emotecraft, agachado;
-  - o alvo vira de frente para quem conjurou.
+  - o alvo vira de frente para quem conjurou;
+  - de joelhos, nenhum item funciona (comida, arco, escudo, totem) e nenhuma magia sai — mas botão,
+    alavanca e porta continuam funcionando;
+  - conjurar de novo no mesmo alvo manda levantar.
 - [ ] Vox Interdicta:
   - microfone mudo em proximidade e em grupo;
   - chat recusado; magia bloqueada;
-  - leite devolve a voz.
+  - leite devolve a voz;
+  - conjurar de novo no mesmo alvo devolve a voz.
+- [ ] Cruciatus no alvo: nenhuma magia sai e nenhum item responde enquanto dura.
 - [ ] Sigillum Clausum:
   - porta (as duas metades), porta dupla, baú duplo, barril, alçapão, portão;
+  - **mods do pack**: mochila do Sophisticated Backpacks no chão, barril e cofre do Sophisticated
+    Storage, item vault do Create, portas do Macaw's e do FramedBlocks, baú do Quark;
+  - **Carry On**: com o baú lacrado, não dá para pegá-lo no colo;
   - dono, time (nível 2+), outro jogador e staff criativa;
   - desfazer o próprio lacre; quebrar com nível maior; resistir com nível menor;
   - explosão; quebrar o bloco;
-  - selo visível para quem chega depois na dimensão.
+  - selo visível para quem chega depois na dimensão;
+  - conferir se sobrou alguma máquina de linha de produção que ficou selável sem querer — se ficou, o
+    id vai para a tag `aurorion_magia:nao_selavel`, sem recompilar.
 - [ ] Deiectio:
   - elytra, levitação (shulker), voo de mod, alvo preso na Mão do Algoz;
   - no chão, sem pular;
-  - poeira do bloco no impacto.
+  - poeira do bloco no impacto;
+  - agachado, todos no raio caem juntos e a onda abre no chão.
 - [ ] Lux Vorata:
-  - velas, bolos com vela e fogueiras apagam;
+  - velas, bolos com vela, fogueiras, lâmpadas de mod com `lit` e fogo no chão apagam;
+  - fornalha acesa e lâmpada de redstone **não** apagam (tag `inapagavel`);
+  - todos dentro do raio ficam com Escuridão, menos quem conjurou e o time dele;
   - neblina negra dentro da zona, some ao sair;
   - proteção de spawn respeitada.
 - [ ] Ferrum Ligatum:

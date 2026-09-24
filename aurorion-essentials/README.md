@@ -236,7 +236,11 @@ O que entrou nesta versão e ainda precisa de uma passada no servidor:
 Esta implementação **ainda não foi compilada nem testada em jogo**.
 Comandos, limites e roteiro de validação: [DEATH-HISTORY.md](DEATH-HISTORY.md).
 
-- `/deathhistory <nome|UUID> [pagina]`: mortes, inclusive de jogadores offline.
+- `/deathhistory <pessoa> [pagina]`: mortes, inclusive de jogadores offline. `<pessoa>` é o **nome
+  do personagem** (o do `/fakename`, com aspas se tiver espaço), o nick da conta ou a UUID — o Tab
+  sugere os nomes conhecidos. Acha até quem já trocou de nome depois de morrer.
+- `/deathhistory view <pessoa> <n>` e `/deathhistory tp <pessoa> <n>`: a n-ésima morte da lista
+  (`#1` é a mais recente). É a forma de trabalhar pelo console, sem UUID.
 - `/deathhistory view <id> [pagina]`: inventário somente para consulta.
 - `/deathhistory tp <id>`: teleporte ao local da morte.
 - `/deathhistory give <id> <indice> <destinatario> confirm`: recupera uma pilha em slot livre.
@@ -244,3 +248,9 @@ Comandos, limites e roteiro de validação: [DEATH-HISTORY.md](DEATH-HISTORY.md)
   ender chest, Curios, efeitos, XP e fome, criando backup antes. O backup também aceita consulta/restauração.
 
 Tudo exige OP 2+. Não há devolução automática nem alteração de drops/keepInventory.
+
+**Rede de seguranca da morte.** Um mod com bug no `LivingDeathEvent` derrubava o servidor e deixava o
+jogador em zero de vida sem morrer (crash de 23/09/2026, `jonesbounty`). O `DeathListenerGuardMixin`
+envolve o disparo desse evento num `try/catch`: o listener quebrado perde o turno, a morte acontece
+inteira e o stack trace vai para o log. Detalhes e limites em
+[DEATH-HISTORY.md](DEATH-HISTORY.md).

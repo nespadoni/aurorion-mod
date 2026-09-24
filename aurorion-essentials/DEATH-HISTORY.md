@@ -38,18 +38,56 @@ auditoria do Relicário e do Fio da Volta.
   ficaram com o jogador e nunca são restaurados. O `restore` completo pula esses itens e devolve os
   que o destinatário tem agora; o `give` recusa. O ender chest não conta: não cai na morte.
 - **Personagem.** Cada snapshot grava `Character` e `CharacterName` (quando o personagem já tem
-  nome). A lista mostra o nome do personagem, o que separa as mortes quando a mesma conta tem vários
-  personagens. Snapshots antigos, sem esses campos, continuam legíveis.
+  nome), mais `FakeName`/`FakeNamePlain`: o nome pelo qual as pessoas chamavam quem morreu, gravado
+  na hora. A lista mostra esse nome, o que separa as mortes quando a mesma conta tem vários
+  personagens — e é por ele que se procura. Snapshots antigos, sem esses campos, continuam legíveis e
+  caem no nick da conta.
 
 ## Comandos (OP 2+)
 
 ```text
-/deathhistory <nome|UUID> [pagina]
+/deathhistory <pessoa> [pagina]
+/deathhistory view <pessoa> <n>
+/deathhistory tp   <pessoa> <n>
 /deathhistory view <id> [pagina]
 /deathhistory tp <id>
 /deathhistory give <id> <indice> <destinatario> confirm [duplicar]
 /deathhistory restore <id> <destinatario> confirm [duplicar]
 ```
+
+### Achar a pessoa sem saber a UUID
+
+Ninguém decora UUID, e num servidor de RP a staff quase nunca sabe o nick da Mojang de quem morreu:
+sabe o **nome do personagem**, que é o que aparece no chat, na tab e sobre a cabeça. Por isso
+`<pessoa>` aceita, nesta ordem de esforço:
+
+1. a UUID da conta, se alguém tiver;
+2. o nome de personagem de quem está online (`FakeNameRegistry`);
+3. o nick da Mojang de quem está online;
+4. o nome de personagem de quem está **offline** (`FakeNameData`, que fica em disco);
+5. o nick da Mojang de quem está offline (cache de perfis do vanilla);
+6. **um nome usado em alguma morte salva** (índice do histórico) — pega até quem já trocou de nome
+   depois de morrer.
+
+Os passos 1 a 5 são síncronos. Só o 6 lê disco, e vai junto com a leitura do histórico, na mesma ida
+à fila de IO.
+
+A comparação é a que uma pessoa faria de cabeça: **sem as cores** (o nome fica em disco com os
+códigos `&`), sem diferença de maiúscula e sem espaço sobrando. Nome com espaço vai entre aspas, e o
+Tab já sugere com elas:
+
+```text
+/deathhistory "Bella Noob"
+/deathhistory view "Bella Noob" 1
+```
+
+O `<n>` é o número que a própria lista mostra no começo de cada linha — `#1` é a morte mais recente.
+É o que permite trabalhar pelo console, sem UUID nenhuma. `give` e `restore` continuam exigindo o
+`<id>`: são destrutivos, e ter de copiar o id do registro é uma trava a favor.
+
+Cada linha da lista mostra o nome que a pessoa usava **na hora da morte**, e não o de hoje: trocar de
+nome amanhã não reescreve o que aconteceu ontem. A lista também imprime a conta resolvida, para o caso
+raro de dois personagens terem usado o mesmo nome em épocas diferentes.
 
 `duplicar` só é aceito (e só é exigido) quando o espólio daquela morte já voltou pelo Relicário.
 
@@ -65,6 +103,10 @@ Em `<mundo>/aurorion/death-history/`:
 
 - `records/<id>.nbt`: snapshots comprimidos.
 - `players/<UUID>.nbt`: índice compacto por jogador, mais recente primeiro.
+- `names.nbt`: nome usado numa morte → conta. É o que faz `/deathhistory "Bella Noob"` funcionar
+  meses depois, com a pessoa offline. Cada morte grava aqui o nome do personagem, o nome falso e o
+  nick da conta. Nome repetido aponta para a conta da morte mais recente; teto de 4096 nomes, podando
+  os mais antigos (o `/fakename` é livre, então sem teto o índice cresceria para sempre).
 - `backups/<id>.nbt`: estado anterior à recuperação; aceita `view` e `restore` pelo ID.
 - `restores/<id>.nbt`: administrador, destinatário, backup, data e estado da recuperação.
 
@@ -90,11 +132,40 @@ Consulte log, backup e destinatário antes de intervenção manual no recibo; n�
 e o journal é finalizado depois. Esses arquivos não formam uma transação atômica única;
 a reserva é conservadora diante de interrupções.
 
+## Rede de segurança: morte que trava o servidor
+
+`ServerPlayer.die` começa disparando o `LivingDeathEvent`. Se um listener lança exceção ali, ela sobe
+pelo `die`, pelo tick do servidor e derruba o loop inteiro — e o jogador fica **no meio da própria
+morte**: vida zero, `dead = false`, sem tela de morte, sem respawn, sem drop. Foi o crash de
+23/09/2026: o `jonesbounty` (`OnplayerkillProcedure`, `ArrayList.remove(-1)`) estourou numa morte
+disparada pelo PlayerRevive, e o servidor caiu com gente presa em zero de vida.
+
+O `DeathListenerGuardMixin` envolve **um** ponto — `CommonHooks.onLivingDeath`, onde o evento é
+disparado — num `try/catch`. O listener quebrado perde o turno dele e o resto da morte acontece
+normalmente: mensagem, drop, contagem de vida no `aurorion-vidas`, respawn. O stack trace inteiro vai
+para o log em `ERROR`, com o nome do mod culpado.
+
+Engolir exceção não é o certo; o certo é o mod culpado não lançar. Mas entre "um mod de recompensa
+perde um registro" e "o servidor de oitenta pessoas cai e alguém fica morto-vivo", a escolha é óbvia —
+e o log existe para que a primeira metade não seja esquecida. **A correção de verdade continua sendo
+remover ou atualizar o `jonesbounty`.**
+
+O mixin é `require = 0` e mora num config próprio (`aurorion_essentials.deathguard.mixins.json`,
+`required: false`): se uma versão futura do NeoForge mudar a linha, o jogo sobe sem a rede em vez de
+não subir. Quem avisa que ela sumiu é o `DeathGuardTargetTest`, que confere o alvo no bytecode.
+
 ## Validar na outra máquina
 
 Não executar Gradle nesta máquina de edição. Esta implementação ainda não foi compilada.
 
-- Compilar Essentials; executar `DeathHistoryStoreTest` e `PrivacyMixinTargetTest`.
+- Compilar Essentials; executar `DeathHistoryStoreTest`, `FakeNameLookupTest`,
+  `PrivacyMixinTargetTest` e `DeathGuardTargetTest`.
+- Busca por nome: `/deathhistory "Bella Noob"` com a pessoa online, offline, depois de ela trocar de
+  nome, e com o nome em caixa diferente. Conferir o Tab (nomes com espaço vêm entre aspas), o nick da
+  conta, a UUID, e a mensagem de "não achei ninguém" para um nome inventado.
+- `view`/`tp` pelo número da linha, do console e do chat; número maior que o total recusado;
+  `view <id>` e `view <pessoa> <n>` continuam funcionando lado a lado.
+- Botão `[Historico]` do aviso de morte abre a lista da pessoa certa.
 - Morte normal, PvP, modded, vazio, keepInventory, desaparecimento, equipamentos, mochilas e cursor.
 - Curios normal/cosmético, slots expandidos e itens que adicionam slots; sem Curios/API incompatível.
 - PlayerRevive/totem/cancelamento não grava; morte após sangramento grava uma vez.

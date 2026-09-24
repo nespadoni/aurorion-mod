@@ -51,10 +51,11 @@ public final class ManusCarnificisSpell extends AurorionSpell {
         return SpellAnimations.ANIMATION_CONTINUOUS_CAST;
     }
 
-    @Override
-    public AnimationHolder getCastFinishAnimation() {
-        return AnimationHolder.pass();
-    }
+    // Sem getCastFinishAnimation: o padrao de magia continua no Iron's e AnimationHolder.none(), que
+    // MANDA PARAR a animacao no fim da canalizacao. Devolver pass() aqui (como este arquivo fazia)
+    // quer dizer "nao mexa na animacao", e o ClientSpellCastHelper so cancela a pose quando a
+    // conjuracao e interrompida. Quem segurava o botao ate o tempo acabar ficava com o boneco de mao
+    // estendida para sempre, ate conjurar outra coisa. Nao reponha o override.
 
     @Override
     public Optional<SoundEvent> getCastStartSound() {

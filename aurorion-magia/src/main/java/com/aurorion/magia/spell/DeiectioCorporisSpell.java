@@ -36,10 +36,16 @@ import java.util.List;
  *   <li><b>No chao</b>: um impacto pequeno e {@code abatido} (sem pular) por alguns segundos.</li>
  * </ul>
  *
+ * <p><b>Agachado, em area</b> ({@link AreaCast}): nao precisa mirar em ninguem. A onda abre no chao
+ * sob quem conjurou e <b>tudo o que estiver no ar dentro do raio cai ao mesmo tempo</b> — o fim de uma
+ * fuga de elytra em grupo, ou de uma invasao vindo pelo alto. Quem ja estava no chao so leva o
+ * impacto e fica sem pular.
+ *
  * <p>E o contra natural de varias outras magias de movimento — inclusive das nossas.
  */
 public final class DeiectioCorporisSpell extends AurorionSpell {
     private static final int RANGE = 24;
+    private static final int MAX_TARGETS = 16;
 
     public DeiectioCorporisSpell() {
         super("deiectio_corporis", SchoolRegistry.ENDER_RESOURCE, SpellRarity.UNCOMMON, 5, 14, CastType.INSTANT);
@@ -60,21 +66,53 @@ public final class DeiectioCorporisSpell extends AurorionSpell {
         return List.of(
                 Component.translatable("ui.aurorion_magia.dano_impacto",
                         Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
-                Component.translatable("ui.aurorion_magia.sem_pulo", Utils.timeFromTicks(groundedTicks(spellLevel), 1)));
+                Component.translatable("ui.aurorion_magia.sem_pulo", Utils.timeFromTicks(groundedTicks(spellLevel), 1)),
+                Component.translatable("ui.aurorion_magia.agachado_area", radius(spellLevel)));
     }
 
+    /**
+     * Em area, a mira nao importa: basta haver alguem no raio. Em alvo unico, o raycast do Iron's,
+     * como sempre.
+     */
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return aim(level, entity, playerMagicData, RANGE, false, target -> !Displacement.isImmune(target));
+        if (!AreaCast.wide(entity)) {
+            return aim(level, entity, playerMagicData, RANGE, false, target -> !Displacement.isImmune(target));
+        }
+        if (!(level instanceof ServerLevel serverLevel)) return true;
+        if (!area(serverLevel, entity, spellLevel).isEmpty()) return true;
+        if (entity instanceof ServerPlayer player) {
+            player.displayClientMessage(Component.translatable("aurorion_magia.ninguem_em_volta"), true);
+        }
+        return false;
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            LivingEntity target = target(serverLevel, entity, playerMagicData);
-            if (target != null) slam(entity, target, spellLevel);
+            if (AreaCast.wide(entity)) {
+                wave(serverLevel, entity, spellLevel);
+            } else {
+                LivingEntity target = target(serverLevel, entity, playerMagicData);
+                if (target != null) slam(entity, target, spellLevel);
+            }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
+    }
+
+    /** A onda: todos no raio vao ao chao no mesmo instante. */
+    private void wave(ServerLevel level, LivingEntity caster, int spellLevel) {
+        for (LivingEntity victim : area(level, caster, spellLevel)) {
+            slam(caster, victim, spellLevel);
+        }
+        Vec3 at = caster.position();
+        sound(level, at, SoundEvents.ANVIL_LAND, 1.4f, 0.4f);
+        sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 0.8f, 0.5f);
+        MagiaNetwork.sendVisualAt(level, caster, SpellVisualPayload.Kind.DEIECTIO_AREA, 40, at, radius(spellLevel));
+    }
+
+    private List<LivingEntity> area(ServerLevel level, LivingEntity caster, int spellLevel) {
+        return AreaCast.victims(level, caster, caster.position(), radius(spellLevel), MAX_TARGETS, target -> true);
     }
 
     private void slam(LivingEntity caster, LivingEntity target, int spellLevel) {
@@ -109,5 +147,10 @@ public final class DeiectioCorporisSpell extends AurorionSpell {
     /** 1,5 s no nivel 1, +0,5 s por nivel. */
     private static int groundedTicks(int spellLevel) {
         return 30 + 10 * (spellLevel - 1);
+    }
+
+    /** Raio da onda: 6 blocos no nivel 1, +2 por nivel (14 no 5). */
+    private static int radius(int spellLevel) {
+        return 6 + 2 * (spellLevel - 1);
     }
 }

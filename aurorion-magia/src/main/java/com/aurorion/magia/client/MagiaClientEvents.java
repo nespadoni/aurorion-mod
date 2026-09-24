@@ -21,8 +21,11 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.neoforged.neoforge.client.event.RenderNameTagEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.common.util.TriState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -120,6 +123,36 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onRenderLevel(RenderLevelStageEvent event) {
             SigilRenderer.render(event);
+        }
+
+        /**
+         * Mundus Vacuus: o mundo esvazia. Enquanto o efeito durar, este cliente para de desenhar
+         * qualquer vivo que nao seja o proprio jogador — pessoas, criaturas, montarias, manequins.
+         *
+         * <p>Ninguem some de verdade: o servidor nunca deixa de saber quem esta onde, o dano continua
+         * chegando, o som continua tocando e para todos os outros a cena e normal. O que muda e so o
+         * que este par de olhos ve. E por isso que a magia e uma tortura e nao uma vantagem: a pessoa
+         * apanha de um corredor vazio.
+         *
+         * <p>Custo: uma consulta de efeito por entidade desenhada, e so enquanto alguem esta sob a
+         * magia — {@code hasEffect} e uma busca em mapa pequeno, que o vanilla ja faz varias vezes por
+         * quadro para cada corpo.
+         */
+        @SubscribeEvent
+        public static void onRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
+            if (alone(event.getEntity())) event.setCanceled(true);
+        }
+
+        /** O nome flutuante sai junto: um nome pairando sozinho entregaria quem esta ali. */
+        @SubscribeEvent
+        public static void onRenderNameTag(RenderNameTagEvent event) {
+            if (alone(event.getEntity())) event.setCanRender(TriState.FALSE);
+        }
+
+        /** {@code true} se este cliente esta sob o Mundo Vazio e {@code entity} nao e ele mesmo. */
+        private static boolean alone(Entity entity) {
+            LocalPlayer player = Minecraft.getInstance().player;
+            return player != null && entity != player && player.hasEffect(MagiaEffects.SOLITARY);
         }
 
         /**

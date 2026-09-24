@@ -5,12 +5,12 @@ import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.compat.EmotecraftCompat;
 import com.aurorion.magia.compat.FrozenLink;
 import com.aurorion.magia.compat.VoiceMute;
+import com.aurorion.magia.effect.EffectCleanup;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.spell.Binding;
 import com.aurorion.magia.spell.Domination;
 import com.aurorion.magia.spell.Gaze;
 import com.aurorion.magia.spell.IronBinding;
-import com.aurorion.magia.spell.Momentum;
 import com.aurorion.magia.spell.Seals;
 import com.aurorion.magia.unlock.SpellAccess;
 import com.aurorion.magia.unlock.SpellUnlockData;
@@ -85,6 +85,18 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.mente_turva").withStyle(ChatFormatting.DARK_AQUA));
             return;
         }
+        // Sob tortura nao se conjura: toda magia e voz firme e mao parada, e a pessoa nao tem
+        // nenhuma das duas. Vale para o Dolor Cruciatus e para o Tormento Coletivo, que usam o
+        // mesmo efeito.
+        if (player.hasEffect(MagiaEffects.CRUCIATUS)) {
+            deny(event, player, Component.translatable("aurorion_magia.dor_demais").withStyle(ChatFormatting.DARK_RED));
+            return;
+        }
+        // De joelhos tambem nao: a Prostracao tira as maos, e nao so as pernas.
+        if (player.hasEffect(MagiaEffects.KNEELING)) {
+            deny(event, player, Component.translatable("aurorion_magia.de_joelhos").withStyle(ChatFormatting.LIGHT_PURPLE));
+            return;
+        }
 
         AbstractSpell spell = SpellRegistry.getSpell(event.getSpellId());
         if (!SpellAccess.canCast(player, spell)) {
@@ -122,6 +134,7 @@ public final class MagiaServerEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         SpellAccess.reconcile(player);
         Seals.sendAll(player);
+        EffectCleanup.sweep(player);
     }
 
     @SubscribeEvent
@@ -131,7 +144,10 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) Seals.sendAll(player);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            Seals.sendAll(player);
+            EffectCleanup.sweep(player);
+        }
     }
 
     @SubscribeEvent
@@ -194,8 +210,13 @@ public final class MagiaServerEvents {
     /**
      * Abrir bloco lacrado. O cliente nao sabe dos lacres e chega a prever a porta abrindo; o
      * servidor recusa e a atualizacao de bloco desfaz a previsao no mesmo tick.
+     *
+     * <p><b>{@code HIGHEST}, e nao {@code HIGH}</b>: o Carry On pega bau e mochila do chao neste mesmo
+     * evento, tambem em {@code HIGH}, e entre dois listeners de mesma prioridade a ordem e a de
+     * registro — ou seja, sorte. Em {@code HIGHEST} cancelamos antes, e sair carregando o bau lacrado
+     * deixa de ser a brecha obvia do Lacre Profano.
      */
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onUseBlock(PlayerInteractEvent.RightClickBlock event) {
         if (event.getLevel() instanceof ServerLevel level && event.getEntity() instanceof ServerPlayer player) {
             Seals.Seal seal = Seals.get(level, event.getPos());
@@ -206,8 +227,8 @@ public final class MagiaServerEvents {
                 return;
             }
         }
-        // Desorientado: porta e botao continuam funcionando; so o item na mao nao e usado no bloco.
-        if (isDisoriented(event.getEntity())) event.setUseItem(TriState.FALSE);
+        // Maos atadas: porta e botao continuam funcionando; so o item na mao nao e usado no bloco.
+        if (handsBound(event.getEntity())) event.setUseItem(TriState.FALSE);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -246,24 +267,35 @@ public final class MagiaServerEvents {
         }
     }
 
-    // --- Desorientacao: sem item --------------------------------------------------------------
+    // --- Maos atadas: sem item ----------------------------------------------------------------
     // Estes rodam nos dois lados de proposito. O efeito ja esta sincronizado com o cliente do
     // afetado, entao cancelar la tambem evita a animacao fantasma de "comecou a comer e parou".
 
     @SubscribeEvent
     public static void onUseItem(PlayerInteractEvent.RightClickItem event) {
-        if (!isDisoriented(event.getEntity())) return;
+        if (!handsBound(event.getEntity())) return;
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.FAIL);
     }
 
     @SubscribeEvent
     public static void onStartUsing(LivingEntityUseItemEvent.Start event) {
-        if (isDisoriented(event.getEntity())) event.setCanceled(true);
+        if (handsBound(event.getEntity())) event.setCanceled(true);
     }
 
-    private static boolean isDisoriented(LivingEntity entity) {
-        return entity instanceof Player player && player.hasEffect(MagiaEffects.DISORIENTED);
+    /**
+     * Os tres estados em que as maos nao respondem: mente dominada (Imperium), dor que paralisa
+     * (Cruciatus e Tormento Coletivo) e joelhos no chao (Prostracao). Nenhum item e usado, nem comida,
+     * nem arco, nem escudo, nem totem — e o gate de conjuracao ja recusa magia nos tres.
+     *
+     * <p>Botao, alavanca e porta continuam funcionando: quem trava isso e {@code onUseBlock}, que so
+     * desliga o <i>item</i> na mao.
+     */
+    private static boolean handsBound(LivingEntity entity) {
+        return entity instanceof Player player
+                && (player.hasEffect(MagiaEffects.DISORIENTED)
+                || player.hasEffect(MagiaEffects.CRUCIATUS)
+                || player.hasEffect(MagiaEffects.KNEELING));
     }
 
     // --- Dominio -----------------------------------------------------------------------------
@@ -309,8 +341,6 @@ public final class MagiaServerEvents {
             Domination.release(mob);
         } else if (effect == MagiaEffects.BOUND.get()) {
             Binding.release(entity);
-        } else if (effect == MagiaEffects.MOMENTUM.get()) {
-            Momentum.forget(entity);
         } else if (effect == MagiaEffects.KNEELING.get() && entity instanceof ServerPlayer player) {
             EmotecraftCompat.stop(player);
         } else if (effect == MagiaEffects.SILENCED.get()) {

@@ -45,18 +45,6 @@ public final class MagiaEffects {
     public static final DeferredHolder<MobEffect, BoundEffect> BOUND =
             EFFECTS.register("vinculado", BoundEffect::new);
 
-    /** Furtum Impetus, no alvo: o impulso foi roubado e o corpo fica parado um instante. */
-    public static final DeferredHolder<MobEffect, MobEffect> STASIS = EFFECTS.register("estase",
-            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0xA8E6FF)
-                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("estase_speed"),
-                            -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
-                    .addAttributeModifier(Attributes.JUMP_STRENGTH, AurorionMagia.id("estase_jump"),
-                            -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-
-    /** Furtum Impetus, no conjurador: carrega um impulso para devolver. So icone. */
-    public static final DeferredHolder<MobEffect, MobEffect> MOMENTUM = EFFECTS.register("impeto",
-            () -> new MagiaEffect(MobEffectCategory.BENEFICIAL, 0xDDF6FF));
-
     /** Mao do Algoz: voando depois de solto. Bate na parede, machuca. */
     public static final DeferredHolder<MobEffect, ThrownEffect> THROWN =
             EFFECTS.register("arremessado", ThrownEffect::new);
@@ -82,6 +70,13 @@ public final class MagiaEffects {
     /** Aspectus Captus: o olhar preso em quem conjurou, andando devagar. */
     public static final DeferredHolder<MobEffect, CaptiveEffect> CAPTIVE =
             EFFECTS.register("cativo", CaptiveEffect::new);
+
+    /**
+     * Mundus Vacuus: o mundo esvazia. So o cliente do afetado reage — ele deixa de desenhar todo
+     * vivo em volta. No servidor nada muda: quem esta ali continua ali.
+     */
+    public static final DeferredHolder<MobEffect, MobEffect> SOLITARY = EFFECTS.register("solitario",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x0B0714));
 
     private MagiaEffects() {
     }

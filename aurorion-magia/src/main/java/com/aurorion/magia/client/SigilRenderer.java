@@ -130,6 +130,21 @@ public final class SigilRenderer {
                 solidDisc(out, pose.last().pose(), a.extra * .95F, 0, 0x1A0005, .3F * fade, .05F * fade, 64);
                 pose.popPose();
             }
+            case MORTEM_AREA -> {
+                at(pose, camera, a.pos.add(0, .02, 0));
+                solidDisc(out, pose.last().pose(), a.extra * .98F, 0, 0x02100A, .55F * fade, .1F * fade, 64);
+                pose.popPose();
+            }
+            case MUNDUS_VACUUS -> {
+                if (target == null) return;
+                // O veu: uma casca escura rente ao corpo, que engole o que esta atras dele.
+                float radius = target.getBbWidth() * .8F + .3F;
+                for (int band = 0; band < 3; band++) {
+                    at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * (.2 + band * .3), 0));
+                    band(out, pose.last().pose(), radius * .55F, radius, 0, 0x05030C, .5F * fade, 32);
+                    pose.popPose();
+                }
+            }
             default -> {
             }
         }
@@ -176,33 +191,6 @@ public final class SigilRenderer {
                     chain(out, pose.last().pose(), new Vec3(0, .15, 0), waist(target, partial).subtract(a.pos.add(0, .05, 0)),
                             .32F, .06F, 0xFF4A4A, .55F * tension * fade);
                 }
-                pose.popPose();
-            }
-            case FURTUM_STEAL -> {
-                if (target == null) return;
-                float t = Mth.clamp(life / 14f, 0, 1);
-                float outer = .2F + 1.4F * (1 - t);
-                at(pose, camera, waist(target, partial));
-                band(out, pose.last().pose(), Math.max(0, outer - .25F), outer, 0, 0xBDEBFF, .6F * (1 - t), 40);
-                pose.popPose();
-            }
-            case FURTUM_HELD -> {
-                if (target == null) return;
-                at(pose, camera, ClientSpellVisuals.castingHand(target, partial));
-                pose.pushPose();
-                pose.mulPose(ROTATION.rotationXYZ(life * .11F, life * .07F, 0));
-                drawMesh(out, pose, CIRCLE, .18F, .02F, 0xFFFFFF, .8F * fade, 0);
-                pose.popPose();
-                pose.mulPose(ROTATION.rotationXYZ(0, -life * .09F, life * .13F));
-                drawMesh(out, pose, CIRCLE, .27F, .015F, 0xBDEBFF, .6F * fade, 0);
-                pose.popPose();
-            }
-            case FURTUM_RELEASE -> {
-                if (target == null) return;
-                float t = Mth.clamp(life / 12f, 0, 1);
-                float radius = .4F + 2.6F * t;
-                at(pose, camera, waist(target, partial));
-                band(out, pose.last().pose(), radius * .75F, radius, 0, 0xFFFFFF, .7F * (1 - t), 48);
                 pose.popPose();
             }
             case TRANSPOSITIO -> {
@@ -353,6 +341,65 @@ public final class SigilRenderer {
                 spin(pose, life, .8F);
                 layered(out, pose, SEAL_THORN, a.extra, 0xB0102A, 0xFF4050, fade * pulse(life, .85F));
                 drawMesh(out, pose, CIRCLE, a.extra * 1.04F, .05F, 0xFF4050, .35F * fade, 0);
+                pose.popPose();
+            }
+            case DEIECTIO_AREA -> {
+                // A onda abrindo do centro ate a borda, e o selo de espinhos que fica marcado no chao.
+                float open = Mth.clamp(life / 10f, 0, 1);
+                at(pose, camera, a.pos.add(0, .04, 0));
+                spin(pose, life, -1.2F);
+                layered(out, pose, SEAL_THORN, a.extra * open, 0x7A5CB0, 0xCFC2FF, fade);
+                if (life < 16) {
+                    float t = life / 16f;
+                    band(out, pose.last().pose(), a.extra * t * .82F, a.extra * t, .05F, 0xE6DEFF, .8F * (1 - t), 72);
+                }
+                pose.popPose();
+            }
+            case ASPECTUS_AREA -> {
+                // O olho enorme de pe sobre quem conjura, e o circulo do alcance no chao.
+                float open = Mth.clamp(life / 8f, 0, 1);
+                at(pose, camera, a.pos.add(0, 2.6, 0));
+                pose.mulPose(ROTATION.rotationY(life * .3F * Mth.DEG_TO_RAD));
+                pose.mulPose(ROTATION.rotationX(Mth.HALF_PI));
+                pose.scale(1, 1, open);
+                layered(out, pose, EYE, 1.6F, 0x8B3FC4, 0xE6D0FF, fade);
+                pose.popPose();
+                at(pose, camera, a.pos.add(0, .05, 0));
+                drawMesh(out, pose, CIRCLE, a.extra * open, .05F, 0x8B3FC4, .3F * fade, 0);
+                spin(pose, life, .5F);
+                drawMesh(out, pose, RUNE_RING, a.extra * .35F * open, .03F, 0xE6D0FF, .45F * fade, .002F);
+                pose.popPose();
+            }
+            case MORTEM_AREA -> {
+                // O pentagrama do tamanho do raio: a sentenca de todos ao mesmo tempo.
+                float open = Mth.clamp(life / 8f, 0, 1);
+                float t = Mth.clamp(life / 80f, 0, 1);
+                at(pose, camera, a.pos.add(0, .04, 0));
+                spin(pose, life, -.4F);
+                layered(out, pose, SEAL_DEATH, a.extra * open, 0x3BFF6B, 0xC8FFD8, fade);
+                Matrix4f matrix = pose.last().pose();
+                float height = 6F * (1 - t);
+                int rays = 16;
+                for (int i = 0; i < rays; i++) {
+                    ray(out, matrix, i * Mth.TWO_PI / rays, a.extra * .9F * open, .18F, height,
+                            (i & 1) == 0 ? 0x3BFF6B : 0xC8FFD8, .3F * fade);
+                }
+                if (life < 20) {
+                    float wave = life / 20f;
+                    band(out, matrix, a.extra * wave * .85F, a.extra * wave, .06F, 0xC8FFD8, .7F * (1 - wave), 72);
+                }
+                pose.popPose();
+            }
+            case MUNDUS_VACUUS -> {
+                if (target == null) return;
+                // Nao ha selo brilhante: a magia e a ausencia. So um fio de runa fechando o corpo.
+                float radius = target.getBbWidth() * .8F + .32F;
+                at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * .55, 0));
+                spin(pose, life, -1.6F);
+                drawMesh(out, pose, RUNE_RING, radius, .012F, 0x6A4FA0, .5F * fade, 0);
+                pose.popPose();
+                at(pose, camera, target.getPosition(partial).add(0, .03, 0));
+                drawMesh(out, pose, CIRCLE, radius * 1.4F, .02F, 0x2A1840, .35F * fade, 0);
                 pose.popPose();
             }
             default -> {

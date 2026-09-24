@@ -50,6 +50,18 @@ public class FakeNameData extends SavedData {
         return names.get(player);
     }
 
+    /**
+     * Todos os nomes gravados, inclusive de quem esta offline — o {@code FakeNameRegistry} so tem
+     * quem esta online agora. E o que permite ao {@code /deathhistory} achar a conta de alguem pelo
+     * nome de personagem dias depois da morte.
+     *
+     * <p>Copia imutavel: quem consulta nao mexe no estado salvo, e a copia sai barata (um nome por
+     * jogador que ja usou o comando).
+     */
+    public Map<UUID, String> allRaw() {
+        return Map.copyOf(names);
+    }
+
     /** @return true se algo mudou de fato. */
     public boolean setRaw(UUID player, @Nullable String raw) {
         String previous = raw == null ? names.remove(player) : names.put(player, raw);

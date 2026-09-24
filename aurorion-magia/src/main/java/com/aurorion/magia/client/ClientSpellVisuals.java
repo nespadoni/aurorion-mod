@@ -53,7 +53,6 @@ public final class ClientSpellVisuals {
     static final ParticleOptions JADE = dust(0.55f, 1.0f, 0.74f, 0.8f);
     static final ParticleOptions SILVER = dust(0.88f, 0.92f, 0.96f, 0.7f);
     static final ParticleOptions CRIMSON = dust(0.8f, 0.12f, 0.16f, 1.0f);
-    static final ParticleOptions FROST = dust(0.78f, 0.94f, 1.0f, 0.8f);
     static final ParticleOptions VIOLET = dust(0.62f, 0.35f, 1.0f, 0.9f);
     static final ParticleOptions LILAC = dust(0.8f, 0.72f, 0.95f, 0.8f);
     static final ParticleOptions IRON = dust(0.6f, 0.62f, 0.68f, 0.9f);
@@ -87,7 +86,6 @@ public final class ClientSpellVisuals {
                 snapBurst(level, payload);
                 return;
             }
-            case FURTUM_RELEASE -> ACTIVE.removeIf(a -> a.kind == Kind.FURTUM_HELD && a.casterId == payload.casterId());
             case SIGILLUM_BREAK -> ACTIVE.removeIf(a -> a.kind == Kind.SIGILLUM && a.pos.distanceToSqr(payload.pos()) < 0.01);
             case SIGILLUM_DENY -> {
                 Active seal = find(Kind.SIGILLUM, -1, payload.pos());
@@ -206,33 +204,6 @@ public final class ClientSpellVisuals {
                     }
                 }
                 if (time % 12 == 0) level.addParticle(ParticleTypes.CRIMSON_SPORE, a.pos.x, a.pos.y + 0.1, a.pos.z, 0, 0.02, 0);
-            }
-            case FURTUM_STEAL -> {
-                if (!(a.caster(level) instanceof LivingEntity caster) || target == null) return;
-                Vec3 hand = castingHand(caster);
-                for (int i = 0; i < 4 / stride + 1; i++) {
-                    Vec3 from = chest(target).add(offset(random, 0.5));
-                    Vec3 velocity = hand.subtract(from).scale(0.12);
-                    level.addParticle(i % 2 == 0 ? ParticleTypes.END_ROD : FROST, from.x, from.y, from.z,
-                            velocity.x, velocity.y, velocity.z);
-                }
-            }
-            case FURTUM_HELD -> {
-                if (target == null || time % (2L * stride) != 0) return;
-                Vec3 hand = castingHand(target);
-                double angle = time * 0.5;
-                level.addParticle(FROST, hand.x + Math.cos(angle) * 0.22, hand.y + Math.sin(angle * 0.7) * 0.1,
-                        hand.z + Math.sin(angle) * 0.22, 0, 0, 0);
-            }
-            case FURTUM_RELEASE -> {
-                if (a.age != 1 || target == null) return;
-                Vec3 center = waist(target);
-                ring(level, center, 0.4, 24 / stride, ParticleTypes.CLOUD, 0.18);
-                Vec3 push = a.pos.normalize().scale(0.6);
-                for (int i = 0; i < 10 / stride + 1; i++) {
-                    Vec3 p = center.add(offset(random, 0.4));
-                    level.addParticle(ParticleTypes.END_ROD, p.x, p.y, p.z, push.x, push.y, push.z);
-                }
             }
             case TRANSPOSITIO -> {
                 LivingEntity caster = a.caster(level) instanceof LivingEntity c ? c : null;
@@ -379,6 +350,73 @@ public final class ClientSpellVisuals {
                     Vec3 p = eyes.lerp(to, t);
                     level.addParticle(VOID, p.x, p.y, p.z, 0, 0, 0);
                     level.addParticle(ParticleTypes.WITCH, eyes.x, eyes.y + 0.35, eyes.z, 0, 0.01, 0);
+                }
+            }
+            case DEIECTIO_AREA -> {
+                double radius = a.extra;
+                if (a.age <= 12) {
+                    // A onda abrindo do centro ate a borda, rasgando o chao.
+                    double ring = radius * a.age / 12.0;
+                    int count = Math.max(10, (int) (ring * 5) / stride);
+                    for (int i = 0; i < count; i++) {
+                        double angle = i * Math.PI * 2 / count;
+                        double x = a.pos.x + Math.cos(angle) * ring;
+                        double z = a.pos.z + Math.sin(angle) * ring;
+                        BlockState under = level.getBlockState(BlockPos.containing(x, a.pos.y - 0.5, z));
+                        level.addParticle(under.isAir() ? ParticleTypes.CLOUD : new BlockParticleOption(ParticleTypes.BLOCK, under),
+                                x, a.pos.y + 0.1, z, 0, 0.25, 0);
+                    }
+                } else if (time % (2L * stride) == 0) {
+                    // Rastros de vento descendo dentro do raio: ninguem se sustenta ali.
+                    for (int i = 0; i < 3 / stride + 1; i++) {
+                        double angle = random.nextDouble() * Math.PI * 2;
+                        double r = Math.sqrt(random.nextDouble()) * radius;
+                        level.addParticle(LILAC, a.pos.x + Math.cos(angle) * r, a.pos.y + 1 + random.nextDouble() * 3,
+                                a.pos.z + Math.sin(angle) * r, 0, -0.6, 0);
+                    }
+                }
+            }
+            case ASPECTUS_AREA -> {
+                double radius = a.extra;
+                if (time % (2L * stride) != 0) return;
+                // Tudo converge para quem conjurou: o olhar da praca inteira, em particula.
+                for (int i = 0; i < 2 / stride + 1; i++) {
+                    double angle = random.nextDouble() * Math.PI * 2;
+                    Vec3 from = a.pos.add(Math.cos(angle) * radius, 0.8 + random.nextDouble() * 1.4, Math.sin(angle) * radius);
+                    Vec3 velocity = a.pos.add(0, 1.4, 0).subtract(from).scale(0.04);
+                    level.addParticle(VIOLET, from.x, from.y, from.z, velocity.x, velocity.y, velocity.z);
+                }
+                level.addParticle(ParticleTypes.WITCH, a.pos.x, a.pos.y + 2.2, a.pos.z, 0, 0.02, 0);
+            }
+            case MORTEM_AREA -> {
+                double radius = a.extra;
+                if (a.age == 1) {
+                    burst(level, a.pos.add(0, 1, 0), DEATH, 40 / stride, 0.4);
+                    level.addParticle(ParticleTypes.FLASH, a.pos.x, a.pos.y + 1, a.pos.z, 0, 0, 0);
+                } else if (time % (2L * stride) == 0) {
+                    // As almas subindo de todo o circulo, uma a uma.
+                    for (int i = 0; i < 3 / stride + 1; i++) {
+                        double angle = random.nextDouble() * Math.PI * 2;
+                        double r = Math.sqrt(random.nextDouble()) * radius;
+                        double x = a.pos.x + Math.cos(angle) * r;
+                        double z = a.pos.z + Math.sin(angle) * r;
+                        level.addParticle(ParticleTypes.SOUL, x, a.pos.y + 0.1, z, 0, 0.07, 0);
+                        level.addParticle(DEATH_DARK, x, a.pos.y + 0.3, z, 0, 0.03, 0);
+                    }
+                }
+            }
+            case MUNDUS_VACUUS -> {
+                if (target == null) return;
+                if (a.age == 1) {
+                    burst(level, chest(target), VOID, 26 / stride, 0.3);
+                    ring(level, waist(target), 1.2, 20 / stride, ParticleTypes.SQUID_INK, 0.12);
+                } else if (time % (3L * stride) == 0) {
+                    // O veu fechando: pontos de vazio girando rente ao corpo, sem brilho nenhum.
+                    double angle = time * 0.18;
+                    double r = target.getBbWidth() * 0.7 + 0.35;
+                    level.addParticle(VOID, target.getX() + Math.cos(angle) * r,
+                            target.getY() + target.getBbHeight() * (0.2 + (time % 40) / 40.0 * 0.8),
+                            target.getZ() + Math.sin(angle) * r, 0, 0, 0);
                 }
             }
             case DOLOR_UNIVERSUS -> {

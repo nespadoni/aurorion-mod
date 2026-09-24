@@ -1,0 +1,16 @@
+{
+  "values": [
+    "minecraft:furnace",
+    "minecraft:blast_furnace",
+    "minecraft:smoker",
+    "minecraft:redstone_lamp",
+    "minecraft:redstone_ore",
+    "minecraft:deepslate_redstone_ore",
+    "minecraft:redstone_torch",
+    "minecraft:redstone_wall_torch",
+    { "id": "farmersdelight:stove", "required": false },
+    { "id": "create:blaze_burner", "required": false },
+    { "id": "cookingforblockheads:oven", "required": false },
+    { "id": "cookingforblockheads:cow_jar", "required": false }
+  ]
+}

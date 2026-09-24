@@ -6,10 +6,10 @@ import com.aurorion.magia.spell.DeiectioCorporisSpell;
 import com.aurorion.magia.spell.DolorCruciatusSpell;
 import com.aurorion.magia.spell.DolorUniversusSpell;
 import com.aurorion.magia.spell.FerrumLigatumSpell;
-import com.aurorion.magia.spell.FurtumImpetusSpell;
 import com.aurorion.magia.spell.GenuaFlecteSpell;
 import com.aurorion.magia.spell.ImperiumMentisSpell;
 import com.aurorion.magia.spell.LuxVorataSpell;
+import com.aurorion.magia.spell.MundusVacuusSpell;
 import com.aurorion.magia.spell.ManusCarnificisSpell;
 import com.aurorion.magia.spell.ManusVacuaSpell;
 import com.aurorion.magia.spell.MortemDicoSpell;
@@ -51,10 +51,10 @@ public final class MagiaSpells {
             SPELLS.register("vox_interdicta", VoxInterdictaSpell::new);
     public static final DeferredHolder<AbstractSpell, FerrumLigatumSpell> FERRUM_LIGATUM =
             SPELLS.register("ferrum_ligatum", FerrumLigatumSpell::new);
+    public static final DeferredHolder<AbstractSpell, MundusVacuusSpell> MUNDUS_VACUUS =
+            SPELLS.register("mundus_vacuus", MundusVacuusSpell::new);
 
     // --- Movimento e forca --------------------------------------------------------------------
-    public static final DeferredHolder<AbstractSpell, FurtumImpetusSpell> FURTUM_IMPETUS =
-            SPELLS.register("furtum_impetus", FurtumImpetusSpell::new);
     public static final DeferredHolder<AbstractSpell, TranspositioSpell> TRANSPOSITIO =
             SPELLS.register("transpositio", TranspositioSpell::new);
     public static final DeferredHolder<AbstractSpell, ManusCarnificisSpell> MANUS_CARNIFICIS =

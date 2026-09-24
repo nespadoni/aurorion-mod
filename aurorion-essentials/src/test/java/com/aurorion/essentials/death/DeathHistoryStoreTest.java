@@ -55,6 +55,43 @@ class DeathHistoryStoreTest {
         }
     }
 
+    /**
+     * O indice de nomes: e o que permite a staff consultar por "Bella Noob" em vez da UUID da conta,
+     * inclusive semanas depois e com a pessoa offline.
+     */
+    @Test void deathsCanBeFoundByAnyNameTheAccountDiedUnder() throws IOException {
+        UUID owner = UUID.randomUUID();
+        CompoundTag death = snapshot(owner);
+        death.putString("FakeNamePlain", "Bella Noob");
+        death.putString("CharacterName", "Bellatrix de Aurorion");
+        try (DeathHistoryStore store = new DeathHistoryStore(root)) {
+            store.saveDeath(death, 10);
+            assertEquals(owner, store.findByName("Bella Noob"));
+            assertEquals(owner, store.findByName("  bella noob "));
+            assertEquals(owner, store.findByName("Bellatrix de Aurorion"));
+            // O nick da conta continua valendo: e o unico nome de quem nunca usou /fakename.
+            assertEquals(owner, store.findByName("Player"));
+            assertNull(store.findByName("Fulano"));
+            assertTrue(store.knownNames().contains("Bella Noob"));
+        }
+    }
+
+    /** Trocar de nome nao apaga o passado: os dois nomes continuam achando a mesma conta. */
+    @Test void anOldNameStillFindsTheAccountAfterTheNameChanges() throws IOException {
+        UUID owner = UUID.randomUUID();
+        CompoundTag before = snapshot(owner);
+        before.putString("FakeNamePlain", "Bella Noob");
+        CompoundTag after = snapshot(owner);
+        after.putString("FakeNamePlain", "Bella Veterana");
+        after.putLong("Time", 9999);
+        try (DeathHistoryStore store = new DeathHistoryStore(root)) {
+            store.saveDeath(before, 10);
+            store.saveDeath(after, 10);
+            assertEquals(owner, store.findByName("Bella Noob"));
+            assertEquals(owner, store.findByName("Bella Veterana"));
+        }
+    }
+
     private static CompoundTag snapshot(UUID owner) {
         CompoundTag snapshot = new CompoundTag();
         snapshot.putInt("Format", 1); snapshot.putUUID("Id", UUID.randomUUID()); snapshot.putUUID("Owner", owner);
