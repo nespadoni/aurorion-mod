@@ -247,9 +247,8 @@ public final class NpcService {
 
     /** Cura nativa: vida vanilla e, com o LSO, todas as partes do corpo (inclusive a marca de lesao grave). */
     private static void heal(ServerPlayer player) {
+        LsoCompat.healAll(player);
         player.setHealth(player.getMaxHealth());
-        for (var part : LsoCompat.parts(player).values())
-            if (part.aurorionCritical() || part.aurorionHealth() < part.aurorionMaxHealth()) part.aurorionTreat();
     }
 
     /**

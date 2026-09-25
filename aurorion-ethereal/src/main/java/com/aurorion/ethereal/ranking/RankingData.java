@@ -256,7 +256,7 @@ public final class RankingData extends SavedData {
     private static int valueOf(PlayerRanking ranking, BoardMode mode) {
         return switch (mode) {
             case TOP_PLAYERS, WORST_PLAYERS -> ranking.points();
-            case DEATHS -> ranking.deaths();
+            case LIVES -> throw new IllegalArgumentException("Lives are provided by aurorion-vidas");
             case DUEL_WINS -> ranking.duelWins();
             case MISSIONS -> ranking.missions();
             case TOP_HOUSES, WORST_HOUSES, RICHEST_HOUSES, RICHEST_PLAYERS -> 0;

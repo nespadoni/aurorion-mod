@@ -1,5 +1,6 @@
 package com.aurorion.magia;
 
+import com.aurorion.magia.passive.Passive;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,39 @@ class MagiaAssetsTest {
     @Test
     void osDoisIdiomasTemExatamenteAsMesmasChaves() {
         assertEquals(new TreeSet<>(lang("pt_br").keySet()), new TreeSet<>(lang("en_us").keySet()));
+    }
+
+    /**
+     * Passiva sem nome apareceria como {@code passive.aurorion_magia.<id>} cru no chat e no
+     * pergaminho — e, ao contrario da magia, ela nao tem icone para denunciar a falta antes.
+     */
+    @Test
+    void todaPassivaTemNomeEDescricaoNosDoisIdiomas() {
+        assertTrue(Passive.values().length > 0, "nenhuma passiva registrada");
+        for (String language : LANGS) {
+            JsonObject keys = lang(language);
+            for (Passive passive : Passive.values()) {
+                assertTrue(keys.has("passive.aurorion_magia." + passive.key()),
+                        "falta o nome de " + passive.key() + " em " + language + ".json");
+                assertTrue(keys.has("passive.aurorion_magia." + passive.key() + ".guide"),
+                        "falta a descricao de " + passive.key() + " em " + language + ".json");
+            }
+        }
+    }
+
+    /** Traducao de passiva sem passiva: a marca saiu do codigo e a chave ficou para tras. */
+    @Test
+    void naoSobraTraducaoDePassivaQueNaoExisteMais() {
+        Set<String> passives = new TreeSet<>();
+        for (Passive passive : Passive.values()) passives.add(passive.key());
+
+        for (String language : LANGS) {
+            for (String key : lang(language).keySet()) {
+                if (!key.startsWith("passive.aurorion_magia.") || key.endsWith(".guide")) continue;
+                String id = key.substring("passive.aurorion_magia.".length());
+                assertTrue(passives.contains(id), "sobrou " + key + " em " + language + ".json");
+            }
+        }
     }
 
     private static Set<String> spellIds() {

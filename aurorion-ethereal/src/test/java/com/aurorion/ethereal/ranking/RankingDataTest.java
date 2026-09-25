@@ -2,6 +2,8 @@ package com.aurorion.ethereal.ranking;
 
 import com.aurorion.ethereal.house.House;
 import com.aurorion.ethereal.house.HouseData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -120,7 +122,10 @@ class RankingDataTest {
         data.recordDuelWin(winner, "Winner");
         data.recordMission(winner, "Winner");
 
-        assertEquals(2, data.top(BoardMode.DEATHS, 1, membership, CATALOG).getFirst().value());
+        var saved = data.save(new CompoundTag(), null).getList("Players", Tag.TAG_COMPOUND);
+        assertEquals(2, saved.stream().map(tag -> (CompoundTag) tag)
+                .filter(tag -> tag.getUUID("Id").equals(victim))
+                .findFirst().orElseThrow().getInt("Deaths"));
         assertEquals("Winner", data.top(BoardMode.DUEL_WINS, 1, membership, CATALOG).getFirst().label());
         assertEquals(1, data.top(BoardMode.MISSIONS, 1, membership, CATALOG).getFirst().value());
     }

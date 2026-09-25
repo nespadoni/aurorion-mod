@@ -1,8 +1,10 @@
 package com.aurorion.magia.client;
 
+import com.aurorion.core.client.ShaderPacks;
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.config.MagiaClientConfig;
 import com.aurorion.magia.registry.MagiaEffects;
+import com.aurorion.magia.registry.MagiaEntities;
 import com.mojang.blaze3d.shaders.FogShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
@@ -18,6 +20,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -46,7 +49,15 @@ public final class MagiaClientEvents {
 
         @SubscribeEvent
         public static void registerLayers(RegisterGuiLayersEvent event) {
+            // A nevoa vai ABAIXO de tudo: ela e cenario, e nao pode cobrir barra de itens nem chat.
+            // A possessao vai acima, porque ali o ponto e justamente cobrir a tela inteira.
+            event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS, FogLayer.ID, new FogLayer());
             event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, PossessionLayer.ID, new PossessionLayer());
+        }
+
+        @SubscribeEvent
+        public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+            event.registerEntityRenderer(MagiaEntities.SPELL_ZONE.get(), SpellZoneRenderer::new);
         }
     }
 
@@ -156,14 +167,24 @@ public final class MagiaClientEvents {
         }
 
         /**
-         * Lux Vorata: dentro da zona, a neblina fecha em volta de quem esta la. Respeita neblina ja
-         * mais densa (agua, lava, cegueira, a floresta do {@code aurorion-areas}).
+         * A neblina de verdade, do pipeline do vanilla: a zona do Devorar Luz e a aura de terror
+         * fechando o ar em volta de quem esta dentro. Respeita neblina ja mais densa (agua, lava,
+         * cegueira, a floresta do {@code aurorion-areas}).
+         *
+         * <p><b>So sem shader.</b> Com um pacote carregado no Iris, quem calcula a neblina e o shader
+         * e este evento nao chega a lugar nenhum; ai quem desenha e a {@link FogLayer}, em espaco de
+         * tela. As duas nunca rodam juntas — somadas, escureceriam o dobro.
+         *
+         * <p>A Presenca Aterradora fecha o ar tanto quanto o Devorar Luz: colado em quem a carrega, o
+         * alcance de visao e {@value #DARK_FOG_DISTANCE} blocos. A escuridao do chao e das paredes nao
+         * vem daqui — vem da Escuridao do vanilla que o servidor poe em quem esta dentro da aura.
          */
         @SubscribeEvent
         public static void onRenderFog(ViewportEvent.RenderFog event) {
             if (event.getCamera().getFluidInCamera() != FogType.NONE
-                    || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN) return;
-            float weight = ClientSpellVisuals.darkness(event.getCamera().getPosition());
+                    || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN || ShaderPacks.inUse()) return;
+            Vec3 camera = event.getCamera().getPosition();
+            float weight = Math.max(ClientSpellVisuals.darkness(camera), terrorWeight(camera));
             if (weight < .001F) return;
             float far = event.getFarPlaneDistance();
             float distance = far + (Math.min(far, DARK_FOG_DISTANCE) - far) * weight;
@@ -173,14 +194,34 @@ public final class MagiaClientEvents {
             event.setCanceled(true);
         }
 
+        /**
+         * A cor do ar. Sao dois ares diferentes: o do Devorar Luz guarda um roxo de vazio, e o do medo
+         * nao guarda nada — preto e tudo o que a Presenca Aterradora tem a dizer.
+         */
         @SubscribeEvent
         public static void onFogColor(ViewportEvent.ComputeFogColor event) {
-            if (event.getCamera().getFluidInCamera() != FogType.NONE) return;
-            float weight = ClientSpellVisuals.darkness(event.getCamera().getPosition()) * .9F;
+            if (event.getCamera().getFluidInCamera() != FogType.NONE || ShaderPacks.inUse()) return;
+            Vec3 camera = event.getCamera().getPosition();
+            float terror = terrorWeight(camera);
+            float darkness = ClientSpellVisuals.darkness(camera) * .9F;
+            float weight = Math.max(terror, darkness);
             if (weight < .001F) return;
-            event.setRed(event.getRed() * (1 - weight) + .02F * weight);
+            // O roxo so aparece na parte da escuridao que o medo nao cobriu.
+            float tint = Math.max(0, darkness - terror);
+            event.setRed(event.getRed() * (1 - weight) + .02F * tint);
             event.setGreen(event.getGreen() * (1 - weight));
-            event.setBlue(event.getBlue() * (1 - weight) + .04F * weight);
+            event.setBlue(event.getBlue() * (1 - weight) + .04F * tint);
+        }
+
+        /**
+         * Quanto a aura de terror fecha o ar na camera: 0 para quem nao esta apavorado (o dono da aura
+         * enxerga a propria praça normalmente) e 1 colado em quem a carrega.
+         */
+        static float terrorWeight(Vec3 camera) {
+            Minecraft minecraft = Minecraft.getInstance();
+            LocalPlayer player = minecraft.player;
+            if (player == null || minecraft.level == null || !player.hasEffect(MagiaEffects.TERRIFIED)) return 0;
+            return ClientSpellVisuals.terror(minecraft.level, camera);
         }
 
         /**
@@ -207,6 +248,18 @@ public final class MagiaClientEvents {
             if (player.hasEffect(MagiaEffects.DISORIENTED) && distortion > 0) {
                 event.setRoll((float) (event.getRoll() + Math.sin(t * .09) * 4 * distortion));
                 event.setYaw((float) (event.getYaw() + Math.sin(t * .05) * 1.5 * distortion));
+            }
+
+            // Medo: um tremor pequeno e no ritmo do coracao (100 bpm = 12 ticks), nao o espasmo da
+            // dor. Quem esta apavorado ainda joga; a mao e que nao para quieta.
+            if (distortion > 0) {
+                float closeness = terrorWeight(event.getCamera().getPosition());
+                double shake = MagiaClientConfig.CAMERA_SHAKE.get() * distortion * closeness;
+                if (shake > 0) {
+                    double beat = Math.pow(Math.max(0, Math.sin(t * Math.PI * 2 / 12)), 6);
+                    event.setRoll((float) (event.getRoll() + Math.sin(t * 1.7) * 0.8 * shake * (0.4 + beat)));
+                    event.setPitch((float) (event.getPitch() + Math.cos(t * 2.3) * 0.5 * shake * (0.4 + beat)));
+                }
             }
 
             if (!player.hasEffect(MagiaEffects.CRUCIATUS)) return;
@@ -243,6 +296,7 @@ public final class MagiaClientEvents {
         public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
             MagiaSoundscape.clear();
             ClientSpellVisuals.clear();
+            FogLayer.clear();
         }
     }
 }

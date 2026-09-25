@@ -47,6 +47,8 @@ public final class ClientSpellVisuals {
     private static final int MAX_BEAM_POINTS = 36;
     private static final float MAX_EXTRA = 64;
     private static final int MAX_TTL = 12_000;
+    /** Ate onde os vultos da Presenca Aterradora rondam, por mais largo que seja o raio do medo. */
+    private static final double WISP_RADIUS = 6;
 
     static final ParticleOptions BLOOD = dust(0.62f, 0.02f, 0.05f, 0.9f);
     static final ParticleOptions SHADOW = dust(0.07f, 0.0f, 0.03f, 1.1f);
@@ -60,6 +62,11 @@ public final class ClientSpellVisuals {
     static final ParticleOptions DEATH = dust(0.23f, 1.0f, 0.42f, 1.1f);
     static final ParticleOptions DEATH_DARK = dust(0.02f, 0.3f, 0.1f, 1.2f);
     static final ParticleOptions FROST_WHITE = dust(0.92f, 0.97f, 1.0f, 0.9f);
+    static final ParticleOptions WATER = dust(0.30f, 0.62f, 0.92f, 0.9f);
+    /** Preto e grande: e a fumaça da aura de terror, que escurece em vez de brilhar. */
+    static final ParticleOptions DREAD = dust(0.02f, 0.0f, 0.03f, 1.8f);
+    /** O ar visivel das magias de vento. */
+    static final ParticleOptions WIND = dust(0.85f, 1.0f, 0.94f, 0.7f);
 
     private static final List<Active> ACTIVE = new ArrayList<>();
     private static final List<Active> VIEW = Collections.unmodifiableList(ACTIVE);
@@ -173,6 +180,32 @@ public final class ClientSpellVisuals {
             double distance = Math.sqrt(camera.distanceToSqr(active.pos));
             float inside = (float) Mth.clamp((radius + 3 - distance) / 3, 0, 1);
             weight = Math.max(weight, inside * Mth.clamp(active.age / 10f, 0, 1) * Mth.clamp(active.ticksLeft / 30f, 0, 1));
+        }
+        return weight;
+    }
+
+    /**
+     * Peso (0..1) da nevoa de terror na camera: 0 fora de qualquer aura, 1 colado em quem a carrega.
+     *
+     * <p>A posicao vem da <b>entidade</b>, e nao do ponto do pacote: o portador anda, e a nevoa tem
+     * que andar com ele sem uma mensagem por tick. O pulso da aura so renova o prazo de validade.
+     *
+     * <p>Quem chama decide <i>a quem</i> isso se aplica — so quem esta com {@code apavorado} ve a
+     * nevoa; o dono da aura enxerga a propria praça normalmente.
+     */
+    static float terror(ClientLevel level, Vec3 camera) {
+        float weight = 0;
+        for (Active active : ACTIVE) {
+            if (active.kind != Kind.TERROR_AURA) continue;
+            LivingEntity owner = active.target(level);
+            if (owner == null) continue;
+            double radius = Math.max(1, active.extra);
+            double distance = Math.sqrt(owner.position().distanceToSqr(camera));
+            // A borda do raio e onde o veu comeca; dos 60% para dentro, ja e parede preta. O trecho de
+            // rampa e curto de proposito: a Escuridao que o servidor poe nao tem meio-tom, e uma nevoa
+            // que so fechasse colado no vilao deixaria o mundo apagado com o horizonte limpo.
+            float inside = (float) Mth.clamp((radius - distance) / (radius * 0.4), 0, 1);
+            weight = Math.max(weight, inside * Mth.clamp(active.ticksLeft / 20f, 0, 1));
         }
         return weight;
     }
@@ -432,6 +465,90 @@ public final class ClientSpellVisuals {
                 double angle = random.nextDouble() * Math.PI * 2;
                 level.addParticle(CRIMSON, target.getX() + Math.cos(angle) * radius, target.getY() + 0.1,
                         target.getZ() + Math.sin(angle) * radius, 0, 0.05, 0);
+            }
+            case SUBMERSIO -> {
+                if (target == null || time % (2L * stride) != 0) return;
+                // As bolhas escapando da boca: e o unico sinal, de fora, de que alguem esta se
+                // afogando em pe no meio da rua.
+                Vec3 mouth = target.position().add(0, target.getEyeHeight() - 0.1, 0);
+                for (int i = 0; i < 2 / stride + 1; i++) {
+                    Vec3 p = mouth.add(offset(random, 0.25));
+                    level.addParticle(ParticleTypes.BUBBLE, p.x, p.y, p.z,
+                            random.nextGaussian() * 0.01, 0.06, random.nextGaussian() * 0.01);
+                }
+                if (time % (8L * stride) == 0) {
+                    Vec3 p = waist(target).add(offset(random, target.getBbWidth()));
+                    level.addParticle(ParticleTypes.FALLING_WATER, p.x, p.y, p.z, 0, 0, 0);
+                }
+            }
+            case UNDA_MAGNA -> {
+                // Uma unica leva, no instante da conjuracao: a onda passa e acaba.
+                double radius = Math.abs(a.extra);
+                boolean circle = a.extra > 0;
+                if (a.age > 12) return;
+                double front = radius * (a.age / 12.0);
+                int points = (int) Math.max(8, front * 6) / stride;
+                // Sem agachar, a onda so abre no arco a frente: a direcao vem do corpo de quem
+                // conjurou, que o cliente ja conhece — nao ha vetor nenhum viajando pela rede.
+                double facing = a.caster(level) instanceof LivingEntity caster
+                        ? Math.toRadians(caster.yBodyRot + 90)
+                        : 0;
+                for (int i = 0; i < points; i++) {
+                    double angle = circle
+                            ? random.nextDouble() * Math.PI * 2
+                            : facing + (random.nextDouble() - 0.5) * (Math.PI * 2 / 3);
+                    double x = a.pos.x + Math.cos(angle) * front;
+                    double z = a.pos.z + Math.sin(angle) * front;
+                    level.addParticle(ParticleTypes.SPLASH, x, a.pos.y + 0.2 + random.nextDouble() * 0.9, z,
+                            Math.cos(angle) * 0.25, 0.12, Math.sin(angle) * 0.25);
+                    if (i % 3 == 0) level.addParticle(WATER, x, a.pos.y + 0.6, z, 0, 0.05, 0);
+                }
+            }
+            case CARCER_AQUAE -> {
+                if (target == null) return;
+                double radius = target.getBbWidth() * 0.9 + 0.45;
+                Vec3 center = waist(target);
+                if (a.age == 1) {
+                    ring(level, center, radius, 24 / stride, ParticleTypes.SPLASH, 0.15);
+                } else if (time % (2L * stride) == 0) {
+                    // A casca girando: dois pontos em orbitas opostas, na altura que sobe e desce.
+                    double angle = time * 0.16;
+                    double lift = Math.sin(time * 0.07) * target.getBbHeight() * 0.35;
+                    level.addParticle(ParticleTypes.BUBBLE_COLUMN_UP,
+                            center.x + Math.cos(angle) * radius, center.y + lift, center.z + Math.sin(angle) * radius,
+                            0, 0.02, 0);
+                    level.addParticle(WATER,
+                            center.x - Math.cos(angle) * radius, center.y - lift, center.z - Math.sin(angle) * radius,
+                            0, 0, 0);
+                }
+            }
+            case TERROR_AURA -> {
+                if (target == null) return;
+                // O medo alcança 30 blocos, mas a <b>aura</b> e o que exala do corpo: os vultos rondam
+                // perto, senao eles nasceriam a trinta blocos de distancia e ninguem os ligaria a
+                // pessoa. Quem sente o alcance inteiro e a nevoa e a batida do coracao, nao isto.
+                double radius = Math.min(a.extra, WISP_RADIUS);
+                // Duas camadas: a fumaça que sobe do corpo e os vultos que rondam o circulo. Nenhuma
+                // sai do servidor — o payload da aura e um so por segundo, e tudo daqui e local.
+                if (time % stride == 0) {
+                    Vec3 p = target.position().add(offset(random, target.getBbWidth() * 1.6).multiply(1, 0, 1));
+                    level.addParticle(DREAD, p.x, p.y + random.nextDouble() * target.getBbHeight(), p.z,
+                            0, 0.02 + random.nextDouble() * 0.03, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, p.x, p.y + 0.1, p.z, 0, 0.015, 0);
+                }
+                if (time % (3L * stride) == 0) {
+                    // Um vulto: nasce na borda do raio, na altura de um corpo, e desliza de lado.
+                    double angle = random.nextDouble() * Math.PI * 2;
+                    double r = radius * (0.45 + random.nextDouble() * 0.55);
+                    double x = target.getX() + Math.cos(angle) * r;
+                    double z = target.getZ() + Math.sin(angle) * r;
+                    double y = target.getY() + 0.6 + random.nextDouble() * 1.6;
+                    Vec3 sideways = new Vec3(-Math.sin(angle), 0, Math.cos(angle)).scale(0.08);
+                    level.addParticle(DREAD, x, y, z, sideways.x, 0.01, sideways.z);
+                    if (random.nextInt(4) == 0) {
+                        level.addParticle(ParticleTypes.SOUL, x, y, z, sideways.x * 0.5, 0.02, sideways.z * 0.5);
+                    }
+                }
             }
             default -> {
             }

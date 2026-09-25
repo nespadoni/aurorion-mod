@@ -8,7 +8,7 @@ import java.util.*;
 
 /** Reflexao resolvida uma vez; usada apenas na abertura/aceite da consulta e na serializacao. */
 public final class LsoCompat {
-    private static Method attachment, partEnum;
+    private static Method attachment, partEnum, setManualDirty, updateBrokenHearts;
     private static Field parts, enabled;
     private static boolean initialized, available;
     private LsoCompat() {}
@@ -22,6 +22,9 @@ public final class LsoCompat {
             parts = Class.forName(base + "common.attachments.bodydamage.BodyDamageAttachment").getDeclaredField("bodyParts");
             parts.setAccessible(true);
             partEnum = Class.forName(base + "common.attachments.bodydamage.BodyPart").getMethod("getBodyPartEnum");
+            Class<?> attachmentType = Class.forName(base + "common.attachments.bodydamage.BodyDamageAttachment");
+            setManualDirty = attachmentType.getMethod("setManualDirty");
+            updateBrokenHearts = attachmentType.getMethod("updateBrokenHearts", Player.class);
             enabled = Class.forName(base + "config.Config$Baked").getField("localizedBodyDamageEnabled");
             available = true;
         } catch (ReflectiveOperationException | LinkageError error) {
@@ -42,6 +45,29 @@ public final class LsoCompat {
     public static WoundPart part(Player player, String name) {
         for (var entry : parts(player).entrySet()) if (entry.getKey().name().equals(name)) return entry.getValue();
         return null;
+    }
+    public static boolean hasWounds(Player player) {
+        for (WoundPart part : parts(player).values())
+            if (part.aurorionCritical() || part.aurorionHealth() < part.aurorionMaxHealth()) return true;
+        return false;
+    }
+    public static void healAll(Player player) {
+        if (!hasWounds(player)) return;
+        for (WoundPart part : parts(player).values()) part.aurorionTreat();
+        markDirty(player);
+    }
+    public static void treat(Player player, WoundPart part) {
+        part.aurorionTreat();
+        markDirty(player);
+    }
+    private static void markDirty(Player player) {
+        try {
+            Object body = attachment.invoke(null, player);
+            updateBrokenHearts.invoke(body, player);
+            setManualDirty.invoke(body);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("Falha ao sincronizar ferimentos LSO", error);
+        }
     }
     public static String name(Object part) {
         init();

@@ -7,6 +7,8 @@ Os JARs dos mods integrados continuam separados; nenhum é embutido neste módul
 ## Uso pelos jogadores
 
 - **Shift+G**, olhando para outro jogador, abre o menu presencial configurável da Economia.
+- Quem tem a profissão de médico pode escolher **Curar pessoa** nesse menu para restaurar as vidas
+  restantes do Aurorion, a saúde e todos os ferimentos do alvo, sem precisar digitar um comando.
 - Quando o alvo é médico, ferreiro, cozinheiro ou arcanista, o menu oferece o atendimento dele.
 - O corretor está cadastrado como profissão; a seleção e venda retangular de terrenos entra na
   próxima etapa da integração territorial.
@@ -55,6 +57,8 @@ Precisa do sistema de dano localizado do LSO habilitado.
   Repetir curas não remove a lesão; a marca sobrevive ao salvamento do jogador.
 - Outro médico pode tratar o membro pela UI: **1 medkit do LSO** restaura a saúde desse membro
   e remove a lesão. Não há atendimento clínico de si mesmo.
+- A opção **Curar pessoa** do menu Shift+G restaura completamente o alvo, inclusive suas vidas
+  restantes. Ela exige a profissão de médico e proximidade, mas não consome medkit.
 - O consumível é definido pela tag `aurorion_profissoes:medical_supplies`, extensível por datapack.
 
 Sem o LSO, o módulo inicia normalmente e o atendimento médico mostra a integração indisponível.

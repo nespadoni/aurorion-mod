@@ -6,12 +6,19 @@ import com.aurorion.magia.compat.EmotecraftCompat;
 import com.aurorion.magia.compat.FrozenLink;
 import com.aurorion.magia.compat.VoiceMute;
 import com.aurorion.magia.effect.EffectCleanup;
+import com.aurorion.magia.passive.DreadAura;
+import com.aurorion.magia.passive.HealingTouch;
+import com.aurorion.magia.passive.Passive;
+import com.aurorion.magia.passive.PassiveData;
+import com.aurorion.magia.passive.Passives;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.spell.Binding;
 import com.aurorion.magia.spell.Domination;
+import com.aurorion.magia.spell.Drowning;
 import com.aurorion.magia.spell.Gaze;
 import com.aurorion.magia.spell.IronBinding;
 import com.aurorion.magia.spell.Seals;
+import com.aurorion.magia.spell.WaterCage;
 import com.aurorion.magia.unlock.SpellAccess;
 import com.aurorion.magia.unlock.SpellUnlockData;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
@@ -23,6 +30,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.TickTask;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -39,6 +47,7 @@ import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -135,6 +144,7 @@ public final class MagiaServerEvents {
         SpellAccess.reconcile(player);
         Seals.sendAll(player);
         EffectCleanup.sweep(player);
+        Passives.onLogin(player);
     }
 
     @SubscribeEvent
@@ -142,11 +152,16 @@ public final class MagiaServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) Seals.sendAll(player);
     }
 
+    /**
+     * Renascer perde todo efeito, inclusive o marcador da aura. Quem morreu com a Presenca
+     * Aterradora ligada volta com ela ligada — a passiva e do personagem, e nao da vida dele.
+     */
     @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             Seals.sendAll(player);
             EffectCleanup.sweep(player);
+            Passives.onLogin(player);
         }
     }
 
@@ -155,12 +170,20 @@ public final class MagiaServerEvents {
         IronBinding.release(event.getEntity().getUUID());
     }
 
-    /** Aula e do personagem, nao da conta: personagem novo nao sabe magia nenhuma. */
+    /**
+     * Aula e do personagem, nao da conta: personagem novo nao sabe magia nenhuma — e nao herda marca
+     * nenhuma. A aura sai junto com o cadastro; deixa-la ligada num personagem que nem existe mais
+     * seria o unico estado do mod capaz de sobreviver a morte definitiva.
+     */
     @SubscribeEvent
     public static void onCharacterReset(CharacterResetEvent event) {
         SpellUnlockData.get(event.server()).clear(event.account());
+        PassiveData.get(event.server()).clear(event.account());
         ServerPlayer player = event.player();
-        if (player != null) SpellAccess.reconcile(player);
+        if (player != null) {
+            SpellAccess.reconcile(player);
+            Passives.onLogin(player);
+        }
     }
 
     /** Estado so em memoria: um mundo nao herda lacre, retrato de armadura nem mudo de outro. */
@@ -304,16 +327,48 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onChangeTarget(LivingChangeTargetEvent event) {
         if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof Mob mob)) return;
-        if (!Domination.allowsTargetChange(mob, event.getNewAboutToBeSetTarget())) event.setCanceled(true);
-    }
-
-    /** Segunda trava: dano em area ou projetil perdido de um dominado nao fere o mestre nem os aliados. */
-    @SubscribeEvent
-    public static void onIncomingDamage(LivingIncomingDamageEvent event) {
-        Entity attacker = event.getSource().getEntity();
-        if (attacker != null && Domination.isHarmingProtected(attacker, event.getEntity())) {
+        if (!Domination.allowsTargetChange(mob, event.getNewAboutToBeSetTarget())) {
+            event.setCanceled(true);
+            return;
+        }
+        // Bicho apavorado nao ataca quem o apavorou. A consulta de passiva so acontece depois da
+        // consulta de efeito, entao ela nao pesa em mob nenhum que nao esteja dentro de uma aura.
+        if (mob.hasEffect(MagiaEffects.TERRIFIED)
+                && event.getNewAboutToBeSetTarget() instanceof ServerPlayer target
+                && Passives.isActive(target, Passive.DREAD)) {
             event.setCanceled(true);
         }
+    }
+
+    /**
+     * O ponto em que o dano recebido pode ser cancelado antes de ser calculado. Dois casos, nesta
+     * ordem — o primeiro que decidir, decide:
+     *
+     * <ol>
+     *   <li><b>Dominio</b>: dano em area ou projetil perdido de um dominado nao fere o mestre nem os
+     *       aliados dele.</li>
+     *   <li><b>Carcere de Agua</b>: bater na bolha a estoura, e a agua absorve o golpe. E o resgate da
+     *       magia — quem foi capturado pode ser tirado de la por qualquer um.</li>
+     * </ol>
+     */
+    @SubscribeEvent
+    public static void onIncomingDamage(LivingIncomingDamageEvent event) {
+        LivingEntity victim = event.getEntity();
+        Entity attacker = event.getSource().getEntity();
+        if (attacker != null && Domination.isHarmingProtected(attacker, victim)) {
+            event.setCanceled(true);
+            return;
+        }
+        if (WaterCage.isCaged(victim) && WaterCage.breaksOn(victim, event.getSource())) {
+            WaterCage.burst(victim);
+            event.setCanceled(true);
+            return;
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onDamagePre(LivingDamageEvent.Pre event) {
+        HealingTouch.intercept(event);
     }
 
     // --- Fim de efeito ------------------------------------------------------------------------
@@ -349,6 +404,24 @@ public final class MagiaServerEvents {
             IronBinding.release(entity.getUUID());
         } else if (effect == MagiaEffects.CAPTIVE.get()) {
             Gaze.release(entity);
+        } else if (effect == MagiaEffects.DROWNING.get()) {
+            Drowning.release(entity);
+            // Sair do afogamento e sair da agua: o pulmao volta cheio, e nao no fundo do poço.
+            entity.setAirSupply(entity.getMaxAirSupply());
+        } else if (effect == MagiaEffects.CAGED.get()) {
+            WaterCage.release(entity);
+        } else if (effect == MagiaEffects.GENUFLECTED.get() && entity instanceof ServerPlayer player) {
+            EmotecraftCompat.stop(player);
+        } else if (effect == MagiaEffects.DREAD_AURA.get() && entity instanceof ServerPlayer player) {
+            // A remocao pode ocorrer durante o shutdown. So a passiva ainda ativa precisa voltar;
+            // tell enfileira sem executar inline dentro do proprio evento de remocao.
+            if (Passives.isActive(player, Passive.DREAD)) {
+                player.server.tell(new TickTask(player.server.getTickCount(), () -> {
+                    if (player.isAlive() && player.server.getPlayerList().getPlayer(player.getUUID()) == player
+                            && Passives.isActive(player, Passive.DREAD)
+                            && !player.hasEffect(MagiaEffects.DREAD_AURA)) DreadAura.enable(player);
+                }));
+            }
         }
     }
 }

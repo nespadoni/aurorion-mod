@@ -4,8 +4,9 @@ Addon do [Iron's Spells 'n Spellbooks](https://github.com/iron431/irons-spells-n
 Aurorion. **Nenhuma magia vem liberada**: a staff ensina magias soltas ou escolas inteiras por
 personagem, em aula, com `/aurorion spells`. O estado é espelhado no Iron's Restrictions.
 
-Dezessete magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma
-**invocação** (o id). As magias servem para duelo, captura, interrogatório, perseguição, fuga, invasão
+Vinte e três magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma
+**invocação** (o id), mais duas **passivas**: marcas que ficam no personagem em vez de serem
+conjuradas. As magias servem para duelo, captura, interrogatório, perseguição, fuga, invasão
 e RP do dia a dia. Quatro delas mudam de forma quando conjuradas **agachado** (ver "Agachado, em
 área"), e três se desfazem conjurando de novo no mesmo alvo (Prostração, Voz Interdita, Mundo Vazio).
 
@@ -98,6 +99,12 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Queda Forçada | `deiectio_corporis` | Ender | instantânea | derrubar quem voa, ou tudo em volta |
 | Devorar Luz | `lux_vorata` | Eldritch | longa 1 s | apagar luzes e cegar quem está dentro |
 | Ferro Vinculado | `ferrum_ligatum` | Sangue | instantânea | travar a armadura |
+| Afogamento | `submersio` | Gelo | instantânea | afogar alguém em terra firme |
+| Maremoto | `unda_magna` | Gelo | instantânea | abrir espaço, empurrar todo mundo |
+| Cárcere de Água | `carcer_aquae` | Gelo | longa 1 s | prender um alvo numa bolha |
+| Vento Guardião | `ventus_custos` | Evocação | instantânea | barreira que empurra para fora |
+| Coluna de Vento | `columna_venti` | Evocação | instantânea | subir, e descer de pena |
+| Turbilhão | `turbo_ventorum` | Evocação | longa 1 s | furacão que anda puxando gente |
 | Tempo Suspenso ⛔ | `tempus_sistere` | Ender | longa 1 s | congelar tudo em volta |
 | Sentença Final ⛔ | `mortem_dico` | Eldritch | instantânea | morte instantânea, de um ou de todos |
 | Tormento Coletivo ⛔ | `dolor_universus` | Sangue | contínua 3–7 s | Cruciatus em área, no ar |
@@ -325,6 +332,144 @@ tirar pelo inventário, trocar por outra peça ou jogar fora com Q devolve a pe�
 durabilidade continua sendo gasta normalmente.
 **Visual:** três anéis de elos girando em volta do corpo, em sentidos alternados, com faíscas.
 
+### Afogamento — *Submersio*
+Alcance 18, em qualquer alvo. O alvo continua de pé no meio da praça, seco, e começa a se afogar: a
+barra de bolhas dele esvazia, o corpo pesa (−35% de velocidade) e, quando o ar acaba, vem o
+afogamento do vanilla, 2 de dano a cada meio segundo, até o tempo correr — 6 s no nível 1, +2 s por
+nível (14 s no 5).
+
+**Ela gasta o ar do vanilla, e não um contador próprio.** É a decisão que mais importa nesta magia:
+com ela, tudo o que já existe em volta continua valendo de graça — a barra de bolhas some na tela do
+alvo, Respiração no elmo segura mais tempo, poção de respirar embaixo d'água salva, leite tira o
+efeito e sair dele enche o ar de volta como sair de um mergulho.
+
+**Duas conjurações:** a segunda no mesmo alvo devolve o ar. Tirar o fôlego e devolvê-lo quando
+convier é a mesma lógica da Voz Interdita — a magia serve para conduzir uma conversa, não só para
+matar. A mensagem de morte nomeia quem conjurou (`aurorion_magia:submersio`).
+
+**Visual:** bolhas escapando da boca do alvo (o único sinal, de fora, de que alguém está se afogando
+em pé no meio da rua), anéis de água subindo pelo corpo e o selo de ondas no chão. Na tela dele, a
+água fecha conforme o ar acaba, com a superfície balançando no alto — o ar que está logo ali e não se
+alcança.
+
+### Maremoto — *Unda Magna*
+Não tem mira: é a magia de **abrir espaço**. Cercado numa viela, no meio de uma multidão ou prensado
+contra a muralha, a onda tira todo mundo de cima de você ao mesmo tempo, apaga o fogo de quem estiver
+queimando e varre até as flechas em voo.
+
+| Nível | Raio |
+|---|---|
+| 1 | 7 |
+| 2 | 9 |
+| 3 | 10 |
+| 4 | 12 |
+| 5 | 13 |
+
+- **Em pé**, a onda sai na direção em que você olha, num arco de 120° à frente.
+- **Agachado**, ela sai em círculo: quem está cercado não tem um lado para escolher.
+- Perto do centro a onda está inteira; na borda ela já se abriu e empurra menos.
+- O empurrão é forte e o dano é pequeno de propósito: quem joga alguém de um penhasco com esta magia
+  matou pela queda, e não pela água.
+- Teto de 24 atingidos. Chefes (`imune_deslocamento`) e criativo ficam de fora.
+
+**Visual:** a crista correndo do centro até a borda em respingo e espuma, e o selo de ondas quebradas
+no chão.
+
+### Cárcere de Água — *Carcer Aquae*
+Uma esfera de água se fecha em volta do alvo (alcance 16) e o suspende no ponto em que ele foi pego,
+por 8 s + 3 s/nível (20 s no 5). Ele não anda, não pula, não foge e não é levado por ninguém — mas
+continua respirando (afogar é a outra magia da escola) e continua vendo e ouvindo tudo. É a magia de
+**captura** da água: prender um só, inteiro, para conversar.
+
+**A bolha é quebrável de fora.** Qualquer golpe de qualquer pessoa a estoura, e quem estava dentro sai
+solto; o dano do golpe some na água. É o que separa esta magia de uma prisão: capturar alguém no meio
+da praça sem ninguém poder tirá-lo de lá vira impasse; com resgate, vira cena. Conjurar de novo no
+mesmo alvo também a desfaz.
+
+O afogamento do Submersio **não** rompe a bolha: afogar alguém dentro dela é uma combinação válida das
+duas magias da água, e não um jeito torto de se libertar.
+
+O ponto fica no `persistentData` do preso, como a âncora do Vínculo: deslogar preso e voltar continua
+preso, no mesmo lugar. Chefes ficam de fora.
+
+**Visual:** três faixas de água fechadas em volta do corpo, escurecendo o que está atrás, com um anel
+rúnico girando na cintura e o selo de ondas no chão.
+
+### Vento Guardião — *Ventus Custos*
+A defensiva da escola do vento. No instante da conjuração, todos dentro do círculo (raio 3,5 — o 7x7
+circular) são arremessados para fora dele. Depois disso fica a **barreira**: enquanto durar, quem
+tentar entrar é empurrado de volta, cada vez mais forte quanto mais fundo conseguir furar. Duração de
+6 s no nível 1, +1,5 s por nível (12 s no 5).
+
+- Quem ergueu a barreira **passa por ela à vontade**.
+- Ela **não cura e não protege de dano**: flecha, magia e bola de fogo atravessam. O que ela compra é
+  distância, que é a moeda de quem está em um contra três. Curar junto teria feito dela a única magia
+  defensiva que alguém levaria.
+- A barreira **não anda com você**: nasce onde você estava. Recuar para dentro dela é uma decisão;
+  arrastá-la junto seria imunidade ambulante.
+
+**Visual:** parede de vento fechada em volta do círculo, com o anel de vento no chão e um anel rúnico
+girando no topo; ela estala como vidro ao acabar.
+
+### Coluna de Vento — *Columna Venti*
+A de exploração. Uma corrente ascendente de 3x3 e 6 blocos de altura fica em pé no chão por 5 s +1 s
+por nível (9 s no 5), onde você estiver olhando (até 12 blocos), sempre em cima do primeiro chão
+firme. Quem entrar nela sobe, e ganha **queda lenta** pelo tempo que sobrar da coluna: dar a volta
+numa muralha, subir um penhasco, tirar o grupo de um buraco, descer de uma torre sem morrer.
+
+**Ela não escolhe lado.** Quem conjurou, os aliados e quem está perseguindo sobem igual — e aí está a
+graça: usada na hora errada, ela dá ao inimigo a mesma altura que deu a você. A única coisa que ela
+nunca faz é machucar. Como ela nasce onde você olha, também serve para levantar outra pessoa.
+
+**Visual:** funil ao contrário, estreito embaixo e aberto em cima, com a espiral do vento marcada no
+chão.
+
+### Turbilhão — *Turbo Ventorum*
+A ofensiva. Um funil de vento nasce 2,5 blocos à sua frente e **anda em linha reta**, na direção em
+que você estava olhando, acompanhando o relevo a 6 blocos por segundo. Quem estiver no caminho é
+**puxado para o eixo** e levantado do chão: o furacão não empurra, ele recolhe. Enquanto a pessoa
+estiver dentro, leva um golpe por segundo.
+
+| Nível | Raio | Duração | Percurso | Dano/s |
+|---|---|---|---|---|
+| 1 | 2,0 | 4 s | 24 | 2,0 |
+| 2 | 2,5 | 5 s | 30 | 2,25 |
+| 3 | 3,0 | 6 s | 36 | 2,5 |
+| 4 | 3,5 | 7 s | 42 | 2,75 |
+| 5 | 4,0 | 8 s | 48 | 3,0 |
+
+É o oposto exato do Maremoto: a onda abre espaço, o turbilhão junta gente. As duas na mesma briga
+viram uma sequência — puxar o grupo para o eixo e jogar todo mundo do penhasco.
+
+**Ele não atravessa parede.** Dois blocos à frente, se houver sólido **no peito e na cabeça** ao
+mesmo tempo, ele se desfaz ali. Exigir as duas alturas é o que separa uma muralha de um tronco de
+árvore: um furacão que morre no primeiro tronco de uma floresta não é magia ofensiva, é fogo de
+artifício. É o que
+impede a magia de ser um aríete de invasão: numa muralha ela morre do lado de fora. Teto de 20
+atingidos por tick; chefes e criativo ficam de fora. A mensagem de morte nomeia quem conjurou
+(`aurorion_magia:turbo_ventorum`), e armadura e encantamento continuam valendo — o vento não ignora
+nada.
+
+**Visual:** funil largo em cima e fechado embaixo, girando rápido, escurecendo o que cobre, com a
+espiral correndo no chão e rajadas saindo dele.
+
+#### As três de vento são uma entidade, e não um efeito
+
+As outras vinte magias do mod são "efeito de status no alvo", porque o alvo já é conhecido na
+conjuração. Estas três não têm alvo: elas são *um lugar* que reage a quem passar por ele depois — e o
+turbilhão ainda anda. Isso precisa de um relógio, e a regra do módulo é não assinar
+`ServerTickEvent` ([SDD §5.1](../SDD.md)).
+
+Entidade resolve exatamente isso pelo caminho do vanilla: o jogo já tica entidade carregada, já a
+sincroniza para quem está perto e já a descarrega com o chunk. Uma zona parada custa o mesmo que um
+item no chão; não existindo zona nenhuma, custa zero. E **nenhum pacote nosso** entra nessas três
+magias: forma, raio, altura e duração são sincronizados uma vez, no nascimento, e o relógio corre dos
+dois lados pelo `tickCount` que o vanilla já incrementa. As partículas e a geometria saem do
+`SpellZoneRenderer`, no cliente.
+
+É um `EntityType` só (`aurorion_magia:zona_de_magia`) para as três formas, e não três: registro
+sincronizado é conteúdo que nunca mais sai do modpack ([SDD §6.1](../SDD.md)).
+
 ### Magias proibidas ⛔
 
 Tempus Sistere, Mortem Dico e Dolor Universus são magias **proibidas**. Jogador nenhum as consegue
@@ -344,7 +489,7 @@ Para conceder a um personagem:
 /createScroll aurorion_magia:tempus_sistere 3        (pergaminho do nível desejado, do Iron's)
 ```
 
-No criativo, a aba **Aurorion — Magias** traz o pergaminho de cada uma das 17 magias em todos
+No criativo, a aba **Aurorion — Magias** traz o pergaminho de cada uma das 23 magias em todos
 os níveis, na ordem do registro (as proibidas por último). Ter o pergaminho não libera: conjurar
 continua exigindo a liberação, e a staff passa pelo `staffBypass`.
 
@@ -447,15 +592,125 @@ O Iron's 3.16 gera um arquivo por magia em
 em `data/aurorion_magia/irons_spellbooks_spell_config/<magia>.json`. Escola, nível máximo, raridade
 mínima e cooldown saem daí. `/ironsSpellbooks config list` lista as chaves.
 
+## Passivas
+
+Uma **passiva** é uma marca que fica no personagem, e não uma magia que ele conjura. A diferença é o
+ponto todo do sistema: magia se aprende, se grava num livro, se conjura, custa mana e entra em
+recarga. Passiva se **recebe uma vez** — o pergaminho é consumido e a marca fica — e a partir daí ela
+é parte de quem a pessoa é. A médica cura no toque porque é médica, não porque apertou um botão.
+
+| Nome | Id | Interruptor | O que faz |
+|---|---|---|---|
+| Mão que Cura | `manus_medica` | não | bater em alguém cura em vez de ferir |
+| Presença Aterradora | `presenca_terrivel` | sim | o mundo escurece, quem está perto sente medo e todos ao redor se prostram |
+
+### Como uma passiva chega a alguém
+
+```
+/aurorion passivas conceder   <passiva> <alvos>   (staff)
+/aurorion passivas remover    <passiva> <alvos>   (staff)
+/aurorion passivas pergaminho <passiva> <alvos>   (staff)
+/aurorion passivas ver <jogador>                  (staff)
+
+/aurorion passivas minhas                         (qualquer um)
+/aurorion passivas ligar    <passiva>             (o dono)
+/aurorion passivas desligar <passiva>             (o dono)
+```
+
+A divisão de permissão é a parte que importa. **Conceder é da staff**, como a aula de magia: ninguém
+ganha uma passiva jogando. **Ligar e desligar é do dono**, sem permissão nenhuma — a Presença
+Aterradora existe para o vilão entrar em cena e sair dela, e pedir staff a cada entrada mataria a
+mecânica.
+
+`pergaminho` entrega o item em vez da marca: serve para colocar a passiva num baú de prêmio, na mão de
+um NPC, ou dar em cena para a pessoa ler quando quiser. O **Pergaminho de Passiva** usa a mesma textura
+do pergaminho do Iron's de propósito, mas faz o contrário dele: o do Iron's é gasto toda vez que a
+magia sai, ou é transcrito para um livro; este se lê **uma vez** e some, e o que ele deixa não é uma
+magia no livro, é uma marca. Ler de novo não faz nada, e o pergaminho não se gasta à toa.
+
+No criativo, a aba **Aurorion — Magias** traz um pergaminho de cada passiva, depois de todas as magias.
+
+**As passivas são do personagem**: morte definitiva zera tudo (`CharacterResetEvent`), como as
+liberações de magia. Passiva com interruptor nasce **desligada** — quem recebeu uma aura de terror
+escolhe quando entrar em cena, e não a recebe já aterrorizando a sala de aula.
+
+Um item só para todas as passivas, com a passiva num componente de dados, e não um item por passiva:
+item registrado é conteúdo que nunca mais sai do modpack ([SDD §6.1](../SDD.md)), e uma passiva nova
+não deveria custar uma entrada permanente no registro. É o mesmo desenho do pergaminho do Iron's.
+
+### Mão que Cura — *manus_medica*
+Bater em alguém, com a mão ou com o que estiver nela, **cura meio coração por golpe** em vez de
+ferir. Com o LSO instalado, cada golpe também trata aos poucos a parte mais ferida do corpo.
+
+- Vale só para o **golpe corpo a corpo direto** (`minecraft:player_attack` com o próprio corpo como
+  causa). Flecha, poção, magia e explosão da mesma pessoa continuam machucando normalmente: curar com
+  arco a 40 blocos seria outra coisa.
+- Arma de mod que soma um segundo dano com tipo próprio não vira cura — só o golpe base vira.
+- Por padrão, **criatura hostil continua levando dano** (`healingTouchHealsHostiles = false`). Sem
+  isso, a personagem ficaria literalmente incapaz de se defender de um zumbi: toda mordida seria
+  respondida com cura. Quem quiser a leitura radical — "ela cura tudo o que toca, e por isso não
+  luta" — liga a chave no config.
+- Sem interruptor de propósito: ela não faz nada até a pessoa decidir bater em alguém, e a decisão já
+  é o interruptor.
+
+**Visual:** o acerto conserva a piscada vermelha, o som e o recuo normais. Também aparecem corações
+e a nota de ametista. A saúde não diminui.
+
+### Presença Aterradora — *presenca_terrivel*
+O ar em volta de quem a carrega fica pesado.
+
+| O que | Alcance padrão | Config |
+|---|---|---|
+| Medo: escuridão, tela preta fechando, tremor, batida de coração, névoa, vultos | 30 | `dreadRadius` |
+| Prostração: os dois joelhos no chão | 30 (o raio inteiro) | `dreadKneelRadius` (0 desliga) |
+| Criaturas perdem o alvo e fogem | 30 | `dreadRadius` |
+
+- O medo **não tira vida nem atributo de ninguém**. O efeito `apavorado` é lido pelo cliente da
+  própria pessoa e vira tela, som e névoa — ele não é arma de PvP disfarçada. O que muda no jogo é
+  que criatura hostil no raio perde o alvo, foge, e não consegue mais atacar quem carrega a aura.
+- **O mundo escurece de verdade.** Além da névoa preta, quem está dentro da aura recebe a *Escuridão*
+  do vanilla (`dreadDarkens`, ligado): a luz dos blocos e do céu se apaga na tela dele. É o caminho
+  que atravessa shader pack — o Iris respeita a iluminação do jogo, e não a neblina que a gente pede.
+  Desligue a chave se a escuridão total estiver inviabilizando cena em lugar fechado.
+- **Todos ao redor se prostram**, e não só quem chega perto: `dreadKneelRadius` nasce igual a
+  `dreadRadius`. A pose é a prostração do Emotecraft (`kneel_down`, os dois joelhos, embutida no nosso
+  jar); com `dreadProstrates = false` ela vira um joelho só (`kneel_one_knee`). Valor de
+  `dreadKneelRadius` maior que `dreadRadius` é cortado para ele — quem não sente a aura não se
+  prostra por ela —, e baixá-lo devolve a plateia de pé.
+- A prostração **não ata as mãos**, ao contrário da magia Prostração: quem está no chão por medo
+  continua conseguindo comer, beber, erguer o escudo e conjurar. A aura fica ligada por tempo
+  indeterminado e vale para todo mundo que passar perto; se ela também tirasse o item da mão,
+  atravessar a rua onde o vilão está deixaria de ser assustador e viraria impossibilidade de jogar.
+  Ela **atrasa a saída**, isso sim: no chão, a velocidade cai 90% e o pulo zera, então sair de um raio
+  de 30 blocos leva mais de um minuto de rastejo. É a dose que a chave de raio existe para ajustar.
+- Ficam de fora: espectador, staff em criativo, entidade invulnerável (NPC de ofício, manequim) e, com
+  `dreadSparesAllies` ligado, os **aliados de time** do portador — os capangas do vilão não se
+  prostram para ele.
+- Sair do raio é sair do efeito: os efeitos nos atingidos duram pouco mais que a varredura que os
+  renova, então quem se afasta volta ao normal sozinho, sem ninguém varrer lista.
+- Ligar e desligar vale **em qualquer lugar**: a aura é de vilão, e ela não é desligada por área
+  segura. Quem decide quando ela acontece é quem a carrega.
+
+**Visual:** mancha preta no chão, quatro faixas de treva girando em volta do corpo, fumaça negra
+subindo e vultos rondando até 6 blocos. Na tela de quem está perto: o mundo apagado, véu preto
+pulsando no ritmo do coração, vultos cruzando a periferia e a névoa fechando conforme a distância
+diminui — na borda do raio é um peso no canto do olho; dos 60% para dentro, uma parede preta a 5
+blocos do nariz.
+
+**Som:** uma batida de coração de 100 bpm em laço, **só no cliente de quem está com medo**, com o
+volume e o tom subindo conforme o portador se aproxima. Quem carrega a aura nunca ouve nada, e nenhum
+pacote de áudio trafega.
+
 ## Integrações opcionais
 
 | Mod | O que liga | Sem ele |
 |---|---|---|
 | Iron's Restrictions | UI de pesquisa/scroll/inscrição mostra o que não foi liberado | o gate de conjuração continua valendo |
-| Emotecraft | pose de joelhos do Genua Flecte, vista por todos | agachado |
+| Emotecraft | pose de joelhos do Genua Flecte e a prostração da Presença Aterradora, vistas por todos | agachado |
 | Simple Voice Chat | Vox Interdicta corta o microfone | corta só chat e magia |
 | `aurorion-utils` | Tempus Sistere usa o freeze completo do `/freeze` | cai na Lentidão do vanilla (sem trava de teclado) |
 | Carry On | baú lacrado também não pode ser carregado embora | nada muda: o lacre já bloqueia abrir e quebrar |
+| Iris/Oculus | a névoa do Devorar Luz e da Presença Aterradora é desenhada em espaço de tela | a névoa do vanilla, que fica melhor |
 | Sophisticated Backpacks/Storage | mochila e cofre no chão aceitam lacre | idem: a regra é por capacidade, não por mod |
 
 - **Emotecraft:** ponte por reflexão (`compat/EmotecraftCompat`), porque os tipos vêm de um jar
@@ -489,7 +744,14 @@ efeito**, que o vanilla já faz da entidade afetada, e só nela.
 | Dolor Universus | todo tick da canalização, só nos alvos dela (teto 24) | 1 vetor + 1 pacote de velocidade por alvo; 1 payload visual e 1 raio visual por pulso |
 | Magia em área (agachado) | uma vez por conjuração | 1 busca no raio com teto de alvos; depois só os efeitos |
 | Mundo Vazio | no feitiço; depois, no cliente do afetado | 1 consulta de efeito por corpo desenhado, só enquanto dura |
-| Varredura de modificador preso | login e renascimento | 8 consultas de atributo por jogador |
+| Afogamento | a cada 10 ticks, só em quem está afogando | 1 leitura de ar; 1 dano depois que ele zera |
+| Cárcere de Água | todo tick, só no preso | 1 distância; teleporte só quando ele saiu do lugar |
+| Maremoto | uma vez por conjuração | 1 busca no raio (teto 24) + 1 busca de projéteis |
+| Barreira / Coluna / Turbilhão | todo tick, só enquanto a zona existe | 1 busca no raio com teto de 20; sem zona, zero |
+| Presença Aterradora (gente) | 1×/s, **por aura ligada** | nenhuma busca espacial: 1 volta em `level.players()`, teto 32 |
+| Presença Aterradora (bicho) | 1×/2 s, **por aura ligada** | 1 busca em esfera de `dreadRadius` só em `Mob`, teto de 8 rotas; sem aura ligada, zero |
+| Mão que Cura | por golpe corpo a corpo de quem a tem | 1 busca em hash |
+| Varredura de modificador preso | login e renascimento | 14 consultas de atributo por jogador |
 
 ### Como os efeitos visuais são feitos sem pesar no TPS
 
@@ -526,9 +788,38 @@ MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.MEU_VISUAL, dura
 // 4. Geometria: um case em SigilRenderer.glow()/ink(), usando os desenhos de SigilGeometry.
 ```
 
+
+### Névoa e shaders
+
+`ViewportEvent.RenderFog` e `ComputeFogColor` são eventos do **pipeline do vanilla**. Quando o Iris
+carrega um pacote de shaders, quem calcula a névoa passa a ser o fragment shader do pacote, com
+uniformes próprios, e o plano distante que a gente pede simplesmente não é consultado. Na prática: a
+escuridão do Devorar Luz existia para quem jogava sem shader e **sumia** para quem jogava com BSL,
+Complementary ou Solas — que é quase todo o servidor.
+
+A saída não é brigar com o shader: é desenhar a névoa **depois** dele.
+
+| Com shader ligado | Sem shader |
+|---|---|
+| `FogLayer` pinta a névoa em espaço de tela, numa camada de HUD **abaixo** de tudo (névoa não pode cobrir a barra de itens nem o chat) | `MagiaClientEvents.onRenderFog` faz a névoa de verdade, que fica melhor |
+
+O interruptor é `ShaderPacks` no `aurorion-core`, uma ponte reflexiva com a API v0 do Iris — sem o
+Iris instalado a resposta é sempre "não" sem custo nenhum. Ele é reconsultado uma vez por segundo,
+porque o jogador liga e desliga shader em jogo (K, no teclado padrão do Iris) e a névoa tem que trocar
+de técnica junto. As duas nunca desenham ao mesmo tempo: somadas, escureceriam o dobro.
+
+**As partículas não precisam de nada disso.** Partícula atravessa o pipeline do shader como qualquer
+outra do jogo — e é por isso que a fumaça negra, os vultos, as bolhas e o vento são o *corpo* dos
+efeitos, e a névoa é só o ar em volta. O mesmo vale para a `PossessionLayer`: ela é retângulo e texto
+em cima do HUD, então funciona com qualquer pacote.
+
+O `aurorion-areas` usa as mesmas duas peças na névoa da Floresta Negra.
+
 ## Configuração
 
-`config/aurorion/magia-server.toml`: `staffBypass`, `authoritative`, `forbiddenSpells`, `dominationRadius`.
+`config/aurorion/magia-server.toml`: `staffBypass`, `authoritative`, `forbiddenSpells`,
+`dominationRadius`, e a seção `[passivas]` com `dreadRadius`, `dreadKneelRadius`, `dreadProstrates`,
+`dreadDarkens`, `dreadSparesAllies` e `healingTouchHealsHostiles`.
 
 `config/aurorion/magia-client.toml`: `visualDistance` (até 32, o limite do vanilla para partículas),
 `cameraShake` (0 desliga).
@@ -563,15 +854,14 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
 - [ ] `./gradlew :aurorion-magia:build` compila (inclui `SpellGrantsTest`, com a regra de proibidas,
   `VoiceMuteTest` e `MagiaAssetsTest`, que cobra ícone + nome + descrição nos dois idiomas de cada
   magia).
-- [ ] Cliente e servidor com o **mesmo jar**: o protocolo do `SpellVisualPayload` subiu para `5` (os
-  tipos do Sequestro de Impulso saíram e quatro entraram). Jar velho de um lado não conecta.
+- [ ] Cliente e servidor com o **mesmo jar**: o protocolo do `SpellVisualPayload` subiu para `6`
+  (quatro tipos novos no fim do enum). Jar velho de um lado não conecta.
 - [ ] `/aurorion spells unlock …`: Tab, seletores, id inexistente recusado; bloqueio sem liberação;
   ponte com o Restrictions (inscrição, scroll, reconcile no login).
 
 **Por magia**
-- [ ] Aba **Aurorion — Magias** no criativo: 17 magias, todos os níveis; magia desligada no config do
-  Iron's some da aba. O Sequestro de Impulso não aparece mais; o Mundo Vazio aparece, e a Sentença
-  Final agora tem três níveis.
+- [ ] Aba **Aurorion — Magias** no criativo: 23 magias, todos os níveis, mais um pergaminho de cada
+  passiva no fim; magia desligada no config do Iron's some da aba.
 - [ ] **Agachado, em área** (Queda Forçada, Olhar Cativo, Sentença Final 2+): em pé continua pegando
   um alvo; agachado pega todos; sem ninguém em volta, a magia é recusada sem gastar mana nem recarga.
 - [ ] **Animação da mão** (o bug que motivou tudo): segurar Dolor Cruciatus, Mão do Algoz e Tormento
@@ -685,11 +975,87 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   - escudo na mão secundária;
   - a peça volta sem duplicar nem sumir.
 
+- [ ] Submersio:
+  - a barra de bolhas do alvo esvazia e o dano começa quando ela zera;
+  - Respiração no elmo segura mais tempo; poção de respirar embaixo d'água salva; leite corta o efeito;
+  - sair do efeito devolve o ar cheio;
+  - conjurar de novo no mesmo alvo devolve o ar;
+  - mensagem de morte com o nome de quem conjurou;
+  - bolhas na boca vistas de fora, e a água fechando na tela do alvo.
+- [ ] Unda Magna:
+  - em pé, só quem está no arco de 120° à frente é empurrado; agachado, todo mundo;
+  - quem estava pegando fogo apaga;
+  - flecha e trident em voo são varridos;
+  - o empurrão é mais forte perto do centro;
+  - testar num penhasco: a morte é de queda, e não da onda.
+- [ ] Carcer Aquae:
+  - o preso boia, não anda, não pula e continua respirando;
+  - qualquer um estoura a bolha batendo nela, e o golpe não fere o preso;
+  - conjurar de novo no mesmo alvo desfaz;
+  - deslogar preso e voltar: continua preso no mesmo ponto;
+  - com Submersio junto, a bolha **não** estoura sozinha.
+- [ ] Ventus Custos:
+  - todos são arremessados para fora no instante da conjuração;
+  - quem tenta voltar é empurrado, mais forte quanto mais fundo entrar;
+  - quem conjurou entra e sai livremente;
+  - flecha e magia **atravessam** a barreira;
+  - andar para longe: a barreira fica onde nasceu.
+- [ ] Columna Venti:
+  - quem entra sobe ~6 blocos e ganha queda lenta;
+  - funciona para aliado e para inimigo igual;
+  - nasce no chão firme sob a mira, e não dentro de parede;
+  - conjurada mirando o ar, cai no chão embaixo do ponto.
+- [ ] Turbo Ventorum:
+  - anda em linha reta acompanhando o relevo, subindo e descendo desnível;
+  - puxa para o eixo e levanta quem estiver no caminho;
+  - um golpe por segundo, com armadura valendo;
+  - **desfaz ao bater numa parede**;
+  - mensagem de morte com o nome de quem conjurou;
+  - desempenho com 20 pessoas no caminho.
+- [ ] Zonas de vento (as três): relogar e trocar de dimensão no meio de uma; derrubar o servidor com
+  uma ativa — nenhuma pode voltar depois do restart (o tipo é `noSave`).
+
+**Passivas**
+- [ ] `/aurorion passivas conceder|remover|pergaminho|ver` exige staff; `ligar|desligar|minhas` não.
+- [ ] Pergaminho: ler consome e grava a marca; ler de novo recusa **sem consumir**; a aba do criativo
+  traz um de cada.
+- [ ] Mão que Cura:
+  - soco e golpe de arma em jogador curam em vez de ferir, com corações e som;
+  - flecha, poção e magia da mesma pessoa continuam machucando;
+  - hostil continua levando dano com o padrão, e passa a ser curado com
+    `healingTouchHealsHostiles = true`;
+  - cada golpe cura meio coração e, com o LSO, a parte mais ferida aos poucos;
+  - o alvo conserva a animação de dano, o som e o recuo, sem perder saúde.
+- [ ] Presença Aterradora:
+  - `/aurorion passivas ligar presenca_terrivel` acende a aura e `desligar` a apaga **no mesmo tick**;
+  - a 30 blocos já se sente tudo: mundo escuro (Escuridão do vanilla), véu preto, tremor, coração,
+    névoa **e** a prostração, com a pose do Emotecraft vista por todos;
+  - `dreadProstrates = false` troca a prostração por um joelho só; `dreadKneelRadius = 10` devolve o
+    comportamento antigo (a plateia de longe fica de pé);
+  - `dreadDarkens = false` mantém a névoa e tira a Escuridão;
+  - no chão por medo, comer/beber/escudo/magia **continuam** funcionando;
+  - sair do raio volta ao normal em pouco mais de um segundo (bicho, em pouco mais de dois);
+  - aliado de time fica de fora (e passa a entrar com `dreadSparesAllies = false`);
+  - staff em criativo e espectador ficam de fora; manequim e NPC de ofício não recebem nada;
+  - criatura hostil perde o alvo, foge e não consegue atacar o portador;
+  - quem carrega a aura **não** ouve o coração, não vê a névoa e não escurece;
+  - relogar com a aura ligada: ela volta sozinha; morrer e renascer: idem;
+  - leite/`/effect clear` no portador não desliga a aura: ela volta no tick seguinte (e **não**
+    entra em recursão — foi o `StackOverflowError` de 0.3.0 no desligamento do servidor);
+  - `/aurorion personagem` (morte definitiva) apaga a passiva e a aura junto.
+- [ ] Dois portadores de aura perto um do outro: uma névoa só, sem dobrar o escurecimento nem tocar
+  dois corações.
+
 **Visual e desempenho**
 - [ ] Todos os selos aparecem, inclusive na face de porta/baú, e somem no fim; nada fica preso na
   tela depois de relogar.
 - [ ] Shaders do pack (Iris/Oculus) com os RenderTypes de tinta/luz. A cerimônia do ethereal usa
   os mesmos e serve de referência.
+- [ ] **Névoa com shader ligado e desligado** (tecla K no Iris, em jogo): dentro do Devorar Luz e
+  dentro de uma aura de terror, a névoa tem que aparecer nos dois casos, e **nunca as duas
+  técnicas ao mesmo tempo** (a tela ficaria escura demais). Conferir com BSL, Complementary e
+  Solas, que são os do pack.
+- [ ] A névoa de tela não cobre a barra de itens nem o chat.
 - [ ] Desempenho com 20+ magias ativas na mesma área (teto de 64 visuais).
 - [ ] Ícones das magias e dos efeitos aparecem (arte provisória; troque por resource pack).
 

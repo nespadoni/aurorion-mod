@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <h2>Custo</h2>
  *
- * <p>Ler o mapa de altura de uma coluna <b>gera o chunk</b> se ele nao existir, na thread do servidor.
+ * <p>Consultar o terreno e checar o vao <b>gera o chunk</b> se ele nao existir, na thread do servidor.
  * Por isso o numero de tentativas e baixo e o raio e modesto: isso roda no respawn, que e raro, mas
  * uma busca de cinquenta tentativas num raio de dois mil blocos seria meio segundo de travada no pior
  * momento possivel.
@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 public final class LimboSpawn {
     /** Poucas tentativas de proposito: cada uma pode gerar um chunk. */
     private static final int ATTEMPTS = 8;
+    private static final int MAX_SURFACE_OFFSET = 64;
 
     private LimboSpawn() {
     }
@@ -71,18 +72,36 @@ public final class LimboSpawn {
         return surface(level, anchor.getX(), anchor.getZ());
     }
 
+    /** Procura uma chegada de superficie perto de um ponto, sem usar a altura de quem esta la. */
+    @Nullable
+    public static BlockPos around(ServerLevel level, BlockPos center, int radius) {
+        for (int ring = 0; ring <= radius; ring++) {
+            for (int dx = -ring; dx <= ring; dx++) {
+                for (int dz = -ring; dz <= ring; dz++) {
+                    if (ring > 0 && Math.abs(dx) != ring && Math.abs(dz) != ring) continue;
+                    BlockPos found = surface(level, center.getX() + dx, center.getZ() + dz);
+                    if (found != null) return found;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
-     * O topo caminhavel da coluna {@code (x, z)}.
+     * O terreno caminhavel da coluna {@code (x, z)}.
      *
-     * <p>{@code MOTION_BLOCKING_NO_LEAVES} e o heightmap certo: ele ignora folhagem, entao numa
-     * floresta densa o ponto cai no <b>chao</b> e nao em cima de uma copa de arvore.
+     * <p>A altura base do gerador ignora arvores, estruturas e plataformas suspensas. O heightmap do
+     * chunk pronto pode apontar para um piso duzentos blocos acima do terreno. Se os dois divergem
+     * tanto, a busca comeca no terreno gerado; nos chunks antigos, onde o gerador pode ter mudado,
+     * ela continua usando a superficie existente quando as alturas sao proximas.
      */
     @Nullable
     public static BlockPos surface(ServerLevel level, int x, int z) {
-        BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
-
-        // Comeca dois blocos acima do topo: o heightmap aponta para o primeiro espaco livre, e o
-        // scanDown quer uma altura de partida com folga para achar o par chao+vao.
-        return SafeSpot.scanDown(level, x, z, top.getY() + 2);
+        if (!level.getWorldBorder().isWithinBounds(x, z)) return null;
+        int topY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        int terrainY = level.getChunkSource().getGenerator().getBaseHeight(x, z,
+                Heightmap.Types.OCEAN_FLOOR_WG, level, level.getChunkSource().randomState());
+        int fromY = topY - terrainY > MAX_SURFACE_OFFSET ? terrainY + 2 : topY + 2;
+        return SafeSpot.scanDown(level, x, z, fromY);
     }
 }

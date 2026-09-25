@@ -59,3 +59,16 @@ que a referencia. A licença do projeto continua sendo a LGPL-3.0 por causa do `
 modificações do arquivo `OMORI-Final-Duet-_TubeRipper.click_.ogg` fornecido pelo usuário para
 desenvolvimento. É um recurso provisório, substituível por resource pack; não é uma composição
 original do Aurorion e a licença LGPL do código não atribui uma licença a essa gravação.
+
+## Batida de coração da Presença Aterradora
+
+`aurorion-magia/src/main/resources/assets/aurorion_magia/sounds/heartbeat.ogg` vem do arquivo
+`heartbeat-100bpm.mp3`, **fornecido pelo usuário** para o desenvolvimento e convertido aqui para
+Ogg Vorbis mono 44,1 kHz (corte em 4,8 s, passa-alta em 25 Hz, passa-baixa em 320 Hz, alvo −22 LUFS
+e fades, para tocar em laço). O processamento está registrado em
+[docs/audio-sources.json](docs/audio-sources.json).
+
+A procedência e a licença da gravação **não foram verificadas neste repositório**: como a faixa do
+epílogo do Limbo, é um recurso provisório, substituível por resource pack, e a licença LGPL do
+código não atribui licença nenhuma a essa gravação. Antes de distribuir o pack publicamente,
+confirme a origem do arquivo ou troque por um efeito com licença conhecida.

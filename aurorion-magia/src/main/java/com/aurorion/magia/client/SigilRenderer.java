@@ -48,6 +48,18 @@ public final class SigilRenderer {
     private SigilRenderer() {
     }
 
+    /**
+     * Os dois passes, para quem desenha fora do lote deste arquivo — hoje so o
+     * {@code SpellZoneRenderer}, que e chamado pelo renderizador de entidades do vanilla.
+     */
+    static RenderType glowType() {
+        return GLOW;
+    }
+
+    static RenderType inkType() {
+        return INK;
+    }
+
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         List<Active> actives = ClientSpellVisuals.active();
@@ -85,6 +97,7 @@ public final class SigilRenderer {
     private static void ink(PoseStack pose, VertexConsumer out, Vec3 camera, ClientLevel level, Active a, float partial) {
         LivingEntity target = a.target(level);
         float fade = a.fade(partial);
+        float life = a.age + partial;
         switch (a.kind) {
             case CRUCIATUS_BEAM -> {
                 if (target == null) return;
@@ -142,6 +155,37 @@ public final class SigilRenderer {
                 for (int band = 0; band < 3; band++) {
                     at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * (.2 + band * .3), 0));
                     band(out, pose.last().pose(), radius * .55F, radius, 0, 0x05030C, .5F * fade, 32);
+                    pose.popPose();
+                }
+            }
+            case CARCER_AQUAE -> {
+                if (target == null) return;
+                // A esfera: tres faixas de agua fechada em volta do corpo, escurecendo o que esta atras.
+                float radius = target.getBbWidth() * .95F + .4F;
+                for (int layer = 0; layer < 3; layer++) {
+                    float t = layer / 2F;
+                    at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * (.15 + t * .7), 0));
+                    float shell = radius * (1 - .35F * Math.abs(t - .5F) * 2);
+                    band(out, pose.last().pose(), shell * .7F, shell, 0, 0x0B2E4A, .45F * fade, 40);
+                    pose.popPose();
+                }
+            }
+            case TERROR_AURA -> {
+                if (target == null) return;
+                // A mancha no chao e a coluna de treva saindo do corpo. Tinta preta, e nao luz: a aura
+                // engole o que esta atras dela, e nao brilha. A mancha nao acompanha o raio do medo de
+                // proposito — um disco chapado de trinta blocos atravessaria escada, telhado e morro.
+                at(pose, camera, target.getPosition(partial).add(0, .02, 0));
+                float breath = .85F + .15F * Mth.sin(life * .06F);
+                solidDisc(out, pose.last().pose(), (3.2F + .7F * Mth.sin(life * .04F)) * breath, 0,
+                        0x000000, .82F * fade, 0, 48);
+                pose.popPose();
+                for (int layer = 0; layer < 4; layer++) {
+                    float t = layer / 3F;
+                    at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * (.1 + t * 1.15), 0));
+                    spin(pose, life + layer * 30, 1.4F - t);
+                    float shell = (target.getBbWidth() * 1.1F + .5F) * (1 + .6F * t) * breath;
+                    band(out, pose.last().pose(), shell * .45F, shell, 0, 0x000000, (.58F - .1F * layer) * fade, 32);
                     pose.popPose();
                 }
             }
@@ -402,10 +446,46 @@ public final class SigilRenderer {
                 drawMesh(out, pose, CIRCLE, radius * 1.4F, .02F, 0x2A1840, .35F * fade, 0);
                 pose.popPose();
             }
+            case SUBMERSIO -> {
+                if (target == null) return;
+                // Aneis de agua subindo pelo corpo: o nivel que enche um pulmao que nao esta na agua.
+                float radius = target.getBbWidth() * .6F + .12F;
+                float level01 = (life % 50) / 50F;
+                at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * level01, 0));
+                drawMesh(out, pose, CIRCLE, radius, .015F, 0x3FA7E8, .7F * fade * (1 - level01), 0);
+                pose.popPose();
+                at(pose, camera, target.getPosition(partial).add(0, .03, 0));
+                spin(pose, life, .8F);
+                layered(out, pose, SEAL_WAVE, target.getBbWidth() + .5F, 0x1C6FA8, 0xBFEBFF, fade * .8F);
+                pose.popPose();
+            }
+            case UNDA_MAGNA -> {
+                // A crista correndo do centro para a borda, uma vez so.
+                float radius = Math.abs(a.extra);
+                float open = Mth.clamp(life / 12F, 0, 1);
+                at(pose, camera, a.pos.add(0, .05, 0));
+                Matrix4f matrix = pose.last().pose();
+                band(out, matrix, radius * open * .78F, radius * open, .1F, 0x8FD8FF, .8F * (1 - open) * fade, 72);
+                drawMesh(out, pose, SEAL_WAVE, radius * .55F, .05F, 0x3FA7E8, .5F * fade, .01F);
+                pose.popPose();
+            }
+            case CARCER_AQUAE -> {
+                if (target == null) return;
+                float radius = target.getBbWidth() * .95F + .42F;
+                at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * .5, 0));
+                spin(pose, life, 2.2F);
+                drawMesh(out, pose, RUNE_RING, radius, .016F, 0x9FE4FF, .8F * fade, 0);
+                pose.popPose();
+                at(pose, camera, target.getPosition(partial).add(0, .03, 0));
+                spin(pose, -life, 1.1F);
+                layered(out, pose, SEAL_WAVE, radius * 1.2F, 0x1C6FA8, 0xD6F4FF, fade * .7F);
+                pose.popPose();
+            }
             default -> {
             }
         }
     }
+
 
     private static void transpositio(PoseStack pose, VertexConsumer out, Vec3 camera, Vec3 feet, float grow,
                                      float fade, float life) {

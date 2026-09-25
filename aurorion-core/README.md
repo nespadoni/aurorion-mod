@@ -30,6 +30,8 @@ risco de o servidor não subir é péssimo negócio.
 | [`datapack/DatapackRegistry`](src/main/java/com/aurorion/core/datapack/DatapackRegistry.java) | 2 | Pasta de JSON de datapack → catálogo consultável |
 | [`config/DerivedConfig`](src/main/java/com/aurorion/core/config/DerivedConfig.java) | 2 | Valor caro derivado de config, recalculado sozinho |
 | [`text/TimeFormat`](src/main/java/com/aurorion/core/text/TimeFormat.java) | 1 | Duração e data como `Component` traduzível |
+| [`client/ShaderPacks`](src/main/java/com/aurorion/core/client/ShaderPacks.java) | 2 | "Tem shader pack ligado agora?" — ponte reflexiva com a API v0 do Iris |
+| [`client/ScreenFog`](src/main/java/com/aurorion/core/client/ScreenFog.java) | 2 | Neblina desenhada em espaço de tela, que sobrevive ao pipeline do shader |
 
 `TimeFormat` é a única **utilidade** que entrou sem duas cópias: é pura, sem dependências, e formatar
 duração é o tipo de coisa que o próximo mod vai querer. Se em seis meses ainda tiver um usuário só,

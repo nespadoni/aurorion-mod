@@ -40,6 +40,10 @@ final class SigilGeometry {
     static final float[] SEAL_DEATH = sealDeath();
     /** Olho amendoado com iris e raios: Aspectus Captus. */
     static final float[] EYE = eye();
+    /** Espiral de tres voltas: a marca do vento no chao. Turbilhao e Coluna de Vento. */
+    static final float[] SPIRAL = spiral();
+    /** Tres aneis concentricos quebrados: a crista da onda. Unda Magna, Carcer Aquae. */
+    static final float[] SEAL_WAVE = sealWave();
 
     private SigilGeometry() {
     }
@@ -96,6 +100,53 @@ final class SigilGeometry {
             out.addVertex(m, inner * Mth.cos(b), height, inner * Mth.sin(b)).setColor(edge);
             out.addVertex(m, outer * Mth.cos(b), height, outer * Mth.sin(b)).setColor(bright);
             out.addVertex(m, outer * Mth.cos(a), height, outer * Mth.sin(a)).setColor(bright);
+        }
+    }
+
+    /**
+     * Parede vertical em volta do eixo: a barreira do Ventus Custos.
+     *
+     * <p>Sem tampa e sem fundo de proposito — o que se quer mostrar e "ate aqui", e nao uma redoma
+     * fechada. As duas pontas tem alfa proprio: forte no chao, quase nada no alto, e a parede some em
+     * vez de terminar num corte reto.
+     */
+    static void wall(VertexConsumer out, Matrix4f m, float radius, float height, int color,
+                     float bottomAlpha, float topAlpha, int steps) {
+        int low = argb(color, bottomAlpha), high = argb(color, topAlpha);
+        for (int i = 0; i < steps; i++) {
+            float a = i * Mth.TWO_PI / steps, b = (i + 1) * Mth.TWO_PI / steps;
+            float ax = radius * Mth.cos(a), az = radius * Mth.sin(a);
+            float bx = radius * Mth.cos(b), bz = radius * Mth.sin(b);
+            out.addVertex(m, ax, 0, az).setColor(low);
+            out.addVertex(m, bx, 0, bz).setColor(low);
+            out.addVertex(m, bx, height, bz).setColor(high);
+            out.addVertex(m, ax, height, az).setColor(high);
+        }
+    }
+
+    /**
+     * Funil: um cone oco, aberto em cima e estreito embaixo, com as faixas torcidas por
+     * {@code twist} radianos a cada camada. E o corpo do furacao e o da coluna de vento.
+     *
+     * @param layers quantas faixas empilhadas; mais faixas, mais torcao visivel
+     */
+    static void funnel(VertexConsumer out, Matrix4f m, float bottomRadius, float topRadius, float height,
+                       float twist, int color, float bottomAlpha, float topAlpha, int steps, int layers) {
+        for (int layer = 0; layer < layers; layer++) {
+            float t0 = layer / (float) layers, t1 = (layer + 1) / (float) layers;
+            float r0 = Mth.lerp(t0, bottomRadius, topRadius), r1 = Mth.lerp(t1, bottomRadius, topRadius);
+            float y0 = height * t0, y1 = height * t1;
+            int c0 = argb(color, Mth.lerp(t0, bottomAlpha, topAlpha));
+            int c1 = argb(color, Mth.lerp(t1, bottomAlpha, topAlpha));
+            float s0 = twist * t0, s1 = twist * t1;
+            // Uma faixa a cada duas: o vazio entre elas e o que faz o funil parecer girar.
+            for (int i = 0; i < steps; i += 2) {
+                float a = i * Mth.TWO_PI / steps, b = (i + 1) * Mth.TWO_PI / steps;
+                out.addVertex(m, r0 * Mth.cos(a + s0), y0, r0 * Mth.sin(a + s0)).setColor(c0);
+                out.addVertex(m, r0 * Mth.cos(b + s0), y0, r0 * Mth.sin(b + s0)).setColor(c0);
+                out.addVertex(m, r1 * Mth.cos(b + s1), y1, r1 * Mth.sin(b + s1)).setColor(c1);
+                out.addVertex(m, r1 * Mth.cos(a + s1), y1, r1 * Mth.sin(a + s1)).setColor(c1);
+            }
         }
     }
 
@@ -291,6 +342,53 @@ final class SigilGeometry {
     private static float[] circle() {
         Mesh mesh = new Mesh();
         mesh.circle(0, 0, 1, 72);
+        return mesh.finish();
+    }
+
+    /** Tres voltas fechando para o centro, com quatro braços saindo delas: a marca do vento. */
+    private static float[] spiral() {
+        Mesh mesh = new Mesh();
+        int steps = 108;
+        float turns = 3;
+        float px = 1, pz = 0;
+        for (int i = 1; i <= steps; i++) {
+            float t = i / (float) steps;
+            float angle = t * turns * Mth.TWO_PI;
+            float radius = 1 - .82F * t;
+            float x = radius * Mth.cos(angle), z = radius * Mth.sin(angle);
+            mesh.line(px, pz, x, z);
+            px = x;
+            pz = z;
+        }
+        for (int i = 0; i < 4; i++) {
+            float angle = i * Mth.HALF_PI + .35F;
+            mesh.line(.35F * Mth.cos(angle), .35F * Mth.sin(angle), Mth.cos(angle), Mth.sin(angle));
+        }
+        mesh.circle(0, 0, .12F, 16);
+        return mesh.finish();
+    }
+
+    /** Aneis quebrados em arcos desencontrados: agua em movimento, e nao um circulo parado. */
+    private static float[] sealWave() {
+        Mesh mesh = new Mesh();
+        float[] radii = {1F, .78F, .56F};
+        int[] arcs = {5, 4, 3};
+        for (int ring = 0; ring < radii.length; ring++) {
+            float radius = radii[ring];
+            int count = arcs[ring];
+            float gap = Mth.TWO_PI / count * .28F;
+            float turn = ring * .4F;
+            for (int i = 0; i < count; i++) {
+                float from = turn + i * Mth.TWO_PI / count + gap;
+                float to = turn + (i + 1) * Mth.TWO_PI / count - gap;
+                int steps = 10;
+                for (int s = 0; s < steps; s++) {
+                    float a = from + (to - from) * s / steps;
+                    float b = from + (to - from) * (s + 1) / steps;
+                    mesh.line(radius * Mth.cos(a), radius * Mth.sin(a), radius * Mth.cos(b), radius * Mth.sin(b));
+                }
+            }
+        }
         return mesh.finish();
     }
 

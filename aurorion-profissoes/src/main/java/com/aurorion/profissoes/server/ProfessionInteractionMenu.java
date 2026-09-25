@@ -14,6 +14,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 @EventBusSubscriber(modid = AurorionProfissoes.MOD_ID)
 public final class ProfessionInteractionMenu {
     private static final String ACTION = "aurorion_profissoes:service";
+    private static final String HEAL_ACTION = "aurorion_profissoes:heal";
 
     private ProfessionInteractionMenu() { }
 
@@ -21,6 +22,9 @@ public final class ProfessionInteractionMenu {
     public static void collect(InteractionMenuEvent.Collect event) {
         if (ProfessionsConfig.enabled() && ProfessionApi.of(event.actor()) == Profession.BROKER)
             event.add("land_sale", "Vender terreno", "Selecione um lote retangular, a zona e o preço. Pagamento ao sistema.", true);
+        if (ProfessionsConfig.enabled() && ProfessionApi.of(event.actor()) == Profession.DOCTOR)
+            event.add(HEAL_ACTION, "Curar pessoa",
+                    "Restaura vidas, saúde e ferimentos do alvo.", DoctorHealing.needsHealing(event.target()));
         Profession profession = ProfessionApi.of(event.target());
         if (!ProfessionsConfig.enabled() || !offersServices(profession)) return;
         event.add(ACTION, "Solicitar atendimento",
@@ -29,6 +33,11 @@ public final class ProfessionInteractionMenu {
 
     @SubscribeEvent
     public static void action(InteractionMenuEvent.Action event) {
+        if (HEAL_ACTION.equals(event.action())) {
+            event.markHandled();
+            DoctorHealing.heal(event.actor(), event.target());
+            return;
+        }
         if ("land_sale".equals(event.action())) {
             event.markHandled();
             LandSaleManager.open(event.actor(), event.target());

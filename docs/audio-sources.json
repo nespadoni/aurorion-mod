@@ -48,5 +48,16 @@
     "retrieved": "2026-09-23",
     "format": "Ogg Vorbis mono 44100 Hz",
     "processing": "90 Hz high-pass, 6.5 kHz low-pass, -24 LUFS target, fades; chime shortened to 7 s"
+  },
+  {
+    "file": "aurorion-magia/src/main/resources/assets/aurorion_magia/sounds/heartbeat.ogg",
+    "provider": "Fornecido pelo usuario",
+    "source_id": "heartbeat-100bpm.mp3",
+    "title": "Batida de coracao, 100 bpm",
+    "duration_seconds": 4.8,
+    "retrieved": "2026-09-24",
+    "format": "Ogg Vorbis mono 44100 Hz",
+    "processing": "25 Hz high-pass, 320 Hz low-pass, -22 LUFS target, fades; cortado em 4,8 s (8 batidas) para tocar em laco",
+    "note": "Arquivo entregue pelo usuario em Downloads/heartbeat-100bpm.mp3; procedencia e licenca nao verificadas aqui. Recurso provisorio, substituivel por resource pack."
   }
 ]

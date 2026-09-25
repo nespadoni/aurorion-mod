@@ -3,8 +3,11 @@ package com.aurorion.magia;
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.magia.config.MagiaClientConfig;
 import com.aurorion.magia.config.MagiaConfig;
+import com.aurorion.magia.registry.MagiaComponents;
 import com.aurorion.magia.registry.MagiaCreativeTabs;
 import com.aurorion.magia.registry.MagiaEffects;
+import com.aurorion.magia.registry.MagiaEntities;
+import com.aurorion.magia.registry.MagiaItems;
 import com.aurorion.magia.registry.MagiaSpells;
 import com.aurorion.magia.registry.MagiaSounds;
 import com.mojang.logging.LogUtils;
@@ -25,6 +28,9 @@ import org.slf4j.Logger;
  *       por personagem e espelhada no Iron's Restrictions.</li>
  *   <li>{@code spell} + {@code effect}: as magias autorais. A regra roda no servidor; o que e so
  *       visual e desenhado pelo cliente a partir do efeito ja sincronizado.</li>
+ *   <li>{@code passive}: o que fica no personagem em vez de ser conjurado. Um pergaminho lido uma
+ *       vez deixa uma marca — curar no toque, exalar medo — que nao custa mana, nao entra em
+ *       recarga e nao se desequipa.</li>
  *   <li>{@code client}: particulas, tremor de camera, controles invertidos e escurecimento. Nada ali
  *       gera pacote nem roda no servidor.</li>
  * </ul>
@@ -40,6 +46,9 @@ public class AurorionMagia {
         MagiaSpells.SPELLS.register(modEventBus);
         MagiaSounds.SOUNDS.register(modEventBus);
         MagiaEffects.EFFECTS.register(modEventBus);
+        MagiaEntities.ENTITIES.register(modEventBus);
+        MagiaComponents.COMPONENTS.register(modEventBus);
+        MagiaItems.ITEMS.register(modEventBus);
         MagiaCreativeTabs.TABS.register(modEventBus);
 
         AurorionConfigs.register(container, ModConfig.Type.SERVER, MagiaConfig.SPEC);

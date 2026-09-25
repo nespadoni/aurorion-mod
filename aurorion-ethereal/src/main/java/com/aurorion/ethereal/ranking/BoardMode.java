@@ -18,7 +18,7 @@ public enum BoardMode {
     TOP_PLAYERS("top_players", "◆", false, false),
     WORST_PLAYERS("worst_players", "◇", false, true),
     MISSIONS("missions", "✎", false, false),
-    DEATHS("deaths", "☠", false, false),
+    LIVES("lives", "♥", false, true),
     DUEL_WINS("duel_wins", "⚔", false, false),
     RICHEST_HOUSES("richest_houses", "$", true, false),
     RICHEST_PLAYERS("richest_players", "$", false, false);
@@ -42,7 +42,7 @@ public enum BoardMode {
     /**
      * A linha de ranking deste modo, ja com o numero e a unidade certa.
      *
-     * <p>E um {@link Component} e nao texto pronto porque "pts", "missoes" e "mortes" sao palavras:
+     * <p>E um {@link Component} e nao texto pronto porque "pts", "missoes" e "vidas" sao palavras:
      * montadas como string no servidor, elas sairiam no idioma do <em>servidor</em> para todo mundo.
      * O projetor do mod de referencia tinha isso fixo em portugues dentro do codigo.
      */
@@ -85,6 +85,9 @@ public enum BoardMode {
      * fazer todos os projetores ja construidos no mundo trocarem de conteudo sozinhos.
      */
     public static BoardMode byId(String id) {
+        if ("deaths".equals(id)) {
+            return LIVES;
+        }
         for (BoardMode mode : values()) {
             if (mode.id.equals(id)) {
                 return mode;

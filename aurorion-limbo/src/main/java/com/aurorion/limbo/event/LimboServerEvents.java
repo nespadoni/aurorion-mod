@@ -99,24 +99,27 @@ public final class LimboServerEvents {
     }
 
     /**
-     * Cada respawn no Limbo acorda a pessoa num lugar novo, sempre na superficie.
+     * Cada respawn no Limbo acorda a pessoa num lugar novo, sempre na superficie, inclusive quem
+     * atravessou uma passagem para resgatar alguem e morreu antes de voltar.
      *
      * <p>{@code LOWEST} porque o {@code aurorion_vidas} ja escolheu o destino em {@code LOW} — ele
      * manda para a ancora do exilio, que e um ponto so. Aqui a dimensao ja esta decidida e o que se
      * troca e apenas <b>onde</b> dentro dela, entao nada do outro mod precisa mudar. E o mesmo
      * arbitro da SDD §9.2: a regra mais especifica fala por ultimo.
      *
-     * <p>Cobre os dois casos de uma vez, porque sao o mesmo evento: cair no Limbo pela primeira vez e
-     * morrer ja estando dentro dele.
+     * <p>Cobre a primeira queda no exilio e qualquer morte dentro do Limbo. Para o resgatador, a
+     * dimensao pode ainda ser o overworld neste evento; a morte nao e uma passagem de volta.
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRespawnPosition(PlayerRespawnPositionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (FinaleManager.isDead(player)) return;
-        if (!LivesManager.isExiled(player.server, player.getUUID())) return;
 
         ServerLevel limbo = player.server.getLevel(LimboManager.dimension());
-        if (limbo == null || event.getDimensionTransition().newLevel() != limbo) return;
+        if (limbo == null) return;
+        boolean diedInLimbo = player.serverLevel() == limbo;
+        if (!diedInLimbo && (!LivesManager.isExiled(player.server, player.getUUID())
+                || event.getDimensionTransition().newLevel() != limbo)) return;
 
         BlockPos spot = LimboSpawn.scattered(limbo);
         if (spot == null) return;
@@ -124,6 +127,7 @@ public final class LimboServerEvents {
         DimensionTransition current = event.getDimensionTransition();
         event.setDimensionTransition(new DimensionTransition(limbo, spot.getBottomCenter(), Vec3.ZERO,
                 current.yRot(), current.xRot(), DimensionTransition.DO_NOTHING));
+        event.setCopyOriginalSpawnPosition(true);
     }
 
     /** O respawn troca a entidade do jogador; e a primeira tela que o exilado ve. */

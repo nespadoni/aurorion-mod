@@ -80,6 +80,18 @@ public final class PossessionLayer implements LayeredDraw.Layer {
         float alone = weight(player, MagiaEffects.SOLITARY);
         if (alone > 0) solitude(graphics, width, height, time, alone);
 
+        float drowning = weight(player, MagiaEffects.DROWNING);
+        if (drowning > 0) drown(graphics, width, height, time, drowning, player.getAirSupply());
+
+        float terror = weight(player, MagiaEffects.TERRIFIED);
+        if (terror > 0) {
+            // Perto da aura a tela fecha inteira; na borda do raio e so um peso no canto do olho. Sem
+            // o visual da aura (fora do alcance de rastreio), sobra o piso: o medo nao some da tela.
+            float closeness = MagiaClientEvents.GameBus.terrorWeight(
+                    minecraft.gameRenderer.getMainCamera().getPosition());
+            dread(graphics, width, height, time, terror * (.35F + .65F * closeness));
+        }
+
         if (ClientSpellVisuals.targets(Kind.MANUS_GRIP, player.getId())) {
             vignette(graphics, width, height, 0x2A0E4A, .55F, .22F);
         }
@@ -151,6 +163,70 @@ public final class PossessionLayer implements LayeredDraw.Layer {
             int y = (int) ((phase - Math.floor(phase)) * h);
             float alpha = .05F * weight * (1 - i / (float) lines);
             g.fill(0, y, w, y + 1, argb(0x2A1840, alpha));
+        }
+    }
+
+    /**
+     * Submersio: a agua subindo por dentro.
+     *
+     * <p>A tela azula e fecha <b>conforme o ar acaba</b>, e nao conforme o tempo passa: com o pulmao
+     * cheio ainda da para pensar; no fim, o mundo inteiro e um borrao escuro com o proprio pulso em
+     * cima. E a barra de bolhas do vanilla que conta a historia — este desenho so a acompanha.
+     */
+    private static void drown(GuiGraphics g, int w, int h, float time, float weight, int air) {
+        // 300 e o ar cheio do vanilla; abaixo de zero a pessoa ja esta se afogando de verdade.
+        float lost = Mth.clamp(1 - Math.max(0, air) / 300f, 0, 1);
+        float depth = weight * (.35F + .65F * lost);
+        g.fill(0, 0, w, h, argb(0x0A3A5E, .22F * depth));
+        vignette(g, w, h, 0x04203A, .75F * depth, .30F);
+
+        // A superficie balançando no alto da tela: o ar que esta logo ali e nao se alcança.
+        int band = (int) (h * .18F * depth);
+        if (band > 1) {
+            int wave = (int) (Mth.sin(time * .09F) * h * .012F);
+            g.fillGradient(0, 0, w, band + wave, argb(0x9FD8F5, .18F * depth), argb(0x9FD8F5, 0));
+        }
+        // Bolhas subindo pela tela, poucas e lentas.
+        int bubbles = 6;
+        for (int i = 0; i < bubbles; i++) {
+            float phase = time * (.006F + .002F * i) + i * 11.7F;
+            float t = (float) (phase - Math.floor(phase));
+            int x = (int) (w * ((i * 0.173F + 0.11F) % 1f));
+            int y = (int) (h * (1 - t));
+            int size = 2 + i % 3;
+            g.fill(x, y, x + size, y + size, argb(0xCDEEFF, .30F * depth * (1 - t)));
+        }
+    }
+
+    /**
+     * Presenca Aterradora: alguem chegou, e o corpo sabe antes da cabeca.
+     *
+     * <p>Duas batidas por segundo e meio, no ritmo de 100 bpm do som — a vinheta aperta junto com o
+     * coracao, e nao em ciclo proprio, senao a tela e o ouvido andariam desencontrados e o efeito
+     * viraria enjoo. As "rachaduras" sao sombras vindas das bordas, nunca do centro: o medo fecha o
+     * campo de visao, ele nao tapa o que voce esta olhando.
+     *
+     * <p>Tudo aqui e preto puro, e o peso vem de <b>quanto o portador esta perto</b>, e nao so de ter o
+     * efeito: de longe e um peso no canto do olho, colado nele a tela quase fecha.
+     */
+    private static void dread(GuiGraphics g, int w, int h, float time, float weight) {
+        // 100 bpm = uma batida a cada 12 ticks. O pico e curto; o resto do ciclo e quase nada.
+        float beat = (float) Math.pow(Math.max(0, Mth.sin(time * Mth.TWO_PI / 12f)), 8);
+        g.fill(0, 0, w, h, argb(0x000000, (.22F + .13F * beat) * weight));
+        vignette(g, w, h, 0x000000, (.80F + .18F * beat) * weight, .42F);
+
+        // Vultos: manchas escuras que cruzam a periferia devagar e nunca chegam ao meio.
+        int shapes = 3;
+        for (int i = 0; i < shapes; i++) {
+            float phase = time * (.0032F + .0011F * i) + i * 5.1F;
+            float t = (float) (phase - Math.floor(phase));
+            boolean left = (i & 1) == 0;
+            int span = (int) (w * .22F);
+            int x = left ? (int) (-span + t * span * 1.6F) : (int) (w - t * span * 1.6F);
+            int y = (int) (h * (.18F + .5F * ((i * 0.37F) % 1f)));
+            int tall = (int) (h * (.26F + .08F * i));
+            g.fillGradient(x, y, x + span, y + tall,
+                    argb(0x000000, .42F * weight), argb(0x000000, 0));
         }
     }
 

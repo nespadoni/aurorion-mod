@@ -17,12 +17,15 @@ final class MagiaSoundscape {
     private static LocalPlayer owner;
     private static ClientLevel world;
     private static Cue cue;
+    /** O laço de 100 bpm da Presenca Aterradora; um por cliente, nunca dois. */
+    private static Heart heart;
     private MagiaSoundscape() { }
 
     static void tick(LocalPlayer player) {
         var mc = Minecraft.getInstance();
         if (owner != player || world != mc.level) { clear(); owner = player; world = mc.level; }
         if (!player.isAlive() || player.isSpectator()) { clear(); return; }
+        dread(player);
         int state = (player.hasEffect(MagiaEffects.CRUCIATUS) ? 1 : 0)
                 | (player.hasEffect(MagiaEffects.DISORIENTED) ? 2 : 0)
                 | (player.hasEffect(MagiaEffects.CAPTIVE) ? 4 : 0)
@@ -53,6 +56,25 @@ final class MagiaSoundscape {
         previous = state;
     }
 
+    /**
+     * A batida de coracao da Presenca Aterradora: um laço so, que nasce quando o medo chega e morre
+     * quando ele passa. O volume e ajustado no tick do proprio som, pela distancia ate quem carrega a
+     * aura — nao existe pacote de audio, e o dono da aura nunca ouve nada.
+     */
+    private static void dread(LocalPlayer player) {
+        boolean afraid = player.hasEffect(MagiaEffects.TERRIFIED);
+        if (!afraid) { stopHeart(); return; }
+        if (heart != null && !heart.isStopped()) return;
+        heart = new Heart(player, Minecraft.getInstance().level);
+        Minecraft.getInstance().getSoundManager().play(heart);
+    }
+
+    private static void stopHeart() {
+        if (heart == null) return;
+        Minecraft.getInstance().getSoundManager().stop(heart);
+        heart = null;
+    }
+
     private static void play(SoundEvent event, float gain, float tone, boolean mind) {
         var mc = Minecraft.getInstance();
         if (cue != null) mc.getSoundManager().stop(cue);
@@ -62,8 +84,40 @@ final class MagiaSoundscape {
 
     static void clear() {
         if (cue != null) Minecraft.getInstance().getSoundManager().stop(cue);
+        stopHeart();
         cue = null; owner = null; world = null; previous = 0;
         heartbeat = 0; whisperDelay = 0; caveDelay = 0; kneelDelay = 0;
+    }
+
+    /**
+     * O coracao. Laço continuo: o volume e que conta a historia, subindo conforme quem carrega a aura
+     * se aproxima. Para sozinho quando o medo passa, quando o jogador troca de mundo ou quando morre.
+     */
+    private static final class Heart extends AbstractTickableSoundInstance {
+        private final LocalPlayer player;
+        private final ClientLevel level;
+
+        Heart(LocalPlayer player, ClientLevel level) {
+            super(MagiaSounds.HEARTBEAT.get(), SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
+            this.player = player;
+            this.level = level;
+            looping = true;
+            delay = 0;
+            volume = .05F;
+            pitch = 1F;
+            relative = true;
+            attenuation = SoundInstance.Attenuation.NONE;
+        }
+
+        @Override public void tick() {
+            var mc = Minecraft.getInstance();
+            if (mc.player != player || mc.level != level || !player.isAlive()
+                    || !player.hasEffect(MagiaEffects.TERRIFIED)) { stop(); return; }
+            // Perto de quem exala o medo, o peito aperta; na borda do raio e so um pulso ao fundo.
+            float closeness = ClientSpellVisuals.terror(level, mc.gameRenderer.getMainCamera().getPosition());
+            volume = .10F + .45F * closeness;
+            pitch = .94F + .10F * closeness;
+        }
     }
 
     private static final class Cue extends AbstractTickableSoundInstance {

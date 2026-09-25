@@ -21,6 +21,7 @@ Depende do `aurorion-core` **0.2.0+** (contrato `HouseGate`). A barreira de casa
 - **Água tratada por área**: só a torneira, ou toda a água da área, enche o cantil purificado (Legendary Survival Overhaul).
 - Vida e dano de monstros definidos no nascimento, sem acumular multiplicadores ao recarregar chunks.
 - Ambientes por datapack: sons individuais, escuridão, cegueira curta, sombra periférica, neblina e ataques invisíveis.
+- **Neblina compatível com shaders**: com um pacote carregado no Iris, ela é desenhada em espaço de tela, e não pelo `RenderFog` do vanilla — que o shader ignora.
 - Comandos de edição, inspeção e visualização exclusivos de staff (permissão 2).
 - API pública e regras com nomes próprios para futuras profissões.
 
@@ -464,6 +465,36 @@ Limites do `pulse`: `blackout` 0–1 e `blackout_seconds` 1–30. Limites de `sp
 
 `/reload` atualiza os ambientes ativos. Presets de regras são **copiados** ao aplicar `/area perfil`: editar o JSON do preset exige reaplicá-lo às áreas ou ao mundo. O conteúdo de um ambiente, por outro lado, é consultado pelo id e atualizado na recarga. JSON inválido é registrado no log e ignorado pelo catálogo; verifique o log de recarga ao editar.
 
+## Neblina e shaders
+
+`ViewportEvent.RenderFog` e `ComputeFogColor` são eventos do **pipeline do vanilla**. Quando o Iris
+carrega um pacote de shaders, quem calcula a neblina passa a ser o fragment shader do pacote, com
+uniformes próprios, e o plano distante que a gente pede simplesmente não é consultado. Na prática, a
+neblina da Floresta Negra existia para quem jogava sem shader e **sumia** para quem jogava com BSL,
+Complementary ou Solas — que é quase todo o servidor.
+
+A saída não é brigar com o shader: é desenhar a neblina **depois** dele.
+
+| Com shader ligado | Sem shader |
+|---|---|
+| `AreaClient.screenFog` pinta a mesma cor e a mesma densidade em espaço de tela, depois de o quadro estar composto | `AreaClient.fog` faz a neblina de verdade, que fica melhor |
+
+O interruptor é [`ShaderPacks`](../aurorion-core/src/main/java/com/aurorion/core/client/ShaderPacks.java)
+no `aurorion-core` (ponte reflexiva com a API v0 do Iris: sem o Iris instalado a resposta é sempre
+"não", sem custo nenhum), e o desenho é o
+[`ScreenFog`](../aurorion-core/src/main/java/com/aurorion/core/client/ScreenFog.java). A resposta é
+reconsultada uma vez por segundo, porque o jogador liga e desliga shader em jogo (K, no teclado padrão
+do Iris). As duas técnicas nunca desenham ao mesmo tempo: somadas, escureceriam o dobro.
+
+**A névoa que se vê passar é partícula.** Neblina desenhada, seja pelo plano distante ou pela tela, é
+uma cor: ela não tem volume, não se move e não passa entre as árvores. Por isso o ambiente também
+solta fumaça e cinza baixas em volta de quem está dentro — no máximo três por tick, num cubo de oito
+blocos, divididas pela opção "Partículas" do vanilla. Partícula atravessa o pipeline do shader como
+qualquer outra do jogo, então esse pedaço aparece igual nos três casos.
+
+A sombra periférica e o apagão já eram retângulos desenhados em cima do HUD, e nunca dependeram do
+shader.
+
 ## Integrações e limites atuais
 
 - **Vanilla:** fiscaliza `abilities.flying` e elytra no servidor; oferece aterrissagem curta ao interromper voo. Não retira `mayfly` nem restaura habilidades antigas de outro mod.
@@ -529,6 +560,8 @@ O contorno é **um único pacote** para o administrador que pediu, com a geometr
 ## Validação no ambiente do pack
 
 Os testes do módulo cobrem concavidade, bordas, alturas, recortes, rejeição de contornos inválidos, precedência, herança, exceções, reset de personagem, dimensões, serialização e comparação do índice com resolução exaustiva. Incluem atualização dos padrões em resultados reutilizados, isolamento das exceções por personagem, preservação de dados ilegíveis e rejeição de carregamento parcial.
+
+Conferir a neblina **com shader ligado e desligado** (tecla K no Iris, em jogo), dentro da Floresta Negra: ela tem que aparecer nos dois casos, com a mesma cor, e **nunca as duas técnicas ao mesmo tempo**. Conferir com BSL, Complementary e Solas, que são os do pack, e que a neblina de tela não cobre a barra de itens nem o chat.
 
 Quando o código for levado ao ambiente de execução, conferir escola/sala/exterior, entrada voando de elytra, personagem autorizado, NPC voando, Iron's Spells com conjuração em andamento, spawn natural/ovo/spawner, proteção contra projéteis hostis, entrada/saída da floresta, reload e reconexão. Confirmar os efeitos visuais com os shaders e os demais mods de neblina do pack.
 

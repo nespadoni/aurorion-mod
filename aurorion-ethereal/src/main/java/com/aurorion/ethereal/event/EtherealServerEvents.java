@@ -131,7 +131,7 @@ public final class EtherealServerEvents {
         RankingData.get(player.server).seePlayer(player.getUUID(), player.getScoreboardName());
         // Login e evento raro; tambem cobre primeiro acesso e mudanca de nome sem qualquer polling.
         BoardService.refresh(player.server, BoardMode.TOP_PLAYERS, BoardMode.WORST_PLAYERS,
-                BoardMode.MISSIONS, BoardMode.DEATHS, BoardMode.DUEL_WINS);
+                BoardMode.MISSIONS, BoardMode.LIVES, BoardMode.DUEL_WINS);
 
         // A apresentacao e sempre disparada pela staff; entrar nunca consome uma fila antiga.
         BindingRite.syncTo(player);
@@ -149,7 +149,6 @@ public final class EtherealServerEvents {
 
         RankingData data = RankingData.get(victim.server);
         data.recordDeath(victim.getUUID(), victim.getScoreboardName());
-        BoardService.refresh(victim.server, BoardMode.DEATHS);
 
         if (event.getSource().getEntity() instanceof ServerPlayer winner && winner != victim) {
             data.recordDuelWin(winner.getUUID(), winner.getScoreboardName());

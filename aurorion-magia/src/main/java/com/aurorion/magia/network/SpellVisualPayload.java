@@ -102,7 +102,18 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         /** Sentenca Final em area: pentagrama do tamanho do raio. pos = centro, extra = raio. */
         MORTEM_AREA,
         /** Mundo Vazio: veu que apaga o mundo em volta do alvo. */
-        MUNDUS_VACUUS;
+        MUNDUS_VACUUS,
+        /** Afogamento: agua subindo pelo corpo do alvo e bolhas escapando da boca. */
+        SUBMERSIO,
+        /**
+         * Maremoto: a onda abrindo do conjurador ate a borda. pos = centro; extra = raio, com o
+         * <b>sinal</b> dizendo a forma: positivo e o circulo (agachado), negativo e o arco a frente.
+         */
+        UNDA_MAGNA,
+        /** Carcere de Agua: a esfera em volta do preso, girando. */
+        CARCER_AQUAE,
+        /** Presenca Aterradora: a aura negra em volta de quem a carrega. extra = raio. */
+        TERROR_AURA;
 
         private static final Kind[] VALUES = values();
 
@@ -114,7 +125,8 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         public boolean anchoredToPoint() {
             return this == SIGILLUM || this == SIGILLUM_DENY || this == SIGILLUM_BREAK || this == LUX_VORATA
                     || this == TEMPUS_SISTERE || this == MORTEM_DICO
-                    || this == DEIECTIO_AREA || this == ASPECTUS_AREA || this == MORTEM_AREA;
+                    || this == DEIECTIO_AREA || this == ASPECTUS_AREA || this == MORTEM_AREA
+                    || this == UNDA_MAGNA;
         }
     }
 }

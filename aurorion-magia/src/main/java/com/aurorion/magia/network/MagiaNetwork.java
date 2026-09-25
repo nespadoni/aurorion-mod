@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = AurorionMagia.MOD_ID)
 public final class MagiaNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload ou a ordem dos Kind. */
-    private static final String PROTOCOL_VERSION = "5";
+    private static final String PROTOCOL_VERSION = "6";
 
     private MagiaNetwork() {
     }

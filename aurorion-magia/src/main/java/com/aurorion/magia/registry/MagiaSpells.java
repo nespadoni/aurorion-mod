@@ -2,6 +2,8 @@ package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.spell.AspectusCaptusSpell;
+import com.aurorion.magia.spell.CarcerAquaeSpell;
+import com.aurorion.magia.spell.ColumnaVentiSpell;
 import com.aurorion.magia.spell.DeiectioCorporisSpell;
 import com.aurorion.magia.spell.DolorCruciatusSpell;
 import com.aurorion.magia.spell.DolorUniversusSpell;
@@ -14,8 +16,12 @@ import com.aurorion.magia.spell.ManusCarnificisSpell;
 import com.aurorion.magia.spell.ManusVacuaSpell;
 import com.aurorion.magia.spell.MortemDicoSpell;
 import com.aurorion.magia.spell.SigillumClausumSpell;
+import com.aurorion.magia.spell.SubmersioSpell;
 import com.aurorion.magia.spell.TempusSistereSpell;
 import com.aurorion.magia.spell.TranspositioSpell;
+import com.aurorion.magia.spell.TurboVentorumSpell;
+import com.aurorion.magia.spell.UndaMagnaSpell;
+import com.aurorion.magia.spell.VentusCustosSpell;
 import com.aurorion.magia.spell.VinculumCarnificisSpell;
 import com.aurorion.magia.spell.VoxInterdictaSpell;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
@@ -69,6 +75,22 @@ public final class MagiaSpells {
             SPELLS.register("sigillum_clausum", SigillumClausumSpell::new);
     public static final DeferredHolder<AbstractSpell, LuxVorataSpell> LUX_VORATA =
             SPELLS.register("lux_vorata", LuxVorataSpell::new);
+
+    // --- Agua: afogar, empurrar, prender -------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, SubmersioSpell> SUBMERSIO =
+            SPELLS.register("submersio", SubmersioSpell::new);
+    public static final DeferredHolder<AbstractSpell, UndaMagnaSpell> UNDA_MAGNA =
+            SPELLS.register("unda_magna", UndaMagnaSpell::new);
+    public static final DeferredHolder<AbstractSpell, CarcerAquaeSpell> CARCER_AQUAE =
+            SPELLS.register("carcer_aquae", CarcerAquaeSpell::new);
+
+    // --- Vento: defender, subir, arrastar ------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, VentusCustosSpell> VENTUS_CUSTOS =
+            SPELLS.register("ventus_custos", VentusCustosSpell::new);
+    public static final DeferredHolder<AbstractSpell, ColumnaVentiSpell> COLUMNA_VENTI =
+            SPELLS.register("columna_venti", ColumnaVentiSpell::new);
+    public static final DeferredHolder<AbstractSpell, TurboVentorumSpell> TURBO_VENTORUM =
+            SPELLS.register("turbo_ventorum", TurboVentorumSpell::new);
 
     // --- Proibidas: sem craft, sem loot, sem vir pela escola. So a staff concede, uma a uma. -----
     public static final DeferredHolder<AbstractSpell, TempusSistereSpell> TEMPUS_SISTERE =

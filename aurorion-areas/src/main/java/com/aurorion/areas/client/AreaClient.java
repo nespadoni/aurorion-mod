@@ -2,11 +2,16 @@ package com.aurorion.areas.client;
 
 import com.aurorion.areas.AurorionAreas;
 import com.aurorion.areas.network.AreaStatePayload;
+import com.aurorion.core.client.ScreenFog;
+import com.aurorion.core.client.ShaderPacks;
 import com.mojang.blaze3d.shaders.FogShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.material.FogType;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.*;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -52,14 +57,59 @@ public final class AreaClient {
             if (mc.player.isFallFlying()) mc.player.stopFallFlying();
             mc.player.getAbilities().flying = false;
         }
+        mist(mc);
+    }
+
+    /**
+     * A neblina que se ve passar.
+     *
+     * <p>Neblina desenhada, seja pelo plano distante ou pela tela, e uma cor: ela nao tem volume, nao
+     * se move e nao passa entre as arvores. Particula tem as tres coisas — e, ao contrario do
+     * {@code RenderFog}, ela atravessa o pipeline do shader como qualquer particula do jogo, entao
+     * este e o pedaco do ambiente que aparece igual com BSL, com Complementary e sem shader nenhum.
+     *
+     * <p>Sao poucas e perto: no maximo tres por tick, num cubo de oito blocos em volta da camera, e
+     * divididas pela opcao "Particulas" do vanilla. Elas nao iluminam, nao colidem e morrem sozinhas.
+     */
+    private static void mist(Minecraft mc) {
+        if (fogWeight < .15F || mc.level == null || mc.player == null) return;
+        int stride = switch (mc.options.particles().get()) {
+            case ALL -> 1;
+            case DECREASED -> 2;
+            case MINIMAL -> 4;
+        };
+        if (mc.level.getGameTime() % stride != 0) return;
+
+        RandomSource random = mc.level.random;
+        Vec3 eye = mc.player.getEyePosition();
+        int count = Math.max(1, Math.round(3 * fogWeight) / stride);
+        for (int i = 0; i < count; i++) {
+            double x = eye.x + (random.nextDouble() - .5) * 16;
+            double y = eye.y + (random.nextDouble() - .7) * 6;
+            double z = eye.z + (random.nextDouble() - .5) * 16;
+            mc.level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z,
+                    (random.nextDouble() - .5) * .02, .004, (random.nextDouble() - .5) * .02);
+            if (random.nextInt(3) == 0) {
+                mc.level.addParticle(ParticleTypes.ASH, x, y + 1, z, 0, -.01, 0);
+            }
+        }
     }
     @SubscribeEvent public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
         dimension = null; targetFog = 0; fogWeight = 0; vignette = 0; pulseRemaining = 0; flightBlocked = false;
         blackout = 0; blackoutStrength = 0; blackoutRemaining = 0;
     }
+    /**
+     * A neblina de verdade, do pipeline do vanilla.
+     *
+     * <p><b>So sem shader.</b> Com um pacote carregado no Iris, quem calcula a neblina e o fragment
+     * shader do pacote e este evento nao e consultado — era por isso que a Floresta Negra existia
+     * para quem joga sem shader e sumia para quem joga com BSL, Complementary ou Solas. Nesse caso
+     * quem desenha e {@link #screenFog}, em espaco de tela, onde nenhum pacote interfere.
+     */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void fog(ViewportEvent.RenderFog event) {
-        if (!current() || fogWeight < .001F || event.getCamera().getFluidInCamera() != FogType.NONE
+        if (!current() || fogWeight < .001F || ShaderPacks.inUse()
+                || event.getCamera().getFluidInCamera() != FogType.NONE
                 || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN) return;
         float far = event.getFarPlaneDistance();
         // Respect an already denser vanilla/mod fog, including blindness and lava/water.
@@ -71,7 +121,8 @@ public final class AreaClient {
         event.setCanceled(true);
     }
     @SubscribeEvent public static void color(ViewportEvent.ComputeFogColor event) {
-        if (!current() || fogWeight < .001F || event.getCamera().getFluidInCamera() != FogType.NONE) return;
+        if (!current() || fogWeight < .001F || ShaderPacks.inUse()
+                || event.getCamera().getFluidInCamera() != FogType.NONE) return;
         float blend = fogWeight * .75F;
         event.setRed(event.getRed() + (((color >> 16 & 255) / 255F) - event.getRed()) * blend);
         event.setGreen(event.getGreen() + (((color >> 8 & 255) / 255F) - event.getGreen()) * blend);
@@ -85,6 +136,23 @@ public final class AreaClient {
      * deveria ganhar visao noturna de brinde. O que ele faz e nao desenhar quando nao ha nada a
      * desenhar, que e o caso em 99% do tempo de jogo.
      */
+    /**
+     * A neblina quando o pipeline do vanilla nao serve: mesma densidade, mesma cor, pintada depois de
+     * o quadro estar composto.
+     *
+     * <p>Desenhada <b>antes</b> da sombra periferica e do apagao de {@link #overlay}, na mesma ordem
+     * em que o olho as leria no mundo: primeiro o ar, depois o que fecha em volta.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void screenFog(RenderGuiEvent.Post event) {
+        if (!current() || fogWeight < .001F || lastFogDistance <= 0 || !ShaderPacks.inUse()) return;
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        if (camera.getFluidInCamera() != FogType.NONE) return;
+        // A mesma leitura da neblina de verdade: 26 blocos de alcance e um veu; 8, uma parede.
+        float density = Math.clamp(1 - (lastFogDistance - 6F) / 50F, 0, 1);
+        ScreenFog.draw(event.getGuiGraphics(), color, fogWeight * density);
+    }
+
     @SubscribeEvent public static void overlay(RenderGuiEvent.Post event) {
         // As duas decisoes vem antes de pedir o GuiGraphics: no quadro comum nao ha nada a desenhar,
         // e este metodo roda a cada quadro de quem ja recebeu qualquer estado de area.

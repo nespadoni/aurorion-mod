@@ -6,8 +6,10 @@ import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
+import com.aurorion.limbo.exile.LimboSpawn;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.environment.LimboEnvironment;
+import com.aurorion.limbo.event.LimboServerEvents;
 import com.aurorion.limbo.registry.LimboItems;
 import com.aurorion.limbo.report.AuditLog;
 import com.aurorion.limbo.rescue.RescueManager;
@@ -42,6 +44,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerRespawnPositionEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -61,6 +64,27 @@ public class LimboGameTests {
             LivesConfig.EXILE_DIMENSION.set("aurorion_limbo:limbo");
             LimboConfig.WEBHOOK_URL.set("");
         });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void spawnStaysOnTerrainBelowHighPlatform(GameTestHelper helper) {
+        ServerLevel limbo = helper.getLevel().getServer().getLevel(LimboManager.dimension());
+        helper.assertTrue(limbo != null, "Limbo deve estar disponivel para testar a chegada");
+
+        BlockPos ground = LimboSpawn.surface(limbo, 8, 8);
+        helper.assertTrue(ground != null, "Limbo deve ter superficie caminhavel na coluna de teste");
+        int platformY = Math.min(limbo.getMaxBuildHeight() - 4, ground.getY() + 96);
+        helper.assertTrue(platformY - ground.getY() > 64, "Plataforma de teste precisa estar acima do terreno");
+        BlockPos platform = new BlockPos(8, platformY, 8);
+        var previous = limbo.getBlockState(platform);
+        try {
+            limbo.setBlockAndUpdate(platform, Blocks.STONE.defaultBlockState());
+            helper.assertTrue(ground.equals(LimboSpawn.surface(limbo, 8, 8)),
+                    "Chegada nao deve escolher uma plataforma suspensa acima do terreno");
+        } finally {
+            limbo.setBlockAndUpdate(platform, previous);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
@@ -135,6 +159,17 @@ public class LimboGameTests {
                     "Travessia deve entregar exatamente dois Vinculos de Alma");
             helper.assertTrue(portal.isRemoved(),
                     "Passagem deve fechar no mesmo tick depois que o dono atravessa");
+
+            var rescuerRespawn = new PlayerRespawnPositionEvent(rescuer,
+                    new DimensionTransition(overworld, center.getBottomCenter(), Vec3.ZERO,
+                            0, 0, DimensionTransition.DO_NOTHING), false);
+            LimboServerEvents.onRespawnPosition(rescuerRespawn);
+            helper.assertTrue(rescuerRespawn.getDimensionTransition().newLevel() == limbo
+                            && rescuerRespawn.copyOriginalSpawnPosition(),
+                    "Morte do resgatador no Limbo deve renascer no Limbo e preservar a cama original");
+            BlockPos respawnSpot = BlockPos.containing(rescuerRespawn.getDimensionTransition().pos());
+            helper.assertTrue(respawnSpot.equals(LimboSpawn.surface(limbo, respawnSpot.getX(), respawnSpot.getZ())),
+                    "Resgatador deve renascer na superficie do Limbo");
 
             // Nao deixa um exilio ativo contaminar os outros GameTests que compartilham este servidor.
             LivesManager.setLives(server, exiled.getUUID(), LimboConfig.LIVES_ON_RESCUE.get());

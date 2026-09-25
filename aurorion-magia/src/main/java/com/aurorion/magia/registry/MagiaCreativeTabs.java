@@ -1,6 +1,8 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.passive.Passive;
+import com.aurorion.magia.passive.PassiveScrollItem;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
 import io.redspace.ironsspellbooks.registries.ItemRegistry;
@@ -38,6 +40,10 @@ public final class MagiaCreativeTabs {
                             for (int level = spell.getMinLevel(); level <= spell.getMaxLevel(); level++) {
                                 output.accept(scroll(spell, level));
                             }
+                        }
+                        // As passivas fecham a aba: nao tem nivel, entao e um pergaminho de cada.
+                        for (Passive passive : Passive.values()) {
+                            output.accept(PassiveScrollItem.of(MagiaItems.PASSIVE_SCROLL.get(), passive));
                         }
                     })
                     .build());

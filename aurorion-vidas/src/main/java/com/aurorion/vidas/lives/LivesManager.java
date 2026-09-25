@@ -3,6 +3,7 @@ package com.aurorion.vidas.lives;
 import com.aurorion.core.config.DerivedConfig;
 import com.aurorion.core.character.CharacterData;
 import com.aurorion.vidas.AurorionVidas;
+import com.aurorion.vidas.compat.EtherealProjectorNotifier;
 import com.aurorion.vidas.config.LivesConfig;
 import com.aurorion.vidas.network.SyncLivesPayload;
 import net.minecraft.ChatFormatting;
@@ -84,6 +85,7 @@ public final class LivesManager {
 
         int after = data.setLives(uuid, before - 1);
         sync(player, after);
+        EtherealProjectorNotifier.refreshLives(player.server);
 
         if (after > 0) {
             player.sendSystemMessage(Component.translatable("aurorion_vidas.perdeu", after, maxLives())
@@ -147,6 +149,7 @@ public final class LivesManager {
         if (CharacterData.get(server).isDead(player)) value = 0;
         int result = LivesData.get(server).setLives(player, value);
         syncIfOnline(server, player, result);
+        EtherealProjectorNotifier.refreshLives(server);
         return result;
     }
 
@@ -155,6 +158,7 @@ public final class LivesManager {
         LivesData data = LivesData.get(server);
         int result = data.setLives(player, data.livesOf(player) + delta);
         syncIfOnline(server, player, result);
+        EtherealProjectorNotifier.refreshLives(server);
         return result;
     }
 

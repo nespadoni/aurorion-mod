@@ -68,6 +68,11 @@ public final class EffectCleanup {
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("genua_jump"), MagiaEffects.KNEELING),
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("cativo_speed"), MagiaEffects.CAPTIVE),
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("abatido_jump"), MagiaEffects.GROUNDED),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("submersio_speed"), MagiaEffects.DROWNING),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("carcer_speed"), MagiaEffects.CAGED),
+                    new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("carcer_jump"), MagiaEffects.CAGED),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("genuflexo_speed"), MagiaEffects.GENUFLECTED),
+                    new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("genuflexo_jump"), MagiaEffects.GENUFLECTED),
                     // Sequestro de Impulso, removido do mod: quem ficou preso nele sai aqui.
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("estase_speed"), null),
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("estase_jump"), null));

@@ -1,6 +1,8 @@
 package com.aurorion.ethereal.ranking;
 
+import com.aurorion.core.character.CharacterData;
 import com.aurorion.ethereal.block.entity.AeonicProjectorBlockEntity;
+import com.aurorion.ethereal.compat.HouseLivesBridge;
 import com.aurorion.ethereal.house.HouseCatalog;
 import com.aurorion.ethereal.house.HouseData;
 import net.minecraft.server.MinecraftServer;
@@ -59,6 +61,11 @@ public final class BoardService {
             return;
         }
 
+        if (mode == BoardMode.LIVES) {
+            projector.setRenderedLines(lifeLines(server, AeonicProjectorBlockEntity.MAX_LINES));
+            return;
+        }
+
         List<RankedEntry> ranking = RankingData.get(server).top(
                 mode, AeonicProjectorBlockEntity.MAX_LINES, HouseData.get(server), HouseCatalog.all());
 
@@ -102,5 +109,28 @@ public final class BoardService {
     /** Chamada pela ponte opcional do mod de economia, somente quando algum saldo muda. */
     public static void refreshEconomy(MinecraftServer server) {
         refresh(server, BoardMode.RICHEST_HOUSES, BoardMode.RICHEST_PLAYERS);
+    }
+
+    /** Chamada pela ponte opcional do mod de vidas, somente quando algum contador muda. */
+    public static void refreshLives(MinecraftServer server) {
+        refresh(server, BoardMode.LIVES);
+    }
+
+    private static List<BoardLine> lifeLines(MinecraftServer server, int limit) {
+        List<RankedEntry> ranking = CharacterData.get(server).characters().entrySet().stream()
+                .filter(entry -> entry.getValue().named() && !entry.getValue().dead())
+                .map(entry -> new RankedEntry(entry.getKey().toString(), entry.getValue().fullName(),
+                        HouseLivesBridge.livesOf(server, entry.getKey())))
+                .sorted(java.util.Comparator.comparingInt(RankedEntry::value)
+                        .thenComparing(RankedEntry::label, String.CASE_INSENSITIVE_ORDER))
+                .limit(limit)
+                .toList();
+
+        List<BoardLine> lines = new ArrayList<>(ranking.size());
+        for (int i = 0; i < ranking.size(); i++) {
+            RankedEntry entry = ranking.get(i);
+            lines.add(new BoardLine(BoardMode.LIVES.line(i + 1, entry.label(), entry.value()), entry.color()));
+        }
+        return lines;
     }
 }

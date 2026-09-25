@@ -16,5 +16,15 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "dread.heartbeat": {
+    "subtitle": "aurorion_magia.subtitle.dread.heartbeat",
+    "sounds": [
+      {
+        "name": "aurorion_magia:heartbeat",
+        "stream": false,
+        "attenuation_distance": 16
+      }
+    ]
   }
 }

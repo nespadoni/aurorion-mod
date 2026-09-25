@@ -1,18 +1,18 @@
 package com.aurorion.limbo.rescue;
 
 import com.aurorion.core.level.SafeSpot;
+import com.aurorion.core.character.CharacterData;
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
+import com.aurorion.limbo.exile.LimboSpawn;
 import com.aurorion.limbo.narrate.LimboText;
 import com.aurorion.limbo.registry.LimboItems;
 import com.aurorion.limbo.report.AuditEvent;
 import com.aurorion.limbo.report.AuditLog;
-import com.aurorion.vidas.lives.ExileSpot;
-import com.aurorion.vidas.lives.LivesData;
 import com.aurorion.vidas.lives.LivesManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -77,12 +77,14 @@ public final class RescueManager {
     public static List<ExileInfo> listExiles(MinecraftServer server) {
         Map<UUID, ExileRecord> active = LimboData.get(server).active();
         List<ExileInfo> out = new ArrayList<>(active.size());
+        CharacterData characters = CharacterData.get(server);
 
         active.forEach((id, record) -> {
-            if (record.remainingMillis() <= 0 || com.aurorion.core.character.CharacterData.get(server).isDead(id)) return;
+            CharacterData.Character character = characters.find(id);
+            if (record.remainingMillis() <= 0 || character == null || character.dead()) return;
             out.add(new ExileInfo(
                 id,
-                record.lastName(),
+                character.named() ? character.fullName() : record.lastName(),
                 record.remainingMillis(),
                 record.rescueAttempted(),
                 server.getPlayerList().getPlayer(id) != null));
@@ -231,10 +233,10 @@ public final class RescueManager {
 
         if (exiled != null && exiled.level().dimension() == limbo.dimension()) {
             BlockPos near = exiled.blockPosition().offset(24, 0, 24);
-            BlockPos found = SafeSpot.aroundColumn(limbo, near, 12, near.getY() + 24);
+            BlockPos found = LimboSpawn.around(limbo, near, 12);
             if (found != null) return found;
         }
-        return ExileSpot.resolve(limbo, LivesData.get(server));
+        return LimboSpawn.scattered(limbo);
     }
 
     private static void giveBonds(ServerPlayer player) {

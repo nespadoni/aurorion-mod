@@ -117,7 +117,7 @@ public final class ServiceActions {
         return new Plan(action, title(action), detail, result, materials, levels, null, honey);
     }
     public static void execute(Plan plan, ServerPlayer professional, ServerPlayer customer) {
-        if (plan.wound != null) plan.wound.aurorionTreat();
+        if (plan.wound != null) LsoCompat.treat(customer, plan.wound);
         else {
             if (plan.honey) FoodCompat.finish(plan.result, true, customer.level());
             customer.setItemInHand(InteractionHand.MAIN_HAND, plan.result);
