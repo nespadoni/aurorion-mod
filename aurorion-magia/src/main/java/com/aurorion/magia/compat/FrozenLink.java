@@ -51,6 +51,34 @@ public final class FrozenLink {
         }
     }
 
+    /**
+     * Congela, mas so renova quando o congelamento atual esta perto de vencer.
+     *
+     * <p>E o que a zona do Tempus usa a cada pulso: renovar sempre mandaria um pacote de efeito por
+     * pessoa por segundo — com o salao cheio, dezenas por segundo para manter o mesmo estado. Um
+     * congelamento sem prazo (o {@code /freeze} da staff) nunca e tocado.
+     */
+    public static void freezeRenewing(LivingEntity target, int ticks, int renewBelow, @Nullable Entity source) {
+        Holder<MobEffect> effect = effect();
+        MobEffectInstance current = target.getEffect(effect != null ? effect : MobEffects.MOVEMENT_SLOWDOWN);
+        if (current != null && (current.isInfiniteDuration() || current.getDuration() > renewBelow)) return;
+        freeze(target, ticks, source);
+    }
+
+    /**
+     * Solta um congelamento <b>curto</b>: so o que tem prazo de ate {@code maxTicks}. E o que a zona
+     * do Tempus poe e renova; o {@code /freeze} da staff (sem prazo ou longo) fica onde esta. No
+     * fallback sem o utils, so sai a Lentidao no nivel que esta classe poe.
+     */
+    public static void thaw(LivingEntity target, int maxTicks) {
+        Holder<MobEffect> effect = effect();
+        Holder<MobEffect> held = effect != null ? effect : MobEffects.MOVEMENT_SLOWDOWN;
+        MobEffectInstance instance = target.getEffect(held);
+        if (instance == null || instance.isInfiniteDuration() || instance.getDuration() > maxTicks) return;
+        if (effect == null && instance.getAmplifier() != SLOWNESS_LEVEL) return;
+        target.removeEffect(held);
+    }
+
     public static boolean isFrozen(LivingEntity entity) {
         Holder<MobEffect> effect = effect();
         return effect != null && entity.hasEffect(effect);

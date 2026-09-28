@@ -6,12 +6,13 @@ import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.spell.AurorionSpell;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
@@ -27,10 +28,10 @@ import java.util.List;
  *
  * <ul>
  *   <li><b>Medo</b>, ate {@code dreadRadius} blocos (30 por padrao): quem estiver dentro recebe
- *       {@code apavorado} e, com {@code dreadDarkens} ligado, a <b>Escuridao</b> do vanilla. O nosso
- *       efeito nao mexe em atributo nenhum — ele e lido pelo cliente da propria pessoa e vira tela
- *       preta fechando, tremor, batida de coracao e nevoa negra; a Escuridao e o que apaga a luz do
- *       mundo de verdade, inclusive para quem joga com shader pack. Nao tira vida, nao tira
+ *       {@code apavorado}. O efeito nao mexe em atributo nenhum — ele e lido pelo cliente da propria
+ *       pessoa e vira sombra nos cantos da tela, tremor e batida de coracao. <b>Ninguem fica cego</b>:
+ *       a aura e palco de cena, com gente no meio dela, entao nao ha Escuridao do vanilla nem nevoa
+ *       fechando o ar — o mundo continua visivel inteiro, so a periferia pesa. Nao tira vida, nao tira
  *       velocidade e nao vira arma de PvP disfarçada.</li>
  *   <li><b>Prostracao</b>, ate {@code dreadKneelRadius} blocos (o raio inteiro, por padrao): quem
  *       sente o medo <b>se prostra</b> — os dois joelhos no chao, pose propria do Emotecraft
@@ -66,23 +67,22 @@ import java.util.List;
  *       os encontrados.</li>
  * </ul>
  *
- * <p>Os efeitos nos atingidos duram pouco mais que a varredura que os renova — quem sai do raio volta
- * ao normal sozinho, sem ninguem varrer lista. Uma unica mensagem de visual sai por pulso, para quem
+ * <p>Os efeitos nos atingidos duram uns tres pulsos e so sao renovados quando estao perto de vencer:
+ * cada renovacao e um pacote de efeito para aquela pessoa, e com a praça cheia (90 pessoas) renovar a
+ * cada segundo seriam centenas de pacotes por segundo so para manter o mesmo estado. Quem sai do raio
+ * volta ao normal sozinho em ate ~3 s, sem ninguem varrer lista. Uma unica mensagem de visual sai por pulso, para quem
  * ja rastreia o portador; a nevoa, os vultos e o coracao sao desenhados e tocados por cada cliente.
  */
 public final class DreadAura {
     /** O pulso da aura: uma vez por segundo. */
     public static final int INTERVAL_TICKS = 20;
-    /** Duracao dos efeitos em gente: um pulso e meio, para dar sobreposicao entre as varreduras. */
-    private static final int VICTIM_TICKS = INTERVAL_TICKS + 15;
+    /** Duracao dos efeitos em gente: tres pulsos. */
+    private static final int VICTIM_TICKS = INTERVAL_TICKS * 3;
     /**
-     * Duracao da Escuridao, mais longa que a do medo de proposito. O vanilla acende e apaga esse efeito
-     * em rampa nos ultimos 22 ticks dele; se a renovacao caisse dentro dessa janela, a luz do mundo
-     * piscaria uma vez por segundo em vez de ficar apagada. Com {@value #DARK_TICKS} ticks sobram 30 no
-     * momento em que o pulso seguinte renova — nunca dentro da rampa. O preco e a escuridao demorar
-     * cerca de dois segundos e meio para levantar depois que a pessoa sai do raio, e isso assenta bem.
+     * So renova quando sobra menos que isto: um pulso e um quarto de folga. Acima disso a pessoa ja
+     * esta coberta ate o pulso seguinte, e renovar seria um pacote a toa.
      */
-    private static final int DARK_TICKS = INTERVAL_TICKS * 2 + 10;
+    private static final int RENEW_BELOW = INTERVAL_TICKS + 5;
     /** A varredura de bicho e mais lenta: fuga nao precisa de resposta em um segundo. */
     private static final int MOB_INTERVAL_TICKS = INTERVAL_TICKS * 2;
     private static final int MOB_TICKS = MOB_INTERVAL_TICKS + 15;
@@ -91,8 +91,11 @@ public final class DreadAura {
      * alcance de rastreio, nao pisca a nevoa de quem esta com medo.
      */
     private static final int VISUAL_TICKS = INTERVAL_TICKS * 3;
-    /** Teto de gente por pulso. Uma praça cheia nao vira 80 efeitos por segundo. */
-    private static final int MAX_AFFECTED = 32;
+    /**
+     * Teto de gente por pulso. E alto porque a cena e com a praça inteira dentro (o servidor tem ~90
+     * pessoas); o que o torna barato e a renovacao espaçada, e nao o teto.
+     */
+    private static final int MAX_AFFECTED = 96;
     /** Teto de bichos por varredura: uma granja de mobs ao lado do vilao nao vira 200 efeitos. */
     private static final int MAX_CREATURES = 48;
     /** Teto de rotas de fuga por varredura: e o pathfinding que pesa, nao o efeito. */
@@ -144,7 +147,6 @@ public final class DreadAura {
         double kneelRadius = Math.min(MagiaConfig.DREAD_KNEEL_RADIUS.get(), radius);
         double kneelSqr = kneelRadius * kneelRadius;
         boolean spareAllies = MagiaConfig.DREAD_SPARE_ALLIES.get();
-        boolean darkens = MagiaConfig.DREAD_DARKENS.get();
         boolean deep = MagiaConfig.DREAD_PROSTRATES.get();
         Vec3 center = owner.position();
 
@@ -158,7 +160,7 @@ public final class DreadAura {
             double distanceSqr = victim.position().distanceToSqr(center);
             if (distanceSqr > radiusSqr) continue;
             touched++;
-            terrify(victim, owner, darkens);
+            renew(victim, MagiaEffects.TERRIFIED, owner);
             if (kneelRadius > 0 && distanceSqr <= kneelSqr) prostrate(victim, owner, deep);
         }
 
@@ -172,16 +174,16 @@ public final class DreadAura {
     }
 
     /**
-     * O medo. {@code apavorado} e lido pelo cliente da propria pessoa (tela, som, nevoa); a Escuridao
-     * do vanilla e o que apaga a luz do mundo em volta, e ela atravessa shader pack — o pacote de
-     * shaders respeita a iluminacao do jogo, e nao a neblina que a gente pede.
+     * Poe ou renova um efeito da aura, mas so quando ele esta perto de vencer. {@code apavorado} e lido
+     * pelo cliente da propria pessoa (sombra nos cantos, tremor, coracao).
+     *
+     * @return {@code true} se o efeito nao existia (primeira vez no raio)
      */
-    private static void terrify(ServerPlayer victim, ServerPlayer owner, boolean darkens) {
-        victim.addEffect(new MobEffectInstance(MagiaEffects.TERRIFIED, VICTIM_TICKS, 0, false, false, true), owner);
-        if (darkens) {
-            // Sem icone: o de apavorado ja esta na tela, e dois icones para o mesmo susto e ruido.
-            victim.addEffect(new MobEffectInstance(MobEffects.DARKNESS, DARK_TICKS, 0, false, false, false), owner);
-        }
+    private static boolean renew(ServerPlayer victim, Holder<MobEffect> effect, ServerPlayer owner) {
+        MobEffectInstance current = victim.getEffect(effect);
+        if (current != null && (current.isInfiniteDuration() || current.getDuration() > RENEW_BELOW)) return false;
+        victim.addEffect(new MobEffectInstance(effect, VICTIM_TICKS, 0, false, false, true), owner);
+        return current == null;
     }
 
     /**
@@ -190,9 +192,7 @@ public final class DreadAura {
      * @param deep os dois joelhos no chao ({@code dreadProstrates}); {@code false} cede um joelho so
      */
     private static void prostrate(ServerPlayer victim, ServerPlayer owner, boolean deep) {
-        boolean first = !victim.hasEffect(MagiaEffects.GENUFLECTED);
-        victim.addEffect(new MobEffectInstance(MagiaEffects.GENUFLECTED, VICTIM_TICKS, 0, false, false, true), owner);
-        if (!first) return;
+        if (!renew(victim, MagiaEffects.GENUFLECTED, owner)) return;
         victim.setSprinting(false);
         EmotecraftCompat.prostrate(victim, deep);
         victim.level().playSound(null, victim.getX(), victim.getY(), victim.getZ(),

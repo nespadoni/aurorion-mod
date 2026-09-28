@@ -16,12 +16,16 @@ import com.aurorion.magia.spell.Binding;
 import com.aurorion.magia.spell.Domination;
 import com.aurorion.magia.spell.Drowning;
 import com.aurorion.magia.spell.Gaze;
+import com.aurorion.magia.spell.Impetus;
 import com.aurorion.magia.spell.IronBinding;
 import com.aurorion.magia.spell.Seals;
+import com.aurorion.magia.spell.TimeStop;
+import com.aurorion.magia.spell.ToggleCooldown;
 import com.aurorion.magia.spell.WaterCage;
 import com.aurorion.magia.unlock.SpellAccess;
 import com.aurorion.magia.unlock.SpellUnlockData;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
+import io.redspace.ironsspellbooks.api.events.SpellCooldownAddedEvent;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
@@ -51,6 +55,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -106,12 +111,26 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.de_joelhos").withStyle(ChatFormatting.LIGHT_PURPLE));
             return;
         }
+        // Lancado para o alto pelo Impeto do Vento: sem chao, sem conjuracao, ate descer.
+        if (player.hasEffect(MagiaEffects.AIRBORNE)) {
+            deny(event, player, Component.translatable("aurorion_magia.no_ar").withStyle(ChatFormatting.AQUA));
+            return;
+        }
 
         AbstractSpell spell = SpellRegistry.getSpell(event.getSpellId());
         if (!SpellAccess.canCast(player, spell)) {
             deny(event, player, Component.translatable("aurorion_magia.nao_liberada",
                     spell.getDisplayName(player)).withStyle(ChatFormatting.RED));
         }
+    }
+
+    /**
+     * Magia de ligar e desligar que acabou de <b>ligar</b> nao abre cooldown: senao o conjurador nao
+     * conseguiria desliga-la antes do cooldown inteiro passar. Ver {@link ToggleCooldown}.
+     */
+    @SubscribeEvent
+    public static void onCooldown(SpellCooldownAddedEvent.Pre event) {
+        if (ToggleCooldown.consume(event.getEntity())) event.setCanceled(true);
     }
 
     private static void deny(SpellPreCastEvent event, ServerPlayer player, Component message) {
@@ -145,6 +164,9 @@ public final class MagiaServerEvents {
         Seals.sendAll(player);
         EffectCleanup.sweep(player);
         Passives.onLogin(player);
+        // Uma zona de tempo parado que sobrou de um crash (o efeito e salvo com o jogador) nao volta
+        // a congelar o salao sozinha quando o dono loga.
+        TimeStop.stop(player);
     }
 
     @SubscribeEvent
@@ -168,6 +190,8 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         IronBinding.release(event.getEntity().getUUID());
+        // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
+        TimeStop.stop(event.getEntity());
     }
 
     /**
@@ -192,6 +216,7 @@ public final class MagiaServerEvents {
         Seals.clear();
         IronBinding.clear();
         VoiceMute.clear();
+        ToggleCooldown.clear();
     }
 
     // --- Vox Interdicta -----------------------------------------------------------------------
@@ -371,6 +396,14 @@ public final class MagiaServerEvents {
         HealingTouch.intercept(event);
     }
 
+    // --- Impeto do Vento ----------------------------------------------------------------------
+
+    /** A investida e imparavel: golpe, flecha e explosao nao empurram quem esta avancando. */
+    @SubscribeEvent
+    public static void onKnockBack(LivingKnockBackEvent event) {
+        if (Impetus.isDashing(event.getEntity())) event.setCanceled(true);
+    }
+
     // --- Fim de efeito ------------------------------------------------------------------------
 
     @SubscribeEvent
@@ -396,6 +429,11 @@ public final class MagiaServerEvents {
             Domination.release(mob);
         } else if (effect == MagiaEffects.BOUND.get()) {
             Binding.release(entity);
+        } else if (effect == MagiaEffects.TIME_STOP.get()) {
+            TimeStop.release(entity);
+        } else if (effect == MagiaEffects.DASHING.get()) {
+            // Investida cortada no meio (leite, /effect clear): acaba sem impacto.
+            Impetus.cancel(entity);
         } else if (effect == MagiaEffects.KNEELING.get() && entity instanceof ServerPlayer player) {
             EmotecraftCompat.stop(player);
         } else if (effect == MagiaEffects.SILENCED.get()) {

@@ -1,6 +1,7 @@
 package com.aurorion.areas.server;
 
 import com.aurorion.areas.AurorionAreas;
+import com.aurorion.core.character.AltData;
 import com.aurorion.core.text.TimeFormat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -84,7 +85,8 @@ final class StaffAlert {
      * mesma fronteira que sustenta o {@code /realname} (SDD §5.1).
      */
     private static String name(ServerPlayer player) {
-        return player.getGameProfile().getName();
+        // Segundo personagem da staff aparece com o dono: "NetoSpadoni_alt (alt de NetoSpadoni)".
+        return AltData.staffLabel(player.server, player.getGameProfile());
     }
 
     private static String where(ServerPlayer player) {

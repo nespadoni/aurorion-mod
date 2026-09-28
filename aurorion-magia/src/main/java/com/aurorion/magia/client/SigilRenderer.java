@@ -89,6 +89,12 @@ public final class SigilRenderer {
     private static boolean visible(Active active, ClientLevel level, Vec3 camera, float partial) {
         LivingEntity target = active.target(level);
         Vec3 at = target != null ? target.getPosition(partial) : active.pos;
+        if (active.kind == Kind.TEMPUS_SISTERE) {
+            // O relogio tem o tamanho de um salao: conta ate a borda, senao quem esta dentro dele, longe
+            // do centro, deixaria de ver o chao em que esta pisando.
+            double reach = Math.sqrt(MAX_DISTANCE_SQR) + active.extra;
+            return at.distanceToSqr(camera) < reach * reach;
+        }
         return at.distanceToSqr(camera) < MAX_DISTANCE_SQR;
     }
 
@@ -107,11 +113,12 @@ public final class SigilRenderer {
             }
             case VINCULUM -> {
                 if (target == null) return;
+                // A corrente fica visivel o tempo todo, da ancora a cintura do preso — frouxa e escura
+                // perto da ancora, carregada e mais opaca conforme ele se aproxima da borda.
                 float tension = Math.max(a.tension(target.getPosition(partial)), a.flash);
-                if (tension <= .01F) return;
                 at(pose, camera, a.pos);
                 chain(out, pose.last().pose(), new Vec3(0, .2, 0), waist(target, partial).subtract(a.pos),
-                        .32F, .035F, 0x2A0508, .75F * tension);
+                        .32F, .035F, 0x2A0508, (.4F + .4F * tension) * fade);
                 pose.popPose();
             }
             case VOX_INTERDICTA -> {
@@ -172,22 +179,55 @@ public final class SigilRenderer {
             }
             case TERROR_AURA -> {
                 if (target == null) return;
-                // A mancha no chao e a coluna de treva saindo do corpo. Tinta preta, e nao luz: a aura
-                // engole o que esta atras dela, e nao brilha. A mancha nao acompanha o raio do medo de
-                // proposito — um disco chapado de trinta blocos atravessaria escada, telhado e morro.
+                // So o chao: a sombra que se espalha e o circulo magico preto riscado nela. Em volta do
+                // corpo nao ha geometria nenhuma — la e fumaça (ClientSpellVisuals), que se mexe e
+                // nao vira um anel duro em volta da pessoa. Tinta preta, e nao luz: a aura engole o
+                // que esta atras dela. O tamanho da mancha e o de ClientSpellVisuals.auraGround.
+                float ground = ClientSpellVisuals.auraGround(a, partial);
+                if (ground <= .05F) return;
                 at(pose, camera, target.getPosition(partial).add(0, .02, 0));
-                float breath = .85F + .15F * Mth.sin(life * .06F);
-                solidDisc(out, pose.last().pose(), (3.2F + .7F * Mth.sin(life * .04F)) * breath, 0,
-                        0x000000, .82F * fade, 0, 48);
-                pose.popPose();
-                for (int layer = 0; layer < 4; layer++) {
-                    float t = layer / 3F;
-                    at(pose, camera, target.getPosition(partial).add(0, target.getBbHeight() * (.1 + t * 1.15), 0));
-                    spin(pose, life + layer * 30, 1.4F - t);
-                    float shell = (target.getBbWidth() * 1.1F + .5F) * (1 + .6F * t) * breath;
-                    band(out, pose.last().pose(), shell * .45F, shell, 0, 0x000000, (.58F - .1F * layer) * fade, 32);
-                    pose.popPose();
+                Matrix4f matrix = pose.last().pose();
+                float breath = .94F + .06F * Mth.sin(life * .05F);
+                // A mancha mais leve que os tracos, senao o circulo preto some dentro dela.
+                solidDisc(out, matrix, ground * breath, 0, 0x000000, .5F * fade, .06F * fade, 64);
+                solidDisc(out, matrix, ground * .4F, .002F, 0x000000, .3F * fade, 0, 48);
+                // A sombra continua se espalhando: ondas escuras correndo do centro para a borda.
+                for (int k = 0; k < 2; k++) {
+                    float t = ((life + k * 25) % 50) / 50F;
+                    band(out, matrix, ground * t * .72F, ground * t, .003F, 0x000000, .4F * (1 - t) * fade, 48);
                 }
+                pose.pushPose();
+                spin(pose, life, .2F);
+                drawMesh(out, pose, SEAL_THORN, ground * .93F, .08F, 0x000000, .95F * fade, .006F);
+                pose.popPose();
+                pose.pushPose();
+                spin(pose, life, -.35F);
+                drawMesh(out, pose, RUNE_RING, ground * .62F, .06F, 0x000000, .95F * fade, .007F);
+                drawMesh(out, pose, SEAL_DEATH, ground * .4F, .05F, 0x000000, .95F * fade, .008F);
+                pose.popPose();
+                pose.popPose();
+            }
+            case IMPETUS_IMPACT -> {
+                // As fendas escuras abrindo do centro em um instante, e a terra afundada em volta.
+                float open = Mth.clamp(life / 4f, 0, 1);
+                float radius = a.extra * open;
+                if (radius <= .05F) return;
+                at(pose, camera, a.pos.add(0, .02, 0));
+                solidDisc(out, pose.last().pose(), radius * .45F, 0, 0x1A120A, .28F * fade, 0, 32);
+                drawMesh(out, pose, CRACKS, radius * 1.05F, .1F, 0x140E08, .92F * fade, .003F);
+                pose.popPose();
+            }
+            case TEMPUS_SISTERE -> {
+                // A sombra do tamanho do salao, e o relogio riscado nela em preto. Parado, sem girar:
+                // o tempo nao anda dentro do selo.
+                float open = Mth.clamp(life / 20f, 0, 1);
+                float radius = a.extra * open;
+                if (radius <= .05F) return;
+                at(pose, camera, a.pos.add(0, .03, 0));
+                solidDisc(out, pose.last().pose(), radius, 0, 0x05020A, .42F * fade, .3F * fade, 96);
+                drawMesh(out, pose, SEAL_CLOCK, radius * .97F, .16F, 0x000000, .95F * fade, .004F);
+                drawMesh(out, pose, SEAL_MAJOR, radius * .3F, .1F, 0x000000, .95F * fade, .006F);
+                pose.popPose();
             }
             default -> {
             }
@@ -231,10 +271,8 @@ public final class SigilRenderer {
                 pose.popPose();
                 at(pose, camera, a.pos.add(0, .05, 0));
                 drawMesh(out, pose, CIRCLE, a.extra, .035F, 0xA01830, (.12F + .45F * tension) * fade, 0);
-                if (tension > .01F) {
-                    chain(out, pose.last().pose(), new Vec3(0, .15, 0), waist(target, partial).subtract(a.pos.add(0, .05, 0)),
-                            .32F, .06F, 0xFF4A4A, .55F * tension * fade);
-                }
+                chain(out, pose.last().pose(), new Vec3(0, .15, 0), waist(target, partial).subtract(a.pos.add(0, .05, 0)),
+                        .32F, .06F, 0xFF4A4A, (.12F + .45F * tension) * fade);
                 pose.popPose();
             }
             case TRANSPOSITIO -> {
@@ -329,14 +367,17 @@ public final class SigilRenderer {
                 }
             }
             case TEMPUS_SISTERE -> {
-                float radius = a.extra;
-                // Relogio parado: de proposito sem girar — o tempo nao anda dentro do selo.
-                at(pose, camera, a.pos.add(0, .04, 0));
-                layered(out, pose, SEAL_CLOCK, radius * Mth.clamp(life / 10f, .2F, 1), 0xBFE8FF, 0xFFFFFF, fade);
-                disc(out, pose.last().pose(), radius, .01F, 0xBFE8FF, .07F * fade, 48);
-                if (life < 14) {
-                    float t = life / 14f;
-                    band(out, pose.last().pose(), radius * t * .85F, radius * t, .05F, 0xFFFFFF, .7F * (1 - t), 64);
+                // Quase nenhuma luz: um brilho roxo morto na borda e em volta dos tracos do relogio,
+                // so para o preto se destacar do chao escuro. A onda que abre o selo e a unica coisa
+                // clara, e dura um segundo.
+                float open = Mth.clamp(life / 20f, 0, 1);
+                float radius = a.extra * open;
+                at(pose, camera, a.pos.add(0, .05, 0));
+                drawMesh(out, pose, CIRCLE, radius, .25F, 0x3A1A5A, .45F * fade, 0);
+                drawMesh(out, pose, SEAL_CLOCK, radius * .97F, .4F, 0x2A1040, .12F * fade, 0);
+                if (life < 20) {
+                    float t = life / 20f;
+                    band(out, pose.last().pose(), a.extra * t * .9F, a.extra * t, .05F, 0x6A3AA0, .5F * (1 - t), 96);
                 }
                 pose.popPose();
             }
@@ -467,6 +508,24 @@ public final class SigilRenderer {
                 Matrix4f matrix = pose.last().pose();
                 band(out, matrix, radius * open * .78F, radius * open, .1F, 0x8FD8FF, .8F * (1 - open) * fade, 72);
                 drawMesh(out, pose, SEAL_WAVE, radius * .55F, .05F, 0x3FA7E8, .5F * fade, .01F);
+                pose.popPose();
+            }
+            case IMPETUS_IMPACT -> {
+                // A onda de choque correndo ate a borda, e um fio de vento claro nas fendas.
+                at(pose, camera, a.pos.add(0, .05, 0));
+                if (life < 12) {
+                    float t = life / 12f;
+                    band(out, pose.last().pose(), a.extra * t * .78F, a.extra * t, .08F, 0xDFFFF4, .8F * (1 - t), 64);
+                }
+                drawMesh(out, pose, CRACKS, a.extra * 1.05F, .03F, 0xBFEFE4, .35F * fade, .006F);
+                pose.popPose();
+            }
+            case TERROR_AURA -> {
+                if (target == null) return;
+                // A unica luz da aura: uma brasa fraca, pulsando, na borda da sombra.
+                float ground = ClientSpellVisuals.auraGround(a, partial);
+                at(pose, camera, target.getPosition(partial).add(0, .04, 0));
+                drawMesh(out, pose, CIRCLE, ground, .12F, 0x5A0816, (.22F + .12F * Mth.sin(life * .1F)) * fade, 0);
                 pose.popPose();
             }
             case CARCER_AQUAE -> {

@@ -40,6 +40,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>A ancora mora no {@code persistentData} do preso, ao lado do efeito que tambem e salvo:
  * deslogar preso e voltar continua preso, no mesmo lugar.
+ *
+ * <p><b>A corrente nao tem prazo.</b> Ela fica ate alguem conjurar o Vinculum de novo no preso
+ * ({@link #unbind}), ou ate ele morrer. Leite e totem nao a abrem. Como o visual no cliente tem
+ * prazo, a propria corrente o renova a cada {@value #VISUAL_REFRESH} ticks — e assim tambem quem
+ * chega perto depois passa a ver a ancora.
  */
 public final class Binding {
     public static final ResourceKey<DamageType> DAMAGE_TYPE =
@@ -54,6 +59,11 @@ public final class Binding {
     private static final String KEY_STRAIN = "Strain";
     private static final String KEY_OWNER = "Owner";
     private static final String KEY_HURT_AT = "HurtAt";
+    private static final String KEY_VISUAL_AT = "VisualAt";
+
+    /** Prazo do visual no cliente; renovado na metade, entao um pacote perdido nao apaga nada. */
+    private static final int VISUAL_TICKS = 200;
+    private static final int VISUAL_REFRESH = 100;
 
     /** Alem do raio mais isto, nao e fuga a pe: foi teleporte. Volta para a ancora na hora. */
     private static final double SNAP_BACK = 8;
@@ -67,7 +77,7 @@ public final class Binding {
     private Binding() {
     }
 
-    public static void bind(LivingEntity target, LivingEntity caster, float radius, int duration) {
+    public static void bind(LivingEntity target, LivingEntity caster, float radius) {
         Vec3 anchor = target.position();
         CompoundTag tag = new CompoundTag();
         tag.putDouble(KEY_X, anchor.x);
@@ -76,10 +86,24 @@ public final class Binding {
         tag.putString(KEY_DIM, target.level().dimension().location().toString());
         tag.putFloat(KEY_RADIUS, radius);
         tag.putUUID(KEY_OWNER, caster.getUUID());
+        tag.putLong(KEY_VISUAL_AT, target.level().getGameTime());
         target.getPersistentData().put(KEY, tag);
 
-        target.addEffect(new MobEffectInstance(MagiaEffects.BOUND, duration, 0, false, false, true), caster);
-        MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.VINCULUM, duration, anchor, radius);
+        target.addEffect(new MobEffectInstance(MagiaEffects.BOUND, MobEffectInstance.INFINITE_DURATION, 0,
+                false, false, true), caster);
+        MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.VINCULUM, VISUAL_TICKS, anchor, radius);
+    }
+
+    /**
+     * A segunda conjuracao: a corrente se abre. Tirar o efeito dispara o {@code MobEffectEvent.Remove},
+     * que chama {@link #release} — o mesmo caminho da morte e do {@code /effect clear}.
+     */
+    public static void unbind(LivingEntity target) {
+        target.removeEffect(MagiaEffects.BOUND);
+        AurorionSpell.sound(target, SoundEvents.CHAIN_BREAK, 1.0f, 1.2f);
+        if (target instanceof ServerPlayer player) {
+            player.displayClientMessage(Component.translatable("aurorion_magia.corrente_solta"), true);
+        }
     }
 
     /** Chamado pelo tick do efeito, 5 vezes por segundo, so em quem esta preso. */
@@ -90,6 +114,7 @@ public final class Binding {
 
         Vec3 anchor = new Vec3(tag.getDouble(KEY_X), tag.getDouble(KEY_Y), tag.getDouble(KEY_Z));
         float radius = tag.getFloat(KEY_RADIUS);
+        refreshVisual(level, entity, tag, anchor, radius);
         Vec3 offset = entity.position().subtract(anchor);
         double distance = offset.length();
         int strain = tag.getInt(KEY_STRAIN);
@@ -130,8 +155,26 @@ public final class Binding {
         return entity instanceof LivingEntity living && living.hasEffect(MagiaEffects.BOUND) && tagOf(living) != null;
     }
 
+    /** A corrente acabou (segunda conjuracao, morte, {@code /effect clear}): o visual some junto. */
     public static void release(LivingEntity entity) {
+        CompoundTag tag = tagOf(entity);
+        if (tag == null) return;
         entity.getPersistentData().remove(KEY);
+        Vec3 anchor = new Vec3(tag.getDouble(KEY_X), tag.getDouble(KEY_Y), tag.getDouble(KEY_Z));
+        // ttl zero: "este visual acabou" (ver ClientSpellVisuals.accept).
+        MagiaNetwork.sendVisual(null, entity, SpellVisualPayload.Kind.VINCULUM, 0, anchor, tag.getFloat(KEY_RADIUS));
+    }
+
+    /**
+     * Renova o visual da ancora antes de ele vencer no cliente. Sai sem conjurador (-1): quem prendeu
+     * pode estar longe ou offline, e o cliente estica o visual que ja tem em vez de abrir outro.
+     */
+    private static void refreshVisual(ServerLevel level, LivingEntity entity, CompoundTag tag, Vec3 anchor,
+                                      float radius) {
+        long now = level.getGameTime();
+        if (now - tag.getLong(KEY_VISUAL_AT) < VISUAL_REFRESH) return;
+        tag.putLong(KEY_VISUAL_AT, now);
+        MagiaNetwork.sendVisual(null, entity, SpellVisualPayload.Kind.VINCULUM, VISUAL_TICKS, anchor, radius);
     }
 
     /** O ferro na carne. No maximo uma vez por segundo, por mais que o preso force a borda. */

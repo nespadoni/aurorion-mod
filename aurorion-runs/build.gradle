@@ -16,9 +16,11 @@ def otherProjects = rootProject.subprojects.findAll { it != project }
 // projeto (a ordem alfabetica sozinha nao garante isso).
 otherProjects.each { evaluationDependsOn(it.path) }
 
-// Excecao: quem declara aurorion_runs_skip=true no proprio gradle.properties. E o caso de um mod que
-// exige outro mod de terceiros pesado (o aurorion-magia exige o Iron's Spells e toda a arvore dele):
-// com ele aqui, o FML recusaria abrir o run inteiro por dependencia obrigatoria ausente.
+// Excecao: quem declara aurorion_runs_skip=true no proprio gradle.properties. Serve para um mod que
+// exige mod de terceiros que ainda nao esta declarado em 'modLibraries' — com ele aqui, o FML
+// recusaria abrir o run inteiro por dependencia obrigatoria ausente. Hoje ninguem usa: o
+// aurorion-magia, que usava, passou a declarar o Iron's e toda a arvore dele (irons_lib, Curios,
+// PlayerAnimator) em 'modLibraries', a partir dos jars de mod-servidor-referencia/.
 def modProjects = otherProjects.findAll { it.findProperty('aurorion_runs_skip') != 'true' }
 
 java {

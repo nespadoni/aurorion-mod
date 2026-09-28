@@ -66,27 +66,46 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
         float radius = zone.radius();
         float height = zone.height();
 
-        VertexConsumer glow = buffers.getBuffer(SigilRenderer.glowType());
-        VertexConsumer ink = buffers.getBuffer(SigilRenderer.inkType());
-
+        // Um passe de cada vez, e nunca os dois consumidores abertos juntos: tinta e luz nao sao
+        // RenderType fixos do BufferSource do vanilla, entao dividem o mesmo BufferBuilder. Pedir o
+        // segundo fecha o primeiro, e escrever no fechado derruba o cliente ("Not building!") — foi o
+        // crash da Coluna de Vento, que pedia a tinta depois da luz e desenhava na luz.
         pose.pushPose();
         Matrix4f matrix = pose.last().pose();
+        if (zone.shape() != SpellZoneEntity.Shape.COLUMN) {
+            VertexConsumer ink = buffers.getBuffer(SigilRenderer.inkType());
+            switch (zone.shape()) {
+                case WARD -> wardInk(ink, matrix, radius, height, life, fade);
+                case STORM -> stormInk(ink, matrix, radius, height, life, fade);
+                default -> {
+                }
+            }
+        }
+        VertexConsumer glow = buffers.getBuffer(SigilRenderer.glowType());
         switch (zone.shape()) {
-            case WARD -> ward(glow, ink, pose, matrix, radius, height, life, fade);
+            case WARD -> ward(glow, pose, matrix, radius, height, life, fade);
             case COLUMN -> column(glow, pose, matrix, radius, height, life, fade);
-            case STORM -> storm(glow, ink, pose, matrix, radius, height, life, fade);
+            case STORM -> storm(glow, pose, matrix, radius, height, life, fade);
         }
         pose.popPose();
 
         particles(zone, life);
     }
 
+    private static float breath(float life) {
+        return .93F + .07F * Mth.sin(life * .18F);
+    }
+
+    /** O fundo escuro da parede da barreira. */
+    private static void wardInk(VertexConsumer ink, Matrix4f matrix, float radius, float height, float life,
+                                float fade) {
+        SigilGeometry.wall(ink, matrix, radius * breath(life) * .99F, height, WIND_DEEP, .10F * fade, 0, 48);
+    }
+
     /** A barreira: parede de vento fechada, o circulo no chao e o anel rúnico no topo. */
-    private static void ward(VertexConsumer glow, VertexConsumer ink, PoseStack pose, Matrix4f matrix,
+    private static void ward(VertexConsumer glow, PoseStack pose, Matrix4f matrix,
                              float radius, float height, float life, float fade) {
-        float breath = .93F + .07F * Mth.sin(life * .18F);
-        SigilGeometry.wall(glow, matrix, radius * breath, height, WIND_PALE, .30F * fade, 0, 48);
-        SigilGeometry.wall(ink, matrix, radius * breath * .99F, height, WIND_DEEP, .10F * fade, 0, 48);
+        SigilGeometry.wall(glow, matrix, radius * breath(life), height, WIND_PALE, .30F * fade, 0, 48);
         SigilGeometry.band(glow, matrix, radius * .88F, radius, .04F, WIND_PALE, .55F * fade, 64);
 
         pose.pushPose();
@@ -106,11 +125,16 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
         pose.popPose();
     }
 
-    /** O furacao: funil largo em cima, fechado embaixo, girando rapido e escurecendo o que cobre. */
-    private static void storm(VertexConsumer glow, VertexConsumer ink, PoseStack pose, Matrix4f matrix,
-                              float radius, float height, float life, float fade) {
+    /** O corpo escuro do furacao, que escurece o que cobre. */
+    private static void stormInk(VertexConsumer ink, Matrix4f matrix, float radius, float height, float life,
+                                 float fade) {
         SigilGeometry.funnel(ink, matrix, radius * .25F, radius, height, -life * .09F,
                 0x0E1A18, .55F * fade, .12F * fade, 28, 10);
+    }
+
+    /** O furacao: funil largo em cima, fechado embaixo, girando rapido. */
+    private static void storm(VertexConsumer glow, PoseStack pose, Matrix4f matrix,
+                              float radius, float height, float life, float fade) {
         SigilGeometry.funnel(glow, matrix, radius * .3F, radius * 1.02F, height, -life * .12F,
                 WIND_PALE, .30F * fade, 0, 28, 10);
         pose.pushPose();

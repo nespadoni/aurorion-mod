@@ -81,6 +81,16 @@ public final class PhoneBankBridge {
         return construct(actionConstructor, true, "Enviado: " + Money.describe(amount) + ".");
     }
 
+    /** Empurra o saldo atual para o app do celular, quando o telefone estiver instalado. */
+    public static void sync(ServerPlayer player) {
+        if (!resolve()) return;
+        try {
+            syncToPlayer.invoke(null, player);
+        } catch (ReflectiveOperationException e) {
+            AurorionEconomia.LOGGER.warn("Nao foi possivel atualizar o saldo no celular.", e);
+        }
+    }
+
     /**
      * Devolve o pagamento ao extrato e a auditoria do proprio telefone, para que a aba de historico
      * e o painel de admin continuem contando a mesma historia que a carteira.

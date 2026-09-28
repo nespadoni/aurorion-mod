@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = AurorionEthereal.MOD_ID)
 public final class EtherealNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload. */
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3";
 
     /** Alcance para editar um placar, em blocos ao quadrado. O cliente pode mentir na posicao. */
     private static final double MAX_EDIT_DISTANCE_SQR = 64.0;
@@ -63,6 +63,10 @@ public final class EtherealNetwork {
                 EtherealNetwork::handleOpenProtector);
         registrar.playToServer(HouseMuralPayloads.GrantLife.TYPE, HouseMuralPayloads.GrantLife.STREAM_CODEC,
                 EtherealNetwork::handleGrantLife);
+        registrar.playToServer(HouseMuralPayloads.VaultTransfer.TYPE, HouseMuralPayloads.VaultTransfer.STREAM_CODEC,
+                EtherealNetwork::handleVaultTransfer);
+        registrar.playToServer(HouseMuralPayloads.BuyVaultUpgrade.TYPE, HouseMuralPayloads.BuyVaultUpgrade.STREAM_CODEC,
+                EtherealNetwork::handleBuyVaultUpgrade);
     }
 
     // --- Ponta cliente --------------------------------------------------------------------------
@@ -121,6 +125,17 @@ public final class EtherealNetwork {
     private static void handleGrantLife(HouseMuralPayloads.GrantLife payload, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
         context.enqueueWork(() -> HouseMuralManager.grantLife(player, payload.pos(), payload.target()));
+    }
+
+    private static void handleVaultTransfer(HouseMuralPayloads.VaultTransfer payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        context.enqueueWork(() -> HouseMuralManager.transfer(player, payload.pos(), payload.deposit(), payload.amount()));
+    }
+
+    private static void handleBuyVaultUpgrade(HouseMuralPayloads.BuyVaultUpgrade payload, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        context.enqueueWork(() -> HouseMuralManager.buyVaultUpgrade(player, payload.pos(),
+                payload.nextLevel(), payload.quotedPrice()));
     }
 
     // --- Projetor Aeonico ------------------------------------------------------------------------

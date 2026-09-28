@@ -129,4 +129,29 @@ class RankingDataTest {
         assertEquals("Winner", data.top(BoardMode.DUEL_WINS, 1, membership, CATALOG).getFirst().label());
         assertEquals(1, data.top(BoardMode.MISSIONS, 1, membership, CATALOG).getFirst().value());
     }
+
+    /**
+     * O projetor mostra o nome do personagem, e nao o nick gravado; quem ainda nao tem personagem
+     * continua com o nick. O desempate por nome tambem usa o nome mostrado.
+     */
+    @Test
+    void playerModesShowTheResolvedName() {
+        RankingData data = new RankingData();
+        HouseData membership = new HouseData();
+        UUID named = UUID.randomUUID();
+        UUID unnamed = UUID.randomUUID();
+
+        data.adjustPlayerPoints(named, "zzz_nick", 10);
+        data.adjustPlayerPoints(unnamed, "SemPersonagem", 5);
+        RankingData.Names names = (id, recorded) -> id.equals(named) ? "Aurora Vale" : recorded;
+
+        for (BoardMode mode : List.of(BoardMode.TOP_PLAYERS, BoardMode.WORST_PLAYERS,
+                BoardMode.MISSIONS, BoardMode.DUEL_WINS)) {
+            List<String> labels = data.top(mode, 5, membership, CATALOG, names).stream()
+                    .map(RankedEntry::label).toList();
+            assertEquals(true, labels.contains("Aurora Vale"), mode + ": " + labels);
+            assertEquals(false, labels.contains("zzz_nick"), mode + ": " + labels);
+            assertEquals(true, labels.contains("SemPersonagem"), mode + ": " + labels);
+        }
+    }
 }

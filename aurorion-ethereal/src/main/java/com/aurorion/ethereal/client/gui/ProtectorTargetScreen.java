@@ -76,9 +76,14 @@ public final class ProtectorTargetScreen extends Screen {
         onClose();
     }
 
+    /**
+     * O painel inteiro e desenhado aqui, e nao em {@code render}: no 1.21 o {@code Screen.render}
+     * chama {@code renderBackground} de novo, e o desfoque dessa segunda chamada cobria todo texto
+     * desenhado antes dele — so os botoes, que vem depois, ficavam nitidos.
+     */
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.renderBackground(graphics, mouseX, mouseY, partialTick);
         int rowsHeight = Math.max(ROW_H, visible * ROW_H);
         int panelH = HEADER_H + rowsHeight + FOOTER_H;
         graphics.fill(0, 0, width, height, 0xD4000000);
@@ -112,7 +117,6 @@ public final class ProtectorTargetScreen extends Screen {
                         left + 210, y + 12, C_MUTED, false);
             }
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     @Override

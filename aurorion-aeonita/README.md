@@ -29,6 +29,17 @@ animado, uma cor por casa de Ethereal. Protege como couro (3 de armadura, 80 de 
 o GeckoLib para animar gola, capa, mangas e panos de perna conforme quem veste está parado, andando,
 correndo ou no ar. Não têm receita nem loot table: são uniforme, entregues por `/give` ou por kit.
 
+**Capa destruída dos Desvinculados** — `desvinculados_cape`. A capa rasgada da facção dos
+Desvinculados. Mesmo tipo de peça que as de uniforme (peitoral animado de couro, mesma resistência ao
+frio, sem receita), mas com **modelo próprio**: `geo/armor/desvinculados_cape.geo.json`,
+`animations/armor/desvinculados_cape.animation.json` e `textures/entity/armor/desvinculados_cape.png`.
+Quem a veste deixa **rastro**: fumaça preta rala saindo da barra da capa e os esporos azuis da
+Floresta Distorcida do Nether flutuando atrás (`client/CapeTrail`). Parado, quase nada; andando, um
+fiapo contínuo. É só do cliente — cada um desenha o rastro de quem está a até 32 blocos, respeitando a
+opção "Partículas" — e custa uma leitura de slot por jogador a cada 2 ticks, sem pacote nenhum.
+O ícone de inventário (`textures/item/desvinculados_cape.png`) é provisório — a capa sem casa
+escurecida e rasgada na barra; troque pela arte definitiva quando houver.
+
 Ver [Capa de uniforme](#capa-de-uniforme) para o que a conversão dos assets fez e o que ainda falta
 conferir em jogo.
 
@@ -63,7 +74,7 @@ lightLevel = 15
 registry/    AeonitaBlocks, AeonitaItems, AeonitaCreativeTab, AeonitaTags, AeonitaArmorMaterials
 block/       SelectionAltarBlock (so a VoxelShape do pedestal — sem estado, sem block entity, sem tick)
 item/        UniformCapeItem (as cinco capas de uniforme)
-client/      DynamicLightHandler, UniformCapeModel, UniformCapeRenderer
+client/      DynamicLightHandler, UniformCapeModel, UniformCapeRenderer, CapeTrail
 config/      AeonitaClientConfig
 ```
 
@@ -117,6 +128,11 @@ bones-raiz, que não têm keyframe nenhum.
 Também saíram 9 cubos de tamanho zero. O CPM exporta cada *group* como um cubo vazio; eles não
 desenham nada, mas o GeckoLib assa seis quads por cubo desses e paga os vértices por frame assim
 mesmo ([SDD §2](../SDD.md): zero desperdício no caminho quente do cliente).
+
+A capa dos Desvinculados passou pelo mesmo conversor (`--capa desvinculados_cape`). No export dela
+as animações vieram batizadas à mão no Blockbench — `andando`, `correndo` e `walkin` —, e o nome
+enganava: `walkin` dura 2 s, que é o `v_global` do CPM, ou seja, a animação **parada**. O conversor
+casa `andando`/`correndo` pelo nome e `walkin` pela duração, e o `.cpmproject` confirma os três.
 
 Sobraram no arquivo `jump_pre` e `jump_post` — as duas metades de um *gesture* do CPM, que aqui não
 tem gatilho. Ficaram porque são trabalho do autor e não custam nada paradas; se um dia a capa ganhar

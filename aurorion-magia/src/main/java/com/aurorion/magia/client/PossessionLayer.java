@@ -85,8 +85,8 @@ public final class PossessionLayer implements LayeredDraw.Layer {
 
         float terror = weight(player, MagiaEffects.TERRIFIED);
         if (terror > 0) {
-            // Perto da aura a tela fecha inteira; na borda do raio e so um peso no canto do olho. Sem
-            // o visual da aura (fora do alcance de rastreio), sobra o piso: o medo nao some da tela.
+            // Perto da aura os cantos pesam mais; na borda do raio e so um sopro. Sem o visual da aura
+            // (fora do alcance de rastreio), sobra o piso: o medo nao some da tela.
             float closeness = MagiaClientEvents.GameBus.terrorWeight(
                     minecraft.gameRenderer.getMainCamera().getPosition());
             dread(graphics, width, height, time, terror * (.35F + .65F * closeness));
@@ -209,24 +209,29 @@ public final class PossessionLayer implements LayeredDraw.Layer {
      * <p>Tudo aqui e preto puro, e o peso vem de <b>quanto o portador esta perto</b>, e nao so de ter o
      * efeito: de longe e um peso no canto do olho, colado nele a tela quase fecha.
      */
+    /**
+     * O medo na tela: sombra nas bordas, pulsando no ritmo do coracao, e vultos passando rente a borda.
+     * <b>O centro fica sempre limpo</b> — a aura e palco de cena, e quem esta no meio dela tem que ver
+     * tudo. Nada cobre a tela inteira; a vinheta alcança so ~20% de cada lado e nunca passa de meia
+     * opacidade, a mesma dose da sombra periferica da floresta do {@code aurorion-areas}.
+     */
     private static void dread(GuiGraphics g, int w, int h, float time, float weight) {
         // 100 bpm = uma batida a cada 12 ticks. O pico e curto; o resto do ciclo e quase nada.
         float beat = (float) Math.pow(Math.max(0, Mth.sin(time * Mth.TWO_PI / 12f)), 8);
-        g.fill(0, 0, w, h, argb(0x000000, (.22F + .13F * beat) * weight));
-        vignette(g, w, h, 0x000000, (.80F + .18F * beat) * weight, .42F);
+        vignette(g, w, h, 0x000000, (.42F + .12F * beat) * weight, .2F);
 
-        // Vultos: manchas escuras que cruzam a periferia devagar e nunca chegam ao meio.
-        int shapes = 3;
+        // Vultos: manchas escuras que cruzam so a faixa da borda, devagar, e nunca chegam ao meio.
+        int shapes = 2;
         for (int i = 0; i < shapes; i++) {
             float phase = time * (.0032F + .0011F * i) + i * 5.1F;
             float t = (float) (phase - Math.floor(phase));
             boolean left = (i & 1) == 0;
-            int span = (int) (w * .22F);
-            int x = left ? (int) (-span + t * span * 1.6F) : (int) (w - t * span * 1.6F);
-            int y = (int) (h * (.18F + .5F * ((i * 0.37F) % 1f)));
-            int tall = (int) (h * (.26F + .08F * i));
+            int span = (int) (w * .1F);
+            int x = left ? (int) (-span + t * span * 1.4F) : (int) (w - t * span * 1.4F);
+            int y = (int) (h * (.22F + .4F * ((i * 0.37F) % 1f)));
+            int tall = (int) (h * (.22F + .06F * i));
             g.fillGradient(x, y, x + span, y + tall,
-                    argb(0x000000, .42F * weight), argb(0x000000, 0));
+                    argb(0x000000, .22F * weight), argb(0x000000, 0));
         }
     }
 

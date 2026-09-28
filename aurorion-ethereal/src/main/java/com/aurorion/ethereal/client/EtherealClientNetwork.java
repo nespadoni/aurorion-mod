@@ -61,7 +61,14 @@ public final class EtherealClientNetwork {
     }
 
     public static void openMural(HouseMuralPayloads.Open payload, IPayloadContext context) {
-        context.enqueueWork(() -> Minecraft.getInstance().setScreen(new HouseMuralScreen(payload)));
+        context.enqueueWork(() -> {
+            // Resposta de um deposito/saque: atualiza a tela aberta sem perder aba nem texto digitado.
+            if (Minecraft.getInstance().screen instanceof HouseMuralScreen screen && screen.showsMural(payload.pos())) {
+                screen.update(payload);
+            } else {
+                Minecraft.getInstance().setScreen(new HouseMuralScreen(payload));
+            }
+        });
     }
 
     public static void openProtectorTargets(HouseMuralPayloads.OpenTargets payload, IPayloadContext context) {

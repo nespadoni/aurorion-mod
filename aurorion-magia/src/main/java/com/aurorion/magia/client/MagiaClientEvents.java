@@ -184,7 +184,8 @@ public final class MagiaClientEvents {
             if (event.getCamera().getFluidInCamera() != FogType.NONE
                     || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN || ShaderPacks.inUse()) return;
             Vec3 camera = event.getCamera().getPosition();
-            float weight = Math.max(ClientSpellVisuals.darkness(camera), terrorWeight(camera));
+            // So o Devorar Luz fecha o ar. O medo nao: quem esta na aura tem que ver a cena.
+            float weight = ClientSpellVisuals.darkness(camera);
             if (weight < .001F) return;
             float far = event.getFarPlaneDistance();
             float distance = far + (Math.min(far, DARK_FOG_DISTANCE) - far) * weight;
@@ -201,16 +202,11 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onFogColor(ViewportEvent.ComputeFogColor event) {
             if (event.getCamera().getFluidInCamera() != FogType.NONE || ShaderPacks.inUse()) return;
-            Vec3 camera = event.getCamera().getPosition();
-            float terror = terrorWeight(camera);
-            float darkness = ClientSpellVisuals.darkness(camera) * .9F;
-            float weight = Math.max(terror, darkness);
-            if (weight < .001F) return;
-            // O roxo so aparece na parte da escuridao que o medo nao cobriu.
-            float tint = Math.max(0, darkness - terror);
-            event.setRed(event.getRed() * (1 - weight) + .02F * tint);
-            event.setGreen(event.getGreen() * (1 - weight));
-            event.setBlue(event.getBlue() * (1 - weight) + .04F * tint);
+            float darkness = ClientSpellVisuals.darkness(event.getCamera().getPosition()) * .9F;
+            if (darkness < .001F) return;
+            event.setRed(event.getRed() * (1 - darkness) + .02F * darkness);
+            event.setGreen(event.getGreen() * (1 - darkness));
+            event.setBlue(event.getBlue() * (1 - darkness) + .04F * darkness);
         }
 
         /**

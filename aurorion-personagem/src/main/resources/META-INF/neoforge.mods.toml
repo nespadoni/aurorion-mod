@@ -34,10 +34,16 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.1.0,)"
+# 0.5.0: AltData (segundo personagem da staff) e a marca de renomeado offline.
+versionRange = "[0.5.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
 # Nenhum outro mod do ecossistema e dependencia declarada, e isso e deliberado: este mod nao importa
 # classe de nenhum deles. Ele dispara CharacterResetEvent e cada mod apaga o que e seu, no seu
 # proprio codigo. Instalado sozinho, ele continua fazendo a parte vanilla do reset.
+
+# Segundo personagem da staff: troca o perfil no login e ignora a sessao de chat assinada do alt.
+# Ver alt/AltLogin e os dois mixins.
+[[mixins]]
+config = "${mod_id}.mixins.json"

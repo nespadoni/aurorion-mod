@@ -18,16 +18,29 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /** Regras autoritativas do mural, executadas somente no thread do servidor e apenas por interação. */
 public final class HouseMuralManager {
     private static final double MAX_DISTANCE_SQR = 64.0D;
     private static final long DAY_MILLIS = 86_400_000L;
+    /**
+     * Intervalo minimo entre acoes do cofre por jogador. Cada acao custa reflexao e o reenvio do
+     * estado inteiro; um cliente modificado mandando pacote por tick nao pode transformar isso em
+     * carga. Chave fraca: o ServerPlayer some do mapa quando sai ou renasce.
+     */
+    private static final long ACTION_INTERVAL_MILLIS = 250L;
+    private static final Map<ServerPlayer, Long> LAST_ACTION = new WeakHashMap<>();
 
     private HouseMuralManager() { }
 
     public static void open(ServerPlayer player, BlockPos pos) {
+        open(player, pos, HouseMuralPayloads.TAB_VAULT, Component.empty(), false);
+    }
+
+    private static void open(ServerPlayer player, BlockPos pos, int tab, Component notice, boolean error) {
         HouseMuralBlockEntity mural = accessibleMural(player, pos, true);
         if (mural == null) return;
         ResourceLocation houseId = mural.house();
@@ -38,12 +51,119 @@ public final class HouseMuralManager {
         }
         if (!player.connection.hasChannel(HouseMuralPayloads.Open.TYPE.id())) return;
 
-        HouseUpgradeData.State upgrade = HouseUpgradeData.get(player.server).state(houseId);
-        HouseEconomyBridge.Snapshot economy = HouseEconomyBridge.snapshot(player.server, houseId);
-        long remaining = remainingMillis(upgrade, System.currentTimeMillis());
+        HouseUpgradeData upgrades = HouseUpgradeData.get(player.server);
+        HouseUpgradeData.State upgrade = upgrades.state(houseId);
+        HouseEconomyBridge.Snapshot economy = HouseEconomyBridge.snapshot(player.server, houseId, player.getUUID());
+        long now = System.currentTimeMillis();
+        long remaining = remainingMillis(upgrade, now);
+        List<HouseMuralPayloads.Tier> tiers = economy.tiers().stream()
+                .limit(HouseMuralPayloads.Tier.MAX)
+                .map(tier -> new HouseMuralPayloads.Tier(tier.capacity(), tier.price()))
+                .toList();
+        List<HouseMuralPayloads.Movement> movements = upgrades.movements(houseId).stream()
+                .limit(HouseMuralPayloads.Movement.MAX)
+                .map(movement -> new HouseMuralPayloads.Movement(clip(movement.actor()), movement.kind().ordinal(),
+                        movement.amount(), Math.max(0L, now - movement.at())))
+                .toList();
         PacketDistributor.sendToPlayer(player, new HouseMuralPayloads.Open(
-                pos, house.name(), house.color(), economy.available(), economy.balance(), economy.capacity(),
-                economy.vaultLevel(), upgrade.protectorLevel(), remaining, HouseLivesBridge.available()));
+                pos, house.name(), house.color(), memberOf(player, houseId), economy.available(), economy.balance(), economy.capacity(),
+                economy.vaultLevel(), economy.wallet(), economy.salary(), economy.salaryDays(),
+                economy.nextSalaryMillis(), tiers, movements,
+                upgrade.protectorLevel(), remaining, HouseLivesBridge.available(), tab, notice, error));
+    }
+
+    /** Depositar ou sacar: qualquer membro pode, e toda operacao fica no log e no historico do mural. */
+    public static void transfer(ServerPlayer player, BlockPos pos, boolean deposit, long amount) {
+        if (throttled(player)) return;
+        ResourceLocation houseId = memberHouse(player, pos);
+        if (houseId == null) return;
+        long result = amount <= 0L ? HouseEconomyBridge.ERR_INVALID : deposit
+                ? HouseEconomyBridge.deposit(player.server, player.getUUID(), houseId, amount)
+                : HouseEconomyBridge.withdraw(player.server, player.getUUID(), houseId, amount);
+        if (result <= 0L) {
+            reply(player, pos, HouseMuralPayloads.TAB_VAULT, failure(result), true);
+            return;
+        }
+
+        String actor = actorName(player);
+        HouseUpgradeData.get(player.server).recordMovement(houseId, new HouseUpgradeData.Movement(
+                System.currentTimeMillis(), actor,
+                deposit ? HouseUpgradeData.Kind.DEPOSIT : HouseUpgradeData.Kind.WITHDRAW, result));
+        AurorionEthereal.LOGGER.info("COFRE_CASA {} actor={} personagem={} house={} quantia={}",
+                deposit ? "deposito" : "saque", player.getGameProfile().getName(), actor, houseId, result);
+
+        Component notice = deposit && result < amount
+                ? Component.translatable("aurorion_ethereal.mural.vault.deposit_partial",
+                        HouseMuralPayloads.formatMoney(result))
+                : Component.translatable(deposit ? "aurorion_ethereal.mural.vault.deposited"
+                        : "aurorion_ethereal.mural.vault.withdrawn", HouseMuralPayloads.formatMoney(result));
+        reply(player, pos, HouseMuralPayloads.TAB_VAULT, notice, false);
+    }
+
+    /** Melhoria paga com o saldo do cofre; o preco citado pela tela precisa bater com o atual. */
+    public static void buyVaultUpgrade(ServerPlayer player, BlockPos pos, int nextLevel, long quotedPrice) {
+        if (throttled(player)) return;
+        ResourceLocation houseId = memberHouse(player, pos);
+        if (houseId == null) return;
+        if (!HouseEconomyBridge.buyVaultUpgrade(player.server, houseId, nextLevel, quotedPrice)) {
+            reply(player, pos, HouseMuralPayloads.TAB_UPGRADES,
+                    Component.translatable("aurorion_ethereal.mural.upgrade.failed"), true);
+            return;
+        }
+
+        String actor = actorName(player);
+        HouseUpgradeData.get(player.server).recordMovement(houseId, new HouseUpgradeData.Movement(
+                System.currentTimeMillis(), actor, HouseUpgradeData.Kind.UPGRADE, quotedPrice));
+        AurorionEthereal.LOGGER.info("COFRE_CASA melhoria actor={} personagem={} house={} nivel={} preco={}",
+                player.getGameProfile().getName(), actor, houseId, nextLevel, quotedPrice);
+        reply(player, pos, HouseMuralPayloads.TAB_UPGRADES,
+                Component.translatable("aurorion_ethereal.mural.upgrade.bought", nextLevel), false);
+    }
+
+    private static boolean throttled(ServerPlayer player) {
+        long now = System.currentTimeMillis();
+        Long last = LAST_ACTION.get(player);
+        if (last != null && now - last < ACTION_INTERVAL_MILLIS) return true;
+        LAST_ACTION.put(player, now);
+        return false;
+    }
+
+    private static void reply(ServerPlayer player, BlockPos pos, int tab, Component notice, boolean error) {
+        open(player, pos, tab, notice, error);
+    }
+
+    private static Component failure(long code) {
+        String key;
+        if (code == HouseEconomyBridge.ERR_WALLET_LOW) key = "wallet_low";
+        else if (code == HouseEconomyBridge.ERR_VAULT_FULL) key = "vault_full";
+        else if (code == HouseEconomyBridge.ERR_VAULT_LOW) key = "vault_low";
+        else if (code == HouseEconomyBridge.ERR_WALLET_FULL) key = "wallet_full";
+        else if (code == HouseEconomyBridge.ERR_UNAVAILABLE) key = "unavailable";
+        else key = "invalid";
+        return Component.translatable("aurorion_ethereal.mural.vault.error." + key);
+    }
+
+    /** Mural acessivel e pertencente a Casa de quem age; staff inspeciona, mas nao movimenta. */
+    @Nullable
+    private static ResourceLocation memberHouse(ServerPlayer player, BlockPos pos) {
+        HouseMuralBlockEntity mural = accessibleMural(player, pos, false);
+        if (mural == null) return null;
+        ResourceLocation houseId = mural.house();
+        if (houseId == null || HouseCatalog.get(houseId) == null || !memberOf(player, houseId)) {
+            tell(player, "aurorion_ethereal.mural.error.not_member", ChatFormatting.RED);
+            return null;
+        }
+        return houseId;
+    }
+
+    /** Nome do personagem, que e como a staff identifica gente (o nick da conta nao serve). */
+    private static String actorName(ServerPlayer player) {
+        CharacterData.Character character = CharacterData.get(player.server).find(player.getUUID());
+        return character != null && character.named() ? character.fullName() : player.getGameProfile().getName();
+    }
+
+    private static String clip(String text) {
+        return text.length() <= 64 ? text : text.substring(0, 64);
     }
 
     public static void openProtector(ServerPlayer player, BlockPos pos) {

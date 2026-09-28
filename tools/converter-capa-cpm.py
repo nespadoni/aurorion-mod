@@ -40,8 +40,11 @@ COMO USAR
 ---------
     python tools/converter-capa-cpm.py <modelo.geo.json> <animacoes.animation.json>
     python tools/converter-capa-cpm.py <animacoes.animation.json>   # so as animacoes
+    python tools/converter-capa-cpm.py --capa desvinculados_cape <modelo> <animacoes>
 
-Sobrescreve uniform_cape.geo.json e uniform_cape.animation.json em aurorion-aeonita. Depois rode
+Sobrescreve <capa>.geo.json e <capa>.animation.json em aurorion-aeonita (uniform_cape, se --capa
+nao for dado). Capa com modelo proprio -- a dos Desvinculados -- tem arquivos proprios; as seis
+cores do uniforme dividem um par so. Depois rode
 `./gradlew :aurorion-aeonita:test` -- o UniformCapeAssetsTest assa o modelo com o proprio Gson do
 GeckoLib e confere bone a bone, que e a unica validacao do repo que chega perto de assets/.
 """
@@ -54,8 +57,12 @@ import sys
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
 ASSETS = os.path.join(RAIZ, "aurorion-aeonita", "src", "main", "resources",
                       "assets", "aurorion_aeonita")
-DST_GEO = os.path.join(ASSETS, "geo", "armor", "uniform_cape.geo.json")
-DST_ANIM = os.path.join(ASSETS, "animations", "armor", "uniform_cape.animation.json")
+CAPA_PADRAO = "uniform_cape"
+
+
+def destinos(capa):
+    return (os.path.join(ASSETS, "geo", "armor", capa + ".geo.json"),
+            os.path.join(ASSETS, "animations", "armor", capa + ".animation.json"))
 
 UV_SCALE = 16
 TEX_W, TEX_H = 280, 256
@@ -77,6 +84,15 @@ BOTAS = [
     {"name": "armorLeftBoot", "pivot": [1.9, 12, 0]},
 ]
 
+# Pernas sem nada dentro. Quando os panos das pernas ficam presos no corpo (a capa dos Desvinculados
+# pendura tudo em armorBody/cauda), o CPM pode deixar de exportar left_leg/right_leg -- ja aconteceu
+# num reexport. O GeoArmorRenderer precisa dos dois nomes assim mesmo, entao eles entram vazios, nos
+# pivos do modelo humanoide, como as botas.
+PERNAS_VAZIAS = {
+    "left_leg": [1.9, 12, 0],
+    "right_leg": [-1.9, 12, 0],
+}
+
 # Nomes que o CPM guarda e que sobrevivem ao import do Blockbench. Os de gesto sempre tem nome;
 # os de estado so tem se voce os batizou no CPM, e ai o nome manda -- e o mais confiavel que existe.
 POR_NOME = {
@@ -86,6 +102,9 @@ POR_NOME = {
     "idle": "idle",
     "walking": "walking",
     "running": "running",
+    # Nomes que o autor ja deu em portugues no Blockbench (capa dos Desvinculados).
+    "andando": "walking",
+    "correndo": "running",
 }
 
 # Rede de seguranca para os estados que sairam sem nome: o Blockbench os numera na ordem do
@@ -138,14 +157,18 @@ def desenha_algo(cubo):
     return any(face["uv_size"][0] and face["uv_size"][1] for face in uv.values())
 
 
-def converter_geo(origem):
+def converter_geo(origem, capa):
     doc = ler(origem)
     geo = doc["minecraft:geometry"][0]
-    geo["description"]["identifier"] = "geometry.uniform_cape"
+    geo["description"]["identifier"] = "geometry." + capa
     geo["description"]["texture_width"] = TEX_W
     geo["description"]["texture_height"] = TEX_H
 
     nomes = {bone["name"] for bone in geo["bones"]}
+    for antigo, pivo in PERNAS_VAZIAS.items():
+        if antigo not in nomes:
+            geo["bones"].append(collections.OrderedDict([("name", antigo), ("pivot", pivo)]))
+            nomes.add(antigo)
     faltando = [antigo for antigo, _ in RENAMES if antigo not in nomes]
     if faltando:
         sys.exit("bone esperado nao existe no export: " + ", ".join(faltando))
@@ -168,7 +191,7 @@ def converter_geo(origem):
             bone.pop("cubes", None)
 
     geo["bones"].extend(collections.OrderedDict(bota) for bota in BOTAS)
-    gravar(DST_GEO, doc)
+    gravar(destinos(capa)[0], doc)
     return len(geo["bones"]), descartados
 
 
@@ -232,7 +255,7 @@ def normalizar_rotacoes(animacao):
     return corrigidos
 
 
-def converter_anim(origem):
+def converter_anim(origem, capa):
     doc = ler(origem)
     exportadas = doc["animations"]
 
@@ -271,23 +294,27 @@ def converter_anim(origem):
     corrigidos = sum(normalizar_rotacoes(animacao) for animacao in renomeadas.values())
 
     doc["animations"] = collections.OrderedDict((nome, renomeadas[nome]) for nome in ORDEM)
-    gravar(DST_ANIM, doc)
+    gravar(destinos(capa)[1], doc)
     return list(doc["animations"]), corrigidos
 
 
 def main(argv):
+    capa = CAPA_PADRAO
+    if len(argv) > 2 and argv[1] == "--capa":
+        capa = argv[2]
+        argv = argv[:1] + argv[3:]
     # Reexportar so as animacoes e comum: o modelo fica igual e o que muda e a pose. Nesse caso o
     # geo do jar continua valendo e nao ha o que converter nele.
     if len(argv) == 2:
         print("geo : nao informado, mantido o que ja esta no jar")
-        relatar_anim(converter_anim(argv[1]))
+        relatar_anim(converter_anim(argv[1], capa))
         return
     if len(argv) != 3:
-        sys.exit("uso: python tools/converter-capa-cpm.py "
+        sys.exit("uso: python tools/converter-capa-cpm.py [--capa <nome>] "
                  "[<modelo.geo.json>] <animacoes.animation.json>")
-    bones, descartados = converter_geo(argv[1])
+    bones, descartados = converter_geo(argv[1], capa)
     print("geo : %d bones, %d cubos marcadores do CPM descartados" % (bones, descartados))
-    relatar_anim(converter_anim(argv[2]))
+    relatar_anim(converter_anim(argv[2], capa))
 
 
 def relatar_anim(resultado):

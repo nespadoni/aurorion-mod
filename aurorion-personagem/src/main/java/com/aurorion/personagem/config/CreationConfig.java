@@ -68,6 +68,17 @@ public final class CreationConfig {
                     "Em false, quem ja jogava segue sem nome e so os personagens novos sao nomeados.")
             .define("cobrarDeQuemJaJoga", true);
 
+    public static final ModConfigSpec.BooleanValue ALT_ENABLED = B
+            .comment("Segundo personagem da staff (/personagem alt criar, /personagem trocar).",
+                    "false: ninguem entra como alt, todo mundo entra na conta principal. E o rollback:",
+                    "os arquivos e o cadastro dos alts ficam intactos e voltam a valer em true.")
+            .define("altLigado", true);
+
+    public static final ModConfigSpec.ConfigValue<String> SWITCHING = B
+            .comment("Tela de desconexao da troca de personagem. %s vira o nome de quem entra.",
+                    "Cliente com o mod reconecta sozinho; sem o mod, a pessoa entra de novo na mao.")
+            .define("trocando", "Trocando de personagem.\n\nEntrando como %s…", CreationConfig::longText);
+
     public static final ModConfigSpec SPEC = B.build();
 
     private CreationConfig() {

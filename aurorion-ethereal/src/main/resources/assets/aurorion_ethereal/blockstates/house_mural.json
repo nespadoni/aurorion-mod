@@ -1,5 +1,19 @@
 {
   "variants": {
-    "": { "model": "aurorion_ethereal:block/house_mural" }
+    "facing=north": {
+      "model": "aurorion_ethereal:block/house_mural"
+    },
+    "facing=east": {
+      "model": "aurorion_ethereal:block/house_mural",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "aurorion_ethereal:block/house_mural",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "aurorion_ethereal:block/house_mural",
+      "y": 270
+    }
   }
 }

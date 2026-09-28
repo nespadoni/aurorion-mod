@@ -181,4 +181,16 @@ class CharacterDataTest {
         assertEquals(renamed, data.rename(account, new CharacterName("Alda", "Verrinne")),
                 "corrigir para o mesmo nome nao pode colidir com o proprio personagem");
     }
+
+    /** Renomeado com o dono fora: o proximo login (e so ele) reaplica o nome exibido, mesmo apos reinicio. */
+    @Test void offlineRenameIsPresentedOnceOnTheNextLogin() {
+        var data = new CharacterData();
+        UUID account = UUID.randomUUID();
+        data.nameLiving(account, new CharacterName("Alda", "Verrine"));
+        data.markRenamed(account);
+
+        var restored = CharacterData.load(data.save(new CompoundTag(), null), null);
+        assertTrue(restored.takeRenamed(account));
+        assertFalse(restored.takeRenamed(account));
+    }
 }

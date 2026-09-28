@@ -48,19 +48,19 @@ public abstract class PhoneBankClientMixin {
 
         this.pendingAmountLabel = Money.describe(this.pendingAmount);
         String note = this.noteInput == null ? "" : this.noteInput.getValue().trim();
-        this.aurorion$confirmationNoteLines = wrap(aurorion$font(), note, 132);
+        this.aurorion$confirmationNoteLines = aurorion$wrap(aurorion$font(), note, 132);
     }
 
     @Inject(method = "updateInputPositions", at = @At("TAIL"))
     private void aurorion$fixInputLayout(int phoneX, int phoneY, CallbackInfo ci) {
         // Keep the vanilla widget a few pixels inside the painted field. The original widget
         // starts on the border, which is especially visible with the pixel font.
-        position(this.targetInput, phoneX + 21, phoneY + 167, 124);
-        position(this.amountInput, phoneX + 21, phoneY + 191, 124);
-        position(this.noteInput, phoneX + 21, phoneY + 215, 124);
+        aurorion$position(this.targetInput, phoneX + 21, phoneY + 167, 124);
+        aurorion$position(this.amountInput, phoneX + 21, phoneY + 191, 124);
+        aurorion$position(this.noteInput, phoneX + 21, phoneY + 215, 124);
     }
 
-    private void position(EditBox input, int x, int y, int width) {
+    private void aurorion$position(EditBox input, int x, int y, int width) {
         if (input == null) return;
         input.setX(x);
         input.setY(y);
@@ -90,9 +90,9 @@ public abstract class PhoneBankClientMixin {
         guiGraphics.drawString(font, ">", x + 16, y + 15, 0xFF007A5A, false);
         guiGraphics.drawString(font, "Confirmar transferencia", x + 33, y + 13, 0xFF101820, false);
         guiGraphics.fill(x + 10, y + 36, x + w - 10, y + 37, 0xFFD9D9D9);
-        guiGraphics.drawString(font, clip(font, this.pendingTarget, w - 20), x + 10, y + 44,
+        guiGraphics.drawString(font, aurorion$clip(font, this.pendingTarget, w - 20), x + 10, y + 44,
                 0xFF6A6F7A, false);
-        guiGraphics.drawString(font, clip(font, this.pendingAmountLabel, w - 20), x + 10, y + 57,
+        guiGraphics.drawString(font, aurorion$clip(font, this.pendingAmountLabel, w - 20), x + 10, y + 57,
                 0xFF007A5A, false);
         guiGraphics.drawString(font, "Descricao", x + 10, y + 72, 0xFF6A6F7A, false);
 
@@ -121,10 +121,10 @@ public abstract class PhoneBankClientMixin {
         int lineCount = Math.min(Math.max(this.aurorion$confirmationNoteLines.size(), 1), 4);
         int buttonY = y + 88 + lineCount * 11;
 
-        if (inside(mouseX, mouseY, x + 10, buttonY, 58, 18)) {
+        if (aurorion$inside(mouseX, mouseY, x + 10, buttonY, 58, 18)) {
             this.awaitingConfirmation = false;
             cir.setReturnValue(true);
-        } else if (inside(mouseX, mouseY, x + 84, buttonY, 58, 18)) {
+        } else if (aurorion$inside(mouseX, mouseY, x + 84, buttonY, 58, 18)) {
             this.aurorion$confirmTransfer();
             cir.setReturnValue(true);
         } else {
@@ -151,7 +151,7 @@ public abstract class PhoneBankClientMixin {
         int boxY = phoneY + 285 - 76;
         this.aurorion$drawRoundRect(guiGraphics, boxX, boxY, 146, 26, 7, 0xDD20252B);
         Font font = aurorion$font();
-        guiGraphics.drawString(font, clip(font, this.toastMessage, 136), boxX + 6, boxY + 9,
+        guiGraphics.drawString(font, aurorion$clip(font, this.toastMessage, 136), boxX + 6, boxY + 9,
                 0xFFFFFFFF, false);
     }
 
@@ -159,7 +159,7 @@ public abstract class PhoneBankClientMixin {
         return Minecraft.getInstance().font;
     }
 
-    private static List<String> wrap(Font font, String text, int maxWidth) {
+    private static List<String> aurorion$wrap(Font font, String text, int maxWidth) {
         if (text == null || text.isBlank()) return List.of();
 
         List<String> lines = new ArrayList<>();
@@ -179,12 +179,12 @@ public abstract class PhoneBankClientMixin {
         return List.copyOf(lines);
     }
 
-    private static String clip(Font font, String text, int maxWidth) {
+    private static String aurorion$clip(Font font, String text, int maxWidth) {
         if (text == null) return "";
         return font.width(text) <= maxWidth ? text : font.plainSubstrByWidth(text, maxWidth - 3) + "...";
     }
 
-    private static boolean inside(double mouseX, double mouseY, int x, int y, int width, int height) {
+    private static boolean aurorion$inside(double mouseX, double mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
     }
 

@@ -40,6 +40,18 @@ public final class RankingData extends SavedData {
     private static final SavedDataAccess<RankingData> ACCESS =
             new SavedDataAccess<>(FILE_ID, RankingData::new, RankingData::load);
 
+    /**
+     * Como um jogador aparece no placar: recebe o id e o nome gravado aqui (o nick da conta, visto no
+     * ultimo login ou evento) e devolve o que mostrar. O {@code BoardService} passa o nome do
+     * personagem; os testes e o que nao tem servidor usam o gravado.
+     */
+    @FunctionalInterface
+    public interface Names {
+        String of(UUID id, String recorded);
+    }
+
+    public static final Names RECORDED = (id, recorded) -> recorded;
+
     private final Map<UUID, PlayerRanking> players = new HashMap<>();
     private final Map<ResourceLocation, Integer> houseBonus = new HashMap<>();
 
@@ -214,9 +226,15 @@ public final class RankingData extends SavedData {
 
     /** As {@code limit} primeiras linhas do ranking pedido. */
     public List<RankedEntry> top(BoardMode mode, int limit, HouseData membership, List<House> catalog) {
+        return top(mode, limit, membership, catalog, RECORDED);
+    }
+
+    /** O mesmo, com o nome de cada jogador resolvido por {@code names}. */
+    public List<RankedEntry> top(BoardMode mode, int limit, HouseData membership, List<House> catalog,
+                                 Names names) {
         List<RankedEntry> entries = mode.isHouseMode()
                 ? houseEntries(membership, catalog)
-                : playerEntries(mode);
+                : playerEntries(mode, names);
         sortAndTrim(entries, limit, mode.isAscending());
         return entries;
     }
@@ -228,10 +246,10 @@ public final class RankingData extends SavedData {
         return List.copyOf(entries);
     }
 
-    public List<RankedEntry> allPlayers() {
+    public List<RankedEntry> allPlayers(Names names) {
         List<RankedEntry> entries = new ArrayList<>(players.size());
         players.forEach((id, ranking) ->
-                entries.add(new RankedEntry(id.toString(), ranking.name(), ranking.points())));
+                entries.add(new RankedEntry(id.toString(), names.of(id, ranking.name()), ranking.points())));
         entries.sort(Comparator.comparing(RankedEntry::label, String.CASE_INSENSITIVE_ORDER));
         return List.copyOf(entries);
     }
@@ -246,10 +264,10 @@ public final class RankingData extends SavedData {
         return entries;
     }
 
-    private List<RankedEntry> playerEntries(BoardMode mode) {
+    private List<RankedEntry> playerEntries(BoardMode mode, Names names) {
         List<RankedEntry> entries = new ArrayList<>(players.size());
         players.forEach((id, ranking) ->
-                entries.add(new RankedEntry(id.toString(), ranking.name(), valueOf(ranking, mode))));
+                entries.add(new RankedEntry(id.toString(), names.of(id, ranking.name()), valueOf(ranking, mode))));
         return entries;
     }
 
