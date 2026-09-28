@@ -52,6 +52,11 @@ config = "${mod_id}.deathguard.mixins.json"
 [[mixins]]
 config = "${mod_id}.phone.mixins.json"
 
+# Nome do personagem, e nao o nick, nos menus do Simple Voice Chat (lista de grupos, membros, volume).
+# Nao obrigatorio: sem o Voice Chat, ou com uma versao que mude o metodo, sobe sem a troca.
+[[mixins]]
+config = "${mod_id}.voice.mixins.json"
+
 # Opcional. Com ele: so grupos de voz abertos, /gritar e ligacoes do telefone audiveis por perto.
 # Sem ele, o /gritar continua existindo, mas nao tem efeito.
 [[dependencies.${mod_id}]]

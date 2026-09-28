@@ -5,6 +5,7 @@ import com.aurorion.core.character.CharacterResetEvent;
 import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.compat.MattupolisPhoneCompat;
 import com.aurorion.essentials.compat.PhoneNumberSaveQueue;
+import com.aurorion.essentials.voice.ShoutRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -38,6 +39,13 @@ public final class EssentialsCharacterReset {
         } finally {
             PhoneNumberSaveQueue.forgetLastWrite();
         }
+
+        // O /gritar e da cena do personagem anterior, nao da conta: o novo comeca com a voz normal.
+        ShoutRegistry.clear(event.account());
+
+        // A agenda do telefone fica no PC de cada um e aponta pelo nick: sem isto, o contato do
+        // personagem morto passaria a chamar o novo. Ver PhoneRetirements.
+        PhoneRetirementSync.retire(event.server(), event.previousCharacterId(), event.transaction().accountName());
 
         // Offline acontece quando um reset interrompido e retomado antes do dono voltar: sem
         // jogador nao ha pacote para enviar, e apagar o dado guardado ja basta.

@@ -79,7 +79,7 @@ public final class GritarCommand {
         String name = CharacterTarget.displayName(source.getServer(), account);
         // true: fica no log e aparece para a staff online, como os outros comandos de moderacao.
         source.sendSuccess(() -> Component.literal(name + " esta gritando: a voz alcanca " + blocks(distance)
-                + " blocos. Para parar: /gritar \"" + name + "\" " + OFF), true);
+                + " blocos. Para parar: /gritar " + StringArgumentType.escapeIfRequired(name) + " " + OFF), true);
         warnIfNoVoiceChat(source);
         notifyTarget(source.getServer(), account, "Voce esta gritando: sua voz alcanca " + blocks(distance) + " blocos.");
         return 1;

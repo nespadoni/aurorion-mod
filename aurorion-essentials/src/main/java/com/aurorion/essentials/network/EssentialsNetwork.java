@@ -25,6 +25,13 @@ public final class EssentialsNetwork {
 
         registrar.playToClient(SyncFakeNamesPayload.TYPE, SyncFakeNamesPayload.STREAM_CODEC, EssentialsNetwork::handleSync);
         registrar.playToClient(UpdateFakeNamePayload.TYPE, UpdateFakeNamePayload.STREAM_CODEC, EssentialsNetwork::handleUpdate);
+        registrar.playToClient(RetiredPhoneContactsPayload.TYPE, RetiredPhoneContactsPayload.STREAM_CODEC,
+                EssentialsNetwork::handleRetiredPhoneContacts);
+    }
+
+    private static void handleRetiredPhoneContacts(RetiredPhoneContactsPayload payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        context.enqueueWork(() -> com.aurorion.essentials.client.PhoneContactCleanup.apply(payload.retired()));
     }
 
     private static void handleSync(SyncFakeNamesPayload payload, IPayloadContext context) {

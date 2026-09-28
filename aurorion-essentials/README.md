@@ -308,6 +308,37 @@ OP 2+. Aumenta o alcance da voz de uma pessoa até alguém desligar.
 `<pessoa>` é o nome do personagem (aspas se tiver espaço), o nick ou a UUID; funciona com quem está
 offline. Usa o gancho oficial `VoiceDistanceEvent` do Voice Chat: sem reenviar áudio, o servidor manda
 o pacote para todos dentro do alcance novo e o cliente atenua pela distância nova. Sussurro não muda, e
-um alcance menor que a voz normal não encurta nada. Fica só em memória: zera ao reiniciar o servidor.
+um alcance menor que a voz normal não encurta nada. Fica só em memória: zera ao reiniciar o servidor
+e no reset de personagem (o grito era do personagem anterior).
 Quem está além da distância de visão do cliente pode não ouvir, porque o cliente precisa enxergar o
 jogador para posicionar o som.
+
+### Nome do personagem nos menus do Voice Chat
+
+O Voice Chat manda a todos os clientes um "estado" de cada jogador com o nome dele, e o cliente mostra
+esse nome na lista de grupos, nos membros do grupo e na tela de ajustar volume. O nome vinha do perfil
+da conta — o nick real. O `VoicechatPlayerNameMixin` (config `aurorion_essentials.voice.mixins.json`,
+não obrigatório) troca pelo nome do personagem na criação do estado, e o `FakeNameManager` reenvia o
+estado quando o nome muda com a pessoa online (login, `/fakename`, personagem novo). O Voice Chat
+identifica todo mundo por UUID; o nome é só exibição. Usa classes internas do Voice Chat, conferidas
+em 2.6.22 e 2.6.24 e cobertas pelo `VoicechatContractTest`. Entradas antigas do cache de nomes do
+cliente do Voice Chat se corrigem quando a pessoa é vista de novo.
+
+### Número e agenda depois do reset de personagem
+
+- **Número novo.** O telefone gera o número pela UUID da conta e tenta sempre o mesmo primeiro; o reset
+  só apagava a linha, e o personagem novo recebia o número do morto. Agora o reset deixa o número antigo
+  reservado em nome de ninguém: o gerador pula para outro, e discar o antigo responde "Number owner not
+  found.".
+- **Agenda dos outros.** A agenda e os favoritos de PIX ficam no PC de cada jogador, pelo nick, e
+  ligação, mensagem e PIX são roteados pelo nick. Depois de um reset, o contato do morto apontava para o
+  personagem novo — e aparecia com o nome novo, denunciando quem era o jogador. O servidor guarda cada
+  reset (`PhoneRetirements`, 180 dias) e manda a lista no login; o `PhoneContactCleanup` do cliente
+  apaga o contato e o favorito daquele nick **uma vez por reset**: um contato adicionado depois é do
+  personagem novo e fica.
+- **Agenda própria.** No reset da própria conta, o cliente esvazia a agenda e os favoritos de PIX: o
+  personagem novo não conhece ninguém. Notas, calendário, papel de parede, capinha e PIN do telefone
+  ficam.
+
+Quem passar mais de 180 dias sem entrar mantém o contato antigo. Cliente sem o essentials atualizado
+não recebe nada e também mantém.

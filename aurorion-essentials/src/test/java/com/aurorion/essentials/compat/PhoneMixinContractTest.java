@@ -108,6 +108,34 @@ class PhoneMixinContractTest {
         }
     }
 
+    /**
+     * O {@code PhoneContactCleanup} mexe na agenda do telefone por reflexao, com nomes de campo e
+     * metodo privados. Se o telefone os renomear, a limpeza para (e avisa no log do cliente); este
+     * teste avisa antes, no build.
+     */
+    @Test
+    void contactCleanupReflectionTargetsExist() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            ClassNode messages = readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneMessagesStore");
+            for (String field : List.of("THREADS", "MESSAGES", "UNREAD_COUNTS", "PHONE_ID_TO_PLAYER", "PLAYER_TO_PHONE_ID")) {
+                assertTrue(messages.fields.stream().anyMatch(candidate -> candidate.name.equals(field)
+                        && (candidate.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0), "PhoneMessagesStore." + field);
+            }
+            assertHasStaticMethod(messages, "loadPlayerContactsIfNeeded", "()V");
+            assertHasStaticMethod(messages, "savePlayerContacts", "()V");
+
+            ClassNode thread = readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneMessagesStore$PhoneThread");
+            for (String accessor : List.of("id", "title", "playerThread")) {
+                assertTrue(thread.methods.stream().anyMatch(method -> method.name.equals(accessor)
+                        && method.desc.startsWith("()")), "PhoneThread." + accessor);
+            }
+
+            ClassNode bank = readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneBankStore");
+            assertHasStaticMethod(bank, "getFavoriteAccounts", "()Ljava/util/List;");
+            assertHasStaticMethod(bank, "toggleFavoriteAccount", "(Ljava/lang/String;)Z");
+        }
+    }
+
     private static void assertHasStaticMethod(ClassNode type, String name, String descriptor) {
         assertTrue(type.methods.stream().anyMatch(method -> method.name.equals(name) && method.desc.equals(descriptor)
                         && (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0),
