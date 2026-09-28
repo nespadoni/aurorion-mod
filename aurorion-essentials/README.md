@@ -254,3 +254,60 @@ jogador em zero de vida sem morrer (crash de 23/09/2026, `jonesbounty`). O `Deat
 envolve o disparo desse evento num `try/catch`: o listener quebrado perde o turno, a morte acontece
 inteira e o stack trace vai para o log. Detalhes e limites em
 [DEATH-HISTORY.md](DEATH-HISTORY.md).
+
+## Telefone Mattupolis e Simple Voice Chat
+
+Esta implementação **ainda não foi compilada nem testada em jogo**.
+
+### Crash do Watchdog no login (diretório de números do telefone)
+
+O crash de 21:58:33 foi o Watchdog matando o servidor com a thread principal presa dentro de
+`PhoneNumberServerStore.save()`, abrindo `mattupolis_phone/phone_numbers.properties`. O arquivo é
+pequeno; o problema é a quantidade de gravações. A cada login o telefone chama `syncToPlayer` para
+cada jogador online, e cada chamada regrava o arquivo inteiro duas vezes por jogador online — mesmo
+sem mudar nada. São 2·N² gravações síncronas por login: 882 com 21 pessoas, 12.800 com 80. Um `open()`
+lento no disco do container basta para parar o tick.
+
+O `PhoneNumberStoreMixin` (config `aurorion_essentials.phone.mixins.json`, não obrigatório) corrige:
+
+- `ensureNumberFor` devolve o número direto quando a conta já tem número e o nome não mudou — quase
+  todas as chamadas do login;
+- `save` passa para o `PhoneNumberSaveQueue`: grava numa thread própria (`Aurorion Phone IO`), só
+  quando o conteúdo mudou, juntando rajadas numa gravação só, e de forma atômica (`.tmp` + move). Se o
+  disco travar, trava essa thread, e o tick segue. Ao desligar o servidor, espera até 10 s pela fila.
+
+O reset de personagem espera a fila esvaziar antes de reescrever o arquivo. O formato gravado é o
+mesmo do telefone, então tirar o mod não perde números.
+
+### Ligações em grupo aberto
+
+O telefone tentava criar o grupo da ligação como `ISOLATED` por reflexão, procurando um `setType` que
+recebesse um *enum*; na API do Voice Chat `Group.Type` é interface, então a busca falhava calada e o
+grupo nascia `NORMAL` — quem está do lado não ouve quem fala ao telefone. O `PhoneCallGroupMixin` monta
+o grupo pela API tipada: **aberto** (quem está perto de cada lado ouve o que ele fala), **oculto** (não
+aparece na lista, ninguém entra na ligação dos outros pelo menu) e persistente, como o original.
+
+### Só grupos abertos
+
+Config `config/aurorion/essentials-voice-server.toml`:
+
+| Chave | Padrão | Efeito |
+|---|---|---|
+| `onlyOpenGroups` | `true` | Grupo Normal ou Isolado é recusado ao criar ou entrar, com aviso no chat. Vale também para grupos de outros mods. |
+| `allowGroupPasswords` | `false` | Grupo com senha também é recusado. |
+| `maxShoutDistance` | `256` | Maior alcance aceito pelo `/gritar`. |
+
+### `/gritar`
+
+OP 2+. Aumenta o alcance da voz de uma pessoa até alguém desligar.
+
+- `/gritar <pessoa> <distancia>` — liga ou troca o alcance, em blocos.
+- `/gritar <pessoa> desligar` — volta ao normal.
+- `/gritar lista` — quem está gritando.
+
+`<pessoa>` é o nome do personagem (aspas se tiver espaço), o nick ou a UUID; funciona com quem está
+offline. Usa o gancho oficial `VoiceDistanceEvent` do Voice Chat: sem reenviar áudio, o servidor manda
+o pacote para todos dentro do alcance novo e o cliente atenua pela distância nova. Sussurro não muda, e
+um alcance menor que a voz normal não encurta nada. Fica só em memória: zera ao reiniciar o servidor.
+Quem está além da distância de visão do cliente pode não ouvir, porque o cliente precisa enxergar o
+jogador para posicionar o som.

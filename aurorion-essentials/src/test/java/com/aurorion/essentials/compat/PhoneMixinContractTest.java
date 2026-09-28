@@ -79,6 +79,41 @@ class PhoneMixinContractTest {
         }
     }
 
+    /**
+     * Os mixins do lado servidor ficam num config nao obrigatorio com {@code require = 0}: se o alvo
+     * sumir, o servidor sobe sem a correcao e sem aviso alto. E este teste que avisa — em especial o
+     * {@code save}, cuja ausencia traria de volta o crash do Watchdog no login.
+     */
+    @Test
+    void serverSideHooksExistInTheInstalledPhoneVersion() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            ClassNode store = readPhoneClass(phone, "com.mattupolis.phone.server.contacts.PhoneNumberServerStore");
+            assertHasStaticMethod(store, "ensureNumberFor", "(Lnet/minecraft/server/level/ServerPlayer;)Ljava/lang/String;");
+            assertHasStaticMethod(store, "save", "(Lnet/minecraft/server/MinecraftServer;)V");
+
+            ClassNode calls = readPhoneClass(phone, "com.mattupolis.phone.voice.MattupolisVoiceCallManager");
+            assertHasStaticMethod(calls, "buildPhoneCallGroup", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
+
+            for (String name : List.of("PhoneNumberStoreMixin", "PhoneCallGroupMixin")) {
+                ClassNode mixin = readMixin(name);
+                ClassNode type = readPhoneClass(phone, targets(mixin).getFirst());
+                for (var field : mixin.fields) {
+                    if (!hasAnnotation(field.invisibleAnnotations, "Lorg/spongepowered/asm/mixin/Shadow;")
+                            && !hasAnnotation(field.visibleAnnotations, "Lorg/spongepowered/asm/mixin/Shadow;")) continue;
+                    assertTrue(type.fields.stream().anyMatch(candidate -> candidate.name.equals(field.name)
+                                    && candidate.desc.equals(field.desc)),
+                            name + ": @Shadow " + field.name + field.desc + " nao e declarado por " + type.name);
+                }
+            }
+        }
+    }
+
+    private static void assertHasStaticMethod(ClassNode type, String name, String descriptor) {
+        assertTrue(type.methods.stream().anyMatch(method -> method.name.equals(name) && method.desc.equals(descriptor)
+                        && (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0),
+                type.name + " sem " + name + descriptor);
+    }
+
     private static boolean hasAnnotation(List<AnnotationNode> annotations, String descriptor) {
         return annotations != null && annotations.stream().anyMatch(annotation -> annotation.desc.equals(descriptor));
     }

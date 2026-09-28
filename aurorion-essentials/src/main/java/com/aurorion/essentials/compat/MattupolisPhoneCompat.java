@@ -128,7 +128,8 @@ public final class MattupolisPhoneCompat {
         }
     }
 
-    private static void forgetLoadedRuntimeState() {
+    /** Faz o telefone reler numeros e banco do disco na proxima vez que precisar deles. */
+    public static void forgetLoadedRuntimeState() {
         resetLoadedWorldKey("com.mattupolis.phone.server.contacts.PhoneNumberServerStore");
         resetLoadedWorldKey("com.mattupolis.phone.server.bank.PhoneBankServerStore");
     }

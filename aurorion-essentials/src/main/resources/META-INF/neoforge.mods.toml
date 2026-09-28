@@ -44,3 +44,19 @@ config = "${mod_id}.mixins.json"
 # subir do mesmo jeito, so sem a rede. Ver DeathListenerGuardMixin.
 [[mixins]]
 config = "${mod_id}.deathguard.mixins.json"
+
+# Correcoes no telefone Mattupolis do lado servidor, separadas e nao obrigatorias pelo mesmo motivo:
+# se uma atualizacao do telefone mudar os metodos, o servidor sobe com o comportamento original.
+# PhoneNumberStoreMixin tira do tick a gravacao do diretorio de numeros (crash do Watchdog no login);
+# PhoneCallGroupMixin poe as ligacoes em grupo aberto do Voice Chat.
+[[mixins]]
+config = "${mod_id}.phone.mixins.json"
+
+# Opcional. Com ele: so grupos de voz abertos, /gritar e ligacoes do telefone audiveis por perto.
+# Sem ele, o /gritar continua existindo, mas nao tem efeito.
+[[dependencies.${mod_id}]]
+modId = "voicechat"
+type = "optional"
+versionRange = "1.21.1-2.5.0"
+ordering = "NONE"
+side = "BOTH"
