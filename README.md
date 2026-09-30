@@ -22,6 +22,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Personagem | [aurorion-personagem/](aurorion-personagem/) | Nome e sobrenome numa tela no primeiro login, e a troca de personagem depois da morte definitiva: identidade nova, progressão zerada, conta preservada |
 | Aurorion Profissões | [aurorion-profissoes/](aurorion-profissoes/) | Médico, ferreiro, cozinheiro e arcanista: uma profissão por personagem, atendimento entre jogadores por interface e integrações com LSO, Quality Food e FoodSpoil |
 | Aurorion Magia | [aurorion-magia/](aurorion-magia/) | Addon do Iron's Spells: magia só com liberação da staff (`/aurorion spells`, por magia ou escola, espelhado no Iron's Restrictions) e dezessete magias autorais (três proibidas, só por concessão da staff), com selos mágicos e telas de possessão desenhados no cliente |
+| Aurorion Serviços | [aurorion-servicos/](aurorion-servicos/) | O app **Serviços** do celular: anúncios de profissionais por área, botão "Trabalhando", pedidos diretos e abertos (estilo iFood), vagas de trabalho com candidatura — tudo terminando numa conversa no próprio celular |
 
 ### Conteúdo x comportamento
 

@@ -30,8 +30,12 @@ import java.util.UUID;
  * <p>Se o telefone mudar e a reflexao falhar, nada e marcado como feito: a proxima entrada tenta de
  * novo, e o aviso vai para o log uma vez.
  *
- * <p>Os ids de reset ja tratados ficam em {@code mattupolis_phone/aurorion_retired_contacts.txt}, ao
- * lado da agenda: processar o mesmo reset duas vezes apagaria um contato do personagem novo.
+ * <p>Os ids de reset ja tratados ficam em {@code aurorion_retired_contacts.txt}, ao lado da agenda,
+ * na pasta do personagem ({@link PhoneCharacterStorage}): processar o mesmo reset duas vezes apagaria
+ * um contato do personagem novo, e cada personagem tem a propria agenda para limpar.
+ *
+ * <p>No reset da propria conta o celular inteiro e do morto: alem da agenda, a pasta do personagem
+ * (notas, calendario, capa, fotos, PIN) e esvaziada e a memoria do telefone volta a de recem-ligado.
  */
 public final class PhoneContactCleanup {
     private static final String MESSAGES = "com.mattupolis.phone.client.gui.PhoneMessagesStore";
@@ -46,7 +50,9 @@ public final class PhoneContactCleanup {
     /** Na thread do cliente. */
     public static void apply(Map<UUID, String> retired) {
         Minecraft minecraft = Minecraft.getInstance();
-        Path processedFile = minecraft.gameDirectory.toPath().resolve("mattupolis_phone").resolve(PROCESSED_FILE);
+        Path characterDir = PhoneCharacterStorage.activeDir();
+        Path processedFile = characterDir != null ? characterDir.resolve(PROCESSED_FILE)
+                : minecraft.gameDirectory.toPath().resolve(PhoneCharacterStorage.ROOT).resolve(PROCESSED_FILE);
         Set<UUID> processed = readProcessed(processedFile);
         String self = minecraft.player != null ? minecraft.player.getGameProfile().getName() : minecraft.getUser().getName();
 
@@ -65,6 +71,13 @@ public final class PhoneContactCleanup {
                         + "tento de novo na proxima entrada.", e);
             }
             return;
+        }
+
+        if (plan.wipeAll() && characterDir != null) {
+            // A lista de resets tratados fica: e ela que impede este mesmo reset de apagar, na proxima
+            // entrada, o que o personagem novo ja tiver gravado.
+            PhoneCharacterStorage.wipe(characterDir, Set.of(PROCESSED_FILE, PhoneCharacterStorage.MIGRATED_MARKER));
+            PhoneSession.resetMemory();
         }
 
         processed.addAll(plan.newlyProcessed());

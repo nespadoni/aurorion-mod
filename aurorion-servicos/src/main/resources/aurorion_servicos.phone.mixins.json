@@ -1,0 +1,18 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.aurorion.servicos.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "PhoneAppCatalogMixin",
+    "PhoneHomeOpenAppMixin",
+    "PhoneAppLibraryMixin",
+    "PhoneGuiScaleMixin",
+    "PhoneHomeNotificationMixin",
+    "PhoneLockNotificationMixin",
+    "PhonePanelNotificationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

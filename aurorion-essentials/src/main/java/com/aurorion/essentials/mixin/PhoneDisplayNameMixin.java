@@ -11,8 +11,12 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
  *
  * <p>A lista e das telas do telefone que mostram nick de jogador, e cada uma foi conferida no jar
  * instalado — o {@code PhoneMixinContractTest} falha se alguma perder o {@code trimText}. Ficam de
- * fora as telas que so desenham texto do proprio dono (notas, musica, tempo, papel de parede) e o
- * Instagram/Twitter, onde o @ e um perfil escolhido pela pessoa e nao o nick vazando.</p>
+ * fora as telas que so desenham texto do proprio dono (notas, musica, tempo, papel de parede).</p>
+ *
+ * <p>O texto inteiro sendo um nick vira o nome do personagem; um nick <b>dentro</b> de uma frase
+ * tambem ("Arthur - Oi!" na previa da notificacao, "★ nick" no contato fixado, "nick is offline.").
+ * No Twitter o telefone escreve o nome e o {@code @} a partir do nick da conta — o {@code @nick} vira
+ * o {@code @} do personagem ({@code @arthur_pendragon}), para o nick nao vazar por ali.</p>
  */
 @Pseudo
 @Mixin(targets = {
@@ -50,11 +54,18 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         "com.mattupolis.phone.client.gui.PhoneMarketplaceSellScreen",
         "com.mattupolis.phone.client.gui.PhoneMailScreen",
         "com.mattupolis.phone.client.gui.PhoneMailDetailScreen",
-        "com.mattupolis.phone.client.gui.PhoneGpsScreen"
+        "com.mattupolis.phone.client.gui.PhoneGpsScreen",
+        // Autor, @ e lista de seguidores do Twitter saem do nick da conta.
+        "com.mattupolis.phone.client.gui.PhoneTwitterScreen",
+        "com.mattupolis.phone.client.gui.PhoneTwitterPostDetailScreen",
+        // Remetente do e-mail sendo escrito, historico de chamadas do banco e o chat de NPC.
+        "com.mattupolis.phone.client.gui.PhoneMailComposeScreen",
+        "com.mattupolis.phone.client.gui.PhoneMessageDetailScreen",
+        "com.mattupolis.phone.client.gui.PhoneSocialAdminScreen"
 }, remap = false)
 public abstract class PhoneDisplayNameMixin {
     @ModifyVariable(method = "trimText", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private String aurorion_essentials$displayCharacterName(String text) {
-        return MattupolisPhoneNames.display(text);
+        return MattupolisPhoneNames.displayOrReplace(text);
     }
 }

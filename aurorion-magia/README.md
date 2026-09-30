@@ -7,8 +7,13 @@ personagem, em aula, com `/aurorion spells`. O estado é espelhado no Iron's Res
 Vinte e três magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma
 **invocação** (o id), mais duas **passivas**: marcas que ficam no personagem em vez de serem
 conjuradas. As magias servem para duelo, captura, interrogatório, perseguição, fuga, invasão
-e RP do dia a dia. Quatro delas mudam de forma quando conjuradas **agachado** (ver "Agachado, em
+e RP do dia a dia. Cinco delas mudam de forma quando conjuradas **agachado** (ver "Agachado, em
 área"), e três se desfazem conjurando de novo no mesmo alvo (Prostração, Voz Interdita, Mundo Vazio).
+
+Em todo lugar que o Iron's mostra uma magia (roda, tooltip, pergaminho, livro, bancada, JEI) e nas
+mensagens do `/aurorion spells`, o nome sai **em latim primeiro e traduzido depois**:
+`Vox Interdicta — Voz Interdita`. O nome inteiro é o valor de `spell.aurorion_magia.<id>` nos dois
+idiomas; por isso a descrição (`.guide`) não repete mais o latim no começo.
 
 Versões de referência (jars em `mod-servidor-referencia/`): Iron's Spells `1.21.1-3.16.3`, Iron's
 Restrictions `1.21.1-5.2.0`, Emotecraft `2.4.12`, Simple Voice Chat `1.21.1-2.6.24`.
@@ -115,12 +120,13 @@ só o padrão; ver "Trocar escola" abaixo.
 
 ### Agachado, em área
 
-Quatro magias têm duas formas, e o gatilho é o mesmo em todas: **conjurar agachado**.
+Cinco magias têm duas formas, e o gatilho é o mesmo em todas: **conjurar agachado**.
 
 | Magia | Em pé | Agachado |
 |---|---|---|
 | Queda Forçada | um alvo mirado | onda em volta de você (6 a 14 blocos) |
 | Olhar Cativo | um alvo mirado | todos em volta (14 a 30 blocos) |
+| Voz Interdita | um alvo mirado (tira ou devolve) | cala todos em volta, menos aliados (5 a 9 blocos, até 8) |
 | Sentença Final ⛔ | um alvo mirado | todos em volta (nível 2+: 8 ou 14 blocos) |
 | Mão Vazia | mão principal | mão secundária |
 
@@ -230,6 +236,12 @@ consulta um mapa concorrente, porque roda na thread de áudio.
 
 **Duas conjurações:** a primeira tira a voz, a segunda no mesmo alvo devolve, sem esperar o tempo
 correr. Interrogatório é isso — tirar a palavra e devolvê-la quando convier.
+
+**Agachado, em área:** "silêncio, todos." Até 8 jogadores num raio de 4 + nível blocos (5 no nível 1,
+9 no 5) perdem a voz de uma vez — o salão do conselho, a roda que começou a gritar. Quem está do lado
+de quem conjura (`isAlliedTo`, o mesmo critério do Devorar Luz) fica de fora. Em área a magia só
+tira a voz: quem já estava calado tem o silêncio renovado; devolver a palavra continua sendo de um
+alvo só. Sem ninguém em volta, a conjuração é recusada antes de gastar mana.
 **Visual:** colar negro na garganta com anel rúnico violeta girando e fumaça escura.
 
 ### Mundo Vazio — *Mundus Vacuus*
@@ -1025,7 +1037,10 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   - microfone mudo em proximidade e em grupo;
   - chat recusado; magia bloqueada;
   - leite devolve a voz;
-  - conjurar de novo no mesmo alvo devolve a voz.
+  - conjurar de novo no mesmo alvo devolve a voz;
+  - agachado: cala todos no raio (5 blocos no nível 1), poupa o próprio time e não devolve a voz de
+    quem já estava calado; sozinho, é recusada sem gastar mana.
+- [ ] Nomes: roda, tooltip, pergaminho e livro mostram "Latim — Tradução" sem estourar o cartão.
 - [ ] Cruciatus no alvo: nenhuma magia sai e nenhum item responde enquanto dura.
 - [ ] Sigillum Clausum:
   - porta (as duas metades), porta dupla, baú duplo, barril, alçapão, portão;

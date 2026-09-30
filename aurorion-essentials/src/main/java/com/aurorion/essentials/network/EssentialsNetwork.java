@@ -27,6 +27,14 @@ public final class EssentialsNetwork {
         registrar.playToClient(UpdateFakeNamePayload.TYPE, UpdateFakeNamePayload.STREAM_CODEC, EssentialsNetwork::handleUpdate);
         registrar.playToClient(RetiredPhoneContactsPayload.TYPE, RetiredPhoneContactsPayload.STREAM_CODEC,
                 EssentialsNetwork::handleRetiredPhoneContacts);
+        registrar.playToClient(PhoneNameDirectoryPayload.TYPE, PhoneNameDirectoryPayload.STREAM_CODEC,
+                EssentialsNetwork::handlePhoneNameDirectory);
+    }
+
+    private static void handlePhoneNameDirectory(PhoneNameDirectoryPayload payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        context.enqueueWork(() -> com.aurorion.essentials.client.MattupolisPhoneNames.applyDirectory(
+                payload.replace(), payload.entries()));
     }
 
     private static void handleRetiredPhoneContacts(RetiredPhoneContactsPayload payload, IPayloadContext context) {

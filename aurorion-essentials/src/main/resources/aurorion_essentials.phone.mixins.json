@@ -5,7 +5,17 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "PhoneNumberStoreMixin",
-    "PhoneCallGroupMixin"
+    "PhoneCallGroupMixin",
+    "PhoneCallChatNameMixin"
+  ],
+  "client": [
+    "PhoneOverlayNamesMixin",
+    "PhoneCallOverlayNameMixin",
+    "PhoneAvatarInitialMixin",
+    "PhoneMailRecipientMixin",
+    "PhoneBankRecipientMixin",
+    "PhoneStoragePathMixin",
+    "PhoneGalleryPathMixin"
   ],
   "injectors": {
     "defaultRequire": 0

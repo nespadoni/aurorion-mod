@@ -76,6 +76,7 @@ public final class FakeNameManager {
         }
 
         PacketDistributor.sendToAllPlayers(new UpdateFakeNamePayload(player, Optional.ofNullable(fakeName).map(FakeName::raw)));
+        PhoneNameDirectorySync.changed(server, player, fakeName == null ? null : fakeName.plain());
         forgetCachedDisplayName(server, player);
         refreshTabList(server, player);
         ServerPlayer online = server.getPlayerList().getPlayer(player);

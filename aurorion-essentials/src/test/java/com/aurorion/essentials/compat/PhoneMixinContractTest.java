@@ -136,6 +136,143 @@ class PhoneMixinContractTest {
         }
     }
 
+    /**
+     * A pasta por personagem depende de cada store pedir o caminho por um metodo estatico sem
+     * argumentos que devolve {@code Path}. Um store que passe a montar o caminho de outro jeito
+     * voltaria a gravar na pasta compartilhada sem erro nenhum — este teste pega no build.
+     */
+    @Test
+    void everyClientStoreStillAsksForItsFileThroughTheRedirectedMethod() throws IOException {
+        List<List<String>> stores = List.of(
+                List.of("PhoneBankStore", "getFavoritesFile"),
+                List.of("PhoneCalendarStore", "getStoreFile"),
+                List.of("PhoneCaseStore", "getStoreFile"),
+                List.of("PhoneHealthStore", "getStoreFile"),
+                List.of("PhoneHomeLayoutStore", "getPath"),
+                List.of("PhoneMarketplaceStore", "getStoreFile"),
+                List.of("PhoneMarketplaceStore", "getExtrasFile"),
+                List.of("PhoneMessagesStore", "getContactsStoreFile"),
+                List.of("PhoneMineStoreState", "getStoreFile"),
+                List.of("PhoneNotesStore", "getStoreFile"),
+                List.of("PhoneSettingsStore", "getPinStoreFile"),
+                List.of("PhoneWallpaperStore", "getStoreFile"));
+        try (ZipFile phone = phoneJar()) {
+            for (List<String> store : stores) {
+                ClassNode type = readPhoneClass(phone, "com.mattupolis.phone.client.gui." + store.get(0));
+                assertHasStaticMethod(type, store.get(1), "()Ljava/nio/file/Path;");
+            }
+            assertCalls(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneGalleryStore"), "getLatestPhotos",
+                    "java/nio/file/Path", "resolve");
+            assertCalls(readPhoneClass(phone, "com.mattupolis.phone.client.PhoneClientPacketHandler"), "saveIncomingPhoto",
+                    "java/nio/file/Path", "resolve");
+        }
+    }
+
+    /**
+     * O {@code PhoneSession} zera o estado em memoria do telefone na troca de personagem pelos nomes
+     * dos campos. Um campo renomeado deixaria so aquele pedaco sem limpar (e um aviso no log).
+     */
+    @Test
+    void sessionResetFieldsExist() throws IOException {
+        List<List<String>> fields = List.of(
+                List.of("PhoneMessagesStore", "playerContactsLoaded", "PHONE_ID_TO_PLAYER", "PLAYER_TO_PHONE_ID",
+                        "CURRENT_OPEN_THREAD_ID", "CURRENT_PLAYER_PHONE_ID", "THREADS", "MESSAGES", "UNREAD_COUNTS"),
+                List.of("PhoneMailStore", "MAILS"),
+                List.of("PhoneInstagramDmStore", "THREADS", "MESSAGES", "PROCESSED_NETWORK_IDS", "currentOpenThreadId"),
+                List.of("PhoneNotesStore", "loaded", "NOTES"),
+                List.of("PhoneCalendarStore", "loaded", "REMINDERS"),
+                List.of("PhoneCaseStore", "loaded", "currentCaseId"),
+                List.of("PhoneWallpaperStore", "loaded", "homeWallpaperId", "lockWallpaperId"),
+                List.of("PhoneHomeLayoutStore", "loaded", "pages", "hiddenApps"),
+                List.of("PhoneMineStoreState", "loaded", "jumpInstalled", "calculatorInstalled", "colorTapInstalled"),
+                List.of("PhoneHealthStore", "loaded", "storedDate", "todaySteps", "distanceMeters", "activeTicks",
+                        "foodEaten", "dailyGoal", "saveCooldownTicks", "lastFoodLevel"),
+                List.of("PhoneMarketplaceStore", "loaded", "extrasLoaded", "LISTINGS", "COMMENTS", "FAVORITE_IDS", "VIEW_COUNTS"),
+                List.of("PhoneSettingsStore", "pinLoaded", "pinContextKey", "lockPinCode"),
+                List.of("PhoneBankStore", "favoritesLoaded", "favoriteAccounts", "unlocked", "available", "balanceText",
+                        "coreBalance", "history", "accounts", "seenInitialSync", "newestIncomingTransferAt"));
+        try (ZipFile phone = phoneJar()) {
+            for (List<String> store : fields) {
+                ClassNode type = readPhoneClass(phone, "com.mattupolis.phone.client.gui." + store.getFirst());
+                for (String field : store.subList(1, store.size())) {
+                    assertTrue(type.fields.stream().anyMatch(candidate -> candidate.name.equals(field)
+                            && (candidate.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0), store.getFirst() + "." + field);
+                }
+            }
+            assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneHealthStore"), "saveNow", "()V");
+            assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneNotificationStore"),
+                    "clearPlayerNotifications", "()V");
+            assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneCallHistoryStore"), "clear", "()V");
+            assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneGpsScreen"), "clearGpsTarget", "()V");
+            assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneInstagramStore"), "clearNotifications", "()V");
+            assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneTwitterStore"), "clearNotifications", "()V");
+        }
+    }
+
+    /** Os ganchos de nome fora do {@code trimText} das telas: overlays, HUD de ligacao, avatar, e-mail, PIX, chat. */
+    @Test
+    void characterNameHooksExist() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            String gui = "com.mattupolis.phone.client.gui.";
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneNotificationPanelOverlay"), "trimText",
+                    "(Lnet/minecraft/client/gui/Font;Ljava/lang/String;I)Ljava/lang/String;");
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneDynamicIslandHelper"), "trimSimple",
+                    "(Ljava/lang/String;I)Ljava/lang/String;");
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneGpsCompactOverlay"), "trim",
+                    "(Ljava/lang/String;I)Ljava/lang/String;");
+            ClassNode call = readPhoneClass(phone, gui + "PhoneCallCompactOverlay");
+            assertHasStaticMethod(call, "getDisplayName", "()Ljava/lang/String;");
+            assertHasStaticMethod(call, "getIncomingDisplayName", "()Ljava/lang/String;");
+
+            for (List<String> avatar : List.of(
+                    List.of("PhoneMessagesScreen", "drawThreadRow"),
+                    List.of("PhoneMessageChatScreen", "drawTopBar"),
+                    List.of("PhoneContactsScreen", "drawContactRow"),
+                    List.of("PhoneCallHistoryScreen", "drawHistoryRow"),
+                    List.of("PhoneTwitterScreen", "drawAvatar"))) {
+                assertCalls(readPhoneClass(phone, gui + avatar.get(0)), avatar.get(1), "java/lang/String", "substring");
+            }
+
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneMailStore"), "sendMail",
+                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+            ClassNode bankScreen = readPhoneClass(phone, gui + "PhoneBankScreen");
+            assertTrue(bankScreen.methods.stream().anyMatch(m -> m.name.equals("confirmTransfer") && m.desc.equals("()V")),
+                    "PhoneBankScreen.confirmTransfer");
+            assertTrue(bankScreen.fields.stream().anyMatch(f -> f.name.equals("pendingTarget") && f.desc.equals("Ljava/lang/String;")),
+                    "PhoneBankScreen.pendingTarget");
+
+            assertCalls(readPhoneClass(phone, "com.mattupolis.phone.voice.MattupolisVoiceCallManager"),
+                    "sendIncomingCallChatIfAllowed", "net/minecraft/server/level/ServerPlayer", "sendSystemMessage");
+        }
+    }
+
+    /** A limpeza do Gram/Twitter/marketplace no reset chama estes metodos privados dos stores do servidor. */
+    @Test
+    void socialResetReflectionTargetsExist() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            ClassNode social = readPhoneClass(phone, "com.mattupolis.phone.server.social.PhoneSocialServerStore");
+            assertHasStaticMethod(social, "ensurePersistentLoaded", "()V");
+            assertHasStaticMethod(social, "savePersistentStore", "()V");
+            ClassNode market = readPhoneClass(phone, "com.mattupolis.phone.server.marketplace.PhoneMarketplaceServerStore");
+            assertHasStaticMethod(market, "ensureLoaded", "(Lnet/minecraft/server/MinecraftServer;)V");
+            assertHasStaticMethod(market, "save", "(Lnet/minecraft/server/MinecraftServer;)V");
+        }
+    }
+
+    private static void assertCalls(ClassNode type, String methodName, String owner, String called) {
+        boolean found = false;
+        for (var method : type.methods) {
+            if (!method.name.equals(methodName)) continue;
+            for (var instruction : method.instructions) {
+                if (instruction instanceof org.objectweb.asm.tree.MethodInsnNode call
+                        && call.owner.equals(owner) && call.name.equals(called)) {
+                    found = true;
+                }
+            }
+        }
+        assertTrue(found, type.name + "." + methodName + " nao chama " + owner + "." + called);
+    }
+
     private static void assertHasStaticMethod(ClassNode type, String name, String descriptor) {
         assertTrue(type.methods.stream().anyMatch(method -> method.name.equals(name) && method.desc.equals(descriptor)
                         && (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0),

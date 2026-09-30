@@ -5,6 +5,7 @@ import com.aurorion.core.character.CharacterResetEvent;
 import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.compat.MattupolisPhoneCompat;
 import com.aurorion.essentials.compat.PhoneNumberSaveQueue;
+import com.aurorion.essentials.compat.PhoneSocialReset;
 import com.aurorion.essentials.voice.ShoutRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -40,6 +41,10 @@ public final class EssentialsCharacterReset {
             PhoneNumberSaveQueue.forgetLastWrite();
         }
 
+        // Perfil, posts, DMs e anuncios do telefone ficam guardados pelo nick, que o personagem novo
+        // herda. Melhor esforco: se o telefone mudar e a limpeza falhar, o reset segue e o log avisa.
+        PhoneSocialReset.forget(event.server(), event.transaction().accountName());
+
         // O /gritar e da cena do personagem anterior, nao da conta: o novo comeca com a voz normal.
         ShoutRegistry.clear(event.account());
 
@@ -51,8 +56,9 @@ public final class EssentialsCharacterReset {
         // jogador nao ha pacote para enviar, e apagar o dado guardado ja basta.
         if (player != null) {
             FakeNameManager.clear(player);
-        } else {
-            FakeNameData.get(event.server()).setRaw(event.account(), null);
+        } else if (FakeNameData.get(event.server()).setRaw(event.account(), null)) {
+            // Quem esta online deixa de ver o nome do morto na agenda.
+            PhoneNameDirectorySync.changed(event.server(), event.account(), null);
         }
     }
 

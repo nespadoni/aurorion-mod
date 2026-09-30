@@ -336,9 +336,55 @@ cliente do Voice Chat se corrigem quando a pessoa é vista de novo.
   reset (`PhoneRetirements`, 180 dias) e manda a lista no login; o `PhoneContactCleanup` do cliente
   apaga o contato e o favorito daquele nick **uma vez por reset**: um contato adicionado depois é do
   personagem novo e fica.
-- **Agenda própria.** No reset da própria conta, o cliente esvazia a agenda e os favoritos de PIX: o
-  personagem novo não conhece ninguém. Notas, calendário, papel de parede, capinha e PIN do telefone
-  ficam.
+- **Celular próprio.** No reset da própria conta, o cliente esvazia a pasta do personagem (agenda,
+  favoritos de PIX, notas, calendário, capinha, papel de parede, PIN, fotos): o personagem novo recebe
+  um celular limpo. Fica só a lista de resets já tratados, que impede o mesmo reset de apagar o que o
+  personagem novo gravar depois.
+- **Gram, Twitter e marketplace.** O telefone guarda perfil, posts, comentários, curtidas, DMs,
+  stories, seguidores e anúncios pelo nick, que o personagem novo herda. O reset tira tudo o que é
+  daquele nick dos stores do servidor (`PhoneSocialReset`, por reflexão, dentro do mesmo monitor que o
+  telefone usa). Bloqueio de app pela staff e permissão de admin social ficam: são da conta.
 
 Quem passar mais de 180 dias sem entrar mantém o contato antigo. Cliente sem o essentials atualizado
 não recebe nada e também mantém.
+
+### Um celular por personagem
+
+O telefone grava o estado do cliente em `.minecraft/mattupolis_phone/`, uma pasta da máquina: o alt
+via as notas, a agenda e as conversas do principal. Agora:
+
+- **Pasta por personagem.** Todo arquivo que o telefone lê ou grava no cliente (agenda, notas,
+  calendário, capinha, papel de parede, layout da tela inicial, PIN, favoritos de PIX, anúncios salvos,
+  fotos recebidas e da câmera) mora em `mattupolis_phone/personagens/<uuid>/`. A chave é o UUID do
+  perfil com que a conexão entrou — o alt é outro perfil, e a troca de personagem reconecta
+  (`PhoneCharacterStorage`, `PhoneStoragePathMixin`, `PhoneGalleryPathMixin`). Prints do F2
+  (`screenshots/`) continuam na galeria de todos: são do PC.
+- **Memória zerada na troca.** O telefone guarda conversas, notificações, e-mails, histórico de
+  chamadas e DMs em campos estáticos que só zeravam ao fechar o jogo. Na entrada e na saída de um
+  servidor, o `PhoneSession` devolve o celular ao estado de recém-ligado; cada store relê a pasta do
+  personagem na primeira vez que for usado. O feed público do Gram e do Twitter é do servidor e volta
+  na próxima sincronização.
+- **Migração.** Na primeira entrada da conta principal depois da atualização, o que estava na raiz da
+  pasta vai para a pasta dela (uma vez, marcada com `.aurorion_migrado`). O alt começa vazio.
+
+### Nome do personagem em todos os apps
+
+O telefone roteia tudo pelo nick da conta, então o nome do personagem é só de exibição
+(`MattupolisPhoneNames`, ver `MattupolisPhoneCompat` para o porquê). Cobre:
+
+- toda tela com `trimText` (`PhoneDisplayNameMixin`), incluindo Twitter — o `@nick` vira o `@` do
+  personagem (`@arthur_pendragon`) —, o e-mail sendo escrito e o painel de moderação social;
+- nick **dentro** de frases: prévia de notificação ("Arthur - Oi!"), contato fixado ("★ nick"),
+  mensagens de sistema ("nick is offline.", "nick Location"). O texto é quebrado em palavras e cada
+  palavra consultada no índice; o resultado fica num cache por texto, zerado só quando um nome muda;
+- painel de notificações, ilha dinâmica, mini GPS e HUD da ligação (`PhoneOverlayNamesMixin`,
+  `PhoneCallOverlayNameMixin`), e a inicial no círculo do avatar (`PhoneAvatarInitialMixin`);
+- quem está **offline**: o servidor manda no login um diretório nick → nome de personagem de toda conta
+  com nome gravado (`PhoneNameDirectoryPayload`, nick do `usercache.json`), e só a mudança quando um nome
+  muda;
+- "Fulano está te ligando" no chat, com o nome de quem liga (`PhoneCallChatNameMixin`, servidor);
+- o caminho inverso: no "Para" do e-mail e no destinatário do PIX dá para digitar o nome do personagem;
+  ele vira o nick antes de sair do cliente (`PhoneMailRecipientMixin`, `PhoneBankRecipientMixin`). Um
+  nick digitado passa intacto.
+
+Fica com o nick o `/phonecall <nick>` (comando de depuração do telefone, digitado pelo nick).

@@ -1,0 +1,51 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1]"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# As categorias do app sao as profissoes, e o selo "registrado" vem de quem a staff definiu.
+[[dependencies.${mod_id}]]
+modId = "aurorion_profissoes"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# O app vive dentro do celular. Sem o telefone o mod carrega, guarda os dados e nao mostra nada.
+[[dependencies.${mod_id}]]
+modId = "mattupolis_phone"
+type = "optional"
+versionRange = "[1.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Ganchos no celular, separados e nao obrigatorios: sem o telefone, nenhum alvo existe.
+[[mixins]]
+config = "${mod_id}.phone.mixins.json"

@@ -1,0 +1,28 @@
+apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// As categorias do app sao as profissoes do aurorion-profissoes, e o selo "registrado" le quem a staff
+// definiu com /profissao. O profissoes, por sua vez, exige a economia (Shift+G dos atendimentos).
+evaluationDependsOn(':aurorion-profissoes')
+evaluationDependsOn(':aurorion-economia')
+
+neoForge {
+    mods {
+        create('aurorion_profissoes') {
+            sourceSet project(':aurorion-profissoes').sourceSets.main
+        }
+        create('aurorion_economia') {
+            sourceSet project(':aurorion-economia').sourceSets.main
+        }
+    }
+    runs {
+        client { loadedMods = [mods.aurorion_servicos, mods.aurorion_profissoes, mods.aurorion_economia, mods.aurorion_core] }
+        server { loadedMods = [mods.aurorion_servicos, mods.aurorion_profissoes, mods.aurorion_economia, mods.aurorion_core] }
+    }
+}
+
+// O telefone (mod-servidor-referencia/mattupolisphone112.jar) nao entra no classpath: como no
+// essentials e na economia, tudo com ele e por @Pseudo e reflexao, e o app some sozinho sem ele.
+dependencies {
+    implementation project(':aurorion-profissoes').sourceSets.main.output
+    implementation project(':aurorion-economia').sourceSets.main.output
+}
