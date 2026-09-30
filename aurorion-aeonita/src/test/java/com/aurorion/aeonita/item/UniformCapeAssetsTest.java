@@ -45,8 +45,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class UniformCapeAssetsTest {
     private static final String NAMESPACE = "aurorion_aeonita";
-    private static final String GEO = "/assets/aurorion_aeonita/geo/armor/uniform_cape.geo.json";
-    private static final String ANIMATIONS = "/assets/aurorion_aeonita/animations/armor/uniform_cape.animation.json";
+
+    /**
+     * Cada par de geo e animacao do jar: o do uniforme, dividido pelas seis cores, e um por capa com
+     * modelo proprio. Os tres testes de conversao rodam em todos — um export novo do CPM entra pelo
+     * mesmo conversor e erra do mesmo jeito.
+     */
+    private static List<String> modelos() {
+        List<String> modelos = new ArrayList<>();
+        modelos.add("uniform_cape");
+        modelos.addAll(UniformCapeItem.MODELOS_PROPRIOS);
+        return modelos;
+    }
+
+    private static String geo(String modelo) {
+        return "/assets/aurorion_aeonita/geo/armor/" + modelo + ".geo.json";
+    }
+
+    private static String animations(String modelo) {
+        return "/assets/aurorion_aeonita/animations/armor/" + modelo + ".animation.json";
+    }
 
     /**
      * Os oito nomes que o {@code GeoArmorRenderer} procura para copiar a pose do modelo humanoide.
@@ -60,19 +78,25 @@ class UniformCapeAssetsTest {
 
     @Test
     void geometriaAssaComOsBonesQueOGeckoLibProcura() {
-        BakedGeoModel baked = BakedModelFactory.getForNamespace(NAMESPACE)
-                .constructGeoModel(GeometryTree.fromModel(readModel()));
+        for (String modelo : modelos()) {
+            BakedGeoModel baked = BakedModelFactory.getForNamespace(NAMESPACE)
+                    .constructGeoModel(GeometryTree.fromModel(readModel(modelo)));
 
-        for (String bone : ARMOR_BONES) {
-            assertTrue(baked.getBone(bone).isPresent(), "faltou o bone de armadura " + bone);
+            for (String bone : ARMOR_BONES) {
+                assertTrue(baked.getBone(bone).isPresent(), "faltou o bone de armadura " + bone + " em " + modelo);
+            }
         }
     }
 
     @Test
     void naoSobrouCuboDegeneradoDoExportDoCpm() {
-        BakedGeoModel baked = BakedModelFactory.getForNamespace(NAMESPACE)
-                .constructGeoModel(GeometryTree.fromModel(readModel()));
+        for (String modelo : modelos()) {
+            assertNoEmptyCubes(BakedModelFactory.getForNamespace(NAMESPACE)
+                    .constructGeoModel(GeometryTree.fromModel(readModel(modelo))));
+        }
+    }
 
+    private static void assertNoEmptyCubes(BakedGeoModel baked) {
         // O CPM exporta cada 'group' como um cubo marcador, e a forma dele muda a cada reexport:
         // ja saiu como [0, 0, 0], como a linha [1.5, 0, 0] e como a placa [1.5, 0, 0.5]. Pelo
         // tamanho nao da para separar marcador de geometria, porque a capa usa placas achatadas
@@ -116,14 +140,16 @@ class UniformCapeAssetsTest {
      */
     @Test
     void asAnimacoesPedidasPelaCapaExistemNoArquivo() {
-        BakedAnimations animations = KeyFramesAdapter.GEO_GSON.fromJson(
-                GsonHelper.getAsJsonObject(readJson(ANIMATIONS), "animations"), BakedAnimations.class);
+        for (String modelo : modelos()) {
+            BakedAnimations animations = KeyFramesAdapter.GEO_GSON.fromJson(
+                    GsonHelper.getAsJsonObject(readJson(animations(modelo)), "animations"), BakedAnimations.class);
 
-        for (RawAnimation raw : List.of(UniformCapeItem.IDLE, UniformCapeItem.WALKING,
-                UniformCapeItem.RUNNING, UniformCapeItem.JUMPING)) {
-            for (RawAnimation.Stage stage : raw.getAnimationStages()) {
-                assertNotNull(animations.getAnimation(stage.animationName()),
-                        "a capa pede a animacao '" + stage.animationName() + "', que nao esta no arquivo");
+            for (RawAnimation raw : List.of(UniformCapeItem.IDLE, UniformCapeItem.WALKING,
+                    UniformCapeItem.RUNNING, UniformCapeItem.JUMPING)) {
+                for (RawAnimation.Stage stage : raw.getAnimationStages()) {
+                    assertNotNull(animations.getAnimation(stage.animationName()),
+                            modelo + " pede a animacao '" + stage.animationName() + "', que nao esta no arquivo");
+                }
             }
         }
     }
@@ -143,8 +169,12 @@ class UniformCapeAssetsTest {
      */
     @Test
     void nenhumaRotacaoDaAVoltaInteira() {
-        JsonObject animacoes = GsonHelper.getAsJsonObject(readJson(ANIMATIONS), "animations");
+        for (String modelo : modelos()) {
+            assertNenhumaRotacaoDaAVoltaInteira(GsonHelper.getAsJsonObject(readJson(animations(modelo)), "animations"));
+        }
+    }
 
+    private static void assertNenhumaRotacaoDaAVoltaInteira(JsonObject animacoes) {
         for (Map.Entry<String, JsonElement> animacao : animacoes.entrySet()) {
             JsonObject bones = GsonHelper.getAsJsonObject(
                     animacao.getValue().getAsJsonObject(), "bones", new JsonObject());
@@ -217,6 +247,23 @@ class UniformCapeAssetsTest {
             assertTrue(temperatura.get("cold_resistance").getAsFloat() > 0,
                     "a capa " + capa + " nao da resistencia ao frio nenhuma");
         }
+
+        // Capa com modelo proprio: a textura vestida mora direto em textures/entity/armor/, com o
+        // nome do item, e nao na pasta das cores do uniforme.
+        for (String item : UniformCapeItem.MODELOS_PROPRIOS) {
+            assertResourceExists("/assets/" + NAMESPACE + "/textures/entity/armor/" + item + ".png");
+            assertResourceExists("/assets/" + NAMESPACE + "/textures/item/" + item + ".png");
+            assertResourceExists("/assets/" + NAMESPACE + "/models/item/" + item + ".json");
+
+            String chave = "item." + NAMESPACE + "." + item;
+            assertTrue(ptBr.has(chave), "falta a traducao pt_br de " + chave);
+            assertTrue(enUs.has(chave), "falta a traducao en_us de " + chave);
+
+            JsonObject temperatura = readJson(
+                    "/data/" + NAMESPACE + "/legendarysurvivaloverhaul/temperature/items/" + item + ".json");
+            assertTrue(temperatura.get("cold_resistance").getAsFloat() > 0,
+                    "a capa " + item + " nao da resistencia ao frio nenhuma");
+        }
     }
 
     /**
@@ -231,6 +278,12 @@ class UniformCapeAssetsTest {
 
         assertEquals(registradas, UniformCapeItem.CAPAS.size(),
                 "UniformCapeItem.CAPAS e as capas registradas no AeonitaItems se separaram");
+
+        long proprias = Arrays.stream(AeonitaItems.class.getDeclaredFields())
+                .filter(field -> field.getName().endsWith("_CAPE"))
+                .count();
+        assertEquals(proprias, UniformCapeItem.MODELOS_PROPRIOS.size(),
+                "UniformCapeItem.MODELOS_PROPRIOS e as capas de modelo proprio do AeonitaItems se separaram");
     }
 
     private static void assertResourceExists(String path) {
@@ -241,8 +294,8 @@ class UniformCapeAssetsTest {
         }
     }
 
-    private static Model readModel() {
-        return KeyFramesAdapter.GEO_GSON.fromJson(readJson(GEO), Model.class);
+    private static Model readModel(String modelo) {
+        return KeyFramesAdapter.GEO_GSON.fromJson(readJson(geo(modelo)), Model.class);
     }
 
     private static JsonObject readJson(String path) {

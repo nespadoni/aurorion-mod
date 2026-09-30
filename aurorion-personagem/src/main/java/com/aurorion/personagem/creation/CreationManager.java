@@ -1,5 +1,6 @@
 package com.aurorion.personagem.creation;
 
+import com.aurorion.core.character.AltData;
 import com.aurorion.core.character.CharacterData;
 import com.aurorion.core.character.CharacterGate;
 import com.aurorion.core.character.CharacterName;
@@ -78,7 +79,10 @@ public final class CreationManager {
         UUID account = player.getUUID();
 
         if (!data.needsName(account)) return false;
-        return data.isDead(account) || data.pending(account) != null || CreationConfig.ASK_EXISTING.get();
+        // O segundo personagem da staff sempre nasce com nome: sem ele, os outros o veriam pelo nome
+        // tecnico de perfil ("Fulano_alt"), que entrega de quem ele e.
+        return data.isDead(account) || data.pending(account) != null || CreationConfig.ASK_EXISTING.get()
+                || AltData.get(player.server).isAlt(account);
     }
 
     // --- Entrada -----------------------------------------------------------------------------
@@ -90,6 +94,8 @@ public final class CreationManager {
 
         // Nasceu enquanto estava fora: a identidade ja existe, falta apresenta-la.
         if (data.takeNewborn(account)) welcome(player);
+        // Renomeado pela staff enquanto estava fora: o nome exibido ainda e o antigo.
+        if (data.takeRenamed(account)) presentRename(player);
 
         // Quem esta no meio do epilogo da morte definitiva ainda tem uma cena para assistir. A
         // pergunta do nome espera a proxima conexao, depois da desconexao que fecha aquela historia.
@@ -349,6 +355,15 @@ public final class CreationManager {
         player.sendSystemMessage(Component.literal("Você é " + character.fullName() + ".")
                 .withStyle(ChatFormatting.GREEN));
         announce(player, character);
+    }
+
+    /** Reaplica o nome exibido depois de um {@code /personagem renomear} feito com a pessoa offline. */
+    private static void presentRename(ServerPlayer player) {
+        CharacterData.Character character = CharacterData.get(player.server).find(player.getUUID());
+        if (character == null || !character.named() || character.dead()) return;
+        NeoForge.EVENT_BUS.post(new CharacterNamedEvent(player, character, false));
+        player.sendSystemMessage(Component.literal("Seu nome agora é " + character.fullName() + ".")
+                .withStyle(ChatFormatting.GRAY));
     }
 
     private static void announce(ServerPlayer player, CharacterData.Character character) {

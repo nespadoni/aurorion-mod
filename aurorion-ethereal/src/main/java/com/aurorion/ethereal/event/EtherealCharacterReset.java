@@ -1,9 +1,11 @@
 package com.aurorion.ethereal.event;
 
+import com.aurorion.core.character.CharacterNamedEvent;
 import com.aurorion.core.character.CharacterResetEvent;
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
 import com.aurorion.ethereal.house.HouseData;
+import com.aurorion.ethereal.ranking.BoardService;
 import com.aurorion.ethereal.ranking.RankingData;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -33,5 +35,14 @@ public final class EtherealCharacterReset {
         CeremonyManager.cancel(server, account);
 
         RankingData.get(server).clearPlayer(account);
+    }
+
+    /**
+     * Personagem nomeado ou renomeado: os projetores mostram o nome dele, entao os modos de aluno sao
+     * refeitos na hora — senao a linha ficaria com o nome antigo ate a proxima morte ou ponto.
+     */
+    @SubscribeEvent
+    public static void onNamed(CharacterNamedEvent event) {
+        BoardService.refreshPlayerNames(event.player().server);
     }
 }

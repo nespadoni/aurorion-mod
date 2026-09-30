@@ -4,6 +4,7 @@ import com.aurorion.essentials.fakename.FakeName;
 import com.aurorion.essentials.fakename.FakeNameRegistry;
 import com.aurorion.essentials.network.SyncFakeNamesPayload;
 import com.aurorion.essentials.network.UpdateFakeNamePayload;
+import com.aurorion.essentials.voice.VoiceNameSync;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -77,6 +78,8 @@ public final class FakeNameManager {
         PacketDistributor.sendToAllPlayers(new UpdateFakeNamePayload(player, Optional.ofNullable(fakeName).map(FakeName::raw)));
         forgetCachedDisplayName(server, player);
         refreshTabList(server, player);
+        ServerPlayer online = server.getPlayerList().getPlayer(player);
+        if (online != null) VoiceNameSync.refresh(online);
     }
 
     /**
@@ -131,6 +134,9 @@ public final class FakeNameManager {
             player.refreshDisplayName();
             refreshTabList(server, player.getUUID());
         }
+        // Fora do 'if': o Voice Chat pode ter criado o estado da pessoa antes deste login, ainda com o
+        // nick, e quem nao tem nome de personagem tambem precisa do estado conferido.
+        VoiceNameSync.refresh(player);
     }
 
     /** So limpa o cache em memoria — o que esta em disco continua valendo se o jogador voltar. */

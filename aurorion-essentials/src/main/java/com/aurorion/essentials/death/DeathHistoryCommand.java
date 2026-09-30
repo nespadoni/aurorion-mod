@@ -3,20 +3,15 @@ package com.aurorion.essentials.death;
 import com.aurorion.core.death.DeathClaims;
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.essentials.AurorionEssentials;
-import com.aurorion.essentials.fakename.FakeName;
-import com.aurorion.essentials.fakename.FakeNameLookup;
-import com.aurorion.essentials.fakename.FakeNameRegistry;
+import com.aurorion.essentials.fakename.CharacterTarget;
 import com.aurorion.essentials.fakename.LegacyColorCodes;
 import com.aurorion.essentials.mixin.PlayerListSaveInvoker;
-import com.aurorion.essentials.server.FakeNameData;
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.arguments.UuidArgument;
@@ -47,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -101,50 +95,19 @@ public final class DeathHistoryCommand {
 
     // --- Achar a pessoa -------------------------------------------------------------------------
     //
-    // Ninguem decora UUID, e num servidor de RP a staff quase nunca sabe o nick da Mojang de quem
-    // morreu: sabe o nome do personagem, que e o que aparece no chat, na tab e sobre a cabeca. Por
-    // isso o argumento aceita, nesta ordem de esforco:
-    //
-    //   1. a UUID da conta, se alguem tiver;
-    //   2. o nome de personagem de quem esta online agora (FakeNameRegistry);
-    //   3. o nick da Mojang de quem esta online;
-    //   4. o nome de personagem de quem esta OFFLINE (FakeNameData, que fica em disco);
-    //   5. o nick da Mojang de quem esta offline (cache de perfis do vanilla);
-    //   6. um nome usado em alguma morte salva (indice do DeathHistoryStore) — pega ate quem ja
-    //      trocou de nome depois de morrer.
-    //
-    // De 1 a 5 e sincrono, na thread do servidor. So o passo 6 le disco, e vai junto com a leitura do
-    // historico, na mesma ida a fila de IO.
+    // Os passos 1 a 5 (UUID, personagem online, nick online, personagem offline, nick offline) sao
+    // os de CharacterTarget, compartilhados com os outros comandos de staff. Este comando acrescenta
+    // o passo 6: um nome usado em alguma morte salva (indice do DeathHistoryStore) — pega ate quem ja
+    // trocou de nome depois de morrer. So o passo 6 le disco, e vai junto com a leitura do historico,
+    // na mesma ida a fila de IO.
 
     /** Nome com espaco precisa de aspas: o Tab ja sugere com elas para nao dar trabalho. */
-    private static final SuggestionProvider<CommandSourceStack> NAMES = (context, builder) -> {
-        MinecraftServer server = context.getSource().getServer();
-        TreeSet<String> names = FakeNameLookup.plainNames(FakeNameData.get(server).allRaw());
-        for (ServerPlayer online : server.getPlayerList().getPlayers()) names.add(online.getGameProfile().getName());
-        return SharedSuggestionProvider.suggest(names.stream().map(StringArgumentType::escapeIfRequired), builder);
-    };
+    private static final SuggestionProvider<CommandSourceStack> NAMES = CharacterTarget.SUGGESTIONS;
 
     /** Passos 1 a 5, todos na thread do servidor. {@code null} deixa o passo 6 para o disco. */
     @Nullable
     private static UUID resolveKnown(MinecraftServer server, String query) {
-        try {
-            return UUID.fromString(query);
-        } catch (IllegalArgumentException notAnId) {
-            // Segue para os nomes.
-        }
-        String wanted = FakeNameLookup.key(query);
-        for (ServerPlayer online : server.getPlayerList().getPlayers()) {
-            FakeName fakeName = FakeNameRegistry.get(online.getUUID());
-            if (fakeName != null && FakeNameLookup.key(fakeName.raw()).equals(wanted)) return online.getUUID();
-        }
-        ServerPlayer byNick = server.getPlayerList().getPlayerByName(query);
-        if (byNick != null) return byNick.getUUID();
-
-        UUID offline = FakeNameLookup.find(FakeNameData.get(server).allRaw(), query);
-        if (offline != null) return offline;
-
-        var cache = server.getProfileCache();
-        return cache == null ? null : cache.get(query).map(GameProfile::getId).orElse(null);
+        return CharacterTarget.resolve(server, query);
     }
 
     /** A conta e a lista de mortes dela, do jeito que o historico as guarda. */

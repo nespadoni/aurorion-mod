@@ -3,7 +3,6 @@ package com.aurorion.magia.client;
 import com.aurorion.core.client.ScreenFog;
 import com.aurorion.core.client.ShaderPacks;
 import com.aurorion.magia.AurorionMagia;
-import com.aurorion.magia.registry.MagiaEffects;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -22,9 +21,8 @@ import net.minecraft.world.phys.Vec3;
  * simplesmente nao e consultado. Resultado: a escuridao do Devorar Luz e a nevoa da Presenca
  * Aterradora <b>sumiam</b> para quem joga com BSL, Complementary ou Solas, que e quase todo mundo.
  *
- * <p>A <b>Escuridao</b> que a Presenca Aterradora poe em quem esta dentro dela nao depende disto: ela e
- * um efeito do vanilla, apaga a luz do mundo e o shader pack a respeita como respeita a noite. Esta
- * camada e a nevoa preta que fecha o ar por cima dessa escuridao.
+ * <p>A Presenca Aterradora <b>nao</b> passa por aqui: quem esta dentro dela tem que continuar vendo a
+ * cena inteira. O medo e so a sombra nos cantos da tela ({@code PossessionLayer}).
  *
  * <p>Esta camada e a outra metade da solucao. Enquanto houver shader ligado, a neblina e pintada aqui,
  * depois de o quadro estar composto, onde nenhum pacote interfere; sem shader, ela continua sendo a
@@ -42,13 +40,11 @@ import net.minecraft.world.phys.Vec3;
 public final class FogLayer implements LayeredDraw.Layer {
     public static final ResourceLocation ID = AurorionMagia.id("nevoa");
 
-    /** A cor do ar de cada magia. O medo nao tem cor: e o preto de nao haver ar nenhum. */
+    /** A cor do ar do Devorar Luz. */
     private static final int DARK = 0x02000A;
-    private static final int TERROR = 0x000000;
 
     /** Suavizacao: a nevoa fecha e abre em rampa, e nao de um quadro para o outro. */
     private static float darkness;
-    private static float terror;
 
     @Override
     public void render(GuiGraphics graphics, DeltaTracker delta) {
@@ -58,25 +54,15 @@ public final class FogLayer implements LayeredDraw.Layer {
 
         Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
         float toDarkness = ClientSpellVisuals.darkness(camera);
-        // O medo so fecha o ar de quem esta com medo: quem carrega a aura enxerga a praça normalmente.
-        float toTerror = player.hasEffect(MagiaEffects.TERRIFIED)
-                ? ClientSpellVisuals.terror(minecraft.level, camera)
-                : 0;
-
-        if (!minecraft.isPaused()) {
-            darkness += (toDarkness - darkness) * .08F;
-            terror += (toTerror - terror) * .06F;
-        }
+        if (!minecraft.isPaused()) darkness += (toDarkness - darkness) * .08F;
         if (!ShaderPacks.inUse()) return;
 
-        // Sem shader estes dois pesos viram neblina de verdade em MagiaClientEvents; com shader, aqui.
+        // Sem shader este peso vira neblina de verdade em MagiaClientEvents; com shader, aqui.
         ScreenFog.draw(graphics, DARK, darkness * .95F);
-        ScreenFog.draw(graphics, TERROR, terror);
     }
 
     /** Sair do mundo com a tela meio fechada nao pode deixar a proxima entrada escura. */
     static void clear() {
         darkness = 0;
-        terror = 0;
     }
 }

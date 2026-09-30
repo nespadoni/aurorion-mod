@@ -66,6 +66,23 @@ class PhoneBankContractTest {
 
             assertShadowFieldsExist(readMixin("PhoneBankClientMixin"), bank);
             assertShadowFieldsExist(readMixin("PhoneBankReceiptClientMixin"), receipt);
+            assertNoHelperCollision(readMixin("PhoneBankClientMixin"), bank);
+            assertNoHelperCollision(readMixin("PhoneBankReceiptClientMixin"), receipt);
+        }
+    }
+
+    /**
+     * Um helper do mixin com o mesmo nome e descritor de um metodo do alvo e fundido por cima dele.
+     * Foi assim que um {@code static isInside} derrubou o recibo com IncompatibleClassChangeError.
+     */
+    private static void assertNoHelperCollision(ClassNode mixin, ClassNode target) {
+        for (var method : mixin.methods) {
+            if (method.name.startsWith("<") || method.name.startsWith("aurorion$")) continue;
+            boolean isHook = method.visibleAnnotations != null || method.invisibleAnnotations != null;
+            if (isHook) continue;
+            assertTrue(target.methods.stream().noneMatch(candidate -> candidate.name.equals(method.name)
+                            && candidate.desc.equals(method.desc)),
+                    mixin.name + "." + method.name + method.desc + " colide com um metodo de " + target.name);
         }
     }
 

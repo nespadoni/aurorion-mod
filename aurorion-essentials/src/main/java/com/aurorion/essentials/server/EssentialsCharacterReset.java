@@ -4,6 +4,8 @@ import com.aurorion.core.character.CharacterNamedEvent;
 import com.aurorion.core.character.CharacterResetEvent;
 import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.compat.MattupolisPhoneCompat;
+import com.aurorion.essentials.compat.PhoneNumberSaveQueue;
+import com.aurorion.essentials.voice.ShoutRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,11 +28,24 @@ public final class EssentialsCharacterReset {
     @SubscribeEvent
     public static void onReset(CharacterResetEvent event) {
         ServerPlayer player = event.player();
+        // O diretorio de numeros e gravado fora da thread do servidor (PhoneNumberSaveQueue): o reset
+        // le e reescreve o arquivo, entao antes espera a fila esvaziar — senao uma gravacao atrasada
+        // devolveria o numero apagado — e depois esquece a ultima gravacao, porque o disco mudou.
+        PhoneNumberSaveQueue.awaitWrites();
         try {
             MattupolisPhoneCompat.resetCharacterData(event.server(), event.account());
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao limpar dados do telefone do personagem anterior", e);
+        } finally {
+            PhoneNumberSaveQueue.forgetLastWrite();
         }
+
+        // O /gritar e da cena do personagem anterior, nao da conta: o novo comeca com a voz normal.
+        ShoutRegistry.clear(event.account());
+
+        // A agenda do telefone fica no PC de cada um e aponta pelo nick: sem isto, o contato do
+        // personagem morto passaria a chamar o novo. Ver PhoneRetirements.
+        PhoneRetirementSync.retire(event.server(), event.previousCharacterId(), event.transaction().accountName());
 
         // Offline acontece quando um reset interrompido e retomado antes do dono voltar: sem
         // jogador nao ha pacote para enviar, e apagar o dado guardado ja basta.

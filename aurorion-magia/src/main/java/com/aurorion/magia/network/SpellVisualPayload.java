@@ -17,7 +17,8 @@ import net.minecraft.world.phys.Vec3;
  *
  * @param casterId id de rede de quem conjurou, ou -1
  * @param targetId id de rede do alvo, ou -1 para visual preso so a um ponto (lacre, Lux Vorata)
- * @param ttl      ticks de vida do visual no cliente
+ * @param ttl      ticks de vida do visual no cliente; <b>zero e "acabou"</b>: o visual que ja existe
+ *                 some em meio segundo (corrente aberta, tempo devolvido)
  * @param pos      ponto do mundo: ancora, bloco lacrado, centro da zona, ou vetor de impulso —
  *                 depende do {@link Kind}
  * @param extra    raio, face do bloco ou intensidade — depende do {@link Kind}
@@ -87,7 +88,7 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         LUX_VORATA,
         /** Correntes girando em volta do corpo. */
         FERRUM_LIGATUM,
-        /** Relogio parado no chao e geada no raio. pos = centro, extra = raio. */
+        /** Sombra do tamanho do salao e relogio preto parado no chao. Renovado a cada segundo. pos = centro, extra = raio. */
         TEMPUS_SISTERE,
         /** Raio verde ate o alvo e o selo da morte onde ele caiu. pos = pes do alvo, extra = altura dele. */
         MORTEM_DICO,
@@ -112,8 +113,12 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         UNDA_MAGNA,
         /** Carcere de Agua: a esfera em volta do preso, girando. */
         CARCER_AQUAE,
-        /** Presenca Aterradora: a aura negra em volta de quem a carrega. extra = raio. */
-        TERROR_AURA;
+        /** Presenca Aterradora: sombra e circulo negro no chao, fumaça, vultos e vozes. extra = raio do medo. */
+        TERROR_AURA,
+        /** Impeto do Vento: o rastro de vento atras de quem avanca. Preso a quem conjurou. */
+        IMPETUS_DASH,
+        /** Impeto do Vento: o chao rachando na chegada e a coluna de vento. pos = centro, extra = raio. */
+        IMPETUS_IMPACT;
 
         private static final Kind[] VALUES = values();
 
@@ -126,7 +131,7 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
             return this == SIGILLUM || this == SIGILLUM_DENY || this == SIGILLUM_BREAK || this == LUX_VORATA
                     || this == TEMPUS_SISTERE || this == MORTEM_DICO
                     || this == DEIECTIO_AREA || this == ASPECTUS_AREA || this == MORTEM_AREA
-                    || this == UNDA_MAGNA;
+                    || this == UNDA_MAGNA || this == IMPETUS_IMPACT;
         }
     }
 }

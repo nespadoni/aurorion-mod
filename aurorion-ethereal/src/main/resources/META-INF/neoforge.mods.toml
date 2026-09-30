@@ -43,3 +43,13 @@ type = "required"
 versionRange = "[0.2.0,)"
 ordering = "AFTER"
 side = "BOTH"
+
+# Cofre da Casa: lido por reflexao, entao continua opcional. Mas quando a economia estiver no pack
+# precisa ser a que tem deposito/saque pela carteira e salario; uma versao velha aqui e erro de
+# carregamento, e nao um cofre que aparece desligado sem explicacao.
+[[dependencies.${mod_id}]]
+modId = "aurorion_economia"
+type = "optional"
+versionRange = "[0.3.0,)"
+ordering = "NONE"
+side = "BOTH"

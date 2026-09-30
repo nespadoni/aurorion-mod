@@ -46,6 +46,11 @@ import java.util.function.Consumer;
  * <p>A textura viaja no proprio item, e nao no modelo: o {@code GeoModel} pergunta a capa que
  * textura usar, entao as seis cores compartilham um geo e um arquivo de animacao so.
  *
+ * <p>A mesma classe serve a capa que tem <em>modelo proprio</em> — a capa destruida dos
+ * Desvinculados ({@link #withOwnModel}). Ela nao e uniforme de casa nenhuma, mas e o mesmo tipo de
+ * peca: peitoral de couro, exportado do CPM pelo mesmo conversor, com os mesmos quatro estados de
+ * animacao. O que muda e so de onde vem geo, animacao e textura, e isso cabe em tres campos.
+ *
  * <p>A resistencia ao frio das capas nao esta aqui, e sim num datapack proprio em
  * {@code data/aurorion_aeonita/legendarysurvivaloverhaul/temperature/items/}. O Legendary Survival
  * Overhaul le aquilo sozinho; sem ele instalado os arquivos ficam parados no jar sem serem lidos
@@ -86,6 +91,13 @@ public class UniformCapeItem extends ArmorItem implements GeoItem {
     static final List<String> CAPAS =
             List.of("sem_casa", "venthra", "sylvara", "nyx", "ignivar", "aetheris");
 
+    /**
+     * As capas com geo, animacao e textura proprios, pelo nome do item (que e tambem o nome dos
+     * tres arquivos). O {@code UniformCapeAssetsTest} assa cada geo daqui e confere os arquivos do
+     * mesmo jeito que faz com {@link #CAPAS}.
+     */
+    static final List<String> MODELOS_PROPRIOS = List.of("desvinculados_cape");
+
     /** Duracao da mistura entre duas animacoes, em ticks. */
     private static final int TRANSITION_TICKS = 5;
 
@@ -100,12 +112,32 @@ public class UniformCapeItem extends ArmorItem implements GeoItem {
     private static final int LEATHER_DURABILITY = 5;
 
     private final ResourceLocation texture;
+    private final ResourceLocation model;
+    private final ResourceLocation animations;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
+    /** Capa de uniforme: o geo e a animacao do uniforme, com a textura da casa. */
     public UniformCapeItem(String house) {
+        this("textures/entity/armor/uniform_cape/" + house + ".png", "uniform_cape");
+    }
+
+    /**
+     * Capa com modelo proprio: {@code geo/armor/<name>.geo.json},
+     * {@code animations/armor/<name>.animation.json} e {@code textures/entity/armor/<name>.png}.
+     */
+    public static UniformCapeItem withOwnModel(String name) {
+        return new UniformCapeItem("textures/entity/armor/" + name + ".png", name);
+    }
+
+    private UniformCapeItem(String texture, String model) {
         super(AeonitaArmorMaterials.UNIFORM, Type.CHESTPLATE, properties());
-        this.texture = ResourceLocation.fromNamespaceAndPath(
-                AurorionAeonita.MOD_ID, "textures/entity/armor/uniform_cape/" + house + ".png");
+        this.texture = id(texture);
+        this.model = id("geo/armor/" + model + ".geo.json");
+        this.animations = id("animations/armor/" + model + ".animation.json");
+    }
+
+    private static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(AurorionAeonita.MOD_ID, path);
     }
 
     private static Item.Properties properties() {
@@ -114,9 +146,18 @@ public class UniformCapeItem extends ArmorItem implements GeoItem {
                 .rarity(Rarity.UNCOMMON);
     }
 
-    /** A textura desta casa. Lida pelo {@code GeoModel} no cliente. */
+    /** A textura desta capa. Lida pelo {@code GeoModel} no cliente. */
     public ResourceLocation texture() {
         return texture;
+    }
+
+    /** A geometria: a do uniforme, compartilhada pelas seis cores, ou a do modelo proprio. */
+    public ResourceLocation model() {
+        return model;
+    }
+
+    public ResourceLocation animations() {
+        return animations;
     }
 
     @Override

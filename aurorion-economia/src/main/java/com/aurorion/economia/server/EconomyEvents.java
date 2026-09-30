@@ -8,10 +8,19 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = AurorionEconomia.MOD_ID)
 public final class EconomyEvents {
+    /** Um minuto: salario e contado em dias, precisao maior so gastaria tick. */
+    private static final int SALARY_CHECK_TICKS = 1200;
+
     private EconomyEvents() { }
+
+    @SubscribeEvent
+    public static void tick(ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % SALARY_CHECK_TICKS == 0) HouseTreasury.paySalaries(event.getServer());
+    }
 
     @SubscribeEvent
     public static void characterNamed(CharacterNamedEvent event) {

@@ -2,6 +2,7 @@ package com.aurorion.personagem.event;
 
 import com.aurorion.core.character.CharacterGate;
 import com.aurorion.personagem.AurorionPersonagem;
+import com.aurorion.personagem.alt.AltLogin;
 import com.aurorion.personagem.creation.CreationManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -57,6 +58,7 @@ public final class PersonagemServerEvents {
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             CreationManager.onLogout(player);
+            AltLogin.onLogout(player.getUUID());
         }
     }
 
@@ -114,6 +116,7 @@ public final class PersonagemServerEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         CreationManager.reset();
+        AltLogin.reset();
         counter = 0;
     }
 }

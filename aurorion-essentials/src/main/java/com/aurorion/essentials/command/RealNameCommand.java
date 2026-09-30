@@ -1,5 +1,6 @@
 package com.aurorion.essentials.command;
 
+import com.aurorion.core.character.AltData;
 import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.fakename.FakeName;
 import com.aurorion.essentials.fakename.FakeNameRegistry;
@@ -45,7 +46,8 @@ public final class RealNameCommand {
             if (player == null) continue;
 
             found = true;
-            String realName = player.getGameProfile().getName();
+            // Segundo personagem da staff aparece com o dono: "NetoSpadoni_alt (alt de NetoSpadoni)".
+            String realName = AltData.staffLabel(context.getSource().getServer(), player.getGameProfile());
             context.getSource().sendSuccess(() -> Component.translatable(
                     "commands.aurorion_essentials.realname.found", query, realName), false);
         }

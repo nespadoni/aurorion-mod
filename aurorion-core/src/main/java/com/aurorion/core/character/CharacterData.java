@@ -35,6 +35,12 @@ public final class CharacterData extends SavedData {
     private final Set<UUID> authorized = new HashSet<>();
     /** Identidades publicadas que ainda nao foram apresentadas ao dono — ele estava offline. */
     private final Set<UUID> newborn = new HashSet<>();
+    /**
+     * Contas renomeadas pela staff com o dono offline. O nome exibido (fakename, projetores) e
+     * aplicado por quem escuta {@link CharacterNamedEvent}, que precisa do jogador online — sem esta
+     * marca, o nome novo so ficava no cadastro e a pessoa voltava com o antigo sobre a cabeca.
+     */
+    private final Set<UUID> renamed = new HashSet<>();
 
     public static CharacterData get(MinecraftServer server) { return ACCESS.get(server); }
     @Nullable public Character find(UUID account) { return current.get(account); }
@@ -127,6 +133,18 @@ public final class CharacterData extends SavedData {
         return renamed;
     }
 
+    /** A staff renomeou com o dono fora: o nome novo sera apresentado no proximo login. */
+    public void markRenamed(UUID account) {
+        if (renamed.add(account)) setDirty();
+    }
+
+    /** @return true uma vez so, no login seguinte a um {@link #markRenamed}. */
+    public boolean takeRenamed(UUID account) {
+        if (!renamed.remove(account)) return false;
+        setDirty();
+        return true;
+    }
+
     public boolean markDead(UUID account) {
         Character before = current(account);
         if (before.dead()) return false;
@@ -198,6 +216,7 @@ public final class CharacterData extends SavedData {
                 e.getUUID("Previous"), readCharacter(e), e.getString("AccountName")));
         PlayerMapNbt.readSet(tag, "Authorized", data.authorized);
         PlayerMapNbt.readSet(tag, "Newborn", data.newborn);
+        PlayerMapNbt.readSet(tag, "Renamed", data.renamed);
         data.current.values().forEach(data::index);
         data.history.values().forEach(a -> data.index(a.character()));
         data.pending.values().forEach(p -> data.index(p.next()));
@@ -225,6 +244,7 @@ public final class CharacterData extends SavedData {
         }));
         tag.put("Authorized", PlayerMapNbt.writeSet(authorized));
         tag.put("Newborn", PlayerMapNbt.writeSet(newborn));
+        tag.put("Renamed", PlayerMapNbt.writeSet(renamed));
         return tag;
     }
 }

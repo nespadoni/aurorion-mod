@@ -2,6 +2,7 @@ package com.aurorion.personagem.network;
 
 import com.aurorion.personagem.AurorionPersonagem;
 import com.aurorion.personagem.client.ClientCreation;
+import com.aurorion.personagem.client.ClientSwitch;
 import com.aurorion.personagem.creation.CreationManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -11,7 +12,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
- * Tres pacotes, e o canal e {@code optional()}: um cliente sem o mod continua entrando no servidor.
+ * Quatro pacotes, e o canal e {@code optional()}: um cliente sem o mod continua entrando no servidor.
  *
  * <p>Ele nao ve a tela — ve as mesmas perguntas no chat e responde em {@code /personagem criar}. A
  * regra nao muda: quem decide se o personagem existe e o servidor, com tela ou sem ela.
@@ -30,6 +31,10 @@ public final class PersonagemNetwork {
         });
         registrar.playToClient(CreationFeedbackPayload.TYPE, CreationFeedbackPayload.STREAM_CODEC, (payload, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> ClientCreation.feedback(payload));
+        });
+        // Troca de personagem: so avisa o cliente para reconectar sozinho depois da desconexao.
+        registrar.playToClient(SwitchingCharacterPayload.TYPE, SwitchingCharacterPayload.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) context.enqueueWork(() -> ClientSwitch.expect(payload));
         });
         registrar.playToServer(SubmitNamePayload.TYPE, SubmitNamePayload.STREAM_CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) {

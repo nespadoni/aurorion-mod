@@ -135,6 +135,10 @@ liberadas pela staff e de identidades publicadas que ainda não foram apresentad
 | `/personagem ver [jogador]` | staff para terceiros | Identidade, ID do personagem, datas e reserva pendente |
 | `/personagem renomear <jogador> <Nome> <Sobrenome>` | staff | Corrige a grafia; mantém ID, progressão e a marca de morte |
 | `/personagem cancelar <jogador>` | staff | Devolve o nome de uma reserva travada. **Não ressuscita ninguém** |
+| `/personagem trocar`, `/personagem alt …` | staff | Segundo personagem; ver [Segundo personagem da staff](#segundo-personagem-da-staff) |
+
+`/personagem renomear` com a pessoa **offline** fica marcado, e o nome exibido é reaplicado no
+próximo login dela.
 
 Nomes com espaço vão entre aspas: `/personagem criar Alda "de Verrine"`.
 
@@ -157,6 +161,54 @@ recebeu no pacote, então trocar uma frase não exige resource pack nem atualiza
 | `semAutorizacao` | texto | Tela de desconexão de quem morreu e ainda não foi liberado |
 | `apagando` | texto | Tela de desconexão entre reservar o nome e nascer; `%s` vira o nome escolhido |
 | `cobrarDeQuemJaJoga` | `true` | `false` pergunta **só** a quem vai criar outro personagem depois da morte |
+| `altLigado` | `true` | `false` desliga o segundo personagem: todo mundo entra na conta principal (rollback sem perder nada) |
+| `trocando` | texto | Tela de desconexão da troca de personagem; `%s` vira o nome de quem entra |
+
+## Segundo personagem da staff
+
+A staff pode ter **dois personagens na mesma conta**: o de staff, com OP, e um de jogador comum,
+sem OP. Cada um tem inventário, casa, vidas, carteira, magias e nome próprios. Acabou o `/deop` para
+jogar e `/op` para moderar.
+
+| Comando | Quem usa | O que faz |
+|---|---|---|
+| `/personagem alt criar` | staff (nível 2), na conta principal | Cria o segundo personagem. Ele nasce **sem OP** |
+| `/personagem trocar` | quem tem alt, dos dois lados | Troca de personagem: desconecta e reconecta como o outro |
+| `/personagem alt ver [jogador]` | staff | Vínculo conta ↔ alt, e quem entra no próximo login |
+| `/personagem alt remover <jogador>` | console ou nível 4 | Desfaz o vínculo. Os dados do alt **ficam** no mundo |
+
+**Como funciona.** O alt é **outro jogador** para o servidor. No login, depois da autenticação da
+Mojang, o perfil da conexão é trocado pelo do alt, que tem UUID próprio e fixo, derivado do da
+conta, e nome técnico de perfil `Nick_alt`. Daí em diante vanilla e **todos** os mods, inclusive os de
+terceiros, veem outra pessoa. Por isso tudo fica separado sem nenhuma linha por mod, e o `ops.json`,
+que é por perfil, nunca tem o alt.
+
+Na primeira entrada, o alt passa pela tela de criação e escolhe nome e sobrenome. É esse nome que os
+outros veem, e não o `Nick_alt`.
+
+**A troca reconecta.** O UUID vale para a conexão inteira. `/personagem trocar` grava quem entra
+no próximo login, com `fsync`, e desconecta. O cliente com este mod reconecta sozinho em ~2 s; sem o
+mod, é só entrar de novo.
+
+**Para a staff não se confundir,** `/realname`, os avisos de área e `/personagem ver` mostram
+`Nick_alt (alt de Nick)`. Toda troca vai para o log.
+
+**Pré-requisito no servidor: `enforce-secure-profile=false`** no `server.properties`. A chave de
+chat assinada que o cliente manda é do UUID real. O servidor ignora a sessão de chat do alt
+(`ChatSessionMixin`), e o chat dele sai sem assinatura. Com a opção ligada, o vanilla recusaria essas
+mensagens. Isso **não** afeta a autenticação (`online-mode` continua valendo): só desliga a assinatura
+criptográfica das mensagens, que serve ao "Report Chat" da Mojang — o mesmo que o NoChatReports faz.
+
+**Guardas:**
+- conta banida não entra pelo alt, porque o ban da conta real é conferido antes da troca;
+- whitelist ligada: o alt é adicionado junto com a conta;
+- alt morto em definitivo e sem liberação volta a pessoa para a conta principal, em vez de trancá-la
+  para fora;
+- o alt não consegue criar outro alt;
+- mundo local (singleplayer/LAN) nunca troca.
+
+**Pets, baús de Lootr e tudo que está no nome da conta principal não servem no alt**, e vice-versa.
+É a separação funcionando. Kits e scripts de "primeiro login" tratam o alt como jogador novo.
 
 ## Verificação
 
@@ -175,3 +227,16 @@ No jogo, com um mundo descartável, vale conferir:
 - reconectando, o personagem novo nasce sem inventário, sem avanços e sem estatísticas — e vale
   conferir também o que os mods do pack guardavam para aquela conta;
 - desligar o servidor entre a reserva e o nascimento e voltar: a varredura termina a troca sozinha.
+
+Segundo personagem (em dev, `runServer` + `runClient`; depois num servidor de teste em `online-mode`
+com conta premium, porque só ele exercita a chave de chat):
+
+- `/personagem alt criar` como OP → `/personagem trocar` → reconecta sozinho → tela de criação do alt;
+- no alt: inventário, casa, vidas, carteira, magias e nome exibido separados; `/op`, `/gamemode` e
+  afins **recusados**;
+- falar no chat como alt não desconecta (com `enforce-secure-profile=false`);
+- `/personagem trocar` de dentro do alt volta para a conta principal, com tudo dela intacto;
+- `/realname` e aviso de área mostram `Nick_alt (alt de Nick)`;
+- banir a conta principal barra os dois; `altLigado = false` faz entrar sempre na principal;
+- Voice Chat, AutoModpack e skin funcionando no alt;
+- `/personagem renomear` com o dono offline: o nome novo aparece sobre a cabeça no próximo login.

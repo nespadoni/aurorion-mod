@@ -37,6 +37,41 @@ class EconomyFoundationTest {
     }
 
     @Test
+    void walletAndVaultMoveTogetherWithoutCreatingMoney() {
+        WalletData data = new WalletData();
+        UUID player = UUID.randomUUID();
+        ResourceLocation house = ResourceLocation.parse("aurorion_ethereal:venthra");
+        data.setBalance(player, 100);
+
+        assertTrue(data.moveBetweenWalletAndHouse(player, house, 60));
+        assertEquals(40, data.balance(player));
+        assertEquals(60, data.houseBalance(house));
+
+        assertTrue(data.moveBetweenWalletAndHouse(player, house, -25));
+        assertEquals(65, data.balance(player));
+        assertEquals(35, data.houseBalance(house));
+
+        assertFalse(data.moveBetweenWalletAndHouse(player, house, 66), "carteira sem saldo");
+        assertFalse(data.moveBetweenWalletAndHouse(player, house, -36), "cofre sem saldo");
+        assertEquals(100, data.balance(player) + data.houseBalance(house));
+    }
+
+    @Test
+    void salaryIsKeptWithTheHouseAndZeroTurnsItOff() {
+        WalletData data = new WalletData();
+        ResourceLocation house = ResourceLocation.parse("aurorion_ethereal:nyx");
+
+        data.setHouseSalary(house, 500, 7, 1234L);
+        assertEquals(500, data.house(house).salary());
+        assertEquals(7, data.house(house).salaryDays());
+        assertEquals(1234L, data.house(house).lastSalaryAt());
+
+        data.setHouseSalary(house, 0, 7, 99L);
+        assertEquals(WalletData.HouseState.EMPTY, data.house(house));
+        assertTrue(data.houseIds().isEmpty(), "casa sem nada nao fica gravada");
+    }
+
+    @Test
     void vaultCapacitiesFollowTheEconomyDocument() {
         assertEquals(1_000, HouseTreasury.capacityForLevel(0));
         assertEquals(2_500, HouseTreasury.capacityForLevel(1));

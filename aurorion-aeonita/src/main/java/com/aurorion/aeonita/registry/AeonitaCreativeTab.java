@@ -30,6 +30,7 @@ public final class AeonitaCreativeTab {
                         output.accept(AeonitaItems.UNIFORM_CAPE_NYX.get());
                         output.accept(AeonitaItems.UNIFORM_CAPE_IGNIVAR.get());
                         output.accept(AeonitaItems.UNIFORM_CAPE_AETHERIS.get());
+                        output.accept(AeonitaItems.DESVINCULADOS_CAPE.get());
                     })
                     .build());
 

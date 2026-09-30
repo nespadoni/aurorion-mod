@@ -3,28 +3,35 @@ apply from: "$rootDir/gradle/aurorion-mod.gradle"
 // Iron's Spells 'n Spellbooks e uma dependencia de COMPILACAO de verdade aqui, diferente da ponte
 // reflexiva do aurorion-areas: as magias estendem AbstractSpell, e isso nao tem como ser reflexivo.
 //
-// O jar vem da pasta de referencia do servidor (a mesma versao que roda em producao), e nao de um
-// maven: assim o que compila e exatamente o que o pack carrega. Para apontar para outro jar:
-//     -PironsSpellbooksJar=C:/caminho/irons_spellbooks-1.21.1-X.jar
-//
-// compileOnly e nao modLibraries: o Iron's arrasta Curios, GeckoLib, PlayerAnimator e Caelus em
-// runtime. Quem instala o pack ja instala todos eles; empacotar ou reexportar aqui so criaria uma
-// segunda copia para o FML reclamar.
-def ironsSpellbooksJar = providers.gradleProperty('ironsSpellbooksJar')
-        .orElse("$rootDir/mod-servidor-referencia/irons_spellbooks-1.21.1-3.16.3.jar")
-
-// Simple Voice Chat: a API publica vem dentro do jar do mod. So o plugin do Vox Interdicta a toca, e
-// o Voice Chat so carrega essa classe se estiver instalado (ele e quem procura a anotacao).
-def voicechatJar = providers.gradleProperty('voicechatJar')
-        .orElse("$rootDir/mod-servidor-referencia/voicechat-neoforge-1.21.1-2.6.24.jar")
-
-// O Emotecraft NAO entra aqui: a ponte dele e reflexiva (compat/EmotecraftCompat), porque os tipos da
-// API vem de um jar aninhado (player-animation-lib) que o Gradle nao le de dentro de outro jar.
+// Os jars vem da pasta de referencia do servidor (as mesmas versoes que rodam em producao), e nao de
+// um maven: assim o que compila e o que roda no dev sao exatamente o que o pack carrega. Qualquer um
+// deles pode apontar para outro arquivo com -P<propriedade>=C:/caminho/arquivo.jar.
+def referencia = { String propriedade, String arquivo ->
+    files(providers.gradleProperty(propriedade).orElse("$rootDir/mod-servidor-referencia/$arquivo").get())
+}
 
 dependencies {
-    compileOnly files(ironsSpellbooksJar.get())
-    compileOnly files(voicechatJar.get())
-    // Tipos do GeckoLib aparecem em assinaturas publicas do Iron's (AnimationHolder). Declarado so para
-    // o javac resolver essas assinaturas; a mesma versao que o aurorion-aeonita ja usa.
-    compileOnly "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    // 'modLibraries' (ver gradle/aurorion-mod.gradle) e nao compileOnly: alem de compilar, estes mods
+    // entram no runClient/runServer deste mod e no aurorion-runs, que monta o classpath dele a partir
+    // do modLibraries de cada subprojeto. Nada disso vai para dentro do jar: quem instala o pack ja
+    // instala todos eles ao lado.
+    //
+    // O Iron's e o que ele exige para carregar (neoforge.mods.toml dele): irons_lib, Curios e
+    // PlayerAnimator. Sem um deles o FML recusa abrir o run inteiro.
+    modLibraries referencia('ironsSpellbooksJar', 'irons_spellbooks-1.21.1-3.16.3.jar')
+    modLibraries referencia('ironsLibJar', 'irons_lib-1.21.1-2.1.0.jar')
+    modLibraries referencia('curiosJar', 'curios-neoforge-9.5.1+1.21.1.jar')
+    modLibraries referencia('playerAnimatorJar', 'player-animation-lib-forge-2.0.4+1.21.1.jar')
+    // Tipos do GeckoLib aparecem em assinaturas publicas do Iron's (AnimationHolder), e o Iron's o exige
+    // em runtime. Mesma coordenada do aurorion-aeonita: no aurorion-runs e o mesmo arquivo, carregado
+    // uma vez so.
+    modLibraries "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+
+    // Opcionais do lado do magia, mas no pack: com eles no dev da para testar o espelho no Iron's
+    // Restrictions, a pose de joelhos (Emotecraft) e o microfone mudo do Vox Interdicta (Voice Chat).
+    // A API do Voice Chat vem dentro do jar do mod; a ponte do Emotecraft continua reflexiva
+    // (compat/EmotecraftCompat) — o jar entra so para rodar.
+    modLibraries referencia('ironsRestrictionsJar', 'irons_restrictions-1.21.1-5.2.0.jar')
+    modLibraries referencia('voicechatJar', 'voicechat-neoforge-1.21.1-2.6.24.jar')
+    modLibraries referencia('emotecraftJar', 'emotecraft-for-MC1.21.1-2.4.12-neoforge.jar')
 }

@@ -17,7 +17,6 @@ public final class MagiaConfig {
     public static final ModConfigSpec.IntValue DREAD_RADIUS;
     public static final ModConfigSpec.IntValue DREAD_KNEEL_RADIUS;
     public static final ModConfigSpec.BooleanValue DREAD_PROSTRATES;
-    public static final ModConfigSpec.BooleanValue DREAD_DARKENS;
     public static final ModConfigSpec.BooleanValue DREAD_SPARE_ALLIES;
     public static final ModConfigSpec.BooleanValue HEALING_TOUCH_HOSTILES;
 
@@ -65,8 +64,8 @@ public final class MagiaConfig {
 
         DREAD_RADIUS = BUILDER
                 .comment(
-                        "Presenca Aterradora: raio (blocos) em que as pessoas sentem medo — tela preta",
-                        "fechando, tremor, batida de coracao e nevoa negra. Nao tira vida nem atributo de",
+                        "Presenca Aterradora: raio (blocos) em que as pessoas sentem medo — sombra nos cantos",
+                        "da tela, tremor e batida de coracao. Ninguem fica cego. Nao tira vida nem atributo de",
                         "ninguem. Para a gente ao redor, aumentar este raio NAO custa mais nada: a aura le a",
                         "lista de jogadores da dimensao, sem busca espacial. So a fuga das criaturas varre uma",
                         "esfera, a cada 2 segundos, e SO enquanto alguem estiver com a aura ligada.")
@@ -89,14 +88,6 @@ public final class MagiaConfig {
                         "funcionando — a aura fica ligada por tempo indeterminado, e tirar o item da mao de",
                         "quem atravessa a rua viraria impossibilidade de jogar em vez de susto.")
                 .define("dreadProstrates", true);
-
-        DREAD_DARKENS = BUILDER
-                .comment(
-                        "Presenca Aterradora: a aura apaga a luz do mundo de quem esta dentro (a Escuridao do",
-                        "vanilla), e nao so fecha a nevoa. E o que faz tudo em volta escurecer de verdade,",
-                        "inclusive com shader pack — o pacote de shaders respeita a iluminacao do jogo.",
-                        "Desligue se a escuridao total estiver inviabilizando cena em lugar fechado.")
-                .define("dreadDarkens", true);
 
         DREAD_SPARE_ALLIES = BUILDER
                 .comment(

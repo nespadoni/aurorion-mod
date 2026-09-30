@@ -9,6 +9,7 @@ import com.aurorion.magia.spell.DolorCruciatusSpell;
 import com.aurorion.magia.spell.DolorUniversusSpell;
 import com.aurorion.magia.spell.FerrumLigatumSpell;
 import com.aurorion.magia.spell.GenuaFlecteSpell;
+import com.aurorion.magia.spell.ImpetusVentiSpell;
 import com.aurorion.magia.spell.ImperiumMentisSpell;
 import com.aurorion.magia.spell.LuxVorataSpell;
 import com.aurorion.magia.spell.MundusVacuusSpell;
@@ -91,6 +92,8 @@ public final class MagiaSpells {
             SPELLS.register("columna_venti", ColumnaVentiSpell::new);
     public static final DeferredHolder<AbstractSpell, TurboVentorumSpell> TURBO_VENTORUM =
             SPELLS.register("turbo_ventorum", TurboVentorumSpell::new);
+    public static final DeferredHolder<AbstractSpell, ImpetusVentiSpell> IMPETUS_VENTI =
+            SPELLS.register("impetus_venti", ImpetusVentiSpell::new);
 
     // --- Proibidas: sem craft, sem loot, sem vir pela escola. So a staff concede, uma a uma. -----
     public static final DeferredHolder<AbstractSpell, TempusSistereSpell> TEMPUS_SISTERE =

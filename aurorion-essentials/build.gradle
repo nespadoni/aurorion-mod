@@ -1,5 +1,14 @@
 apply from: "$rootDir/gradle/aurorion-mod.gradle"
 
+// Simple Voice Chat: a API vem dentro do jar do mod, do mesmo arquivo de referencia que o
+// aurorion-magia usa (no aurorion-runs e o mesmo jar, carregado uma vez so). Opcional em runtime —
+// o plugin de voz (voice/EssentialsVoicePlugin) so e carregado pelo proprio Voice Chat. Aponte para
+// outro arquivo com -PvoicechatJar=C:/caminho/arquivo.jar.
+dependencies {
+    modLibraries files(providers.gradleProperty('voicechatJar')
+            .orElse("$rootDir/mod-servidor-referencia/voicechat-neoforge-1.21.1-2.6.24.jar").get())
+}
+
 // O reset dos dados do telefone (extrato do banco, teto de PIX do dia, agenda de contas e numero)
 // e testado fora do JUnit: o RunPhoneResetTests compila o MattupolisPhoneCompat contra stubs das
 // classes de Minecraft, porque carregar a classe de verdade arrastaria o FML inteiro para dentro do

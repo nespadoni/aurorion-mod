@@ -67,7 +67,8 @@ public final class BoardService {
         }
 
         List<RankedEntry> ranking = RankingData.get(server).top(
-                mode, AeonicProjectorBlockEntity.MAX_LINES, HouseData.get(server), HouseCatalog.all());
+                mode, AeonicProjectorBlockEntity.MAX_LINES, HouseData.get(server), HouseCatalog.all(),
+                characterNames(server));
 
         List<BoardLine> lines = new ArrayList<>(ranking.size());
         for (int i = 0; i < ranking.size(); i++) {
@@ -114,6 +115,26 @@ public final class BoardService {
     /** Chamada pela ponte opcional do mod de vidas, somente quando algum contador muda. */
     public static void refreshLives(MinecraftServer server) {
         refresh(server, BoardMode.LIVES);
+    }
+
+    /**
+     * O nome de aluno em todo modo de jogador do projetor: o do <b>personagem</b> — o mesmo que o placar
+     * de vidas, a economia e o {@code /fakename} (que nasce com ele) mostram —, e nao o nick da conta que
+     * o {@code RankingData} grava. Sem personagem nomeado (conta que ainda nao passou pela criacao), fica
+     * o nick gravado, para a linha nao sair em branco.
+     */
+    public static RankingData.Names characterNames(MinecraftServer server) {
+        CharacterData characters = CharacterData.get(server);
+        return (id, recorded) -> {
+            CharacterData.Character character = characters.find(id);
+            return character != null && character.named() ? character.fullName() : recorded;
+        };
+    }
+
+    /** Todo modo que mostra nome de aluno. Nomear ou renomear um personagem refaz estes. */
+    public static void refreshPlayerNames(MinecraftServer server) {
+        refresh(server, BoardMode.TOP_PLAYERS, BoardMode.WORST_PLAYERS, BoardMode.MISSIONS,
+                BoardMode.LIVES, BoardMode.DUEL_WINS, BoardMode.RICHEST_PLAYERS);
     }
 
     private static List<BoardLine> lifeLines(MinecraftServer server, int limit) {

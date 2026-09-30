@@ -44,6 +44,8 @@ final class SigilGeometry {
     static final float[] SPIRAL = spiral();
     /** Tres aneis concentricos quebrados: a crista da onda. Unda Magna, Carcer Aquae. */
     static final float[] SEAL_WAVE = sealWave();
+    /** O chao rachado: fendas tortas saindo do centro, com galhos. Impeto do Vento. */
+    static final float[] CRACKS = cracks();
 
     private SigilGeometry() {
     }
@@ -369,6 +371,37 @@ final class SigilGeometry {
     }
 
     /** Aneis quebrados em arcos desencontrados: agua em movimento, e nao um circulo parado. */
+    /**
+     * Fendas em zigue-zague do centro para a borda, cada uma com um ou dois galhos curtos. A semente e
+     * fixa: todo cliente desenha a mesma rachadura, e ela e montada uma vez so, na carga da classe.
+     */
+    private static float[] cracks() {
+        Mesh mesh = new Mesh();
+        java.util.Random random = new java.util.Random(0x1A7E7L);
+        int arms = 9;
+        for (int i = 0; i < arms; i++) {
+            float angle = i * Mth.TWO_PI / arms + (random.nextFloat() - .5F) * .5F;
+            float r = .06F;
+            float x = r * Mth.cos(angle), z = r * Mth.sin(angle);
+            int steps = 6;
+            for (int s = 0; s < steps; s++) {
+                float next = Math.min(1, r + (1 - .06F) / steps * (.8F + random.nextFloat() * .4F));
+                float bend = angle + (random.nextFloat() - .5F) * .38F;
+                float nx = next * Mth.cos(bend), nz = next * Mth.sin(bend);
+                mesh.line(x, z, nx, nz);
+                if (s >= 1 && random.nextFloat() < .4F) {
+                    float branch = bend + (random.nextBoolean() ? .7F : -.7F);
+                    float length = .12F + random.nextFloat() * .12F;
+                    mesh.line(nx, nz, nx + length * Mth.cos(branch), nz + length * Mth.sin(branch));
+                }
+                x = nx;
+                z = nz;
+                r = next;
+            }
+        }
+        return mesh.finish();
+    }
+
     private static float[] sealWave() {
         Mesh mesh = new Mesh();
         float[] radii = {1F, .78F, .56F};

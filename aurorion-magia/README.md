@@ -87,7 +87,7 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 |---|---|---|---|---|
 | Dolor Cruciatus | `dolor_cruciatus` | Sangue | contínua 4 s | dor que paralisa |
 | Imperium Mentis | `imperium_mentis` | Eldritch | longa 1,5 s | dominar mob, desorientar jogador |
-| Vínculo do Carrasco | `vinculum_carnificis` | Sangue | instantânea | prender alguém a uma área |
+| Vínculo do Carrasco | `vinculum_carnificis` | Sangue | instantânea | prender alguém a uma área, até conjurar de novo |
 | Transposição | `transpositio` | Ender | instantânea | trocar de lugar com o alvo |
 | Mão do Algoz | `manus_carnificis` | Evocação | contínua 5 s | segurar e arremessar |
 | Mão Vazia | `manus_vacua` | Evocação | instantânea | desarmar |
@@ -105,7 +105,8 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Vento Guardião | `ventus_custos` | Evocação | instantânea | barreira que empurra para fora |
 | Coluna de Vento | `columna_venti` | Evocação | instantânea | subir, e descer de pena |
 | Turbilhão | `turbo_ventorum` | Evocação | longa 1 s | furacão que anda puxando gente |
-| Tempo Suspenso ⛔ | `tempus_sistere` | Ender | longa 1 s | congelar tudo em volta |
+| Ímpeto do Vento | `impetus_venti` | Evocação | instantânea | investida imparável que racha o chão e lança todos em 5 blocos para o alto |
+| Tempo Suspenso ⛔ | `tempus_sistere` | Ender | longa 1 s | parar o tempo num salão inteiro, até conjurar de novo |
 | Sentença Final ⛔ | `mortem_dico` | Eldritch | instantânea | morte instantânea, de um ou de todos |
 | Tormento Coletivo ⛔ | `dolor_universus` | Sangue | contínua 3–7 s | Cruciatus em área, no ar |
 
@@ -147,7 +148,14 @@ Tormento Coletivo, que usa o mesmo efeito.
   se abre no chão.
 
 ### Vínculo do Carrasco — *Vinculum Carnificis*
-O ponto onde o alvo foi atingido vira a âncora de uma corrente de 6 blocos, por 10 s + 2 s/nível.
+O ponto onde o alvo foi atingido vira a âncora de uma corrente de 12 blocos + 2 por nível (20 no
+nível 5), e ela **não tem prazo**: a primeira conjuração prende, a segunda no mesmo alvo solta.
+- Soltar vale em qualquer preso, inclusive o aliado que outro prendeu — é assim que um companheiro
+  abre a corrente. Prender continua só em quem não é aliado.
+- Prender **não abre cooldown**; soltar abre o cooldown inteiro. Quem acabou de prender consegue
+  soltar na hora, e ninguém prende e solta em sequência sem pagar.
+- Leite e totem **não** abrem a corrente. Ela acaba com a segunda conjuração, com a morte do preso ou
+  com `/effect clear` da staff.
 - O alvo anda, bate e conjura à vontade dentro do raio.
 - Ao cruzar a borda, é puxado para a âncora **e sangra**: 3 de dano no primeiro puxão, +1 por ponto de
   tensão, até 11 (cinco corações e meio). O dano tem intervalo próprio de 1 s, então quem insiste na
@@ -424,6 +432,29 @@ nunca faz é machucar. Como ela nasce onde você olha, também serve para levant
 **Visual:** funil ao contrário, estreito embaixo e aberto em cima, com a espiral do vento marcada no
 chão.
 
+### Ímpeto do Vento — *Impetus Venti*
+Inspirada na "Força Imparável". Você dispara **para a frente**, na direção em que olha, montado no
+vento: 8 blocos no nível 1, +1,5 por nível (14 no 5). Durante a investida você é **imparável**:
+golpe, flecha, explosão e magia de deslocamento não te empurram.
+
+A investida acaba ao percorrer a distância, ao bater numa parede ou num degrau alto, ou em no máximo
+0,8 s. Onde você para, **o chão racha**, e todos num raio de **5 blocos** são lançados para o alto:
+sobem uns seis blocos e ficam ~1,5 s no ar (`lancado`), sem conseguir conjurar e **sem dano de queda**
+ao descer.
+
+| Nível | Investida | Dano do impacto |
+|---|---|---|
+| 1 | 8 | **nenhum**: só lança |
+| 2 | 9,5 | poder de magia do nível 1 (≈2) |
+| 3 | 11 | ≈4 |
+| 5 | 14 | ≈8 |
+
+O dano sai pela escola de Evocação e escala com o poder de magia de quem conjura. Staff em
+criativo/espectador, chefes e NPCs ficam de fora. O teto é de 24 alvos.
+**Visual:** rastro de vento e poeira do chão atrás de quem avança. Na chegada, explosão de pedaços do
+próprio bloco, onda de choque clara, nove fendas escuras abrindo do centro por 3 s e o ar subindo
+delas.
+
 ### Turbilhão — *Turbo Ventorum*
 A ofensiva. Um funil de vento nasce 2,5 blocos à sua frente e **anda em linha reta**, na direção em
 que você estava olhando, acompanhando o relevo a 6 blocos por segundo. Quem estiver no caminho é
@@ -498,25 +529,42 @@ uma magia de outro addon, use `forbiddenSpells` no config (a regra de concessão
 craft se desliga no config de magia do Iron's).
 
 ### Tempo Suspenso — *Tempus Sistere* ⛔
-Tudo em volta para, **menos quem conjurou**: pessoas e criaturas ficam com o mesmo congelamento do
-`/freeze` do `aurorion-utils`. Ninguém anda, pula, agacha, bate, usa item ou troca de slot. Todos
-só olham, e mob congelado perde a IA. Flechas, tridentes e bolas de fogo no ar perdem o impulso e
-caem.
+Uma sombra se abre no chão, do tamanho de um salão, e o tempo para dentro dela, **menos para quem
+conjurou**: pessoas e criaturas ficam com o mesmo congelamento do `/freeze` do `aurorion-utils`.
+Ninguém anda, pula, agacha, bate, usa item ou troca de slot. Todos só olham, e mob congelado perde a
+IA. Flechas, tridentes e bolas de fogo que entram voando perdem o impulso e caem (as de quem parou o
+tempo, não).
 
-| Nível | Raio | Duração |
-|---|---|---|
-| 1 | 6 | 5 s |
-| 2 | 9 | 7 s |
-| 3 | 12 | 9 s |
-| 4 | 15 | 11 s |
-| 5 | 18 | 13 s |
+**É ativável:** a primeira conjuração para o tempo, e ele fica parado até a segunda. Parar **não
+abre cooldown**; devolver o tempo abre os 120 s inteiros — senão o conjurador ficaria preso à própria
+magia por dois minutos.
+
+| Nível | Raio |
+|---|---|
+| 1 | 30 |
+| 2 | 32 |
+| 3 | 35 |
+| 4 | 37 |
+| 5 | 40 |
+
+- A zona é **fixa no ponto da conjuração** (o que para é o lugar, não o corpo de quem conjurou) e é
+  um **cilindro**: o raio na horizontal e 12 blocos para cima e para baixo. Uma esfera de 40
+  congelaria também o andar de cima e o porão.
+- Quem entra depois congela no pulso seguinte (1 s); quem é arrastado para fora descongela sozinho
+  em até ~3 s. O congelamento dura 3 s e só é renovado quando está perto de vencer: um pacote de
+  efeito a cada ~2 s por pessoa, e não um por segundo, com o salão cheio.
+  Ao devolver o tempo, todos descongelam na hora — menos quem a staff congelou por `/freeze`.
+- Acaba com a segunda conjuração, com a morte de quem conjurou, ao deslogar e ao trocar de dimensão.
+  Leite e totem não o desfazem.
 
 Ficam de fora a staff em criativo/espectador e os chefes (`imune_deslocamento`). Há um teto de 64
-alvos. Sem o `aurorion-utils` no pack, a magia cai na `estase` deste mod, que tira andar e pular,
-mas não trava o teclado nem as ações.
-**Visual:** uma onda de gelo abre do centro até a borda e deixa um **relógio parado** no chão. O
-selo não gira de propósito: o tempo não anda ali. Flocos ficam suspensos no raio. Cada congelado
-ganha o anel de geada do `/freeze` e, na tela dele, a borda de geada.
+criaturas por pulso; jogadores não têm teto (é para pegar o salão inteiro). Sem o `aurorion-utils`
+no pack, a magia cai na Lentidão do vanilla, que tira o andar mas não trava o teclado nem as ações.
+**Visual:** a sombra abre do centro até a borda e deixa um **relógio preto parado** riscado nela,
+com um brilho roxo morto só na borda. O selo não gira de propósito: o tempo não anda ali. Poeira
+escura fica parada no ar e uma parede baixa de sombra sobe na borda — as duas só nascem perto de
+quem está olhando, porque o raio inteiro não cabe no orçamento de partículas. Cada congelado ganha o
+anel de geada do `/freeze` e, na tela dele, a borda de geada.
 
 ### Sentença Final — *Mortem Dico* ⛔
 "Eu declaro a morte." O alvo mirado (alcance 32, **inclui aliados**) morre na hora, como `/kill`.
@@ -602,7 +650,7 @@ recarga. Passiva se **recebe uma vez** — o pergaminho é consumido e a marca f
 | Nome | Id | Interruptor | O que faz |
 |---|---|---|---|
 | Mão que Cura | `manus_medica` | não | bater em alguém cura em vez de ferir |
-| Presença Aterradora | `presenca_terrivel` | sim | o mundo escurece, quem está perto sente medo e todos ao redor se prostram |
+| Presença Aterradora | `presenca_terrivel` | sim | quem está perto sente medo (sombra nos cantos da tela) e todos ao redor se prostram |
 
 ### Como uma passiva chega a alguém
 
@@ -661,17 +709,17 @@ O ar em volta de quem a carrega fica pesado.
 
 | O que | Alcance padrão | Config |
 |---|---|---|
-| Medo: escuridão, tela preta fechando, tremor, batida de coração, névoa, vultos | 30 | `dreadRadius` |
+| Medo: sombra nos cantos da tela, tremor, batida de coração, vultos na borda | 30 | `dreadRadius` |
 | Prostração: os dois joelhos no chão | 30 (o raio inteiro) | `dreadKneelRadius` (0 desliga) |
 | Criaturas perdem o alvo e fogem | 30 | `dreadRadius` |
 
 - O medo **não tira vida nem atributo de ninguém**. O efeito `apavorado` é lido pelo cliente da
-  própria pessoa e vira tela, som e névoa — ele não é arma de PvP disfarçada. O que muda no jogo é
-  que criatura hostil no raio perde o alvo, foge, e não consegue mais atacar quem carrega a aura.
-- **O mundo escurece de verdade.** Além da névoa preta, quem está dentro da aura recebe a *Escuridão*
-  do vanilla (`dreadDarkens`, ligado): a luz dos blocos e do céu se apaga na tela dele. É o caminho
-  que atravessa shader pack — o Iris respeita a iluminação do jogo, e não a neblina que a gente pede.
-  Desligue a chave se a escuridão total estiver inviabilizando cena em lugar fechado.
+  própria pessoa e vira tela e som — ele não é arma de PvP disfarçada. O que muda no jogo é que
+  criatura hostil no raio perde o alvo, foge, e não consegue mais atacar quem carrega a aura.
+- **Ninguém fica cego.** A aura é palco de cena, com gente no meio dela: não há Escuridão do vanilla,
+  névoa fechando o ar nem véu na tela inteira. O mundo continua visível; só as bordas da tela pesam
+  (vinheta preta de ~20% de cada lado, no máximo meia opacidade, pulsando com o coração), a mesma dose
+  da sombra periférica da Floresta Negra do `aurorion-areas`. A chave `dreadDarkens` saiu do config.
 - **Todos ao redor se prostram**, e não só quem chega perto: `dreadKneelRadius` nasce igual a
   `dreadRadius`. A pose é a prostração do Emotecraft (`kneel_down`, os dois joelhos, embutida no nosso
   jar); com `dreadProstrates = false` ela vira um joelho só (`kneel_one_knee`). Valor de
@@ -691,11 +739,24 @@ O ar em volta de quem a carrega fica pesado.
 - Ligar e desligar vale **em qualquer lugar**: a aura é de vilão, e ela não é desligada por área
   segura. Quem decide quando ela acontece é quem a carrega.
 
-**Visual:** mancha preta no chão, quatro faixas de treva girando em volta do corpo, fumaça negra
-subindo e vultos rondando até 6 blocos. Na tela de quem está perto: o mundo apagado, véu preto
-pulsando no ritmo do coração, vultos cruzando a periferia e a névoa fechando conforme a distância
-diminui — na borda do raio é um peso no canto do olho; dos 60% para dentro, uma parede preta a 5
-blocos do nariz.
+**Visual:** nada de faixa em volta do corpo. Quando a aura acende, uma **sombra se espalha no chão**
+a partir dos pés, em 3 s, até 10 blocos, com ondas escuras correndo para a borda e uma brasa fraca
+pulsando nela; riscado na sombra, um **círculo mágico preto** (espinhos, anel de runas e pentagrama,
+girando devagar em sentidos opostos). Fumaça negra grossa sobe colada ao corpo, girando; fumaça
+rasteira brota da mancha; **vultos** — colunas de sombra da altura de uma pessoa — brotam do chão e
+sobem inteiros; almas escapam de vez em quando. A sombra fica em 10 blocos mesmo com o medo em 30:
+é um disco chapado na altura dos pés, e maior que isso atravessaria escada, telhado e morro.
+
+**Vozes:** a cada ~4,5 s, em média, um sussurro, um lamento ou um suspiro de alma toca num ponto da
+sombra — no cliente de cada um que está perto, inclusive o de quem carrega a aura. Nenhum pacote.
+
+**Tela de quem está com medo:** sombra nas bordas, pulsando no ritmo do coração, e dois vultos
+passando rente à borda. O centro fica sempre limpo. Mais perto de quem carrega a aura, os cantos
+pesam mais; na borda do raio, é só um sopro.
+
+**Com a praça cheia (~90 pessoas):** o teto é de 96 pessoas por pulso, e cada efeito da aura
+(`apavorado`, `genuflexo`) dura 3 s e só é renovado quando está perto de vencer — um pacote de efeito
+a cada ~2 s por pessoa, e não um por segundo. Quem sai do raio volta ao normal em até ~3 s.
 
 **Som:** uma batida de coração de 100 bpm em laço, **só no cliente de quem está com medo**, com o
 volume e o tom subindo conforme o portador se aproxima. Quem carrega a aura nunca ouve nada, e nenhum
@@ -730,7 +791,7 @@ efeito**, que o vanilla já faz da entidade afetada, e só nela.
 | Gate de conjuração | a cada tentativa de conjurar | 2 buscas em hash (+1 consulta de efeito) |
 | Reconcile com o Iron's | login, comando, reset | ~150 entradas, sem pacote se nada mudou |
 | Pulso do Cruciatus | a cada 10 ticks, só durante a canalização | 1 distância + 1 raycast + 1 payload |
-| Corrente do Vinculum | 5×/s, só em quem está preso | 1 distância; puxão só fora do raio |
+| Corrente do Vinculum | 5×/s, só em quem está preso | 1 distância; puxão só fora do raio; 1 payload de visual a cada 5 s |
 | Mão do Algoz | todo tick, só durante a canalização, 1 alvo | 1 vetor + 1 pacote de velocidade |
 | Arremessado | todo tick, até 1,5 s, só no arremessado | leitura de colisão |
 | Dominação | no feitiço e 1×/s só no mob dominado, se o alvo sumiu | `getEntitiesOfClass` num raio de 12 |
@@ -739,7 +800,8 @@ efeito**, que o vanilla já faz da entidade afetada, e só nela.
 | Lacres | ao abrir/quebrar bloco e em explosão | 1 busca em `Long2ObjectMap` |
 | Ferro Vinculado | quando o equipamento muda (evento vanilla) | busca no inventário, só no vinculado |
 | Lux Vorata | uma vez por conjuração (cooldown 30 s) | varredura da esfera, até ~5 mil posições |
-| Tempus Sistere | uma vez por conjuração (cooldown 120 s) | 1 busca no raio (teto 64); depois só o tick do efeito |
+| Tempus Sistere (gente) | 1×/s, **por zona ligada** | nenhuma busca espacial: 1 volta em `level.players()`; 1 payload de visual |
+| Tempus Sistere (criaturas e projéteis) | 1×/2 s e 1×/s, **por zona ligada** | 1 busca no cilindro (teto 64 criaturas) e 1 de projéteis; sem zona ligada, zero |
 | Mortem Dico | uma vez por conjuração | 1 raycast + 1 dano |
 | Dolor Universus | todo tick da canalização, só nos alvos dela (teto 24) | 1 vetor + 1 pacote de velocidade por alvo; 1 payload visual e 1 raio visual por pulso |
 | Magia em área (agachado) | uma vez por conjuração | 1 busca no raio com teto de alvos; depois só os efeitos |
@@ -748,6 +810,7 @@ efeito**, que o vanilla já faz da entidade afetada, e só nela.
 | Cárcere de Água | todo tick, só no preso | 1 distância; teleporte só quando ele saiu do lugar |
 | Maremoto | uma vez por conjuração | 1 busca no raio (teto 24) + 1 busca de projéteis |
 | Barreira / Coluna / Turbilhão | todo tick, só enquanto a zona existe | 1 busca no raio com teto de 20; sem zona, zero |
+| Ímpeto do Vento | todo tick, só durante a investida (≤ 0,8 s), 1 alvo | 1 vetor + 1 pacote de velocidade; na chegada, 1 busca no raio com teto de 24 |
 | Presença Aterradora (gente) | 1×/s, **por aura ligada** | nenhuma busca espacial: 1 volta em `level.players()`, teto 32 |
 | Presença Aterradora (bicho) | 1×/2 s, **por aura ligada** | 1 busca em esfera de `dreadRadius` só em `Mob`, teto de 8 rotas; sem aura ligada, zero |
 | Mão que Cura | por golpe corpo a corpo de quem a tem | 1 busca em hash |
@@ -819,7 +882,7 @@ O `aurorion-areas` usa as mesmas duas peças na névoa da Floresta Negra.
 
 `config/aurorion/magia-server.toml`: `staffBypass`, `authoritative`, `forbiddenSpells`,
 `dominationRadius`, e a seção `[passivas]` com `dreadRadius`, `dreadKneelRadius`, `dreadProstrates`,
-`dreadDarkens`, `dreadSparesAllies` e `healingTouchHealsHostiles`.
+`dreadSparesAllies` e `healingTouchHealsHostiles`. (`dreadDarkens` saiu: a aura não cega mais.)
 
 `config/aurorion/magia-client.toml`: `visualDistance` (até 32, o limite do vanilla para partículas),
 `cameraShake` (0 desliga).
@@ -837,14 +900,20 @@ Tags de datapack (`data/aurorion_magia/tags/`):
 
 ## Build
 
-Compila contra os jars locais (`compileOnly`) de `mod-servidor-referencia/`:
-- Iron's Spells, trocável com `-PironsSpellbooksJar=...`;
-- Voice Chat, trocável com `-PvoicechatJar=...`.
+Compila e roda contra os jars locais de `mod-servidor-referencia/`, as mesmas versões do pack,
+declarados em `modLibraries` (entram no classpath e nos runs, nunca dentro do jar):
 
-O Emotecraft não entra no build (a ponte é por reflexão).
+| Mod | Por quê | Trocar com |
+|---|---|---|
+| Iron's Spells 3.16.3 | as magias estendem `AbstractSpell` | `-PironsSpellbooksJar=...` |
+| irons_lib 2.1.0, Curios 9.5.1, PlayerAnimator 2.0.4 | obrigatórios do Iron's | `-PironsLibJar`, `-PcuriosJar`, `-PplayerAnimatorJar` |
+| GeckoLib (Maven, mesma versão do aeonita) | obrigatório do Iron's | `geckolib_version` |
+| Iron's Restrictions, Voice Chat, Emotecraft | compat opcional, para testar no dev | `-PironsRestrictionsJar`, `-PvoicechatJar`, `-PemotecraftJar` |
 
-O mod fica fora do `aurorion-runs` (`aurorion_runs_skip=true`), porque o run do ecossistema não
-carrega o Iron's e a árvore dele. A validação é no pack do servidor.
+A ponte do Emotecraft continua por reflexão; o jar dele entra só para rodar.
+
+O mod **entra no `aurorion-runs`**: `./gradlew :aurorion-runs:runClient` sobe o ecossistema inteiro
+com as magias. `:aurorion-magia:runClient` sobe só ele (com o core e a árvore do Iron's).
 
 O mod é obrigatório no cliente: as magias e os efeitos entram em registros sincronizados.
 
@@ -885,12 +954,17 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   - `unlock spell` libera;
   - `/createScroll <id> <nível>` gera o pergaminho.
 - [ ] Tempus Sistere:
-  - todos no raio congelam (jogador e mob), menos quem conjurou;
+  - todos no raio (30 no nível 1, 40 no 5) congelam, jogador e mob, menos quem conjurou;
+  - **segunda conjuração devolve o tempo**, todos soltam na hora; quem estava em `/freeze` da staff
+    continua congelado;
+  - ligar não põe cooldown; desligar põe os 120 s;
+  - quem entra no salão depois congela em até 1 s; quem é empurrado para fora solta;
+  - o andar de cima (mais de 12 blocos) **não** congela;
   - criativo e chefe ficam de fora;
-  - flechas no ar caem;
-  - soltam no fim;
-  - relógio parado e onda de gelo visíveis;
-  - sem o `aurorion-utils`, cai na estase.
+  - flechas que entram caem; as de quem conjurou passam;
+  - deslogar, morrer ou trocar de dimensão devolve o tempo; leite não;
+  - sombra, relógio preto e brilho roxo visíveis de qualquer ponto do salão (também longe do centro);
+  - sem o `aurorion-utils`, cai na Lentidão.
 - [ ] Mortem Dico:
   - mata jogador de armadura cheia, com totem na mão e em criativo; mata mob;
   - mensagem de morte com o nome de quem conjurou;
@@ -909,6 +983,11 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
 - [ ] Cruciatus e Imperium: comportamento anterior, agora com os selos (espinhos sob o alvo, coroa
   jade, selo que se abre no chão).
 - [ ] Vinculum:
+  - **não acaba sozinho**: passa de 1 minuto, relogar, e continua preso; segunda conjuração no preso
+    solta (mensagem "A corrente se abre."), e o círculo some;
+  - prender não põe cooldown, soltar põe; um aliado consegue soltar quem outro prendeu;
+  - leite e totem não soltam; raio 12 no nível 1, 20 no 5;
+  - quem chega perto depois de o preso já estar preso vê a âncora em até 5 s;
   - puxão ao cruzar o raio, e mais forte a cada tentativa;
   - **dano ao insistir na borda**: um golpe por segundo, crescendo com a tensão, e a mensagem de morte
     nomeia quem lançou a corrente;
@@ -1028,23 +1107,38 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
   - o alvo conserva a animação de dano, o som e o recuo, sem perder saúde.
 - [ ] Presença Aterradora:
   - `/aurorion passivas ligar presenca_terrivel` acende a aura e `desligar` a apaga **no mesmo tick**;
-  - a 30 blocos já se sente tudo: mundo escuro (Escuridão do vanilla), véu preto, tremor, coração,
-    névoa **e** a prostração, com a pose do Emotecraft vista por todos;
+  - a 30 blocos já se sente tudo: sombra nos cantos da tela, tremor, coração **e** a prostração,
+    com a pose do Emotecraft vista por todos;
+  - **ninguém fica cego**: dentro do círculo, colado em quem carrega a aura, dá para ver a cena
+    inteira — sem Escuridão, sem névoa, sem véu no centro da tela (com e sem shader);
   - `dreadProstrates = false` troca a prostração por um joelho só; `dreadKneelRadius = 10` devolve o
     comportamento antigo (a plateia de longe fica de pé);
-  - `dreadDarkens = false` mantém a névoa e tira a Escuridão;
   - no chão por medo, comer/beber/escudo/magia **continuam** funcionando;
-  - sair do raio volta ao normal em pouco mais de um segundo (bicho, em pouco mais de dois);
+  - sair do raio volta ao normal em até ~3 s (bicho, em pouco mais de dois);
   - aliado de time fica de fora (e passa a entrar com `dreadSparesAllies = false`);
   - staff em criativo e espectador ficam de fora; manequim e NPC de ofício não recebem nada;
   - criatura hostil perde o alvo, foge e não consegue atacar o portador;
-  - quem carrega a aura **não** ouve o coração, não vê a névoa e não escurece;
+  - quem carrega a aura **não** ouve o coração nem vê a sombra nos cantos;
+  - com muita gente dentro (teste com vários clientes), todos ficam apavorados e de joelhos, e o
+    `apavorado` não pisca ao ser renovado;
   - relogar com a aura ligada: ela volta sozinha; morrer e renascer: idem;
   - leite/`/effect clear` no portador não desliga a aura: ela volta no tick seguinte (e **não**
     entra em recursão — foi o `StackOverflowError` de 0.3.0 no desligamento do servidor);
   - `/aurorion personagem` (morte definitiva) apaga a passiva e a aura junto.
-- [ ] Dois portadores de aura perto um do outro: uma névoa só, sem dobrar o escurecimento nem tocar
-  dois corações.
+- [ ] Presença Aterradora, visual: **nenhum anel preto em volta do corpo**; a sombra nasce nos pés e
+  se espalha em ~3 s até 10 blocos; o círculo mágico preto aparece riscado nela (conferir contraste
+  em chão claro e escuro, de dia e de noite, e com shader); fumaça grossa subindo do corpo, vultos
+  brotando do chão, vozes ao redor; com "Partículas: Mínimas" a quantidade cai para 1/4.
+- [ ] Dois portadores de aura perto um do outro: uma vinheta só e um coração só.
+- [ ] Ímpeto do Vento:
+  - a investida sai reta para onde se olha e para numa parede ou num degrau alto;
+  - golpe e flecha **não** empurram quem está avançando;
+  - na chegada todos em 5 blocos sobem ~6 blocos e descem **sem** dano de queda; ninguém conjura no ar;
+  - nível 1 não fere; nível 2+ fere;
+  - rachadura, onda de choque e rastro visíveis; com lag, a investida não para no meio do caminho.
+- [ ] Zonas de vento (Barreira, Coluna, Turbilhão): conjurar as três e olhar para elas. A Coluna
+  derrubava o cliente com `IllegalStateException: Not building!` no `SpellZoneRenderer` (pedia o
+  buffer de tinta depois do de luz e continuava escrevendo no de luz, que tinha sido fechado).
 
 **Visual e desempenho**
 - [ ] Todos os selos aparecem, inclusive na face de porta/baú, e somem no fim; nada fica preso na
@@ -1052,7 +1146,7 @@ O mod é obrigatório no cliente: as magias e os efeitos entram em registros sin
 - [ ] Shaders do pack (Iris/Oculus) com os RenderTypes de tinta/luz. A cerimônia do ethereal usa
   os mesmos e serve de referência.
 - [ ] **Névoa com shader ligado e desligado** (tecla K no Iris, em jogo): dentro do Devorar Luz e
-  dentro de uma aura de terror, a névoa tem que aparecer nos dois casos, e **nunca as duas
+  a névoa tem que aparecer nos dois casos, e **nunca as duas
   técnicas ao mesmo tempo** (a tela ficaria escura demais). Conferir com BSL, Complementary e
   Solas, que são os do pack.
 - [ ] A névoa de tela não cobre a barra de itens nem o chat.

@@ -34,6 +34,9 @@ public class WalletData extends SavedData {
     private static final String KEY_HOUSES = "HouseTreasuries";
     private static final String KEY_HOUSE_ID = "House";
     private static final String KEY_VAULT_LEVEL = "VaultLevel";
+    private static final String KEY_SALARY = "Salary";
+    private static final String KEY_SALARY_DAYS = "SalaryDays";
+    private static final String KEY_LAST_SALARY = "LastSalaryAt";
 
     private static final SavedDataAccess<WalletData> ACCESS =
             new SavedDataAccess<>(FILE_ID, WalletData::new, WalletData::load);
@@ -46,7 +49,27 @@ public class WalletData extends SavedData {
     private Tag unreadableDeeds;
     public static final int MAX_DEEDS = 4096;
 
-    record HouseState(long balance, int vaultLevel, int protectorLevel) { }
+    /** Salario zero = desligado; {@code lastSalaryAt} e o relogio real do ultimo pagamento. */
+    record HouseState(long balance, int vaultLevel, int protectorLevel,
+                      long salary, int salaryDays, long lastSalaryAt) {
+        static final HouseState EMPTY = new HouseState(0L, 0, 0, 0L, 0, 0L);
+
+        boolean isEmpty() {
+            return balance == 0L && vaultLevel == 0 && protectorLevel == 0 && salary == 0L;
+        }
+
+        HouseState withBalance(long value) {
+            return new HouseState(value, vaultLevel, protectorLevel, salary, salaryDays, lastSalaryAt);
+        }
+
+        HouseState withLevels(int vault, int protector) {
+            return new HouseState(balance, vault, protector, salary, salaryDays, lastSalaryAt);
+        }
+
+        HouseState withSalary(long amount, int days, long lastAt) {
+            return new HouseState(balance, vaultLevel, protectorLevel, amount, days, lastAt);
+        }
+    }
 
     public static WalletData get(MinecraftServer server) {
         return ACCESS.get(server);
@@ -68,8 +91,12 @@ public class WalletData extends SavedData {
             long balance = Math.min(Math.max(entry.getLong(KEY_BALANCE), 0L), Money.MAX);
             int vaultLevel = Math.max(0, Math.min(entry.getInt(KEY_VAULT_LEVEL), HouseTreasury.MAX_LEVEL));
             int protectorLevel = Math.max(0, Math.min(entry.getInt("ProtectorLevel"), 2));
-            if (balance > 0 || vaultLevel > 0 || protectorLevel > 0)
-                data.houses.put(id, new HouseState(balance, vaultLevel, protectorLevel));
+            long salary = Math.min(Math.max(entry.getLong(KEY_SALARY), 0L), Money.MAX);
+            int salaryDays = Math.max(0, Math.min(entry.getInt(KEY_SALARY_DAYS), HouseTreasury.MAX_SALARY_DAYS));
+            if (salaryDays == 0) salary = 0L;
+            HouseState state = new HouseState(balance, vaultLevel, protectorLevel,
+                    salary, salaryDays, Math.max(0L, entry.getLong(KEY_LAST_SALARY)));
+            if (!state.isEmpty()) data.houses.put(id, state);
         }
         try {
             if (tag.contains("LandDeeds") && !tag.contains("LandDeeds", Tag.TAG_LIST))
@@ -100,6 +127,11 @@ public class WalletData extends SavedData {
             entry.putLong(KEY_BALANCE, state.balance());
             entry.putInt(KEY_VAULT_LEVEL, state.vaultLevel());
             entry.putInt("ProtectorLevel", state.protectorLevel());
+            if (state.salary() > 0L) {
+                entry.putLong(KEY_SALARY, state.salary());
+                entry.putInt(KEY_SALARY_DAYS, state.salaryDays());
+                entry.putLong(KEY_LAST_SALARY, state.lastSalaryAt());
+            }
             houses.add(entry);
         });
         tag.put(KEY_HOUSES, houses);
@@ -164,55 +196,84 @@ public class WalletData extends SavedData {
         return true;
     }
 
+    HouseState house(ResourceLocation house) {
+        return houses.getOrDefault(house, HouseState.EMPTY);
+    }
+
+    java.util.Set<ResourceLocation> houseIds() {
+        return java.util.Set.copyOf(houses.keySet());
+    }
+
     long houseBalance(ResourceLocation house) {
-        HouseState state = houses.get(house);
-        return state == null ? 0L : state.balance();
+        return house(house).balance();
     }
 
     int houseVaultLevel(ResourceLocation house) {
-        HouseState state = houses.get(house);
-        return state == null ? 0 : state.vaultLevel();
+        return house(house).vaultLevel();
     }
 
     boolean setHouseBalance(ResourceLocation house, long balance) {
-        HouseState before = houses.getOrDefault(house, new HouseState(0L, 0, 0));
+        HouseState before = house(house);
         long safe = Math.min(Math.max(balance, 0L), Money.MAX);
         if (before.balance() == safe) return false;
-        putHouse(house, new HouseState(safe, before.vaultLevel(), before.protectorLevel()));
+        putHouse(house, before.withBalance(safe));
         return true;
     }
 
     boolean setHouseVaultLevel(ResourceLocation house, int level) {
-        HouseState before = houses.getOrDefault(house, new HouseState(0L, 0, 0));
+        HouseState before = house(house);
         int safe = Math.max(0, Math.min(level, HouseTreasury.MAX_LEVEL));
         if (before.vaultLevel() == safe) return false;
         if (before.balance() > HouseTreasury.capacityForLevel(safe)) return false;
-        putHouse(house, new HouseState(before.balance(), safe, before.protectorLevel()));
+        putHouse(house, before.withLevels(safe, before.protectorLevel()));
+        return true;
+    }
+
+    void setHouseSalary(ResourceLocation house, long amount, int days, long lastAt) {
+        HouseState before = house(house);
+        putHouse(house, amount <= 0L || days <= 0
+                ? before.withSalary(0L, 0, 0L)
+                : before.withSalary(Math.min(amount, Money.MAX), days, Math.max(0L, lastAt)));
+    }
+
+    /**
+     * Carteira e cofre moram no mesmo SavedData: debitar um lado e creditar o outro e uma unica
+     * alteracao gravada junto, sem janela em que o dinheiro exista nos dois lugares ou em nenhum.
+     */
+    boolean moveBetweenWalletAndHouse(java.util.UUID player, ResourceLocation house, long toHouse) {
+        long wallet = balance(player);
+        HouseState state = house(house);
+        long walletAfter = wallet - toHouse;
+        long houseAfter = state.balance() + toHouse;
+        if (toHouse == 0L || walletAfter < 0L || houseAfter < 0L || walletAfter > Money.MAX || houseAfter > Money.MAX)
+            return false;
+        setBalance(player, walletAfter);
+        putHouse(house, state.withBalance(houseAfter));
         return true;
     }
 
     private void putHouse(ResourceLocation house, HouseState state) {
-        if (state.balance() == 0L && state.vaultLevel() == 0 && state.protectorLevel() == 0) houses.remove(house);
+        if (state.isEmpty()) houses.remove(house);
         else houses.put(house, state);
         setDirty();
     }
 
     int houseProtectorLevel(ResourceLocation house) {
-        return houses.getOrDefault(house, new HouseState(0, 0, 0)).protectorLevel();
+        return house(house).protectorLevel();
     }
 
     void setHouseProtectorLevel(ResourceLocation house, int level) {
-        HouseState before = houses.getOrDefault(house, new HouseState(0, 0, 0));
-        putHouse(house, new HouseState(before.balance(), before.vaultLevel(), Math.clamp(level, 0, 2)));
+        HouseState before = house(house);
+        putHouse(house, before.withLevels(before.vaultLevel(), Math.clamp(level, 0, 2)));
     }
 
     /** Balance and acquired level share the same SavedData and change together. */
     boolean buyUpgrade(ResourceLocation house, boolean protector, int nextLevel, long cost) {
-        HouseState before = houses.getOrDefault(house, new HouseState(0, 0, 0));
+        HouseState before = house(house);
         int level = protector ? before.protectorLevel() : before.vaultLevel();
         if (cost < 0 || cost > Money.MAX || nextLevel != level + 1
                 || nextLevel > (protector ? 2 : 3) || before.balance() < cost) return false;
-        putHouse(house, new HouseState(before.balance() - cost,
+        putHouse(house, before.withBalance(before.balance() - cost).withLevels(
                 protector ? before.vaultLevel() : nextLevel, protector ? nextLevel : before.protectorLevel()));
         return true;
     }

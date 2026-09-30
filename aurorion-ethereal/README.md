@@ -198,24 +198,55 @@ Sete estatísticas:
 | ☠ Alunos com mais mortes | contagem de mortes |
 | ⚔ Maiores duelistas | jogador que matou jogador |
 
+**Todo nome de aluno no painel é o nome do personagem**, e não o nick da conta — o mesmo que o
+`/fakename` recebe quando o personagem nasce, e o mesmo que o painel de vidas e o de mais ricos já
+mostravam. Vale para pontos (mais e menos), missões, duelos, vidas e riqueza. Conta sem personagem
+nomeado ainda aparece pelo nick. Nomear ou renomear um personagem refaz esses painéis na hora.
+
 **O total de uma casa é o bônus dela mais a soma dos pontos dos membros.** É por isso que dar ponto a
 um aluno mexe no painel da casa dele, e é por isso que este mod e o das casas são o mesmo mod.
 
 Quem dá e tira ponto é o `/pontos`, como no mod de referência — o projetor só exibe.
 
-## O Mural da Casa
+## O Cofre da Casa
 
-O bloco provisório `aurorion_ethereal:house_mural` é vinculado pela staff a uma Casa. O bloco não
-possui saldo nem upgrade próprio: todos os murais vinculados à mesma Casa mostram o mesmo cofre e o
-mesmo estado persistente. Membros abrem com botão direito; staff pode abrir para inspeção.
+O bloco `aurorion_ethereal:house_mural` (nome no jogo: **Cofre da Casa**) é vinculado pela staff a
+uma Casa. O bloco não guarda saldo: todos os cofres vinculados à mesma Casa mostram o mesmo cofre,
+que mora no `aurorion-economia`. Membros abrem com botão direito; staff pode abrir para inspeção,
+mas só membros movimentam.
 
-A área proibida do mural começa selada. O nível do Protetor é liberado pela staff enquanto os custos
-de compra ainda não foram definidos. No nível I, uma Casa concede uma vida a cada 30 dias; no II, a
-cada 14 dias. Qualquer membro pode escolher um personagem vivo, inclusive alguém com zero vidas no
-Limbo. A confirmação exige dois cliques, o servidor reconfere tudo, todos os administradores online
-recebem um alerta e o uso fica registrado no log. Nenhuma pessoa perde uma vida no código.
+A tela tem três abas:
 
-O cofre é lido opcionalmente do `aurorion-economia` e a concessão usa opcionalmente o
+- **Cofre** — saldo e capacidade, salário da Casa, a carteira de quem abriu (a mesma do celular) e
+  as últimas movimentações. **Qualquer membro deposita e saca.** Saque cai direto na carteira e o
+  app de banco do celular é atualizado na hora. Depósito maior que o espaço livre entra só até
+  encher; o resto nem sai da carteira. Toda operação vai para o log (`COFRE_CASA`) com o nome do
+  personagem.
+- **Melhorias** — níveis de capacidade (100 → 250 → 500 → 1000 óbolos), pagos com o saldo do
+  próprio cofre, com confirmação em dois cliques. Preços: `/economia preco cofre1|cofre2|cofre3 <fragmentos>`
+  (−1 = fora de venda, o padrão).
+- **Protocolo** — a área proibida do Protetor Arcano, selada até a staff liberar. No nível I, uma
+  Casa concede uma vida a cada 30 dias; no II, a cada 14 dias. Qualquer membro pode escolher um
+  personagem vivo, inclusive alguém com zero vidas no Limbo. A confirmação exige dois cliques, o
+  servidor reconfere tudo, todos os administradores online recebem um alerta e o uso fica registrado
+  no log. Nenhuma pessoa perde uma vida no código.
+
+### Salário da Casa (staff)
+
+```mcfunction
+/economia casa venthra salario 50 7      # 50 óbolos no cofre a cada 7 dias reais
+/economia casa venthra salario           # mostra valor e quanto falta para o próximo
+/economia casa venthra salario pagar     # paga um período agora e reinicia o relógio
+/economia casa venthra salario desligar
+/economia casa venthra saldo | dar | tirar | definir <quantia> | cofre <nível>
+```
+
+O nome curto (`venthra`) vale `aurorion_ethereal:venthra`. O salário cai no cofre, não na carteira
+de ninguém: a Casa decide como dividir. Com o servidor desligado, os períodos vencidos são pagos na
+volta, mas **o que passa da capacidade do cofre não é criado** — é isso que faz a Casa sacar ou
+comprar melhoria.
+
+O cofre é lido opcionalmente do `aurorion-economia` (≥ 0.3.0) e a concessão usa opcionalmente o
 `aurorion-vidas`; sem um desses módulos, a parte correspondente aparece indisponível sem impedir o
 Ethereal de iniciar.
 
@@ -240,7 +271,7 @@ travar a atualização do pack inteiro.
 /casa definir <jogador> <casa>    -> atribui, ignorando cerimonia e lotacao          (nivel 2)
 /casa limpar <jogador>            -> tira da casa                                    (nivel 2)
 
-# Olhando para o bloco provisório do mural, a até 8 blocos:
+# Olhando para o Cofre da Casa, a até 8 blocos:
 /casa mural vincular <casa>       -> vincula o mural à Casa indicada                  (nivel 2)
 /casa mural protetor <casa> <0-2> -> define o nível liberado do Protetor Arcano       (nivel 2)
 

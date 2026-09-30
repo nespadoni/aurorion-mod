@@ -48,10 +48,74 @@ public final class MattupolisPhoneCompat {
 
     public static void resetCharacterData(MinecraftServer server, UUID account) throws IOException {
         Path dir = phoneDir(server);
-        removePropertiesForAccount(dir.resolve(PHONE_NUMBER_STORE), account);
+        resetNumberDirectory(dir.resolve(PHONE_NUMBER_STORE), account);
         removePropertiesForAccount(dir.resolve(BANK_HISTORY_STORE), account);
         removeAuditLinesForAccount(dir.resolve("bank_audit.log"), account);
         forgetLoadedRuntimeState();
+    }
+
+    /**
+     * Tira a conta do diretorio de numeros e aposenta o numero dela. Reserva antes de apagar: se o
+     * reset cair entre um passo e outro, a repeticao ainda acha o numero da conta, e a reserva nao
+     * duplica.
+     */
+    private static void resetNumberDirectory(Path numbers, UUID account) throws IOException {
+        reserveNumbers(numbers, numbersOf(numbers, account));
+        removePropertiesForAccount(numbers, account);
+    }
+
+    /**
+     * Os numeros que a conta tinha. Linha do diretorio: {@code uuid|base64(nome)|numero}.
+     */
+    private static List<String> numbersOf(Path file, UUID account) throws IOException {
+        List<String> numbers = new ArrayList<>();
+        if (!Files.exists(file)) return numbers;
+        Properties props = load(file);
+        String owner = account.toString();
+        int count = parseInt(props.getProperty("entry.count"), 0);
+        for (int i = 0; i < count; i++) {
+            String value = props.getProperty("entry." + i);
+            if (value == null) continue;
+            String[] parts = value.split("\\|", -1);
+            if (parts.length >= 3 && parts[0].equals(owner) && parts[2].matches("\\d{6}")) numbers.add(parts[2]);
+        }
+        return numbers;
+    }
+
+    /**
+     * Aposenta os numeros do personagem anterior: cada um fica no diretorio em nome de uma conta que
+     * nao existe, sem nome.
+     *
+     * <p>Sem isto o personagem novo recebia o <b>mesmo</b> numero: o telefone gera o numero a partir
+     * da UUID da conta, tentando sempre o mesmo primeiro, e o reset so o deixava livre. Quem ligasse
+     * para o numero do morto caia no personagem novo. Com a reserva, o gerador pula para o proximo, e
+     * discar o numero antigo responde "Number owner not found." — o numero morreu com o personagem.
+     *
+     * <p>Um numero por reset, de um espaco de 900.000: nao falta.
+     */
+    private static void reserveNumbers(Path file, List<String> numbers) throws IOException {
+        if (numbers.isEmpty() || !Files.exists(file)) return;
+        Properties props = load(file);
+        int count = parseInt(props.getProperty("entry.count"), 0);
+        boolean changed = false;
+        for (String number : numbers) {
+            String reserved = retiredNumberOwner(number) + "||" + number;
+            boolean already = false;
+            for (int i = 0; i < count && !already; i++) {
+                already = reserved.equals(props.getProperty("entry." + i));
+            }
+            if (already) continue;
+            props.setProperty("entry." + count++, reserved);
+            changed = true;
+        }
+        if (!changed) return;
+        props.setProperty("entry.count", String.valueOf(count));
+        store(file, props, "Aurorion character reset");
+    }
+
+    /** A "conta" dona de um numero aposentado: fixa por numero, e nunca a de um jogador. */
+    static UUID retiredNumberOwner(String number) {
+        return UUID.nameUUIDFromBytes(("aurorion-retired-phone-number:" + number).getBytes(StandardCharsets.UTF_8));
     }
 
     private static void removePropertiesForAccount(Path file, UUID account) throws IOException {
@@ -128,7 +192,8 @@ public final class MattupolisPhoneCompat {
         }
     }
 
-    private static void forgetLoadedRuntimeState() {
+    /** Faz o telefone reler numeros e banco do disco na proxima vez que precisar deles. */
+    public static void forgetLoadedRuntimeState() {
         resetLoadedWorldKey("com.mattupolis.phone.server.contacts.PhoneNumberServerStore");
         resetLoadedWorldKey("com.mattupolis.phone.server.bank.PhoneBankServerStore");
     }

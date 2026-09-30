@@ -29,7 +29,8 @@ public final class EtherealBlocks {
             BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_BLACK)
                     .strength(3.5F, 8.0F)
-                    .sound(SoundType.STONE));
+                    .sound(SoundType.METAL)
+                    .noOcclusion());
 
     private EtherealBlocks() {
     }

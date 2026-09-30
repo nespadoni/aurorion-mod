@@ -19,7 +19,47 @@ public class MattupolisPhoneCompatDataTest {
         dailyRowsAreCompacted();
         everyIndexedListIsCompactedAtOnce();
         unindexedKeysSurviveAndStaleRowsDoNot();
-        System.out.println("PASS: reset do telefone (3 casos)");
+        oldNumberIsRetiredNotHandedBack();
+        retryingTheResetDoesNotDuplicateTheReservation();
+        System.out.println("PASS: reset do telefone (5 casos)");
+    }
+
+    /**
+     * O telefone gera o numero a partir da UUID da conta e tenta sempre o mesmo primeiro: se o reset
+     * so apagasse a linha, o personagem novo ganharia o numero do morto. A linha tem de sair, e o
+     * numero tem de ficar reservado em nome de ninguem.
+     */
+    private static void oldNumberIsRetiredNotHandedBack() throws Exception {
+        Properties numbers = new Properties();
+        numbers.setProperty("entry.count", "2");
+        numbers.setProperty("entry.0", ACCOUNT + "|QmVsbGE=|123456");
+        numbers.setProperty("entry.1", OTHER + "|Q2FybGlu|654321");
+
+        Properties actual = resetNumbers(numbers);
+        String reserved = MattupolisPhoneCompat.retiredNumberOwner("123456") + "||123456";
+        expect(actual, "entry.count", "2");
+        expect(actual, "entry.0", OTHER + "|Q2FybGlu|654321");
+        expect(actual, "entry.1", reserved);
+        if (actual.toString().contains(ACCOUNT.toString())) {
+            throw new AssertionError("A conta resetada nao pode sobrar no diretorio: " + actual);
+        }
+    }
+
+    /** O reset e repetido quando cai no meio; a segunda passada nao pode reservar de novo. */
+    private static void retryingTheResetDoesNotDuplicateTheReservation() throws Exception {
+        String reserved = MattupolisPhoneCompat.retiredNumberOwner("123456") + "||123456";
+        Properties numbers = new Properties();
+        numbers.setProperty("entry.count", "2");
+        numbers.setProperty("entry.0", ACCOUNT + "|QmVsbGE=|123456");
+        numbers.setProperty("entry.1", reserved);
+
+        Properties actual = resetNumbers(numbers);
+        expect(actual, "entry.count", "1");
+        expect(actual, "entry.0", reserved);
+    }
+
+    private static Properties resetNumbers(Properties fixture) throws Exception {
+        return run(fixture, "resetNumberDirectory");
     }
 
     /** O teto diario de transferencia vive numa lista propria, separada do extrato. */
@@ -81,10 +121,14 @@ public class MattupolisPhoneCompatDataTest {
     }
 
     private static Properties reset(Properties fixture) throws Exception {
-        Path file = Files.createTempFile("aurorion-bank-regression-", ".properties");
+        return run(fixture, "removePropertiesForAccount");
+    }
+
+    private static Properties run(Properties fixture, String methodName) throws Exception {
+        Path file = Files.createTempFile("aurorion-phone-regression-", ".properties");
         try {
             try (var writer = Files.newBufferedWriter(file)) { fixture.store(writer, "Regression fixture"); }
-            var method = MattupolisPhoneCompat.class.getDeclaredMethod("removePropertiesForAccount", Path.class, UUID.class);
+            var method = MattupolisPhoneCompat.class.getDeclaredMethod(methodName, Path.class, UUID.class);
             method.setAccessible(true);
             method.invoke(null, file, ACCOUNT);
             Properties actual = new Properties();

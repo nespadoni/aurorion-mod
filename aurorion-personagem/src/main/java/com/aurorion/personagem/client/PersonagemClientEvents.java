@@ -15,6 +15,7 @@ public final class PersonagemClientEvents {
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
         ClientCreation.tick();
+        ClientSwitch.tick();
     }
 
     @SubscribeEvent

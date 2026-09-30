@@ -30,7 +30,7 @@ public abstract class PhoneBankReceiptClientMixin {
                     + "(Lnet/minecraft/client/gui/GuiGraphics;IIILjava/lang/String;Ljava/lang/String;I)V"))
     private void aurorion$captureNote(@Coerce Object screen, GuiGraphics guiGraphics, int x, int y, int w,
                                       String label, String value, int valueColor) {
-        if (isNoteLabel(label)) this.aurorion$note = value == null ? "" : value;
+        if (aurorion$isNoteLabel(label)) this.aurorion$note = value == null ? "" : value;
         this.aurorion$drawRow(guiGraphics, x, y, w, label, value, valueColor);
     }
 
@@ -46,9 +46,9 @@ public abstract class PhoneBankReceiptClientMixin {
         Screen screen = (Screen)(Object)this;
         int phoneX = (screen.width - 170) / 2;
         int phoneY = (screen.height - 285) / 2;
-        if (isInside(mouseX, mouseY, phoneX + 12, phoneY + 190, 146, 22)
+        if (aurorion$isInside(mouseX, mouseY, phoneX + 12, phoneY + 190, 146, 22)
                 && !this.aurorion$note.isBlank() && !"-".equals(this.aurorion$note)) {
-            this.aurorion$noteLines = wrap(aurorion$font(), this.aurorion$note, 130);
+            this.aurorion$noteLines = aurorion$wrap(aurorion$font(), this.aurorion$note, 130);
             this.aurorion$noteOpen = true;
             cir.setReturnValue(true);
         }
@@ -87,12 +87,12 @@ public abstract class PhoneBankReceiptClientMixin {
         return Minecraft.getInstance().font;
     }
 
-    private static boolean isNoteLabel(String label) {
+    private static boolean aurorion$isNoteLabel(String label) {
         return "Note".equalsIgnoreCase(label) || "Aciklama".equalsIgnoreCase(label)
                 || "Descricao".equalsIgnoreCase(label) || "Descrição".equalsIgnoreCase(label);
     }
 
-    private static List<String> wrap(Font font, String text, int maxWidth) {
+    private static List<String> aurorion$wrap(Font font, String text, int maxWidth) {
         List<String> lines = new ArrayList<>();
         String remaining = text == null ? "" : text.trim();
         while (!remaining.isEmpty() && lines.size() < 4) {
@@ -109,7 +109,7 @@ public abstract class PhoneBankReceiptClientMixin {
         return List.copyOf(lines);
     }
 
-    private static boolean isInside(double mouseX, double mouseY, int x, int y, int width, int height) {
+    private static boolean aurorion$isInside(double mouseX, double mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
     }
 

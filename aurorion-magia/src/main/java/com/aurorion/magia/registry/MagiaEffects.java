@@ -1,10 +1,12 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.effect.AirborneEffect;
 import com.aurorion.magia.effect.BoundEffect;
 import com.aurorion.magia.effect.CagedEffect;
 import com.aurorion.magia.effect.CaptiveEffect;
 import com.aurorion.magia.effect.CruciatusEffect;
+import com.aurorion.magia.effect.DashingEffect;
 import com.aurorion.magia.effect.DisorientedEffect;
 import com.aurorion.magia.effect.DominatedEffect;
 import com.aurorion.magia.effect.DreadAuraEffect;
@@ -13,6 +15,7 @@ import com.aurorion.magia.effect.GenuflectedEffect;
 import com.aurorion.magia.effect.KneelingEffect;
 import com.aurorion.magia.effect.MagiaEffect;
 import com.aurorion.magia.effect.ThrownEffect;
+import com.aurorion.magia.effect.TimeStopEffect;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -111,6 +114,25 @@ public final class MagiaEffects {
     /** Um joelho no chao diante da aura. Nao ata as maos, ao contrario da Prostracao. */
     public static final DeferredHolder<MobEffect, GenuflectedEffect> GENUFLECTED =
             EFFECTS.register("genuflexo", GenuflectedEffect::new);
+
+    // --- Tempus Sistere --------------------------------------------------------------------------
+
+    /**
+     * Quem parou o tempo, enquanto a zona existir. Infinito e invisivel, como o da aura: e o relogio
+     * da zona ({@code TimeStop}), e nao um estado que o jogador ganhou.
+     */
+    public static final DeferredHolder<MobEffect, TimeStopEffect> TIME_STOP =
+            EFFECTS.register("tempo_suspenso", TimeStopEffect::new);
+
+    // --- Impeto do Vento -------------------------------------------------------------------------
+
+    /** Avancando: imparavel, e o relogio da investida ({@code Impetus}). */
+    public static final DeferredHolder<MobEffect, DashingEffect> DASHING =
+            EFFECTS.register("investida", DashingEffect::new);
+
+    /** Lancado para o alto pelo impacto: sem conjurar, sem dano de queda ao descer. */
+    public static final DeferredHolder<MobEffect, AirborneEffect> AIRBORNE =
+            EFFECTS.register("lancado", AirborneEffect::new);
 
     private MagiaEffects() {
     }

@@ -43,6 +43,13 @@ public final class AeonitaItems {
     public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_IGNIVAR = uniformCape("ignivar");
     public static final DeferredItem<UniformCapeItem> UNIFORM_CAPE_AETHERIS = uniformCape("aetheris");
 
+    /**
+     * A capa destruida dos Desvinculados. Nao e uniforme de casa: tem geo, animacao e textura
+     * proprios ({@link UniformCapeItem#withOwnModel}), e o nome do item e o nome dos tres arquivos.
+     */
+    public static final DeferredItem<UniformCapeItem> DESVINCULADOS_CAPE =
+            ITEMS.register("desvinculados_cape", () -> UniformCapeItem.withOwnModel("desvinculados_cape"));
+
     private AeonitaItems() {
     }
 

@@ -3,6 +3,7 @@ package com.aurorion.magia.client;
 import com.aurorion.magia.config.MagiaClientConfig;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.network.SpellVisualPayload.Kind;
+import com.aurorion.magia.registry.MagiaSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -10,6 +11,8 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -47,8 +50,19 @@ public final class ClientSpellVisuals {
     private static final int MAX_BEAM_POINTS = 36;
     private static final float MAX_EXTRA = 64;
     private static final int MAX_TTL = 12_000;
-    /** Ate onde os vultos da Presenca Aterradora rondam, por mais largo que seja o raio do medo. */
-    private static final double WISP_RADIUS = 6;
+    /**
+     * O tamanho da sombra da Presenca Aterradora no chao, por mais largo que seja o raio do medo. Ela
+     * e um disco chapado na altura dos pes: com dez blocos ela ja toma a praça, e maior que isso
+     * atravessaria escada, telhado e morro. Quem sente os trinta blocos inteiros e a nevoa, o
+     * coracao e a escuridao na tela.
+     */
+    private static final double AURA_GROUND_RADIUS = 10;
+    /** Quantos ticks a sombra leva para se espalhar do corpo ate a borda quando a aura acende. */
+    private static final float AURA_SPREAD_TICKS = 60;
+    /** Uma voz a cada ~4,5 s, em media, perto de quem carrega a aura. */
+    private static final int AURA_VOICE_CHANCE = 90;
+    /** Um visual que acabou (pacote de ttl zero) some neste prazo, em vez de sumir de uma vez. */
+    private static final int END_FADE_TICKS = 10;
 
     static final ParticleOptions BLOOD = dust(0.62f, 0.02f, 0.05f, 0.9f);
     static final ParticleOptions SHADOW = dust(0.07f, 0.0f, 0.03f, 1.1f);
@@ -61,10 +75,11 @@ public final class ClientSpellVisuals {
     static final ParticleOptions VOID = dust(0.03f, 0.0f, 0.06f, 1.4f);
     static final ParticleOptions DEATH = dust(0.23f, 1.0f, 0.42f, 1.1f);
     static final ParticleOptions DEATH_DARK = dust(0.02f, 0.3f, 0.1f, 1.2f);
-    static final ParticleOptions FROST_WHITE = dust(0.92f, 0.97f, 1.0f, 0.9f);
     static final ParticleOptions WATER = dust(0.30f, 0.62f, 0.92f, 0.9f);
     /** Preto e grande: e a fumaça da aura de terror, que escurece em vez de brilhar. */
     static final ParticleOptions DREAD = dust(0.02f, 0.0f, 0.03f, 1.8f);
+    /** A mesma fumaça, mais grossa: o corpo dos vultos e o que sobe colado em quem carrega a aura. */
+    static final ParticleOptions DREAD_BIG = dust(0.0f, 0.0f, 0.0f, 3.0f);
     /** O ar visivel das magias de vento. */
     static final ParticleOptions WIND = dust(0.85f, 1.0f, 0.94f, 0.7f);
 
@@ -108,8 +123,21 @@ public final class ClientSpellVisuals {
 
         Active existing = find(payload.kind(), payload.kind().anchoredToPoint() ? -1 : payload.targetId(),
                 payload.kind().anchoredToPoint() ? payload.pos() : null);
-        if (existing != null && (payload.kind().anchoredToPoint() || existing.casterId == payload.casterId())) {
-            // Pulso seguinte da mesma canalizacao: estica a vida, nao duplica o visual.
+        if (payload.ttl() <= 0) {
+            // ttl zero e "acabou": a corrente que se abriu, o tempo que voltou a correr. O visual some
+            // em meio segundo em vez de esperar o prazo que ainda tinha, e sai da busca para que uma
+            // conjuracao nova no mesmo alvo abra um visual novo, com a ancora nova.
+            if (existing != null) {
+                existing.ended = true;
+                existing.ticksLeft = Math.min(existing.ticksLeft, END_FADE_TICKS);
+            }
+            return;
+        }
+        if (existing != null && (payload.kind().anchoredToPoint() || existing.casterId == payload.casterId()
+                || payload.casterId() < 0)) {
+            // Pulso seguinte da mesma canalizacao: estica a vida, nao duplica o visual. A renovacao sem
+            // conjurador (-1) e a da propria magia — a corrente renovando a ancora — e vale para o
+            // visual que ja existe, seja de quem for.
             existing.ticksLeft = Math.max(existing.ticksLeft, payload.ttl());
             return;
         }
@@ -149,8 +177,10 @@ public final class ClientSpellVisuals {
                 continue;
             }
             Vec3 at = target != null ? target.position() : active.pos;
-            if (at.distanceToSqr(eye) > maxDistance * maxDistance) continue;
-            particles(level, active, target, stride, time);
+            // A zona do Tempus e um salao inteiro: conta a distancia ate a borda dela, nao ate o centro.
+            double reach = maxDistance + (active.kind == Kind.TEMPUS_SISTERE ? active.extra : 0);
+            if (at.distanceToSqr(eye) > reach * reach) continue;
+            particles(level, active, target, stride, time, eye);
         }
     }
 
@@ -185,13 +215,15 @@ public final class ClientSpellVisuals {
     }
 
     /**
-     * Peso (0..1) da nevoa de terror na camera: 0 fora de qualquer aura, 1 colado em quem a carrega.
+     * Peso (0..1) do medo na camera: 0 fora de qualquer aura, 1 colado em quem a carrega. Da a dose da
+     * sombra nos cantos da tela, do tremor e do volume do coracao — nunca uma nevoa: quem esta na aura
+     * continua vendo a cena.
      *
-     * <p>A posicao vem da <b>entidade</b>, e nao do ponto do pacote: o portador anda, e a nevoa tem
-     * que andar com ele sem uma mensagem por tick. O pulso da aura so renova o prazo de validade.
+     * <p>A posicao vem da <b>entidade</b>, e nao do ponto do pacote: o portador anda, e o peso tem que
+     * andar com ele sem uma mensagem por tick. O pulso da aura so renova o prazo de validade.
      *
-     * <p>Quem chama decide <i>a quem</i> isso se aplica — so quem esta com {@code apavorado} ve a
-     * nevoa; o dono da aura enxerga a propria praça normalmente.
+     * <p>Quem chama decide <i>a quem</i> isso se aplica — so quem esta com {@code apavorado} sente; o
+     * dono da aura enxerga a propria praça normalmente.
      */
     static float terror(ClientLevel level, Vec3 camera) {
         float weight = 0;
@@ -201,9 +233,7 @@ public final class ClientSpellVisuals {
             if (owner == null) continue;
             double radius = Math.max(1, active.extra);
             double distance = Math.sqrt(owner.position().distanceToSqr(camera));
-            // A borda do raio e onde o veu comeca; dos 60% para dentro, ja e parede preta. O trecho de
-            // rampa e curto de proposito: a Escuridao que o servidor poe nao tem meio-tom, e uma nevoa
-            // que so fechasse colado no vilao deixaria o mundo apagado com o horizonte limpo.
+            // Da borda do raio ate 60% dele o medo cresce; dali para dentro ja esta no maximo.
             float inside = (float) Mth.clamp((radius - distance) / (radius * 0.4), 0, 1);
             weight = Math.max(weight, inside * Mth.clamp(active.ticksLeft / 20f, 0, 1));
         }
@@ -212,7 +242,17 @@ public final class ClientSpellVisuals {
 
     // --- Particulas por magia -----------------------------------------------------------------
 
-    private static void particles(ClientLevel level, Active a, @Nullable LivingEntity target, int stride, long time) {
+    /**
+     * Raio atual da sombra da Presenca Aterradora no chao: nasce nos pes de quem a carrega e se
+     * espalha ate a borda em {@value #AURA_SPREAD_TICKS} ticks, desacelerando no fim.
+     */
+    static float auraGround(Active a, float partial) {
+        float t = Mth.clamp((a.age + partial) / AURA_SPREAD_TICKS, 0, 1);
+        return (float) Math.min(a.extra, AURA_GROUND_RADIUS) * (1 - (1 - t) * (1 - t));
+    }
+
+    private static void particles(ClientLevel level, Active a, @Nullable LivingEntity target, int stride, long time,
+                                  Vec3 eye) {
         RandomSource random = level.random;
         switch (a.kind) {
             case CRUCIATUS_BEAM -> {
@@ -227,11 +267,12 @@ public final class ClientSpellVisuals {
             }
             case VINCULUM -> {
                 if (target == null) return;
+                // Fagulhas correndo pela corrente o tempo todo; mais delas quando ela esta esticada.
                 float tension = a.tension(target.position());
-                if (tension > 0 && time % (2L * stride) == 0) {
+                if (time % ((tension > 0 ? 2L : 6L) * stride) == 0) {
                     Vec3 from = a.pos.add(0, 0.2, 0);
                     Vec3 to = waist(target);
-                    for (int i = 0; i < 3; i++) {
+                    for (int i = 0; i < (tension > 0 ? 3 : 1); i++) {
                         Vec3 p = from.lerp(to, random.nextDouble());
                         level.addParticle(CRIMSON, p.x, p.y, p.z, 0, 0, 0);
                     }
@@ -336,27 +377,11 @@ public final class ClientSpellVisuals {
                     level.addParticle(ParticleTypes.CRIT, p.x, p.y, p.z, 0, 0, 0);
                 }
             }
-            case TEMPUS_SISTERE -> {
-                double radius = a.extra;
-                if (a.age <= 14) {
-                    // A onda que para o tempo, abrindo do centro ate a borda.
-                    double ring = radius * a.age / 14.0;
-                    int count = Math.max(8, (int) (ring * 6) / stride);
-                    for (int i = 0; i < count; i++) {
-                        double angle = i * Math.PI * 2 / count;
-                        level.addParticle(i % 3 == 0 ? FROST_WHITE : ParticleTypes.SNOWFLAKE,
-                                a.pos.x + Math.cos(angle) * ring, a.pos.y + 0.3, a.pos.z + Math.sin(angle) * ring, 0, 0, 0);
-                    }
-                } else if (time % (4L * stride) == 0) {
-                    for (int i = 0; i < 3; i++) {
-                        double angle = random.nextDouble() * Math.PI * 2;
-                        double r = Math.sqrt(random.nextDouble()) * radius;
-                        level.addParticle(i == 0 ? ParticleTypes.END_ROD : ParticleTypes.SNOWFLAKE,
-                                a.pos.x + Math.cos(angle) * r, a.pos.y + 0.3 + random.nextDouble() * 2.5,
-                                a.pos.z + Math.sin(angle) * r, 0, i == 0 ? 0 : -0.01, 0);
-                    }
-                }
+            case TEMPUS_SISTERE -> tempus(level, a, random, stride, eye);
+            case IMPETUS_DASH -> {
+                if (target != null) dashTrail(level, target, random, stride);
             }
+            case IMPETUS_IMPACT -> impact(level, a, random, stride);
             case MORTEM_DICO -> {
                 Vec3 chest = a.pos.add(0, a.extra * 0.6, 0);
                 if (a.age == 1) {
@@ -523,34 +548,201 @@ public final class ClientSpellVisuals {
                 }
             }
             case TERROR_AURA -> {
-                if (target == null) return;
-                // O medo alcança 30 blocos, mas a <b>aura</b> e o que exala do corpo: os vultos rondam
-                // perto, senao eles nasceriam a trinta blocos de distancia e ninguem os ligaria a
-                // pessoa. Quem sente o alcance inteiro e a nevoa e a batida do coracao, nao isto.
-                double radius = Math.min(a.extra, WISP_RADIUS);
-                // Duas camadas: a fumaça que sobe do corpo e os vultos que rondam o circulo. Nenhuma
-                // sai do servidor — o payload da aura e um so por segundo, e tudo daqui e local.
-                if (time % stride == 0) {
-                    Vec3 p = target.position().add(offset(random, target.getBbWidth() * 1.6).multiply(1, 0, 1));
-                    level.addParticle(DREAD, p.x, p.y + random.nextDouble() * target.getBbHeight(), p.z,
-                            0, 0.02 + random.nextDouble() * 0.03, 0);
-                    level.addParticle(ParticleTypes.LARGE_SMOKE, p.x, p.y + 0.1, p.z, 0, 0.015, 0);
-                }
-                if (time % (3L * stride) == 0) {
-                    // Um vulto: nasce na borda do raio, na altura de um corpo, e desliza de lado.
-                    double angle = random.nextDouble() * Math.PI * 2;
-                    double r = radius * (0.45 + random.nextDouble() * 0.55);
-                    double x = target.getX() + Math.cos(angle) * r;
-                    double z = target.getZ() + Math.sin(angle) * r;
-                    double y = target.getY() + 0.6 + random.nextDouble() * 1.6;
-                    Vec3 sideways = new Vec3(-Math.sin(angle), 0, Math.cos(angle)).scale(0.08);
-                    level.addParticle(DREAD, x, y, z, sideways.x, 0.01, sideways.z);
-                    if (random.nextInt(4) == 0) {
-                        level.addParticle(ParticleTypes.SOUL, x, y, z, sideways.x * 0.5, 0.02, sideways.z * 0.5);
-                    }
-                }
+                if (target != null) dread(level, a, target, random, stride);
             }
             default -> {
+            }
+        }
+    }
+
+    /**
+     * A Presenca Aterradora, em volta de quem a carrega. Tudo daqui e local — o payload da aura e um so
+     * por segundo, e nenhuma particula nem som sai do servidor.
+     *
+     * <ul>
+     *   <li><b>O corpo</b>: fumaça negra grossa subindo colada, girando devagar em volta dele;</li>
+     *   <li><b>a sombra</b>: fumaça rasteira brotando da mancha no chao, e a borda dela escorrendo
+     *       para fora;</li>
+     *   <li><b>os vultos</b>: colunas de sombra da altura de uma pessoa que brotam da mancha e sobem
+     *       inteiras;</li>
+     *   <li><b>as vozes</b>: sussurros e lamentos em pontos ao redor, de tempos em tempos.</li>
+     * </ul>
+     *
+     * <p>O circulo magico e a mancha sao geometria, desenhados pelo {@link SigilRenderer}.
+     */
+    private static void dread(ClientLevel level, Active a, LivingEntity owner, RandomSource random, int stride) {
+        Vec3 feet = owner.position();
+        double ground = auraGround(a, 0);
+        double width = owner.getBbWidth();
+        double height = owner.getBbHeight();
+
+        for (int i = 0; i < Math.max(1, 3 / stride); i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double r = width * (0.35 + random.nextDouble() * 0.7);
+            double cos = Math.cos(angle), sin = Math.sin(angle);
+            level.addParticle((i & 1) == 0 ? DREAD_BIG : DREAD,
+                    feet.x + cos * r, feet.y + random.nextDouble() * height * 1.1, feet.z + sin * r,
+                    -sin * 0.03, 0.03 + random.nextDouble() * 0.04, cos * 0.03);
+        }
+        if (random.nextInt(2 * stride) == 0) {
+            Vec3 p = feet.add(offset(random, width * 1.4).multiply(1, 0, 1));
+            level.addParticle(ParticleTypes.LARGE_SMOKE, p.x, p.y + 0.1, p.z, 0, 0.02, 0);
+        }
+        if (random.nextInt(6 * stride) == 0) {
+            Vec3 p = chest(owner).add(offset(random, width));
+            level.addParticle(ParticleTypes.SQUID_INK, p.x, p.y, p.z, 0, 0.01, 0);
+        }
+
+        if (ground < 0.5) return;
+        for (int i = 0; i < Math.max(1, 2 / stride); i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double r = Math.sqrt(random.nextDouble()) * ground;
+            level.addParticle(i == 0 ? DREAD : SHADOW, feet.x + Math.cos(angle) * r, feet.y + 0.05,
+                    feet.z + Math.sin(angle) * r, 0, 0.01 + random.nextDouble() * 0.02, 0);
+        }
+        if (random.nextInt(stride) == 0) {
+            // A borda escorrendo para fora: a sombra ainda se espalhando.
+            double angle = random.nextDouble() * Math.PI * 2;
+            double cos = Math.cos(angle), sin = Math.sin(angle);
+            level.addParticle(DREAD, feet.x + cos * ground * 0.95, feet.y + 0.08, feet.z + sin * ground * 0.95,
+                    cos * 0.04, 0.005, sin * 0.04);
+        }
+        if (random.nextInt(14 * stride) == 0) figure(level, random, feet, ground);
+        if (random.nextInt(11 * stride) == 0) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double r = Math.sqrt(random.nextDouble()) * ground;
+            level.addParticle(ParticleTypes.SOUL, feet.x + Math.cos(angle) * r, feet.y + 0.1,
+                    feet.z + Math.sin(angle) * r, 0, 0.05, 0);
+        }
+        if (random.nextInt(AURA_VOICE_CHANCE) == 0) voice(level, random, feet, ground);
+    }
+
+    /**
+     * Um vulto: uma coluna de fumaça negra da altura de um corpo, mais estreita em cima, que brota de
+     * um ponto da sombra e sobe inteira, derivando de lado. De longe, alguem saindo do chao.
+     */
+    private static void figure(ClientLevel level, RandomSource random, Vec3 feet, double ground) {
+        double angle = random.nextDouble() * Math.PI * 2;
+        double r = ground * (0.35 + random.nextDouble() * 0.6);
+        double x = feet.x + Math.cos(angle) * r;
+        double z = feet.z + Math.sin(angle) * r;
+        double driftX = -Math.sin(angle) * 0.02, driftZ = Math.cos(angle) * 0.02;
+        for (int k = 0; k < 9; k++) {
+            double spread = k >= 7 ? 0.12 : 0.24;
+            level.addParticle(k >= 7 ? DREAD : DREAD_BIG,
+                    x + (random.nextDouble() - 0.5) * spread, feet.y + 0.1 + k * 0.21, z + (random.nextDouble() - 0.5) * spread,
+                    driftX, 0.035, driftZ);
+        }
+        if (random.nextInt(3) == 0) level.addParticle(ParticleTypes.SOUL, x, feet.y + 1.8, z, driftX, 0.04, driftZ);
+    }
+
+    /** Uma voz sem dono num ponto da sombra: sussurro, lamento, suspiro de alma. Toca so neste cliente. */
+    private static void voice(ClientLevel level, RandomSource random, Vec3 feet, double ground) {
+        double angle = random.nextDouble() * Math.PI * 2;
+        double r = 1.5 + random.nextDouble() * Math.max(1, ground - 1.5);
+        double x = feet.x + Math.cos(angle) * r, y = feet.y + 1.2, z = feet.z + Math.sin(angle) * r;
+        float tone = 0.9f + random.nextFloat() * 0.2f;
+        switch (random.nextInt(4)) {
+            case 0 -> level.playLocalSound(x, y, z, MagiaSounds.MIND.get(), SoundSource.PLAYERS, 0.8f, 0.8f * tone, false);
+            case 1 -> level.playLocalSound(x, y, z, SoundEvents.AMBIENT_SOUL_SAND_VALLEY_ADDITIONS.value(),
+                    SoundSource.PLAYERS, 0.9f, 0.6f * tone, false);
+            case 2 -> level.playLocalSound(x, y, z, SoundEvents.VEX_AMBIENT, SoundSource.PLAYERS, 0.6f, 0.45f * tone, false);
+            default -> level.playLocalSound(x, y, z, SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.9f, 0.5f * tone, false);
+        }
+    }
+
+    /** O rastro da investida: vento e poeira ficando para tras de quem avanca. */
+    private static void dashTrail(ClientLevel level, LivingEntity dasher, RandomSource random, int stride) {
+        Vec3 back = dasher.getDeltaMovement().multiply(-1, 0, -1);
+        if (back.lengthSqr() < 1.0E-3) back = Vec3.directionFromRotation(0, dasher.getYRot()).scale(-1);
+        back = back.normalize();
+        for (int i = 0; i < Math.max(1, 4 / stride); i++) {
+            Vec3 p = dasher.position().add(offset(random, dasher.getBbWidth() * 1.4))
+                    .add(0, random.nextDouble() * dasher.getBbHeight(), 0);
+            level.addParticle(i % 2 == 0 ? WIND : ParticleTypes.CLOUD, p.x, p.y, p.z,
+                    back.x * 0.25, 0.02, back.z * 0.25);
+        }
+        BlockState under = level.getBlockState(dasher.blockPosition().below());
+        if (!under.isAir() && random.nextInt(stride) == 0) {
+            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, under),
+                    dasher.getX(), dasher.getY() + 0.1, dasher.getZ(), back.x * 0.3, 0.2, back.z * 0.3);
+        }
+    }
+
+    /**
+     * A chegada: o chao estoura em pedacos do proprio bloco, o anel de vento abre e, por um segundo, o
+     * ar sobe das fendas. A rachadura em si e geometria ({@link SigilRenderer}).
+     */
+    private static void impact(ClientLevel level, Active a, RandomSource random, int stride) {
+        double radius = a.extra;
+        BlockState under = level.getBlockState(BlockPos.containing(a.pos.x, a.pos.y - 0.5, a.pos.z));
+        ParticleOptions debris = under.isAir() ? ParticleTypes.CLOUD : new BlockParticleOption(ParticleTypes.BLOCK, under);
+        if (a.age == 1) {
+            level.addParticle(ParticleTypes.EXPLOSION, a.pos.x, a.pos.y + 0.5, a.pos.z, 0, 0, 0);
+            level.addParticle(ParticleTypes.GUST, a.pos.x, a.pos.y + 0.5, a.pos.z, 0, 0, 0);
+            for (int i = 0; i < 48 / stride; i++) {
+                double angle = random.nextDouble() * Math.PI * 2;
+                double r = Math.sqrt(random.nextDouble()) * radius;
+                level.addParticle(debris, a.pos.x + Math.cos(angle) * r, a.pos.y + 0.1, a.pos.z + Math.sin(angle) * r,
+                        0, 0.35 + random.nextDouble() * 0.35, 0);
+            }
+            ring(level, a.pos.add(0, 0.3, 0), radius * 0.3, 28 / stride, ParticleTypes.CLOUD, 0.5);
+        } else if (a.age <= 20 && random.nextInt(stride) == 0) {
+            // O vento subindo das fendas: e ele que ergueu todo mundo.
+            for (int i = 0; i < 2; i++) {
+                double angle = random.nextDouble() * Math.PI * 2;
+                double r = Math.sqrt(random.nextDouble()) * radius;
+                level.addParticle(WIND, a.pos.x + Math.cos(angle) * r, a.pos.y + 0.1, a.pos.z + Math.sin(angle) * r,
+                        0, 0.45, 0);
+            }
+            if (a.age % 3 == 0) {
+                double angle = random.nextDouble() * Math.PI * 2;
+                double r = random.nextDouble() * radius;
+                level.addParticle(debris, a.pos.x + Math.cos(angle) * r, a.pos.y + 0.1, a.pos.z + Math.sin(angle) * r,
+                        0, 0.15, 0);
+            }
+        }
+    }
+
+    /**
+     * O tempo parado, versao sombria. A zona e um salao inteiro (30 a 40 blocos), entao nada aqui
+     * varre o raio todo: a poeira parada e a parede da borda nascem so perto de quem esta olhando —
+     * e onde alguem as ve. O relogio preto no chao e geometria ({@link SigilRenderer}).
+     */
+    private static void tempus(ClientLevel level, Active a, RandomSource random, int stride, Vec3 eye) {
+        double radius = a.extra;
+        double radiusSqr = radius * radius;
+        if (a.age <= 20) {
+            // A sombra abrindo do centro ate a borda.
+            double ring = radius * a.age / 20.0;
+            int count = Math.min(120, Math.max(12, (int) (ring * 3))) / stride;
+            for (int i = 0; i < count; i++) {
+                double angle = (i + random.nextDouble()) * Math.PI * 2 / count;
+                level.addParticle((i & 1) == 0 ? VOID : ParticleTypes.LARGE_SMOKE,
+                        a.pos.x + Math.cos(angle) * ring, a.pos.y + 0.2, a.pos.z + Math.sin(angle) * ring, 0, 0.02, 0);
+            }
+        }
+        // Poeira escura parada no ar: o tempo nao anda, ela nao cai.
+        for (int i = 0; i < 6 / stride; i++) {
+            double x = eye.x + (random.nextDouble() - 0.5) * 32;
+            double z = eye.z + (random.nextDouble() - 0.5) * 32;
+            double dx = x - a.pos.x, dz = z - a.pos.z;
+            if (dx * dx + dz * dz > radiusSqr) continue;
+            level.addParticle(random.nextInt(4) == 0 ? SHADOW : VOID, x, a.pos.y + 0.2 + random.nextDouble() * 4, z, 0, 0, 0);
+        }
+        // A borda: uma parede baixa de sombra subindo, so no trecho perto de quem olha.
+        for (int i = 0; i < Math.max(1, 4 / stride); i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double x = a.pos.x + Math.cos(angle) * radius, z = a.pos.z + Math.sin(angle) * radius;
+            if ((x - eye.x) * (x - eye.x) + (z - eye.z) * (z - eye.z) > 24 * 24) continue;
+            level.addParticle(DREAD, x, a.pos.y + 0.1 + random.nextDouble() * 0.5, z, 0, 0.04, 0);
+        }
+        if (random.nextInt(6 * stride) == 0) {
+            double x = eye.x + (random.nextDouble() - 0.5) * 20;
+            double z = eye.z + (random.nextDouble() - 0.5) * 20;
+            double dx = x - a.pos.x, dz = z - a.pos.z;
+            if (dx * dx + dz * dz <= radiusSqr) {
+                level.addParticle(ParticleTypes.SOUL, x, a.pos.y + 0.5 + random.nextDouble() * 2.5, z, 0, 0, 0);
             }
         }
     }
@@ -710,7 +902,7 @@ public final class ClientSpellVisuals {
     @Nullable
     private static Active find(Kind kind, int targetId, @Nullable Vec3 pos) {
         for (Active active : ACTIVE) {
-            if (active.kind != kind) continue;
+            if (active.kind != kind || active.ended) continue;
             if (pos != null ? active.pos.distanceToSqr(pos) < 0.01 : active.targetId == targetId) return active;
         }
         return null;
@@ -730,14 +922,16 @@ public final class ClientSpellVisuals {
         float flash;
         boolean landed;
         int landedAge;
+        /** Recebeu o fim (ttl zero) e esta so apagando: nao e estendido nem reaproveitado. */
+        boolean ended;
 
         Active(SpellVisualPayload payload) {
             this.kind = payload.kind();
             this.casterId = payload.casterId();
             this.targetId = payload.targetId();
             this.pos = payload.pos();
-            // Tetos defensivos: raio/intensidade ate 64 (o maior raio real e 18) e vida ate 10 min (o
-            // lacre mais longo e 9). Um valor absurdo no pacote nao vira um laco de particulas sem fim.
+            // Tetos defensivos: raio/intensidade ate 64 (o maior raio real e o Tempus, 40) e vida ate
+            // 10 min (o lacre mais longo e 9; corrente e zona sem prazo se renovam antes disso). Um valor absurdo no pacote nao vira um laco de particulas sem fim.
             float extra = payload.extra();
             this.extra = Float.isFinite(extra) ? Mth.clamp(extra, -MAX_EXTRA, MAX_EXTRA) : 0;
             this.ttl = Mth.clamp(payload.ttl(), 0, MAX_TTL);
