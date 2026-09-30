@@ -50,9 +50,11 @@ public final class ServiceActions {
             var part = LsoCompat.part(customer, action.substring(6));
             require(part != null && part.aurorionMaxHealth() > 0, "Parte do corpo indisponível.");
             require(part.aurorionCritical() || part.aurorionHealth() < part.aurorionMaxHealth(), "Este membro já está saudável.");
-            require(supply.is(MEDICAL_SUPPLIES), "Médico: segure 1 kit médico do LSO na mão secundária.");
+            require(supply.is(MEDICAL_SUPPLIES),
+                    "Médico: segure 1 insumo de cura completa do LSO na mão secundária.");
             return new Plan(action, title(action), (part.aurorionCritical() ? "Lesão grave" : "Ferimento leve")
-                    + " • " + Math.round(100 * part.aurorionHealth() / part.aurorionMaxHealth()) + "% de saúde • 1 kit médico", ItemStack.EMPTY, 1, 0, part, false);
+                    + " • " + Math.round(100 * part.aurorionHealth() / part.aurorionMaxHealth())
+                    + "% de saúde • 1 insumo médico", ItemStack.EMPTY, 1, 0, part, false);
         }
         require(!subject.isEmpty(), "Cliente: segure o item a ser atendido na mão principal.");
         ItemStack result = subject.copy(); int materials = 1, levels = 0; boolean honey = false;

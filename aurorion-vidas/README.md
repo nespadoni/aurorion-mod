@@ -12,7 +12,7 @@ As vidas aparecem no HUD, numa fileira logo acima da barra de fome.
 2. Na última morte, o servidor inteiro fica sabendo: *"Fulano perdeu a última vida e foi exilado."*
 3. Você renasce no ponto de exílio, no Nether. Morrer de novo te devolve ao mesmo ponto — o exílio
    não afunda mais.
-4. A única saída é alguém te devolver uma vida: `/vidas dar <você> 1`, ou o item de resgate.
+4. A única saída é a staff devolver uma vida com `/vidas dar <você> 1`.
 
 ## A dupla com o aurorion-portais
 
@@ -59,8 +59,8 @@ construído e sumir junto quando o mundo for trocado.
 | `/vidas exilio aqui` | 2 | Marca o ponto de chegada na sua posição |
 | `/vidas exilio ver` | 2 | Mostra o ponto atual |
 
-`dar` é o caminho de saída do exílio, e é o mesmo que o item de resgate vai usar quando existir —
-ele só precisa chamar `LivesManager.addLives(...)`.
+`dar` é o caminho administrativo de saída do exílio. Cura, alimentos, efeitos e atendimentos de
+profissão não recuperam vidas perdidas por morte.
 
 ## Config
 

@@ -3,6 +3,7 @@ package com.aurorion.profissoes.gametest;
 import com.aurorion.profissoes.compat.*;
 import com.aurorion.profissoes.data.*;
 import com.aurorion.profissoes.network.*;
+import com.aurorion.profissoes.npc.*;
 import com.aurorion.profissoes.server.*;
 import com.mojang.authlib.GameProfile;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -26,6 +27,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.brewing.PotionBrewEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.gametest.*;
 import net.neoforged.neoforge.network.registration.ChannelAttributes;
 import java.lang.reflect.*;
@@ -166,6 +168,51 @@ public final class ProfessionGameTests {
             helper.assertTrue(!part.aurorionCritical() && part.aurorionHealth() == 10f, "Medico deve tratar o membro real do LSO");
             helper.assertTrue(doctor.player.getOffhandItem().isEmpty(), "Kit medico deve ser consumido");
         }
+        helper.succeed();
+    }
+
+    @GameTest(template="empty") public static void completeLsoHealingRequiresDoctor(GameTestHelper helper) throws Exception {
+        if (!ModList.get().isLoaded("legendarysurvivaloverhaul")) { helper.succeed(); return; }
+        try (var doctor = player(helper, "MedicoItens", Profession.DOCTOR); var novice = player(helper, "Leigo", Profession.NONE)) {
+            ItemStack medkit = new ItemStack(BuiltInRegistries.ITEM.get(
+                    ResourceLocation.parse("legendarysurvivaloverhaul:medkit")));
+            var denied = new LivingEntityUseItemEvent.Start(novice.player, medkit,
+                    InteractionHand.MAIN_HAND, 20);
+            NeoForge.EVENT_BUS.post(denied);
+            helper.assertTrue(denied.isCanceled(), "Nao medico nao pode iniciar uma cura corporal completa");
+
+            WoundPart part = LsoCompat.part(doctor.player, "LEFT_ARM");
+            part.getClass().getMethod("setMaxHealth", float.class).invoke(part, 10f);
+            part.getClass().getMethod("hurt", float.class).invoke(part, 9f);
+            var allowed = new LivingEntityUseItemEvent.Start(doctor.player, medkit,
+                    InteractionHand.MAIN_HAND, 20);
+            NeoForge.EVENT_BUS.post(allowed);
+            helper.assertTrue(!allowed.isCanceled(), "Medico deve poder iniciar o uso do medkit");
+            NeoForge.EVENT_BUS.post(new LivingEntityUseItemEvent.Finish(
+                    doctor.player, medkit, 0, ItemStack.EMPTY));
+            helper.assertTrue(!part.aurorionCritical() && part.aurorionHealth() == 10f,
+                    "Medkit usado por medico deve tratar o dano corporal real do LSO");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template="empty") public static void npcSkinOverrideSurvivesSave(GameTestHelper helper) {
+        ProfessionNpcEntity npc = NpcEntities.NPC.get().create(helper.getLevel());
+        helper.assertTrue(npc != null, "Entidade de NPC deve existir");
+        npc.setSkinOverride("aurorion_profissoes:textures/entity/npc/teste.png", true);
+        CompoundTag saved = new CompoundTag();
+        npc.addAdditionalSaveData(saved);
+
+        ProfessionNpcEntity loaded = NpcEntities.NPC.get().create(helper.getLevel());
+        helper.assertTrue(loaded != null, "Entidade de NPC deve poder ser recarregada");
+        loaded.readAdditionalSaveData(saved);
+        loaded.applyConfig();
+        helper.assertTrue(loaded.skin().equals("aurorion_profissoes:textures/entity/npc/teste.png")
+                        && loaded.slimSkin(),
+                "Override in-game de skin e modelo deve sobreviver ao save");
+        loaded.clearSkinOverride();
+        helper.assertTrue(loaded.skin().isEmpty() && !loaded.slimSkin(),
+                "Limpar override deve voltar para a configuracao do catalogo");
         helper.succeed();
     }
     @GameTest(template="empty") public static void realFoodQualityAndFreshnessSurviveHandover(GameTestHelper helper) throws Exception {

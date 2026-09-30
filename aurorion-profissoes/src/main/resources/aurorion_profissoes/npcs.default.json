@@ -16,7 +16,7 @@
       "services": [
         {
           "name": "Cura Completa",
-          "description": "Trata todas as partes do corpo e restaura a vida.",
+          "description": "Trata todas as partes do corpo e restaura a saúde, sem recuperar vidas de morte.",
           "action_type": "command",
           "command": "bodydamage heal {player} all 100",
           "cost_item": "minecraft:emerald",

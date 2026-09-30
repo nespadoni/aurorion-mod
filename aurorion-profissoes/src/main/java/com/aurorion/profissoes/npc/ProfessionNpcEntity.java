@@ -32,6 +32,9 @@ public class ProfessionNpcEntity extends PathfinderMob {
             SynchedEntityData.defineId(ProfessionNpcEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> SLIM =
             SynchedEntityData.defineId(ProfessionNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private boolean hasSkinOverride;
+    private String skinOverride = "";
+    private boolean slimOverride;
 
     public ProfessionNpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -59,6 +62,21 @@ public class ProfessionNpcEntity extends PathfinderMob {
     public String skin() { return entityData.get(SKIN); }
     public boolean slimSkin() { return entityData.get(SLIM); }
 
+    /** Troca somente este corpo; a escolha sobrevive a restart e nao altera o JSON do catalogo. */
+    public void setSkinOverride(String skin, boolean slim) {
+        hasSkinOverride = true;
+        skinOverride = skin == null ? "" : skin;
+        slimOverride = slim;
+        applyConfig();
+    }
+
+    public void clearSkinOverride() {
+        hasSkinOverride = false;
+        skinOverride = "";
+        slimOverride = false;
+        applyConfig();
+    }
+
     public void setNpcId(String id) {
         entityData.set(NPC_ID, id == null ? "" : id);
         applyConfig();
@@ -70,13 +88,13 @@ public class ProfessionNpcEntity extends PathfinderMob {
         var loaded = NpcCatalog.get(npcId());
         if (loaded == null) {
             setCustomName(Component.literal("NPC sem configuração: " + npcId()));
-            entityData.set(SKIN, "");
-            entityData.set(SLIM, false);
+            entityData.set(SKIN, hasSkinOverride ? skinOverride : "");
+            entityData.set(SLIM, hasSkinOverride && slimOverride);
         } else {
             var definition = loaded.definition();
             setCustomName(Component.literal(definition.displayName()));
-            entityData.set(SKIN, definition.skin());
-            entityData.set(SLIM, definition.slimSkin());
+            entityData.set(SKIN, hasSkinOverride ? skinOverride : definition.skin());
+            entityData.set(SLIM, hasSkinOverride ? slimOverride : definition.slimSkin());
         }
         setCustomNameVisible(true);
     }
@@ -84,11 +102,18 @@ public class ProfessionNpcEntity extends PathfinderMob {
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("NpcId", npcId());
+        if (hasSkinOverride) {
+            tag.putString("SkinOverride", skinOverride);
+            tag.putBoolean("SlimSkinOverride", slimOverride);
+        }
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         entityData.set(NPC_ID, tag.getString("NpcId"));
+        hasSkinOverride = tag.contains("SkinOverride");
+        skinOverride = hasSkinOverride ? tag.getString("SkinOverride") : "";
+        slimOverride = hasSkinOverride && tag.getBoolean("SlimSkinOverride");
     }
 
     @Override protected InteractionResult mobInteract(Player player, InteractionHand hand) {

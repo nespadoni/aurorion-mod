@@ -54,7 +54,7 @@ public final class LivesConfig {
                         "quando um trem do aurorion_portais abre a passagem para todo mundo.",
                         "E o que da sentido a taxa de resgate: se o exilado pudesse pegar o trem junto com os",
                         "outros, bastaria esperar o sabado a noite e ninguem pagaria nada.",
-                        "A saida continua sendo devolver vida a pessoa (/vidas dar, ou o item de resgate)."
+                        "A saida continua sendo a staff devolver vida a pessoa com /vidas dar."
                 )
                 .define("blockExileExit", true);
 

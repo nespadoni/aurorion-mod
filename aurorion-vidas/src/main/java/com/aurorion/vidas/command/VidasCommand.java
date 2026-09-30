@@ -23,8 +23,8 @@ import java.util.Collection;
 /**
  * {@code /vidas} — quantas vidas voce ainda tem. Para o jogador comum e so isso.
  *
- * <p>O resto e staff (nivel 2). {@code dar} e a saida do exilio: e o mesmo caminho que o item de
- * resgate vai usar quando existir, entao ele ja e o comportamento de referencia.
+ * <p>O resto e staff (nivel 2). {@code dar} e a unica saida administrativa do exilio; curas e
+ * consumiveis nunca devem chamar este caminho.
  *
  * <p>Usa {@link GameProfileArgument} e nao seletor de entidade porque vida e gravada por UUID —
  * precisa dar para acertar a de quem esta offline.

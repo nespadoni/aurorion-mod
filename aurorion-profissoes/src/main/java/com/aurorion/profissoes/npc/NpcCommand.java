@@ -8,6 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -22,6 +23,7 @@ import java.util.List;
  * <pre>
  * /npc criar &lt;id&gt;          invoca o NPC do JSON na sua posicao, olhando para onde voce olha
  * /npc definir &lt;id&gt;        troca o id do NPC mais proximo (ate 4 blocos)
+ * /npc skin ...             troca a textura somente do NPC mais proximo
  * /npc remover             remove o NPC mais proximo (ate 4 blocos)
  * /npc listar              ids carregados e avisos do arquivo
  * /npc recarregar          le config/aurorion/npcs.json de novo e atualiza os NPCs carregados
@@ -32,6 +34,8 @@ import java.util.List;
 public final class NpcCommand {
     private static final SuggestionProvider<CommandSourceStack> IDS =
             (context, builder) -> SharedSuggestionProvider.suggest(NpcCatalog.ids(), builder);
+    private static final SuggestionProvider<CommandSourceStack> SKIN_MODELS =
+            (context, builder) -> SharedSuggestionProvider.suggest(new String[] {"wide", "slim"}, builder);
     private NpcCommand() {}
 
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
@@ -40,6 +44,13 @@ public final class NpcCommand {
                 .executes(NpcCommand::create)));
         root.then(Commands.literal("definir").then(Commands.argument("id", StringArgumentType.word()).suggests(IDS)
                 .executes(NpcCommand::define)));
+        root.then(Commands.literal("skin")
+                .then(Commands.literal("padrao").executes(NpcCommand::clearSkin))
+                .then(Commands.argument("textura", StringArgumentType.word())
+                        .executes(context -> skin(context, null))
+                        .then(Commands.argument("modelo", StringArgumentType.word()).suggests(SKIN_MODELS)
+                                .executes(context -> skin(context,
+                                        StringArgumentType.getString(context, "modelo"))))));
         root.then(Commands.literal("remover").executes(NpcCommand::remove));
         root.then(Commands.literal("listar").executes(NpcCommand::list));
         root.then(Commands.literal("recarregar").executes(NpcCommand::reload));
@@ -83,6 +94,37 @@ public final class NpcCommand {
         String id = npc.npcId();
         npc.discard();
         source.sendSuccess(() -> Component.literal("NPC \"" + id + "\" removido."), true);
+        return 1;
+    }
+
+    private static int skin(CommandContext<CommandSourceStack> context, @Nullable String model) {
+        var source = context.getSource();
+        var npc = nearest(source);
+        if (npc == null) { source.sendFailure(Component.literal("Nenhum NPC a até 4 blocos.")); return 0; }
+        String value = StringArgumentType.getString(context, "textura");
+        ResourceLocation texture = ResourceLocation.tryParse(value);
+        if (texture == null) {
+            source.sendFailure(Component.literal("Textura inválida. Use namespace:textures/caminho/arquivo.png."));
+            return 0;
+        }
+        boolean slim = model == null ? npc.slimSkin() : model.equalsIgnoreCase("slim");
+        if (model != null && !model.equalsIgnoreCase("slim") && !model.equalsIgnoreCase("wide")) {
+            source.sendFailure(Component.literal("Modelo inválido: use wide ou slim."));
+            return 0;
+        }
+        npc.setSkinOverride(texture.toString(), slim);
+        boolean finalSlim = slim;
+        source.sendSuccess(() -> Component.literal("Skin do NPC alterada para " + texture
+                + " (" + (finalSlim ? "slim" : "wide") + ")."), true);
+        return 1;
+    }
+
+    private static int clearSkin(CommandContext<CommandSourceStack> context) {
+        var source = context.getSource();
+        var npc = nearest(source);
+        if (npc == null) { source.sendFailure(Component.literal("Nenhum NPC a até 4 blocos.")); return 0; }
+        npc.clearSkinOverride();
+        source.sendSuccess(() -> Component.literal("Skin do NPC voltou para a configuração do npcs.json."), true);
         return 1;
     }
 

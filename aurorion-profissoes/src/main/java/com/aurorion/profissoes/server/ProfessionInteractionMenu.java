@@ -24,7 +24,7 @@ public final class ProfessionInteractionMenu {
             event.add("land_sale", "Vender terreno", "Selecione um lote retangular, a zona e o preço. Pagamento ao sistema.", true);
         if (ProfessionsConfig.enabled() && ProfessionApi.of(event.actor()) == Profession.DOCTOR)
             event.add(HEAL_ACTION, "Curar pessoa",
-                    "Restaura vidas, saúde e ferimentos do alvo.", DoctorHealing.needsHealing(event.target()));
+                    "Restaura a saúde e os ferimentos corporais do alvo.", DoctorHealing.needsHealing(event.target()));
         Profession profession = ProfessionApi.of(event.target());
         if (!ProfessionsConfig.enabled() || !offersServices(profession)) return;
         event.add(ACTION, "Solicitar atendimento",

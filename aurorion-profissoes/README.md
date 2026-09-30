@@ -7,8 +7,8 @@ Os JARs dos mods integrados continuam separados; nenhum é embutido neste módul
 ## Uso pelos jogadores
 
 - **Shift+G**, olhando para outro jogador, abre o menu presencial configurável da Economia.
-- Quem tem a profissão de médico pode escolher **Curar pessoa** nesse menu para restaurar as vidas
-  restantes do Aurorion, a saúde e todos os ferimentos do alvo, sem precisar digitar um comando.
+- Quem tem a profissão de médico pode escolher **Curar pessoa** nesse menu para restaurar a saúde
+  e todos os ferimentos corporais do alvo, sem alterar as vidas perdidas por morte.
 - Quando o alvo é médico, ferreiro, cozinheiro ou arcanista, o menu oferece o atendimento dele.
 - O corretor está cadastrado como profissão; a seleção e venda retangular de terrenos entra na
   próxima etapa da integração territorial.
@@ -51,15 +51,18 @@ A autorização acompanha aquele equipamento. Criativo com OP pode usar a bigorn
 Integração com **2.4.7.2**, usando as oito partes do corpo reais do LSO.
 Precisa do sistema de dano localizado do LSO habilitado.
 
-- Todos continuam usando os primeiros socorros e a recuperação normal do LSO em ferimentos leves.
+- Todos continuam usando bandagens, ervas e gesso como primeiros socorros do LSO em ferimentos leves.
+- Medkit e tônico, que tratam o corpo inteiro, só podem ser usados por personagens médicos.
+  Ao terminar o uso, eles tratam as oito partes reais do LSO e removem lesões graves.
 - Quando a saúde de um membro cai para **35% ou menos**, a lesão fica marcada como grave.
 - Primeiros socorros estabilizam uma lesão grave até **50%** da saúde do membro.
   Repetir curas não remove a lesão; a marca sobrevive ao salvamento do jogador.
-- Outro médico pode tratar o membro pela UI: **1 medkit do LSO** restaura a saúde desse membro
+- Outro médico pode tratar o membro pela UI: **1 medkit ou tônico do LSO** restaura a saúde desse membro
   e remove a lesão. Não há atendimento clínico de si mesmo.
-- A opção **Curar pessoa** do menu Shift+G restaura completamente o alvo, inclusive suas vidas
-  restantes. Ela exige a profissão de médico e proximidade, mas não consome medkit.
-- O consumível é definido pela tag `aurorion_profissoes:medical_supplies`, extensível por datapack.
+- A opção **Curar pessoa** do menu Shift+G restaura saúde e ferimentos, mas nunca recupera
+  vidas perdidas por morte. Ela exige a profissão de médico e proximidade, mas não consome medkit.
+- Os insumos do atendimento usam a tag `aurorion_profissoes:medical_supplies`. Os consumíveis
+  globais exclusivos usam `aurorion_profissoes:doctor_only_healing`; ambas aceitam extensão por datapack.
 
 Sem o LSO, o módulo inicia normalmente e o atendimento médico mostra a integração indisponível.
 
@@ -170,14 +173,17 @@ conferidos de novo no servidor a cada escolha.
 ```text
 /npc criar <id>           invoca o NPC na sua posição, olhando para onde você olha
 /npc definir <id>         troca o id do NPC mais próximo (até 4 blocos)
+/npc skin <textura> [wide|slim]  troca a skin do NPC mais próximo e salva no mundo
+/npc skin padrao          volta a usar skin e modelo definidos no npcs.json
 /npc remover              remove o NPC mais próximo (até 4 blocos); /kill também funciona
 /npc listar               ids carregados e avisos do arquivo
 /npc recarregar           relê o JSON e atualiza nome/skin dos NPCs carregados
 /npc estoque <id> repor   repõe o estoque das ofertas limitadas
 ```
 
-A entidade só guarda o `id`; nome, skin, serviços e loja vêm do JSON. Editar e recarregar muda
-todos os corpos daquele id. Um JSON que nem é JSON **não** derruba os NPCs já carregados.
+A entidade guarda o `id` e, opcionalmente, uma skin escolhida in-game. Nome, skin padrão, serviços
+e loja vêm do JSON. Editar e recarregar muda todos os corpos daquele id, exceto a skin dos corpos
+com override. Um JSON que nem é JSON **não** derruba os NPCs já carregados.
 
 ### Plantão: o NPC não concorre com jogadores
 
