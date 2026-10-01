@@ -37,6 +37,7 @@ include 'aurorion-personagem'
 include 'aurorion-economia'
 include 'aurorion-magia'
 include 'aurorion-servicos'
+include 'aurorion-integracao'
 
 // Nao e um mod: sobe um client/servidor com todos os mods acima de uma vez.
 include 'aurorion-runs'

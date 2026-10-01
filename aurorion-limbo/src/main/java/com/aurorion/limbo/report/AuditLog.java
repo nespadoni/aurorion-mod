@@ -75,6 +75,13 @@ public final class AuditLog {
         }
 
         DiscordSink.push(event);
+
+        // Marcos publicos (queda, saida, fim) para a linha do tempo do site. No-op sem integracao.
+        try {
+            LimboFacts.publish(server, event);
+        } catch (RuntimeException e) {
+            AurorionLimbo.LOGGER.warn("Nao consegui publicar o fato do Limbo: {}", line, e);
+        }
     }
 
     /**

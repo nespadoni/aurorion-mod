@@ -1,8 +1,10 @@
 package com.aurorion.vidas;
 
 import com.aurorion.core.config.AurorionConfigs;
+import com.aurorion.core.lives.LivesGate;
 import com.aurorion.vidas.config.LivesClientConfig;
 import com.aurorion.vidas.config.LivesConfig;
+import com.aurorion.vidas.lives.LivesManager;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -37,5 +39,7 @@ public class AurorionVidas {
     public AurorionVidas(IEventBus modEventBus, ModContainer container) {
         AurorionConfigs.register(container, ModConfig.Type.SERVER, LivesConfig.SPEC);
         AurorionConfigs.register(container, ModConfig.Type.CLIENT, LivesClientConfig.SPEC);
+        // Responde "quantas vidas restam" a quem pergunta pelo core, sem que precise importar este mod.
+        LivesGate.provide(LivesManager::livesOf);
     }
 }

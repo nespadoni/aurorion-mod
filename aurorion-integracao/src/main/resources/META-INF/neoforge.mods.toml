@@ -9,8 +9,7 @@ version = "${mod_version}"
 displayName = "${mod_name}"
 authors = "${mod_authors}"
 description = '''${mod_description}'''
-# Mod 100% de servidor: decide viagem entre dimensoes, respawn e avisos, tudo no lado logico do
-# servidor. Nao registra tela, render nem payload — um cliente sem o mod entra normalmente.
+# Tudo acontece no servidor: nao ha item, bloco, pacote nem tela. O cliente nao precisa do jar.
 displayTest = "IGNORE_ALL_VERSION"
 
 [[dependencies.${mod_id}]]
@@ -27,14 +26,10 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
-# Biblioteca compartilhada do ecossistema. Obrigatoria: sem ela este mod nao carrega.
-# Ordering AFTER garante que o core ja esteja pronto quando este mod inicializar.
+# GameFacts e LivesGate entraram no core 0.6.0.
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
 versionRange = "[0.6.0,)"
 ordering = "AFTER"
 side = "BOTH"
-
-[[mixins]]
-config = "${mod_id}.mixins.json"

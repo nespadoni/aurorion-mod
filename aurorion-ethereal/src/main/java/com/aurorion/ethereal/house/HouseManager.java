@@ -1,9 +1,13 @@
 package com.aurorion.ethereal.house;
 
+import com.aurorion.core.house.HouseGate;
+import com.aurorion.core.integration.GameFacts;
+import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.config.EtherealConfig;
 import com.aurorion.ethereal.network.HouseChoiceResultPayload;
 import com.aurorion.ethereal.network.OpenHouseSelectionPayload;
 import com.aurorion.ethereal.ranking.BoardService;
+import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -153,11 +157,28 @@ public final class HouseManager {
      * @return true se algo mudou de fato.
      */
     public static boolean bind(MinecraftServer server, UUID player, @Nullable ResourceLocation house) {
+        ResourceLocation previous = HouseData.get(server).houseOf(player);
         if (!HouseData.get(server).setHouse(player, house)) {
             return false;
         }
         BoardService.refreshHouses(server);
+        publishChange(server, player, previous);
         return true;
+    }
+
+    /**
+     * Avisa o site da troca de casa. O backend guarda o fato visivel so para a equipe: a casa pode
+     * revelar o resultado da cerimonia antes da hora, e quem decide quando publicar e a staff.
+     */
+    private static void publishChange(MinecraftServer server, UUID player, @Nullable ResourceLocation previous) {
+        if (!GameFacts.installed()) return;
+        try {
+            JsonObject payload = new JsonObject();
+            if (previous != null) payload.addProperty("previous_house", HouseGate.nameOf(previous).getString());
+            GameFacts.publish(GameFacts.HOUSE_CHANGED, GameFacts.subject(server, player), payload);
+        } catch (RuntimeException e) {
+            AurorionEthereal.LOGGER.warn("Nao consegui publicar a troca de casa de {}", player, e);
+        }
     }
 
     /** Anuncio no chat do servidor, se a config deixar. */

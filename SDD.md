@@ -1435,3 +1435,33 @@ manter sincronizada a cada atualização, e o mesmo problema que a §3.2 resolve
   Magias usam os efeitos já sincronizados e uma camada local limitada; nenhuma rede por tick.
   Trilha e encerramento continuam com suas fontes originais.
 - Limites e validações: `aurorion-essentials/DEATH-HISTORY.md` e `docs/IMMERSION-AUDIO.md`.
+
+## 19. aurorion-integracao — o mundo avisa o site
+
+Mortes, quedas e saídas do Limbo, fins definitivos, janelas de portal e trocas de casa viram entradas
+na linha do tempo do site no instante em que acontecem. Contrato do lado do backend:
+`docs/planejamento/contrato-integracao-v1.md` (pasta raiz do ecossistema).
+
+- **Sinal, não consulta.** Ninguém pergunta ao servidor "o que mudou?". Cada mod publica no momento do
+  fato pelo `GameFacts` do core — o mesmo desenho de contrato do `HouseGate` (§3.1): limbo, portais e
+  ethereal publicam sem saber que a integração existe, e sem ela `publish` é no-op. Quem publica checa
+  `GameFacts.installed()` antes de montar o payload, para não pagar nem a montagem sem destino.
+- **Morte sem tick.** A captura roda em `HIGHEST` e guarda só dados imutáveis (id, causa, matador,
+  dimensão). A confirmação é **uma** `TickTask` agendada com `server.tell`, que só roda depois do
+  despacho do evento — quando totem, PlayerRevive e o Limbo já decidiram. Diferente do §18, não há
+  listener de `ServerTickEvent`: quando ninguém morre, o custo é zero. O id do fato é o `DeathId`.
+- **A thread do servidor só enfileira.** Fila limitada em memória; rede e disco numa thread própria
+  (`outbox.Outbox`). Cada fato vai para `<mundo>/aurorion_integracao/pendentes.jsonl` **antes** de
+  qualquer envio e só sai de lá quando o backend responde por ele; o backend deduplica por `event_id`,
+  então reenvio é seguro. Site fora do ar, 5xx, 429 e queda no meio do envio esperam com backoff
+  (até 5 min); credencial recusada espera 10 min com um único aviso. Fila ou spool cheios descartam
+  com aviso — o jogo vale mais que o registro.
+- **Config `STARTUP`, nunca `SERVER`.** O NeoForge envia o arquivo de cada config `SERVER` a todo
+  cliente que conecta (`ConfigSync`); o token iria junto. `config/aurorion/integracao-startup.toml`
+  fica no servidor; a contrapartida é reiniciar para trocar a URL ou o token.
+- **Privacidade.** Sai o perfil Minecraft em uso (o alt tem UUID próprio) e o nome do **personagem**;
+  nunca a conta real, o nick da Mojang, coordenadas ou NBT. Sem personagem nomeado, o site mostra "um
+  viajante". Criativo, espectador e `FakePlayer` não geram morte, pela mesma regra do `aurorion-vidas`.
+  Troca de casa chega ao site visível só para a equipe, para não revelar a cerimônia antes da hora.
+- **Vidas por contrato.** `LivesGate` (core) responde quantas vidas restam sem importar o
+  `aurorion-vidas`; sem o mod, a resposta é "desconhecido", nunca "zero".

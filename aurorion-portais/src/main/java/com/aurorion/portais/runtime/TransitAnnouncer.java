@@ -45,6 +45,7 @@ public final class TransitAnnouncer {
 
     /** Janela aberta: e agora que da para atravessar. */
     public static void boarding(MinecraftServer server, TransitLine line, long closesAt, long now) {
+        PortalFacts.opened(line, closesAt);
         if (!announces()) return;
 
         Component message = Component.translatable("aurorion_portais.aviso.embarque",
@@ -55,6 +56,7 @@ public final class TransitAnnouncer {
 
     /** Janela fechada. Quem ficou dentro, ficou. */
     public static void departed(MinecraftServer server, TransitLine line) {
+        PortalFacts.closed(line);
         if (!announces()) return;
 
         broadcast(server, Component.translatable("aurorion_portais.aviso.partiu", line.coloredName()), 0.8F);
