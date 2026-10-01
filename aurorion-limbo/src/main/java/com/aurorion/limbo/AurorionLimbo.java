@@ -51,6 +51,8 @@ public class AurorionLimbo {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AurorionLimbo(IEventBus modEventBus, ModContainer container) {
+        AurorionConfigs.register(container, ModConfig.Type.STARTUP,
+                com.aurorion.limbo.config.AuditWebhookConfig.SPEC, "auditoria");
         AurorionConfigs.register(container, ModConfig.Type.SERVER, LimboConfig.SPEC);
         AurorionConfigs.register(container, ModConfig.Type.SERVER,
                 com.aurorion.limbo.config.FinaleConfig.SPEC, "finale");

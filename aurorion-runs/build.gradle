@@ -23,6 +23,13 @@ otherProjects.each { evaluationDependsOn(it.path) }
 // PlayerAnimator) em 'modLibraries', a partir dos jars de mod-servidor-referencia/.
 def modProjects = otherProjects.findAll { it.findProperty('aurorion_runs_skip') != 'true' }
 
+configurations {
+    clientModLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
@@ -71,6 +78,9 @@ neoForge {
         }
 
         configureEach {
+            if (it.name == 'client' || it.name == 'client2') {
+                additionalRuntimeClasspathConfiguration.extendsFrom(configurations.clientModLibraries)
+            }
             // Um diretorio por run: client, client2 e server nao dividem mundo,
             // options.txt nem log. Sem isso os dois clientes brigam pelos mesmos
             // arquivos de config.
@@ -97,6 +107,7 @@ dependencies {
         // desta configuration, declarada na convencao compartilhada. Mod sem biblioteca
         // externa contribui com um conjunto vazio, entao isto nao precisa de 'if'.
         implementation files(modProject.configurations.modLibraries)
+        clientModLibraries files(modProject.configurations.clientModLibraries)
     }
 }
 

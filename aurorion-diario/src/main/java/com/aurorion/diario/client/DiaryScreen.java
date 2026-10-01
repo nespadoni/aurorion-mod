@@ -340,7 +340,11 @@ public final class DiaryScreen extends TesseraScreen {
         conflict = null;
         entryId = current.entryId();
         version = current.version();
+        flags &= ~DiaryPayloads.LOCAL;
         fill(current.title(), current.loreDate(), current.markup());
+        // O texto recusado já está no histórico da entrada no site: a cópia do servidor pode sair.
+        request("descartar", entryId);
+        upsertSummary();
         setState("site", "Versão do site carregada.");
     }
 
@@ -366,16 +370,16 @@ public final class DiaryScreen extends TesseraScreen {
         conflict = null;
         preview = false;
         publishAfterSave = false;
-        draftKey = UUID.randomUUID().toString();
+        // Cópia guardada no servidor: a tela continua aquela sessão, e as próximas gravações a
+        // substituem em vez de competir com ela.
+        draftKey = payload.draftKey().isEmpty() ? UUID.randomUUID().toString() : payload.draftKey();
         fill(payload.title(), payload.loreDate(), payload.markup());
         opened = true;
         if (readOnly) {
             setState("leitura", "Entrada longa demais para editar no jogo — edite pelo site.");
         } else if ((flags & DiaryPayloads.LOCAL) != 0) {
-            // Cópia guardada no servidor com o site fora: volta a tentar salvar no site.
-            dirty = true;
-            lastEditAt = 0;
-            setState("servidor", "Cópia guardada no servidor — enviando ao site…");
+            // O servidor já está mandando a cópia ao site; se o site a recusou, chega um conflito.
+            setState("servidor", "Cópia guardada no servidor — sincroniza sozinha com o site.");
         } else {
             setState("site", "Salvo no site");
         }

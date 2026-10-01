@@ -79,8 +79,12 @@ public final class DiaryPayloads {
         }
     }
 
-    /** Uma entrada aberta para edição, já convertida para a marcação do jogo. */
-    public record Entry(long id, int version, String title, String loreDate, String markup, int flags) implements CustomPacketPayload {
+    /**
+     * Uma entrada aberta para edição, já convertida para a marcação do jogo. {@code draftKey} vem
+     * preenchido quando é a cópia guardada no servidor ({@link #LOCAL}): a tela continua aquela
+     * sessão de edição, e as próximas gravações substituem a cópia em vez de competir com ela.
+     */
+    public record Entry(long id, int version, String title, String loreDate, String markup, int flags, String draftKey) implements CustomPacketPayload {
         public static final Type<Entry> TYPE = new Type<>(channel("entry"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.of(
                 (buf, data) -> {
@@ -90,8 +94,10 @@ public final class DiaryPayloads {
                     buf.writeUtf(data.loreDate, LORE_DATE);
                     buf.writeUtf(data.markup, MARKUP);
                     buf.writeVarInt(data.flags);
+                    buf.writeUtf(data.draftKey, KEY);
                 },
-                buf -> new Entry(buf.readVarLong(), buf.readVarInt(), buf.readUtf(TITLE), buf.readUtf(LORE_DATE), buf.readUtf(MARKUP), buf.readVarInt()));
+                buf -> new Entry(buf.readVarLong(), buf.readVarInt(), buf.readUtf(TITLE), buf.readUtf(LORE_DATE), buf.readUtf(MARKUP),
+                        buf.readVarInt(), buf.readUtf(KEY)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -146,7 +152,10 @@ public final class DiaryPayloads {
 
     // ── Cliente → servidor ──────────────────────────────────────────────────────
 
-    /** {@code action}: {@code abrir} uma entrada, ou {@code lista} para recarregar. */
+    /**
+     * {@code action}: {@code abrir} uma entrada, {@code lista} para recarregar, ou {@code descartar} a
+     * cópia guardada no servidor quando a pessoa fica com a versão do site.
+     */
     public record Request(String action, long entryId) implements CustomPacketPayload {
         public static final Type<Request> TYPE = new Type<>(channel("request"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Request> STREAM_CODEC = StreamCodec.of(

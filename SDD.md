@@ -1477,11 +1477,18 @@ na linha do tempo do site no instante em que acontecem. Contrato do lado do back
   assíncrona do `SiteApi`; a resposta volta à thread do servidor (`server.execute`) antes de tocar
   no jogador. O autosave é do cliente (2 s após parar de digitar), não do servidor.
 - **Site fora do ar.** A gravação vai para `<mundo>/aurorion_diario/pendentes.json` (`PendingStore`,
-  limite global e por perfil) e uma única rotina numa thread própria reenvia a cada 30 s. Publicar
-  exige sincronizado — nunca publica uma versão que o site não viu.
-- **Concorrência site × jogo.** Versão de rascunho com compare-and-swap no backend; `operation_id`
-  torna o reenvio idempotente (inclusive a criação). Conflito mostra as duas versões e o jogador
-  escolhe; o lado descartado continua no histórico do site.
+  limite global e por perfil, chaves sempre sob o perfil de quem gravou) e uma única rotina numa
+  thread própria reenvia a cada 30 s; a escrita em disco tem outra thread, e "guardado no servidor"
+  só aparece depois dela. A cópia só sai do disco quando o site confirma uma gravação daquela sessão
+  de edição — abrir a entrada não a consome: a tela recebe o `draftKey` da cópia e continua a mesma
+  sessão. Publicar exige sincronizado — nunca publica uma versão que o site não viu.
+- **Concorrência site × jogo.** O backend trava a entrada na transação e grava um recibo por
+  `operation_id`: reenvio devolve o resultado já gravado (inclusive a criação e a publicação, sem
+  avisar o Discord de novo) e o mesmo id com outro texto é recusado (`operation_reused`). Texto
+  recusado por conflito vira ponto de recuperação "conflito" no histórico do site. No jogo, o
+  conflito mostra as duas versões; "usar a do site" descarta só a cópia recusada (ação `descartar`).
+- **Protocolo.** `DiaryNetwork.PROTOCOL_VERSION` muda junto com o formato dos pacotes; o canal é
+  opcional, então cliente de outra versão só recebe o link do site.
 - **Formato único.** O documento de blocos do site (parágrafo, título 2/3, citação, lista, separador,
   imagem; negrito/itálico). No jogo vira uma marcação curta (`DiaryMarkup`), ida e volta sem perda.
   Imagens só entram pelo site; no jogo aparecem como `[[imagem:ID|legenda]]` e são preservadas.

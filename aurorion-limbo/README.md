@@ -182,7 +182,7 @@ Todos são staff (nível 2).
 
 ## Config
 
-`config/aurorion_limbo-server.toml`:
+`config/aurorion/limbo-server.toml`:
 
 | Chave | Padrão | O que faz |
 |---|---|---|
@@ -194,10 +194,14 @@ Todos são staff (nível 2).
 | `raioDaColeira` | `300` | Zero desliga |
 | `anunciarQuedaNoChat` | `false` | Anuncia no servidor que alguém caiu |
 | `anunciarNomes` | `false` | Se o anúncio diz **quem** caiu |
-| `webhookUrl` | `""` | Vazio desliga o push |
 | `tambemNoLog` | `true` | Repete a auditoria no log do servidor |
 | `raioDoRelicarioEmChunks` | `1` | Raio, em chunks, onde o Relicário procura os drops (1 = 3x3) |
 | `minutosDeProtecaoDosDrops` | `120` | Drops de morte não somem nem são limpos por esse tempo. Zero desliga |
+
+O webhook da auditoria fica à parte, em `config/aurorion/limbo-auditoria-startup.toml`
+(`webhookUrl`, vazio desliga o push; mudar exige reiniciar). A URL de webhook do Discord carrega o
+token: config SERVER é enviada a todo jogador que conecta, a STARTUP não. **Quem já usava o
+`webhookUrl` na config SERVER precisa copiá-lo para o arquivo novo** — a chave antiga é ignorada.
 
 ⚠️ **O Limbo não recebe ninguém até você apontar o exílio para ele.** Em
 `config/aurorion_vidas-server.toml`:

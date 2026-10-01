@@ -20,7 +20,6 @@ neoForge {
 
 dependencies {
     implementation project(':aurorion-integracao').sourceSets.main.output
-    // 'modLibraries' (ver gradle/aurorion-mod.gradle): compila, entra nos runs deste mod e no
-    // aurorion-runs. So o cliente o carrega (neoforge.mods.toml), mas o jar do pack e um so.
-    modLibraries referencia('tesseraUiJar', 'tesseraui-1.1.jar')
+    // O Tessera referencia classes de tela: runtime exclusivo dos runs de cliente.
+    clientModLibraries referencia('tesseraUiJar', 'tesseraui-1.1.jar')
 }

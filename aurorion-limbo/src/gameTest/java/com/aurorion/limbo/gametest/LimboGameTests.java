@@ -7,6 +7,7 @@ import com.aurorion.limbo.exile.ForgottenDoor;
 import com.aurorion.limbo.exile.LimboData;
 import com.aurorion.limbo.exile.LimboManager;
 import com.aurorion.limbo.exile.LimboSpawn;
+import com.aurorion.limbo.config.AuditWebhookConfig;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.environment.LimboEnvironment;
 import com.aurorion.limbo.event.LimboServerEvents;
@@ -62,7 +63,7 @@ public class LimboGameTests {
     public LimboGameTests() {
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             LivesConfig.EXILE_DIMENSION.set("aurorion_limbo:limbo");
-            LimboConfig.WEBHOOK_URL.set("");
+            AuditWebhookConfig.WEBHOOK_URL.set("");
         });
     }
 
@@ -193,7 +194,7 @@ public class LimboGameTests {
         helper.assertTrue(limbo != null, "Dimensao do Limbo deve carregar no servidor dedicado");
         LivesConfig.EXILE_DIMENSION.set(dimension.location().toString());
         LivesConfig.MAX_LIVES.set(5);
-        LimboConfig.WEBHOOK_URL.set("");
+        AuditWebhookConfig.WEBHOOK_URL.set("");
         LimboConfig.DOOR_WALK_MIN.set(1);
         LimboConfig.DOOR_WALK_MAX.set(1);
         LimboConfig.LEASH_RADIUS.set(0);

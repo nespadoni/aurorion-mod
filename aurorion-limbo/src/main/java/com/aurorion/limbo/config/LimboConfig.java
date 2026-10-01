@@ -38,7 +38,6 @@ public final class LimboConfig {
     public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_NAMES;
 
-    public static final ModConfigSpec.ConfigValue<String> WEBHOOK_URL;
     public static final ModConfigSpec.BooleanValue AUDIT_TO_LOG;
 
     public static final ModConfigSpec SPEC;
@@ -285,26 +284,6 @@ public final class LimboConfig {
                 "sempre, independente destas opcoes. O arquivo e a fonte da verdade; o que esta aqui e",
                 "so como ele chega ate voce."
         ).push("auditoria");
-
-        WEBHOOK_URL = BUILDER
-                .comment(
-                        "Webhook (Discord ou outro) que recebe um POST a cada evento do Limbo. Vazio desliga.",
-                        "",
-                        "POR QUE WEBHOOK E NAO RCON: RCON e de mao unica e a mao e a de fora — um cliente se",
-                        "conecta no servidor e manda comando. O servidor nao abre conexao RCON com ninguem, entao",
-                        "'avisar o Discord na hora que alguem saiu' nao e uma coisa que RCON saiba fazer.",
-                        "",
-                        "As duas metades, entao:",
-                        "  - EMPURRAR o evento na hora  -> este webhook.",
-                        "  - PUXAR o estado quando quiser -> seu bot roda /limbo relatorio por RCON. A saida e",
-                        "    texto estavel em chave=valor, feita para ser parseada.",
-                        "Da para usar so uma das duas. Um bot que ja fala RCON e que so precisa de um painel",
-                        "'quem esta no Limbo agora' nao precisa de webhook nenhum.",
-                        "",
-                        "O envio e assincrono e descartavel: nunca bloqueia o tick, e um webhook fora do ar vira",
-                        "aviso no log, nunca lag no servidor."
-                )
-                .define("webhookUrl", "");
 
         AUDIT_TO_LOG = BUILDER
                 .comment("Repete cada evento da auditoria no log do servidor, para quem prefere ler pelo console.")

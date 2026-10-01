@@ -34,8 +34,11 @@ site).
   Nada roda por tick: cada ação é uma chamada assíncrona, e a resposta volta para a thread do
   servidor antes de tocar no jogador.
 - **Site fora do ar**: a gravação fica em `<mundo>/aurorion_diario/pendentes.json`
-  (`PendingStore`) e uma rotina numa thread própria reenvia a cada 30 s. A tela mostra "guardado no
-  servidor". Publicar espera a sincronização.
+  (`PendingStore`) e uma rotina numa thread própria reenvia a cada 30 s. A tela só mostra "guardado
+  no servidor" depois que o arquivo foi gravado. Reabrir a entrada continua a mesma sessão de edição
+  (a cópia não é consumida ao abrir) e adianta o reenvio. Se o site recusar a cópia por conflito, ela
+  vira um ponto "conflito" no histórico do site e, no jogo, a tela mostra as duas versões. Publicar
+  espera a sincronização.
 - **Cliente** (`client/DiaryScreen`): visual em HTML/CSS do **TesseraUI**
   (`assets/aurorion_diario/ui/diario.css`) e o campo de texto nativo do Minecraft para escrever.
   As classes de cliente só carregam depois do teste de `Dist`.
@@ -59,7 +62,10 @@ site).
     preciso), lista paginada, campos de título/data, barra de ferramentas, prévia com rolagem;
   - autosave (status "Salvo no site"), editar no site e depois no jogo → conflito → "Manter a minha"
     e "Usar a do site";
-  - derrubar o backend enquanto escreve → "guardado no servidor"; religar → sincroniza e avisa no chat;
+  - derrubar o backend enquanto escreve → "guardado no servidor"; fechar e reabrir a entrada com o
+    site ainda fora (o texto continua lá); religar → sincroniza e avisa no chat;
+  - com o site fora, escrever no jogo; editar a mesma entrada no site; religar → aviso de conflito
+    no chat; reabrir no jogo → tela de conflito; "Usar a do site" → reabrir não mostra mais a cópia;
   - publicar/retirar e conferir no perfil público do site;
   - cliente sem o mod → `/diario` manda o link do site; servidor dedicado sobe sem carregar classe do
     Tessera.

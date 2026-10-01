@@ -92,7 +92,17 @@ configurations {
         canBeResolved = true
         canBeConsumed = false
     }
+    // Bibliotecas de tela compilam junto, mas nunca entram no servidor dedicado.
+    clientModLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileOnly.extendsFrom(clientModLibraries)
     implementation.extendsFrom(modLibraries)
+}
+
+neoForge.runs.named('client') {
+    additionalRuntimeClasspathConfiguration.extendsFrom(configurations.clientModLibraries)
 }
 
 dependencies {

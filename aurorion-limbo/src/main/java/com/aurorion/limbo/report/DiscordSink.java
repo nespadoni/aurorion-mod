@@ -1,7 +1,7 @@
 package com.aurorion.limbo.report;
 
 import com.aurorion.limbo.AurorionLimbo;
-import com.aurorion.limbo.config.LimboConfig;
+import com.aurorion.limbo.config.AuditWebhookConfig;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public final class DiscordSink {
     }
 
     public static void push(AuditEvent event) {
-        String url = LimboConfig.WEBHOOK_URL.get();
+        String url = AuditWebhookConfig.WEBHOOK_URL.get();
         if (url == null || url.isBlank()) return;
 
         DeliverySession owner = session();
