@@ -21,7 +21,7 @@ no-op.
 ```toml
 [integracao]
 habilitado = true
-url = "https://aurorionstudios.cloud/api/v1/integration/v1/events/batch"
+url = "https://aurorionstudios.cloud/api/v1/integration/v1"
 token = "<o mesmo valor de GAME_API_TOKEN no backend>"
 spoolMaxMiB = 8
 ```
@@ -29,8 +29,17 @@ spoolMaxMiB = 8
 - O token **não é** o do bot. No backend, defina `GAME_API_TOKEN` (32+ caracteres) e reinicie.
 - Mudar o arquivo exige reiniciar o servidor do jogo. É `STARTUP` de propósito: config `SERVER` é
   enviada a todo cliente que conecta, e o token iria junto.
+- `url` é a **base** da integração; os caminhos (`/events/batch`, `/link/claim`, `/diary/...`) são
+  montados a partir dela. O endereço antigo terminado em `/events/batch` continua aceito.
 - Na mesma rede Docker do backend, `http://backend:8080/...` também serve. HTTP para um host externo
   gera aviso no log, porque o token trafegaria aberto.
+
+## `/vincular`
+
+Liga a conta do site (Discord) ao perfil Minecraft. O código nasce no site (Perfil → Diário →
+"Vincular minha conta Minecraft"), vale 10 minutos e é de uso único; o backend limita tentativas por
+perfil. O comando só repassa código + perfil da sessão, de forma assíncrona. O `aurorion-diario`
+usa o mesmo cliente do site (`FactBridge.site()`), sem repetir credencial.
 
 ## Como sai sem pesar
 

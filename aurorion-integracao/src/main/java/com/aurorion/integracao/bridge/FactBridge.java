@@ -6,6 +6,7 @@ import com.aurorion.integracao.config.IntegracaoConfig;
 import com.aurorion.integracao.outbox.FactJson;
 import com.aurorion.integracao.outbox.IngestClient;
 import com.aurorion.integracao.outbox.Outbox;
+import com.aurorion.integracao.outbox.SiteApi;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Liga os fatos do jogo ({@link GameFacts}) a caixa de saida.
@@ -34,6 +36,8 @@ public final class FactBridge {
 
     @Nullable
     private static volatile Outbox outbox;
+    @Nullable
+    private static volatile SiteApi site;
 
     private FactBridge() {
     }
@@ -41,6 +45,14 @@ public final class FactBridge {
     /** Ha para onde enviar agora? */
     public static boolean active() {
         return outbox != null;
+    }
+
+    /**
+     * O cliente de pergunta e resposta do site (vinculo, diario), ou vazio se a integracao esta
+     * desligada. Outros mods (o {@code aurorion-diario}) usam por aqui, sem repetir credencial.
+     */
+    public static Optional<SiteApi> site() {
+        return Optional.ofNullable(site);
     }
 
     /** O {@link GameFacts.Sink} da integracao. Thread do servidor: serializa e enfileira, nada mais. */
@@ -65,7 +77,8 @@ public final class FactBridge {
             return;
         }
 
-        IngestClient client = new IngestClient(endpoint, token, userAgent());
+        IngestClient client = new IngestClient(URI.create(endpoint + "/events/batch"), token, userAgent());
+        site = new SiteApi(endpoint, token, userAgent());
         Path spool = server.getWorldPath(LevelResource.ROOT).resolve(SPOOL_DIR).resolve(SPOOL_FILE);
         long maxBytes = IntegracaoConfig.SPOOL_MAX_MIB.get() * 1024L * 1024L;
         outbox = new Outbox(spool, maxBytes, client, new Outbox.Log() {
@@ -91,6 +104,9 @@ public final class FactBridge {
         Outbox current = outbox;
         outbox = null;
         if (current != null) current.close();
+        SiteApi api = site;
+        site = null;
+        if (api != null) api.close();
     }
 
     /**
@@ -108,7 +124,7 @@ public final class FactBridge {
             if (scheme.equals("http") && !internalHost(uri.getHost())) {
                 AurorionIntegracao.LOGGER.warn("Integracao usando HTTP sem TLS para {}: o token trafega aberto. Prefira https.", uri.getHost());
             }
-            return uri;
+            return SiteApi.normalizeBase(uri);
         } catch (IllegalArgumentException e) {
             return null;
         }

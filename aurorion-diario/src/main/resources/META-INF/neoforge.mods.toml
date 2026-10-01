@@ -1,0 +1,50 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.6.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# O transporte (credencial, endereço do site, cliente HTTP) é da integração; o diário só a usa.
+# Só o servidor fala com o site, mas no singleplayer o servidor integrado roda no cliente: por isso
+# a dependência vale dos dois lados. A integração sem config é inofensiva no cliente.
+[[dependencies.${mod_id}]]
+modId = "aurorion_integracao"
+type = "required"
+versionRange = "[0.2.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# A tela é HTML/CSS do TesseraUI. Só o cliente desenha; o servidor nunca carrega classe dele.
+[[dependencies.${mod_id}]]
+modId = "tesseraui"
+type = "required"
+versionRange = "[1.1,)"
+ordering = "AFTER"
+side = "CLIENT"

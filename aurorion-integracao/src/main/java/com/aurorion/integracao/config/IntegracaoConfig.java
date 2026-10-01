@@ -32,9 +32,9 @@ public final class IntegracaoConfig {
 
         URL = BUILDER
                 .comment(
-                        "Endpoint de ingestao do backend, completo. Ex.:",
-                        "https://aurorionstudios.cloud/api/v1/integration/v1/events/batch",
-                        "Na mesma rede Docker do backend, pode ser http://backend:8080/api/v1/integration/v1/events/batch.")
+                        "Endereco base da integracao no backend. Ex.:",
+                        "https://aurorionstudios.cloud/api/v1/integration/v1",
+                        "Na mesma rede Docker do backend, pode ser http://backend:8080/api/v1/integration/v1.")
                 .define("url", "");
 
         TOKEN = BUILDER

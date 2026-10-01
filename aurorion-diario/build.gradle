@@ -1,0 +1,26 @@
+apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// O diario usa o transporte da integracao (credencial e cliente do site). A direcao e unica:
+// diario -> integracao; a integracao nao sabe que o diario existe.
+evaluationDependsOn(':aurorion-integracao')
+
+// O TesseraUI vem da pasta de referencia, como os jars do aurorion-magia: o que compila e o que
+// roda no pack sao o mesmo arquivo. Outro caminho com -PtesseraUiJar=C:/caminho/tesseraui.jar.
+def referencia = { String propriedade, String arquivo ->
+    files(providers.gradleProperty(propriedade).orElse("$rootDir/mod-servidor-referencia/$arquivo").get())
+}
+
+neoForge {
+    mods {
+        create('aurorion_integracao') {
+            sourceSet project(':aurorion-integracao').sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    implementation project(':aurorion-integracao').sourceSets.main.output
+    // 'modLibraries' (ver gradle/aurorion-mod.gradle): compila, entra nos runs deste mod e no
+    // aurorion-runs. So o cliente o carrega (neoforge.mods.toml), mas o jar do pack e um so.
+    modLibraries referencia('tesseraUiJar', 'tesseraui-1.1.jar')
+}

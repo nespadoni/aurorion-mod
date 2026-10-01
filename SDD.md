@@ -1465,3 +1465,28 @@ na linha do tempo do site no instante em que acontecem. Contrato do lado do back
   Troca de casa chega ao site visível só para a equipe, para não revelar a cerimônia antes da hora.
 - **Vidas por contrato.** `LivesGate` (core) responde quantas vidas restam sem importar o
   `aurorion-vidas`; sem o mod, a resposta é "desconhecido", nunca "zero".
+
+## 20. aurorion-diario — o diário do site dentro do jogo
+
+`/diario` abre o mesmo diário do site (fonte da verdade: backend). O jogo é só mais uma tela.
+
+- **Identidade vem da sessão.** O servidor envia perfil (UUID da sessão) e personagem; a tela nunca
+  informa quem é. A conta do site se liga ao perfil por `/vincular` (código gerado no site, uso único,
+  10 min). O token é o do `aurorion-integracao` (`STARTUP`), reaproveitado via `FactBridge.site()`.
+- **Nada por tick no servidor.** Cada ação (abrir, listar, salvar, publicar) é uma chamada HTTP
+  assíncrona do `SiteApi`; a resposta volta à thread do servidor (`server.execute`) antes de tocar
+  no jogador. O autosave é do cliente (2 s após parar de digitar), não do servidor.
+- **Site fora do ar.** A gravação vai para `<mundo>/aurorion_diario/pendentes.json` (`PendingStore`,
+  limite global e por perfil) e uma única rotina numa thread própria reenvia a cada 30 s. Publicar
+  exige sincronizado — nunca publica uma versão que o site não viu.
+- **Concorrência site × jogo.** Versão de rascunho com compare-and-swap no backend; `operation_id`
+  torna o reenvio idempotente (inclusive a criação). Conflito mostra as duas versões e o jogador
+  escolhe; o lado descartado continua no histórico do site.
+- **Formato único.** O documento de blocos do site (parágrafo, título 2/3, citação, lista, separador,
+  imagem; negrito/itálico). No jogo vira uma marcação curta (`DiaryMarkup`), ida e volta sem perda.
+  Imagens só entram pelo site; no jogo aparecem como `[[imagem:ID|legenda]]` e são preservadas.
+- **Teto do pacote.** C2S no 1.21.1 tem limite de 32767 bytes; entrada com mais de 10 mil caracteres
+  de marcação abre **só leitura** no jogo, em vez de cortar o texto.
+- **Visual.** TesseraUI 1.1 (HTML/CSS, `assets/aurorion_diario/ui/diario.css`) para moldura, lista
+  e prévia; o campo de escrita é o `MultiLineEditBox` vanilla. Tessera é dependência só de cliente;
+  as classes de cliente só carregam depois do teste de `Dist`, então o servidor dedicado sobe sem ele.
