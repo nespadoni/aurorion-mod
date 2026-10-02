@@ -8,15 +8,15 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Chamadas de pergunta e resposta ao site (vínculo, diário), sempre assíncronas.
@@ -59,8 +59,19 @@ public final class SiteApi implements AutoCloseable {
     private final URI base;
     private final String token;
     private final String userAgent;
-    private final ExecutorService executor;
+    private final ThreadPoolExecutor executor;
     private final HttpClient client;
+    private final AtomicInteger inFlight = new AtomicInteger();
+    private final AtomicLong transportFailures = new AtomicLong();
+    private volatile String lastResult = "nenhuma chamada";
+
+    public record Diagnostics(int inFlight, int executorQueued, int executorCapacity,
+                              long transportFailures, String lastResult) { }
+
+    public Diagnostics diagnostics() {
+        return new Diagnostics(inFlight.get(), executor.getQueue().size(), 256,
+                transportFailures.get(), lastResult);
+    }
 
     public SiteApi(URI base, String token, String userAgent) {
         this.base = trimSlash(base);
@@ -95,12 +106,23 @@ public final class SiteApi implements AutoCloseable {
         } catch (IllegalArgumentException e) {
             return CompletableFuture.completedFuture(Response.transport());
         }
+        inFlight.incrementAndGet();
         try {
-            return client.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                    .handle((response, error) -> error != null || response == null
-                            ? Response.transport()
-                            : new Response(response.statusCode(), parse(response.body())));
+            return client.sendAsync(request, LimitedResponseBody.utf8(MAX_BODY))
+                    .handle((response, error) -> {
+                        inFlight.decrementAndGet();
+                        if (error != null || response == null) {
+                            transportFailures.incrementAndGet();
+                            lastResult = "falha de transporte ou resposta excessiva";
+                            return Response.transport();
+                        }
+                        lastResult = "HTTP " + response.statusCode();
+                        return new Response(response.statusCode(), parse(response.body()));
+                    });
         } catch (RuntimeException e) { // fila cheia ou cliente fechado
+            inFlight.decrementAndGet();
+            transportFailures.incrementAndGet();
+            lastResult = "cliente fechado ou fila indisponível";
             return CompletableFuture.completedFuture(Response.transport());
         }
     }

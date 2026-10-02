@@ -1,6 +1,7 @@
 package com.aurorion.diario.server;
 
 import com.aurorion.core.integration.GameFacts;
+import com.aurorion.core.diagnostics.ServerDiagnostics;
 import com.aurorion.core.character.AltData;
 import com.aurorion.diario.AurorionDiario;
 import com.aurorion.diario.markup.DiaryMarkup;
@@ -94,6 +95,7 @@ public final class DiaryServer {
         disk = io;
         store = new PendingStore(server.getWorldPath(LevelResource.ROOT).resolve(AurorionDiario.MOD_ID).resolve("pendentes.json"),
                 io::execute, AurorionDiario.LOGGER::warn);
+        ServerDiagnostics.register("Diário", DiaryServer::diagnostics);
         worker.scheduleWithFixedDelay(DiaryServer::retryPending, RETRY_EVERY_S, RETRY_EVERY_S, TimeUnit.SECONDS);
     }
 
@@ -113,6 +115,7 @@ public final class DiaryServer {
     }
 
     private static void stop() {
+        ServerDiagnostics.unregister("Diário");
         if (worker != null) worker.shutdownNow(); // o reenvio pode parar no meio: o recibo do site cobre a repetição
         if (disk != null) {
             disk.shutdown(); // a thread é daemon: espera a última gravação em disco antes de o processo sair
@@ -131,6 +134,28 @@ public final class DiaryServer {
         LAST_SAVE.clear();
         LAST_REQUEST.clear();
         RETRY_KICKED.set(false);
+    }
+
+    private static List<String> diagnostics() {
+        PendingStore current = store;
+        if (current == null) return List.of("Estado: parado");
+        var stats = current.diagnostics();
+        var lines = new ArrayList<String>();
+        lines.add("Rascunhos pendentes: " + stats.total());
+        lines.add("Aguardando reenvio: " + stats.retryable());
+        lines.add("Conflitos/recusas que precisam de revisão: " + stats.conflicts());
+        lines.add("Arquivo de rascunhos legível: " + (stats.readable() ? "sim" : "não; conferir log"));
+        lines.add("Gravação em andamento: " + (stats.writing() ? "sim" : "não")
+                + "; confirmações aguardando disco: " + stats.waitingForDisk());
+        lines.add("Última gravação: " + (stats.lastWriteAt() == 0 ? "nenhuma"
+                : stats.lastWriteSucceeded() ? "ok" : "falhou; conferir log"));
+        if (stats.oldestSavedAt() > 0) {
+            long minutes = Math.max(0, System.currentTimeMillis() - stats.oldestSavedAt()) / 60_000;
+            lines.add("Rascunho pendente mais antigo: " + minutes + " minuto(s)");
+        }
+        lines.add("Transporte do site disponível: " + (FactBridge.site().isPresent() ? "sim" : "não"));
+        lines.add("Reenvio periódico: a cada " + RETRY_EVERY_S + " s, até " + RETRY_BATCH + " por rodada");
+        return lines;
     }
 
     private static java.util.concurrent.ThreadFactory daemon(String name) {

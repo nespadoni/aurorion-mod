@@ -42,6 +42,26 @@ class OutboxTest {
     }
 
     @Test
+    void diagnosticsAreReadOnlyAndDoNotExposeFactsOrTransportDetails() throws Exception {
+        int[] calls = {0};
+        Outbox box = outbox(spoolIn(Files.createTempDirectory("outbox")), 1 << 20,
+                batch -> { calls[0]++; return Attempt.retry(0, "private-transport-detail"); });
+        box.offer("private-fact-payload");
+        var queued = box.diagnostics();
+        assertEquals(1, queued.queued());
+        assertEquals(0, queued.pending());
+        assertEquals(0, calls[0]);
+        assertFalse(queued.toString().contains("private-fact"));
+        box.runOnce(0);
+        var waiting = box.diagnostics();
+        assertEquals(0, waiting.queued());
+        assertEquals(1, waiting.pending());
+        assertTrue(waiting.retryInMillis() > 0);
+        assertFalse(waiting.toString().contains("private-transport"));
+        assertEquals(1, calls[0]);
+    }
+
+    @Test
     void factSurvivesOutageAndRestart() throws Exception {
         Path spool = spoolIn(Files.createTempDirectory("outbox"));
         Outbox down = outbox(spool, 1 << 20, batch -> Attempt.retry(0, "rede"));

@@ -26,6 +26,7 @@ public final class IngestClient implements Function<List<String>, Attempt> {
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final long DEFAULT_RETRY_AFTER = 30_000L;
+    private static final int MAX_RESPONSE_BYTES = 256 * 1024;
 
     private final URI endpoint;
     private final String token;
@@ -53,7 +54,7 @@ public final class IngestClient implements Function<List<String>, Attempt> {
                 .build();
         HttpResponse<String> response;
         try {
-            response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            response = client.send(request, LimitedResponseBody.utf8(MAX_RESPONSE_BYTES));
         } catch (IOException e) {
             return Attempt.retry(0, "rede: " + e.getClass().getSimpleName());
         } catch (InterruptedException e) {

@@ -70,10 +70,27 @@ public final class Outbox implements AutoCloseable {
     private volatile boolean running = true;
     private long pendingBytes;
     private long backoff = MIN_BACKOFF;
-    private long nextAttemptAt;
+    private volatile long nextAttemptAt;
     private long droppedSinceWarn;
     private long lastDropWarn;
     private boolean forbiddenWarned;
+    private long droppedTotal;
+    private volatile long resolvedTotal;
+    private volatile String lastResult = "nenhuma tentativa";
+    private volatile long lastAttemptAt;
+    private volatile long lastSuccessAt;
+    private volatile boolean diskHealthy = true;
+
+    public record Diagnostics(int queued, int queueCapacity, int pending, long pendingBytes,
+                              long spoolCapacityBytes, long retryInMillis, long resolved, long dropped,
+                              String lastResult, long lastAttemptAt, long lastSuccessAt, boolean diskHealthy) { }
+
+    /** Counters only: never reads the spool, serializes facts or starts a request. */
+    public synchronized Diagnostics diagnostics() {
+        return new Diagnostics(queue.size(), QUEUE_CAPACITY, pending.size(), pendingBytes, maxSpoolBytes,
+                pending.isEmpty() ? 0L : Math.max(0L, nextAttemptAt - clock.getAsLong()), resolvedTotal,
+                droppedTotal, lastResult, lastAttemptAt, lastSuccessAt, diskHealthy);
+    }
 
     public Outbox(Path spool, long maxSpoolBytes, Function<List<String>, Attempt> transport, Log log) {
         this(spool, maxSpoolBytes, transport, log, System::currentTimeMillis, true);
@@ -135,6 +152,7 @@ public final class Outbox implements AutoCloseable {
             } catch (InterruptedException e) {
                 break;
             } catch (RuntimeException e) {
+                lastResult = "erro interno; reenvio adiado";
                 log.warn("Integracao: erro inesperado na caixa de saida (" + e.getClass().getSimpleName() + "); tentando de novo");
                 nextAttemptAt = clock.getAsLong() + MAX_BACKOFF;
             }
@@ -168,10 +186,14 @@ public final class Outbox implements AutoCloseable {
     /** @return {@code true} se vale tentar o proximo lote ja (o anterior foi entregue). */
     private boolean sendBatch() {
         List<String> batch = nextBatch();
+        lastAttemptAt = clock.getAsLong();
         Attempt attempt = transport.apply(batch);
         switch (attempt.kind()) {
             case DELIVERED -> {
                 int done = resolve(batch, attempt.resolved());
+                resolvedTotal += done;
+                lastResult = done == batch.size() ? "lote confirmado" : "resposta parcial";
+                if (done > 0) lastSuccessAt = clock.getAsLong();
                 if (!attempt.rejections().isEmpty()) {
                     log.warn("Integracao: o site recusou " + attempt.rejections().size() + " fato(s): " + attempt.rejections());
                 }
@@ -188,6 +210,7 @@ public final class Outbox implements AutoCloseable {
                 return true;
             }
             case FORBIDDEN -> {
+                lastResult = "credencial recusada";
                 if (!forbiddenWarned) {
                     log.warn("Integracao: o site recusou a credencial (" + attempt.detail()
                             + "). Confira integracao.token; os fatos ficam guardados ate la.");
@@ -197,6 +220,7 @@ public final class Outbox implements AutoCloseable {
                 return false;
             }
             default -> {
+                lastResult = "falha de entrega; aguardando reenvio";
                 scheduleRetry(attempt.waitMillis());
                 return false;
             }
@@ -254,6 +278,7 @@ public final class Outbox implements AutoCloseable {
             }
             if (!lines.isEmpty()) log.info("Integracao: " + pendingSize() + " fato(s) pendente(s) de antes do reinicio");
         } catch (IOException e) {
+            diskHealthy = false;
             log.warn("Integracao: nao consegui ler o spool " + spool.getFileName() + " (" + e.getClass().getSimpleName() + ")");
         }
     }
@@ -278,7 +303,9 @@ public final class Outbox implements AutoCloseable {
         try {
             Files.createDirectories(spool.getParent());
             Files.write(spool, accepted, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            diskHealthy = true;
         } catch (IOException e) {
+            diskHealthy = false;
             // Continua em memoria e sai normalmente; so nao sobrevive a um reinicio antes da entrega.
             log.warn("Integracao: nao consegui gravar o spool (" + e.getClass().getSimpleName() + "); fatos mantidos em memoria");
         }
@@ -293,6 +320,7 @@ public final class Outbox implements AutoCloseable {
         try {
             if (snapshot.isEmpty()) {
                 Files.deleteIfExists(spool);
+                diskHealthy = true;
                 return;
             }
             Path temp = spool.resolveSibling(spool.getFileName() + ".tmp");
@@ -302,7 +330,9 @@ public final class Outbox implements AutoCloseable {
             } catch (AtomicMoveNotSupportedException e) {
                 Files.move(temp, spool, StandardCopyOption.REPLACE_EXISTING);
             }
+            diskHealthy = true;
         } catch (IOException e) {
+            diskHealthy = false;
             // O arquivo antigo continua la: no pior caso, fatos ja entregues saem de novo e o
             // backend os reconhece como duplicados.
             log.warn("Integracao: nao consegui atualizar o spool (" + e.getClass().getSimpleName() + ")");
@@ -312,6 +342,7 @@ public final class Outbox implements AutoCloseable {
     private void noteDrop() {
         long now = clock.getAsLong();
         synchronized (this) {
+            droppedTotal++;
             droppedSinceWarn++;
             if (now - lastDropWarn < WARN_EVERY) return;
             lastDropWarn = now;

@@ -18,10 +18,10 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * {@code /gritar} — a staff aumenta o alcance da voz (Simple Voice Chat) de alguem enquanto quiser.
@@ -64,9 +64,6 @@ public final class GritarCommand {
 
     private static int on(CommandContext<CommandSourceStack> c) {
         CommandSourceStack source = c.getSource();
-        UUID account = target(c);
-        if (account == null) return 0;
-
         float distance = FloatArgumentType.getFloat(c, "distancia");
         double max = VoiceConfig.MAX_SHOUT_DISTANCE.get();
         if (distance > max) {
@@ -75,28 +72,33 @@ public final class GritarCommand {
             return 0;
         }
 
-        ShoutRegistry.set(account, distance);
-        String name = CharacterTarget.displayName(source.getServer(), account);
-        // true: fica no log e aparece para a staff online, como os outros comandos de moderacao.
-        source.sendSuccess(() -> Component.literal(name + " esta gritando: a voz alcanca " + blocks(distance)
-                + " blocos. Para parar: /gritar " + StringArgumentType.escapeIfRequired(name) + " " + OFF), true);
-        warnIfNoVoiceChat(source);
-        notifyTarget(source.getServer(), account, "Voce esta gritando: sua voz alcanca " + blocks(distance) + " blocos.");
+        target(c, account -> {
+            if (distance > VoiceConfig.MAX_SHOUT_DISTANCE.get()) {
+                source.sendFailure(Component.literal("O alcance máximo mudou durante a consulta. Tente novamente."));
+                return;
+            }
+            ShoutRegistry.set(account, distance);
+            String name = CharacterTarget.displayName(source.getServer(), account);
+            // true: fica no log e aparece para a staff online, como os outros comandos de moderacao.
+            source.sendSuccess(() -> Component.literal(name + " esta gritando: a voz alcanca " + blocks(distance)
+                    + " blocos. Para parar: /gritar " + StringArgumentType.escapeIfRequired(name) + " " + OFF), true);
+            warnIfNoVoiceChat(source);
+            notifyTarget(source.getServer(), account, "Voce esta gritando: sua voz alcanca " + blocks(distance) + " blocos.");
+        });
         return 1;
     }
 
     private static int off(CommandContext<CommandSourceStack> c) {
         CommandSourceStack source = c.getSource();
-        UUID account = target(c);
-        if (account == null) return 0;
-
-        String name = CharacterTarget.displayName(source.getServer(), account);
-        if (!ShoutRegistry.clear(account)) {
-            source.sendFailure(Component.literal(name + " nao estava gritando."));
-            return 0;
-        }
-        source.sendSuccess(() -> Component.literal(name + " parou de gritar: a voz voltou ao alcance normal."), true);
-        notifyTarget(source.getServer(), account, "Sua voz voltou ao alcance normal.");
+        target(c, account -> {
+            String name = CharacterTarget.displayName(source.getServer(), account);
+            if (!ShoutRegistry.clear(account)) {
+                source.sendFailure(Component.literal(name + " nao estava gritando."));
+                return;
+            }
+            source.sendSuccess(() -> Component.literal(name + " parou de gritar: a voz voltou ao alcance normal."), true);
+            notifyTarget(source.getServer(), account, "Sua voz voltou ao alcance normal.");
+        });
         return 1;
     }
 
@@ -128,15 +130,16 @@ public final class GritarCommand {
         return 1;
     }
 
-    @Nullable
-    private static UUID target(CommandContext<CommandSourceStack> c) {
+    private static void target(CommandContext<CommandSourceStack> c, Consumer<UUID> result) {
         String query = StringArgumentType.getString(c, "pessoa");
-        UUID account = CharacterTarget.resolve(c.getSource().getServer(), query);
-        if (account == null) {
-            c.getSource().sendFailure(Component.literal("Nao achei ninguem chamado \"" + query + "\". Aceita nome "
-                    + "de personagem, nick da conta ou UUID; nome com espaco vai entre aspas."));
-        }
-        return account;
+        CharacterTarget.resolve(c.getSource(), query, account -> {
+            if (account == null) {
+                c.getSource().sendFailure(Component.literal("Nao achei ninguem chamado \"" + query + "\". Aceita nome "
+                        + "de personagem, nick da conta ou UUID; nome com espaco vai entre aspas."));
+                return;
+            }
+            result.accept(account);
+        });
     }
 
     private static void notifyTarget(MinecraftServer server, UUID account, String message) {

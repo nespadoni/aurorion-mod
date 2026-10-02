@@ -1,5 +1,7 @@
 package com.aurorion.economia.server;
 
+import com.aurorion.core.character.AltData;
+import com.aurorion.core.rate.ActionCooldown;
 import com.aurorion.economia.api.InteractionMenuEvent;
 import com.aurorion.economia.money.Money;
 import com.aurorion.economia.money.Transfer;
@@ -13,7 +15,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,17 +24,32 @@ public final class ChargeManager {
     private static final double MAX_DISTANCE_SQUARED = 25.0D;
     private static final double LOOK_DISTANCE = 5.0D;
     private static final long LIFETIME_MS = 30_000L;
-    private static final long OPEN_COOLDOWN_MS = 300L;
     private static final ChargeBook CHARGES = new ChargeBook();
-    private static final Map<UUID, Long> LAST_OPEN = new HashMap<>();
+    private static final ActionCooldown OPENS = new ActionCooldown(300);
+    private static final ActionCooldown SELECTIONS = new ActionCooldown(250);
+    private static final ActionCooldown SUBMISSIONS = new ActionCooldown(5_000);
+    private static final ActionCooldown SUBMISSION_NOTICES = new ActionCooldown(2_000);
+    private static final ActionCooldown RESPONSES = new ActionCooldown(250);
+    public enum PacketAction { OPEN, SELECT, SUBMIT, RESPOND, LAND_SUBMIT, LAND_RESPOND }
+    private static final Map<PacketAction, ActionCooldown> PACKETS = new EnumMap<>(PacketAction.class);
+    static {
+        for (PacketAction action : PacketAction.values()) PACKETS.put(action, new ActionCooldown(100));
+    }
 
     private ChargeManager() { }
 
+    /** Admission before enqueueWork; only the authenticated profile UUID is read on the network thread. */
+    public static boolean admitPacket(ServerPlayer player, PacketAction action) {
+        return PACKETS.get(action).acquire(player.getUUID(), Util.getMillis());
+    }
+
+    private static UUID account(ServerPlayer player) {
+        UUID owner = AltData.get(player.server).ownerOf(player.getUUID());
+        return owner == null ? player.getUUID() : owner;
+    }
+
     public static void open(ServerPlayer charger, UUID targetId) {
-        long now = Util.getMillis();
-        Long previous = LAST_OPEN.get(charger.getUUID());
-        if (previous != null && now - previous < OPEN_COOLDOWN_MS) return;
-        LAST_OPEN.put(charger.getUUID(), now);
+        if (!OPENS.acquire(account(charger), Util.getMillis())) return;
 
         ServerPlayer target = charger.server.getPlayerList().getPlayer(targetId);
         String refusal = validatePair(charger, target, true);
@@ -56,6 +73,7 @@ public final class ChargeManager {
     }
 
     public static void select(ServerPlayer charger, UUID targetId, String action) {
+        if (!SELECTIONS.acquire(account(charger), Util.getMillis())) return;
         ServerPlayer target = charger.server.getPlayerList().getPlayer(targetId);
         String refusal = validatePair(charger, target, true);
         if (refusal != null) {
@@ -75,6 +93,15 @@ public final class ChargeManager {
     }
 
     public static void submit(ServerPlayer charger, UUID targetId, String amountText) {
+        UUID account = account(charger);
+        long now = Util.getMillis();
+        if (!SUBMISSIONS.acquire(account, now)) {
+            if (SUBMISSION_NOTICES.acquire(account, now)) {
+                long seconds = Math.max(1, (SUBMISSIONS.remainingMillis(account, now) + 999) / 1_000);
+                status(charger, "Aguarde para cobrar", "Aguarde " + seconds + " segundo(s) antes de enviar outra cobrança.", false);
+            }
+            return;
+        }
         ServerPlayer payer = charger.server.getPlayerList().getPlayer(targetId);
         String refusal = validatePair(charger, payer, true);
         if (refusal != null) {
@@ -93,6 +120,10 @@ public final class ChargeManager {
 
         ChargeBook.Charge charge = CHARGES.put(
                 charger.getUUID(), payer.getUUID(), amount, Util.getMillis(), LIFETIME_MS);
+        if (charge == null) {
+            status(charger, "Cobrança pendente", "Um dos participantes já tem uma cobrança aguardando resposta. Aguarde o pagamento, a recusa ou o prazo de 30 segundos.", false);
+            return;
+        }
         PacketDistributor.sendToPlayer(payer, new EconomyPayloads.OpenApproval(
                 charge.token(), displayName(charger), amount, Wallet.balance(payer.server, payer.getUUID())));
         status(charger, "Cobrança enviada",
@@ -101,6 +132,7 @@ public final class ChargeManager {
     }
 
     public static void respond(ServerPlayer payer, UUID token, boolean accepted) {
+        if (!RESPONSES.acquire(account(payer), Util.getMillis())) return;
         ChargeBook.Charge charge = CHARGES.take(payer.getUUID(), token, Util.getMillis());
         if (charge == null) {
             status(payer, "Cobrança expirada", "Essa cobrança não está mais disponível.", false);
@@ -144,13 +176,17 @@ public final class ChargeManager {
     public static void forget(UUID player) {
         LandSaleManager.forget(player);
         CHARGES.remove(player);
-        LAST_OPEN.remove(player);
     }
 
     public static void clear() {
         LandSaleManager.clear();
         CHARGES.clear();
-        LAST_OPEN.clear();
+        OPENS.clear();
+        SELECTIONS.clear();
+        SUBMISSIONS.clear();
+        SUBMISSION_NOTICES.clear();
+        RESPONSES.clear();
+        PACKETS.values().forEach(ActionCooldown::clear);
     }
 
     public static String validatePair(ServerPlayer charger, ServerPlayer payer, boolean requireAim) {

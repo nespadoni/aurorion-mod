@@ -61,8 +61,27 @@ public final class PendingStore {
     private final Consumer<String> warn;
     private final Map<String, Pending> byKey = new LinkedHashMap<>();
     private final List<CompletableFuture<Boolean>> acknowledgements = new ArrayList<>();
+    private int flushingAcknowledgements;
     private boolean writing;
     private boolean readable = true;
+    private boolean lastWriteSucceeded;
+    private long lastWriteAt;
+
+    public record Diagnostics(int total, int retryable, int conflicts, long oldestSavedAt,
+                              boolean readable, boolean writing, int waitingForDisk,
+                              boolean lastWriteSucceeded, long lastWriteAt) { }
+
+    /** Aggregate only: no text, author, draft key or disk access is exposed. */
+    public synchronized Diagnostics diagnostics() {
+        int conflicts = 0;
+        long oldest = 0;
+        for (Pending pending : byKey.values()) {
+            if (pending.conflict()) conflicts++;
+            if (pending.savedAt() > 0 && (oldest == 0 || pending.savedAt() < oldest)) oldest = pending.savedAt();
+        }
+        return new Diagnostics(byKey.size(), byKey.size() - conflicts, conflicts, oldest, readable,
+                writing, acknowledgements.size() + flushingAcknowledgements, lastWriteSucceeded, lastWriteAt);
+    }
 
     public PendingStore(Path file, Executor io, Consumer<String> warn) {
         this.file = file;
@@ -195,8 +214,14 @@ public final class PendingStore {
                 snapshot = new ArrayList<>(byKey.values());
                 waiting = new ArrayList<>(acknowledgements);
                 acknowledgements.clear();
+                flushingAcknowledgements = waiting.size();
             }
             boolean success = write(GSON.toJson(snapshot));
+            synchronized (this) {
+                lastWriteSucceeded = success;
+                lastWriteAt = System.currentTimeMillis();
+                flushingAcknowledgements = 0;
+            }
             waiting.forEach(future -> future.complete(success));
             synchronized (this) {
                 if (acknowledgements.isEmpty()) {

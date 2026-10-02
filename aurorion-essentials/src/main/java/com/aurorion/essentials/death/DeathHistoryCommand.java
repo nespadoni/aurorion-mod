@@ -121,17 +121,11 @@ public final class DeathHistoryCommand {
     // Os passos 1 a 5 (UUID, personagem online, nick online, personagem offline, nick offline) sao
     // os de CharacterTarget, compartilhados com os outros comandos de staff. Este comando acrescenta
     // o passo 6: um nome usado em alguma morte salva (indice do DeathHistoryStore) — pega ate quem ja
-    // trocou de nome depois de morrer. So o passo 6 le disco, e vai junto com a leitura do historico,
-    // na mesma ida a fila de IO.
+    // trocou de nome depois de morrer. A consulta por nick offline roda em um executor separado;
+    // depois, o passo 6 e a leitura do historico usam a mesma ida a fila de IO do historico.
 
     /** Nome com espaco precisa de aspas: o Tab ja sugere com elas para nao dar trabalho. */
     private static final SuggestionProvider<CommandSourceStack> NAMES = CharacterTarget.SUGGESTIONS;
-
-    /** Passos 1 a 5, todos na thread do servidor. {@code null} deixa o passo 6 para o disco. */
-    @Nullable
-    private static UUID resolveKnown(MinecraftServer server, String query) {
-        return CharacterTarget.resolve(server, query);
-    }
 
     /** A conta e a lista de mortes dela, do jeito que o historico as guarda. */
     private record Found(UUID owner, ListTag entries) { }
@@ -146,9 +140,8 @@ public final class DeathHistoryCommand {
     private static void lookup(CommandContext<CommandSourceStack> c, Consumer<Found> then) {
         CommandSourceStack source = c.getSource();
         String query = StringArgumentType.getString(c, "player");
-        UUID known = resolveKnown(source.getServer(), query);
         DeathHistoryStore repository = DeathHistoryEvents.store(source.getServer());
-        async(source, () -> {
+        CharacterTarget.resolve(source, query, known -> async(source, () -> {
             UUID owner = known != null ? known : repository.findByName(query);
             return owner == null ? null : new Found(owner, repository.list(owner));
         }, found -> {
@@ -159,7 +152,7 @@ public final class DeathHistoryCommand {
             }
             if (found.entries().isEmpty()) { say(source, "Nenhuma morte salva para este jogador."); return; }
             then.accept(found);
-        });
+        }));
     }
 
     /** O que {@code view}, {@code tp}, {@code devolver} e {@code pegar} fazem depois de saber o id. */

@@ -1,6 +1,7 @@
 package com.aurorion.integracao.bridge;
 
 import com.aurorion.core.integration.GameFacts;
+import com.aurorion.core.diagnostics.ServerDiagnostics;
 import com.aurorion.integracao.AurorionIntegracao;
 import com.aurorion.integracao.config.IntegracaoConfig;
 import com.aurorion.integracao.outbox.FactJson;
@@ -20,6 +21,8 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Liga os fatos do jogo ({@link GameFacts}) a caixa de saida.
@@ -38,6 +41,7 @@ public final class FactBridge {
     private static volatile Outbox outbox;
     @Nullable
     private static volatile SiteApi site;
+    private static String state = "não iniciada";
 
     private FactBridge() {
     }
@@ -67,12 +71,15 @@ public final class FactBridge {
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         stop();
+        ServerDiagnostics.register("Integração", FactBridge::diagnostics);
+        state = "desativada por configuração";
         if (!IntegracaoConfig.ENABLED.get()) return;
 
         MinecraftServer server = event.getServer();
         URI endpoint = endpoint(IntegracaoConfig.URL.get());
         String token = IntegracaoConfig.TOKEN.get().strip();
         if (endpoint == null || token.isEmpty()) {
+            state = "configuração de URL/credencial incompleta";
             AurorionIntegracao.LOGGER.warn("Integracao habilitada, mas sem url/token validos em config/aurorion/integracao-startup.toml; nada sera enviado");
             return;
         }
@@ -92,6 +99,7 @@ public final class FactBridge {
                 AurorionIntegracao.LOGGER.warn(message);
             }
         });
+        state = "ativa";
         AurorionIntegracao.LOGGER.info("Integracao com o site ativa ({})", client.describe());
     }
 
@@ -101,12 +109,44 @@ public final class FactBridge {
     }
 
     private static void stop() {
+        ServerDiagnostics.unregister("Integração");
+        state = "parada";
         Outbox current = outbox;
         outbox = null;
         if (current != null) current.close();
         SiteApi api = site;
         site = null;
         if (api != null) api.close();
+    }
+
+    private static List<String> diagnostics() {
+        var lines = new ArrayList<String>();
+        lines.add("Estado: " + state);
+        Outbox current = outbox;
+        if (current != null) {
+            var facts = current.diagnostics();
+            lines.add("Fatos na fila: " + facts.queued() + "/" + facts.queueCapacity());
+            lines.add("Fatos pendentes de confirmação: " + facts.pending());
+            lines.add("Spool em memória: " + facts.pendingBytes() + "/" + facts.spoolCapacityBytes() + " bytes");
+            lines.add("Próxima tentativa em: " + ((facts.retryInMillis() + 999) / 1_000) + " s");
+            lines.add("Resolvidos/descartados desde o início: " + facts.resolved() + "/" + facts.dropped());
+            lines.add("Último resultado: " + facts.lastResult());
+            long now = System.currentTimeMillis();
+            if (facts.lastAttemptAt() > 0) lines.add("Última tentativa há: "
+                    + Math.max(0, now - facts.lastAttemptAt()) / 1_000 + " s");
+            if (facts.lastSuccessAt() > 0) lines.add("Última confirmação há: "
+                    + Math.max(0, now - facts.lastSuccessAt()) / 1_000 + " s");
+            lines.add("Estado recente do disco: " + (facts.diskHealthy() ? "sem falhas registradas" : "última operação falhou; conferir log"));
+        }
+        SiteApi api = site;
+        if (api != null) {
+            var http = api.diagnostics();
+            lines.add("Chamadas HTTP em andamento: " + http.inFlight());
+            lines.add("Tarefas HTTP na fila: " + http.executorQueued() + "/" + http.executorCapacity());
+            lines.add("Falhas de transporte desde o início: " + http.transportFailures());
+            lines.add("Último resultado HTTP: " + http.lastResult());
+        }
+        return lines;
     }
 
     /**

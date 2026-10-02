@@ -1,20 +1,17 @@
 package com.aurorion.essentials.fakename;
 
 import com.aurorion.essentials.server.FakeNameData;
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * O argumento "pessoa" dos comandos de staff.
@@ -29,7 +26,8 @@ import java.util.UUID;
  *   <li>o nome de personagem de quem esta OFFLINE ({@link FakeNameData}, que fica em disco);</li>
  *   <li>o nick da Mojang de quem esta offline (cache de perfis do vanilla).</li>
  * </ol>
- * Tudo sincrono e sem disco, na thread do servidor. O argumento e {@code StringArgumentType.string()}
+ * Identidades locais são resolvidas na thread do servidor; a consulta por nick offline é assíncrona.
+ * O argumento e {@code StringArgumentType.string()}
  * porque nome com espaco existe ("Bella Noob"); o Tab ja sugere com aspas.
  */
 public final class CharacterTarget {
@@ -44,9 +42,9 @@ public final class CharacterTarget {
         return SharedSuggestionProvider.suggest(names.stream().map(StringArgumentType::escapeIfRequired), builder);
     };
 
-    /** A conta de quem atende por {@code query}, ou {@code null} se ninguem conhecido. */
+    /** Local identities only; never calls Mojang. */
     @Nullable
-    public static UUID resolve(MinecraftServer server, String query) {
+    static UUID resolveKnown(MinecraftServer server, String query) {
         try {
             return UUID.fromString(query);
         } catch (IllegalArgumentException notAnId) {
@@ -60,31 +58,12 @@ public final class CharacterTarget {
         ServerPlayer byNick = server.getPlayerList().getPlayerByName(query);
         if (byNick != null) return byNick.getUUID();
 
-        UUID offline = FakeNameLookup.find(FakeNameData.get(server).allRaw(), query);
-        if (offline != null) return offline;
-
-        var cache = server.getProfileCache();
-        return cache == null ? null : cache.get(query)
-                .filter(profile -> realProfile(server, profile))
-                .map(GameProfile::getId).orElse(null);
+        return FakeNameLookup.find(FakeNameData.get(server).allRaw(), query);
     }
 
-    /**
-     * O perfil do cache e de uma conta de verdade? Em modo offline ({@code online-mode=false}, ou atras
-     * de proxy), o vanilla nao responde "ninguem" para um nome desconhecido: inventa um perfil com a
-     * UUID offline do nome. Sem este filtro, qualquer nome digitado errado "existia" — o
-     * {@code /gritar} ligava o grito numa conta que nao existe, e o {@code /deathhistory} nunca chegava
-     * a procurar nos nomes antigos das mortes.
-     *
-     * <p>Uma conta real com a UUID offline so existe se ja entrou neste mundo, e entao tem playerdata.
-     * Com outra UUID (a da Mojang, repassada por proxy), o perfil veio de quem entrou e e real. Mesma
-     * regra do {@code AltLogin} do aurorion-personagem.
-     */
-    private static boolean realProfile(MinecraftServer server, GameProfile profile) {
-        if (server.usesAuthentication()) return true;
-        UUID offline = UUIDUtil.createOfflinePlayerUUID(profile.getName());
-        if (!offline.equals(profile.getId())) return true;
-        return Files.exists(server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve(offline + ".dat"));
+    /** Reports on the server thread, rechecking staff permission and the requester's session. */
+    public static void resolve(CommandSourceStack source, String query, Consumer<UUID> result) {
+        NameProfileLookup.resolve(source, query, result);
     }
 
     /** Como a staff conhece a conta: o nome do personagem, senao o nick, senao a UUID. */

@@ -14,10 +14,12 @@ final class ChargeBook {
     private final Map<UUID, Charge> byPayer = new HashMap<>();
     private final Map<UUID, Charge> byCharger = new HashMap<>();
 
+    @Nullable
     Charge put(UUID charger, UUID payer, long amount, long now, long lifetime) {
         purge(now);
-        remove(charger);
-        remove(payer);
+        // A new packet cannot replace an approval already displayed to either participant.
+        if (byPayer.containsKey(charger) || byCharger.containsKey(charger)
+                || byPayer.containsKey(payer) || byCharger.containsKey(payer)) return null;
 
         Charge charge = new Charge(UUID.randomUUID(), charger, payer, amount, now + lifetime);
         byPayer.put(payer, charge);

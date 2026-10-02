@@ -135,15 +135,7 @@ public final class PersonagemCommand {
             return 0;
         }
 
-        AltData.Alt alt = AltLogin.create(player);
-        if (alt == null) {
-            context.getSource().sendFailure(Component.literal("Nenhum nome de perfil livre para o segundo personagem. Chame quem mantém o servidor."));
-            return 0;
-        }
-
-        context.getSource().sendSuccess(() -> Component.literal("Personagem alternativo criado (perfil " + alt.altName()
-                + "). Ele não tem OP. Use /personagem trocar " + alt.altName() + " para entrar nele — na primeira vez você escolhe o nome."), true);
-        return 1;
+        return AltLogin.create(player) ? 1 : 0;
     }
 
     private static int showAlt(CommandContext<CommandSourceStack> context, UUID account, String accountName) {

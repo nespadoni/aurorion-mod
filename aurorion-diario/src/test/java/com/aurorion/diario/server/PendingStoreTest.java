@@ -57,6 +57,15 @@ class PendingStoreTest {
         put(s, a);
         put(s, pending("b", "p1", 11, "y", 2));
         s.markConflict(a, 10);
+        var diagnostics = s.diagnostics();
+        assertEquals(2, diagnostics.total());
+        assertEquals(1, diagnostics.retryable());
+        assertEquals(1, diagnostics.conflicts());
+        assertEquals(1, diagnostics.oldestSavedAt());
+        assertTrue(diagnostics.readable());
+        assertTrue(diagnostics.lastWriteSucceeded());
+        assertFalse(diagnostics.toString().contains("Lyra"));
+        assertFalse(diagnostics.toString().contains("p1"));
         assertEquals(List.of("b"), s.retryable(10).stream().map(PendingStore.Pending::draftKey).toList());
         assertTrue(s.forEntry("p1", 10).orElseThrow().conflict());
         assertFalse(s.forEntry("p2", 10).isPresent(), "outro perfil não enxerga a cópia");

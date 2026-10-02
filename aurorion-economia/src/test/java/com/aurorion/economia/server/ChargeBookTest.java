@@ -22,16 +22,19 @@ class ChargeBookTest {
     }
 
     @Test
-    void replacingEitherParticipantsChargeRemovesTheOldToken() {
+    void newRequestsCannotReplaceAPendingApproval() {
         ChargeBook book = new ChargeBook();
         UUID charger = UUID.randomUUID();
         UUID firstPayer = UUID.randomUUID();
         UUID secondPayer = UUID.randomUUID();
         ChargeBook.Charge old = book.put(charger, firstPayer, 10, 1_000, 30_000);
-        ChargeBook.Charge replacement = book.put(charger, secondPayer, 20, 1_001, 30_000);
-
-        assertNull(book.take(firstPayer, old.token(), 1_002));
-        assertEquals(replacement, book.take(secondPayer, replacement.token(), 1_002));
+        assertNull(book.put(charger, secondPayer, 20, 1_001, 30_000));
+        assertNull(book.put(secondPayer, firstPayer, 20, 1_001, 30_000));
+        assertNull(book.put(firstPayer, secondPayer, 20, 1_001, 30_000));
+        assertEquals(1, book.size());
+        assertEquals(old, book.take(firstPayer, old.token(), 1_002));
+        ChargeBook.Charge next = book.put(charger, secondPayer, 20, 1_003, 30_000);
+        assertEquals(next, book.take(secondPayer, next.token(), 1_004));
     }
 
     @Test

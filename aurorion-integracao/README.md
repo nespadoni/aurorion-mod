@@ -43,6 +43,10 @@ usa o mesmo cliente do site (`FactBridge.site()`), sem repetir credencial.
 
 ## Como sai sem pesar
 
+`/aurorion diagnostico` (Essentials, OP nível 2/console) mostra filas, prazo de reenvio, estados de
+disco e chamadas HTTP. Respostas do site são limitadas a 256 KiB durante a leitura. Confira
+[os limites e as validações](../docs/OTIMIZACOES-OPERACIONAIS-2026-10-02.md).
+
 - Nada roda por tick. A morte é capturada no próprio evento e confirmada por **uma** tarefa agendada
   logo após o despacho (para respeitar totem e PlayerRevive). Os outros fatos saem do funil que cada
   mod já tinha.

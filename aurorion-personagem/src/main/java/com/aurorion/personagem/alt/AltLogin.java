@@ -7,7 +7,6 @@ import com.aurorion.personagem.AurorionPersonagem;
 import com.aurorion.personagem.config.CreationConfig;
 import com.aurorion.personagem.network.SwitchingCharacterPayload;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -15,12 +14,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.server.players.UserWhiteListEntry;
-import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,8 +44,6 @@ public final class AltLogin {
      * thread de rede — por isso um conjunto concorrente, e nao uma consulta ao {@link AltData}.
      */
     private static final Set<UUID> ONLINE_ALTS = ConcurrentHashMap.newKeySet();
-
-    private static final int NAME_ATTEMPTS = 1000;
 
     private AltLogin() {
     }
@@ -104,10 +99,12 @@ public final class AltLogin {
 
     public static void onLogout(UUID player) {
         ONLINE_ALTS.remove(player);
+        AltCreation.logout(player);
     }
 
     public static void reset() {
         ONLINE_ALTS.clear();
+        AltCreation.reset();
     }
 
     /** Pode criar alts: staff na conta principal, com a funcionalidade ligada. */
@@ -116,62 +113,9 @@ public final class AltLogin {
         return CreationConfig.ALT_ENABLED.get() && !alts.isAlt(player.getUUID()) && player.hasPermissions(2);
     }
 
-    /** Cria o alt da conta de quem chamou. @return o alt, ou null se nenhum nome de perfil estava livre */
-    @Nullable
-    public static AltData.Alt create(ServerPlayer owner) {
-        if (!canCreate(owner)) throw new IllegalStateException("Cannot create an alt from this account");
-        MinecraftServer server = owner.server;
-        AltData alts = AltData.get(server);
-
-        String name = null;
-        for (int attempt = 0; attempt < NAME_ATTEMPTS && name == null; attempt++) {
-            String candidate = AltData.altNameOf(owner.getGameProfile().getName(), attempt);
-            if (!profileNameTaken(server, candidate, alts)) name = candidate;
-        }
-        if (name == null) return null;
-
-        AltData.Alt alt = alts.create(owner.getUUID(), name);
-        if (server.getProfileCache() != null) {
-            server.getProfileCache().add(new GameProfile(alt.altId(), alt.altName()));
-        }
-        PlayerList players = server.getPlayerList();
-        if (players.isUsingWhitelist() && players.isWhiteListed(owner.getGameProfile())) {
-            players.getWhiteList().add(new UserWhiteListEntry(new GameProfile(alt.altId(), alt.altName())));
-        }
-        AurorionPersonagem.LOGGER.info("{} criou o alt {} ({}).", owner.getGameProfile().getName(), name, alt.altId());
-        return alt;
-    }
-
-    /**
-     * O nome de perfil ja e de alguem? {@code GameProfileCache.get(nome)} consulta a Mojang quando o
-     * nome nao esta no cache — trava a thread por um instante, mas so no {@code /personagem alt criar},
-     * e e o que impede o alt de ganhar o nick de uma conta real.
-     *
-     * <p><b>Modo offline</b> ({@code online-mode=false}, ou atras de proxy): quando a Mojang nao
-     * conhece o nome, o vanilla nao responde "ninguem" — inventa um perfil offline para ele
-     * ({@code GameProfileCache.createUnknownProfile}). Tratar isso como "ocupado" fazia as dez
-     * tentativas falharem sempre, e o comando respondia "Nenhum nome de perfil livre". Aqui o perfil
-     * inventado nao conta; ver {@link #realProfile}.
-     */
-    private static boolean profileNameTaken(MinecraftServer server, String name, AltData alts) {
-        if (alts.nameTaken(name) || server.getPlayerList().getPlayerByName(name) != null) return true;
-        GameProfileCache cache = server.getProfileCache();
-        return cache != null && cache.get(name).filter(profile -> realProfile(server, profile)).isPresent();
-    }
-
-    /**
-     * O perfil que o cache devolveu e de uma conta de verdade, e nao um inventado pelo modo offline?
-     *
-     * <p>O inventado tem sempre a UUID offline do nome ({@code UUIDUtil.createOfflinePlayerUUID}). Uma
-     * conta real com essa mesma UUID so existe se ja entrou neste mundo — e ai tem playerdata. Com
-     * outra UUID (a da Mojang, repassada por um proxy), o perfil veio do cache de quem entrou e e real.
-     * O {@code CharacterTarget} do essentials usa a mesma regra.
-     */
-    private static boolean realProfile(MinecraftServer server, GameProfile profile) {
-        if (server.usesAuthentication()) return true;
-        UUID offline = UUIDUtil.createOfflinePlayerUUID(profile.getName());
-        if (!offline.equals(profile.getId())) return true;
-        return Files.exists(server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve(offline + ".dat"));
+    /** Starts a bounded asynchronous name lookup; reports its result to the owner on the server thread. */
+    public static boolean create(ServerPlayer owner) {
+        return AltCreation.start(owner);
     }
 
     /**

@@ -8,6 +8,11 @@ Comandos essenciais de servidor para o ecossistema Aurorion. Features:
   antes.
 - **privacidade dos avisos** — quem vê entrada/saída, conquista e morte no chat.
 - **`/ajuda`** — pedido de socorro do jogador, entregue a quem está moderando.
+- **`/aurorion diagnostico`** — filas da integração e rascunhos do diário, para OP nível 2/console.
+
+`/ajuda` aceita um pedido a cada 30 segundos por conta principal, inclusive após troca de alt ou relog.
+Consultas de nicks offline em `/gritar` e `/deathhistory` são assíncronas. Os limites e a validação
+das mudanças estão em [Otimizações operacionais](../docs/OTIMIZACOES-OPERACIONAIS-2026-10-02.md).
 
 ## Uso
 
