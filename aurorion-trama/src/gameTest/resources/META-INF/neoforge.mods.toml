@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="LGPL-3.0-or-later"
+[[mods]]
+modId="aurorion_trama_tests"
+version="1"
+displayName="Trama Integration Tests"
+[[dependencies.aurorion_trama_tests]]
+modId="aurorion_trama"
+type="required"
+versionRange="[0.1.0,)"
+ordering="AFTER"
+side="BOTH"

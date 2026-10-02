@@ -1,0 +1,17 @@
+{
+  "title": "Trama do Eco",
+  "description": "Sua Casa é o começo. O caminho pertence a você.",
+  "extra_description": "Até 45 pontos por personagem. Descobertas e prática ativa: /trama progresso. /trama respec fora de combate.",
+  "icon": {
+    "type": "item",
+    "data": {
+      "item": "minecraft:echo_shard"
+    }
+  },
+  "background": "minecraft:textures/block/black_concrete.png",
+  "unlocked_by_default": false,
+  "starting_points": 0,
+  "spent_points_limit": 45,
+  "exclusive_root": false,
+  "erase_on_death": false
+}
