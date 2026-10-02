@@ -102,6 +102,8 @@ public final class VincularCommand {
             case "invalid_code" -> error("Código inválido ou vencido. Gere outro no site, em Perfil → Diário.");
             case "profile_taken" -> error("Este perfil Minecraft já está vinculado a outra conta do site. Desvincule por lá antes.");
             case "too_many_attempts" -> error("Tentativas demais. Gere um código novo no site e aguarde alguns minutos.");
+            case "integration_disabled" -> error("A integração Minecraft está desligada no site. Peça à equipe para configurar GAME_API_TOKEN no backend.");
+            case "invalid_game_token" -> error("A credencial de integração do servidor não confere com a do site. Avise a equipe.");
             default -> error("O site não respondeu agora. Tente de novo em instantes.");
         };
     }
