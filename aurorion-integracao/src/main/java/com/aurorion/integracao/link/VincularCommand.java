@@ -1,6 +1,7 @@
 package com.aurorion.integracao.link;
 
 import com.aurorion.core.integration.GameFacts;
+import com.aurorion.core.character.AltData;
 import com.aurorion.integracao.AurorionIntegracao;
 import com.aurorion.integracao.bridge.FactBridge;
 import com.aurorion.integracao.outbox.SiteApi;
@@ -75,11 +76,14 @@ public final class VincularCommand {
         GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
         JsonObject body = new JsonObject();
         body.addProperty("code", code.length() > 32 ? code.substring(0, 32) : code);
-        body.addProperty("profile_uuid", player.getUUID().toString());
-        body.addProperty("profile_name", player.getGameProfile().getName());
+        UUID owner = AltData.get(player.server).ownerOf(player.getUUID());
+        UUID account = owner == null ? player.getUUID() : owner;
+        body.addProperty("profile_uuid", account.toString());
+        body.addProperty("profile_name", AltData.accountName(player.server, account));
         if (subject.character() != null) {
             body.addProperty("character_id", subject.character().toString());
-            body.addProperty("character_name", subject.characterName());
+            String displayed = player.getName().getString().trim();
+            body.addProperty("character_name", displayed.isEmpty() ? subject.characterName() : displayed);
         }
 
         player.sendSystemMessage(info("Conferindo o código com o site…"));

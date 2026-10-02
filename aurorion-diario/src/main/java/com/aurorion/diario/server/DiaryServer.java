@@ -1,6 +1,7 @@
 package com.aurorion.diario.server;
 
 import com.aurorion.core.integration.GameFacts;
+import com.aurorion.core.character.AltData;
 import com.aurorion.diario.AurorionDiario;
 import com.aurorion.diario.markup.DiaryMarkup;
 import com.aurorion.diario.network.DiaryNetwork;
@@ -60,6 +61,8 @@ public final class DiaryServer {
     private static final long MIN_SAVE_INTERVAL_MS = 700L;
     private static final long RETRY_EVERY_S = 30L;
     private static final int RETRY_BATCH = 10;
+    private static final int MAX_EDIT_SESSIONS = 32;
+    private static final Map<UUID, Long> LAST_REQUEST = new HashMap<>();
 
     private static final Map<UUID, Long> LAST_SAVE = new HashMap<>();
     /** Sessão de edição → entrada criada nela, para as gravações seguintes não criarem outra. */
@@ -103,6 +106,7 @@ public final class DiaryServer {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
         LAST_SAVE.remove(id);
+        LAST_REQUEST.remove(id);
         String prefix = PendingStore.key(id.toString(), "");
         CREATED.keySet().removeIf(key -> key.startsWith(prefix));
         LATEST_OP.keySet().removeIf(key -> key.startsWith(prefix));
@@ -125,6 +129,7 @@ public final class DiaryServer {
         CREATED.clear();
         LATEST_OP.clear();
         LAST_SAVE.clear();
+        LAST_REQUEST.clear();
         RETRY_KICKED.set(false);
     }
 
@@ -139,6 +144,7 @@ public final class DiaryServer {
     // ── /diario ─────────────────────────────────────────────────────────────────
 
     public static void open(ServerPlayer player) {
+        if (!acceptRequest(player)) return;
         Optional<SiteApi> site = FactBridge.site();
         if (site.isEmpty()) {
             player.sendSystemMessage(error("O diário depende da integração com o site, que está desligada neste servidor."));
@@ -148,7 +154,7 @@ public final class DiaryServer {
             player.sendSystemMessage(siteLink(site.get(), "Seu cliente não tem a tela do diário. Escreva pelo site: "));
             return;
         }
-        GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
+        GameFacts.Subject subject = diarySubject(player);
         if (subject.character() == null) {
             player.sendSystemMessage(error("Crie seu personagem antes de abrir o diário."));
             return;
@@ -172,6 +178,7 @@ public final class DiaryServer {
     // ── Pacotes da tela ─────────────────────────────────────────────────────────
 
     public static void request(ServerPlayer player, DiaryPayloads.Request payload) {
+        if (!"lista".equals(payload.action()) && !acceptRequest(player)) return;
         switch (payload.action()) {
             case "lista" -> open(player);
             case "abrir" -> openEntry(player, payload.entryId());
@@ -186,7 +193,7 @@ public final class DiaryServer {
         Optional<SiteApi> site = FactBridge.site();
         if (site.isEmpty() || entryId <= 0) return;
         String profile = player.getUUID().toString();
-        GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
+        GameFacts.Subject subject = diarySubject(player);
         JsonObject body = actor(player, subject);
         body.addProperty("entry_id", entryId);
         UUID id = player.getUUID();
@@ -241,17 +248,26 @@ public final class DiaryServer {
         }
         LAST_SAVE.put(player.getUUID(), now);
 
-        GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
+        GameFacts.Subject subject = diarySubject(player);
         if (subject.character() == null) {
             DiaryNetwork.send(player, status(payload.draftKey(), "erro", payload.entryId(), 0, 0, "Crie seu personagem antes de escrever."));
             return;
         }
         String profile = player.getUUID().toString();
         String session = PendingStore.key(profile, payload.draftKey());
+        if (!LATEST_OP.containsKey(session)) {
+            String prefix = PendingStore.key(profile, "");
+            long sessions = LATEST_OP.keySet().stream().filter(key -> key.startsWith(prefix)).count();
+            if (sessions >= MAX_EDIT_SESSIONS) {
+                DiaryNetwork.send(player, status(payload.draftKey(), "erro", payload.entryId(), 0, 0,
+                        "Muitas sessões de edição. Reconecte antes de criar outra entrada."));
+                return;
+            }
+        }
         long entryId = payload.entryId() > 0 ? payload.entryId() : CREATED.getOrDefault(session, 0L);
         PendingStore.Pending pending = new PendingStore.Pending(payload.draftKey(), payload.operationId(), entryId, payload.baseVersion(),
                 payload.title(), payload.loreDate(), DiaryMarkup.toDocument(payload.markup()).toString(),
-                profile, subject.character().toString(), subject.characterName(), now, false);
+                profile, subject.character().toString(), subject.characterName(), now, false, accountProfile(player).toString());
         LATEST_OP.put(session, payload.operationId());
 
         // Com uma cópia desta sessão ainda na fila, a versão nova toma o lugar dela e espera a vez:
@@ -309,13 +325,14 @@ public final class DiaryServer {
     }
 
     public static void publish(ServerPlayer player, DiaryPayloads.Publish payload) {
+        if (!acceptRequest(player)) return;
         Optional<SiteApi> site = FactBridge.site();
         if (site.isEmpty() || payload.entryId() <= 0) return;
         if (store != null && store.forEntry(player.getUUID().toString(), payload.entryId()).isPresent()) {
             DiaryNetwork.send(player, status("", "erro", payload.entryId(), 0, 0, "Espere o texto sincronizar com o site antes de publicar."));
             return;
         }
-        GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
+        GameFacts.Subject subject = diarySubject(player);
         JsonObject body = actor(player, subject);
         body.addProperty("entry_id", payload.entryId());
         body.addProperty("version", payload.version());
@@ -412,6 +429,7 @@ public final class DiaryServer {
     private static JsonObject actor(ServerPlayer player, GameFacts.Subject subject) {
         JsonObject body = new JsonObject();
         body.addProperty("profile_uuid", player.getUUID().toString());
+        body.addProperty("account_uuid", accountProfile(player).toString());
         if (subject.character() != null) body.addProperty("character_id", subject.character().toString());
         if (!subject.characterName().isEmpty()) body.addProperty("character_name", subject.characterName());
         return body;
@@ -420,6 +438,7 @@ public final class DiaryServer {
     private static JsonObject saveBody(PendingStore.Pending pending) {
         JsonObject body = new JsonObject();
         body.addProperty("profile_uuid", pending.profile());
+        body.addProperty("account_uuid", pending.accountProfile() == null ? pending.profile() : pending.accountProfile());
         body.addProperty("character_id", pending.characterId());
         if (!pending.characterName().isEmpty()) body.addProperty("character_name", pending.characterName());
         long entryId = pending.entryId() > 0 ? pending.entryId()
@@ -431,6 +450,29 @@ public final class DiaryServer {
         body.addProperty("lore_date", pending.loreDate());
         body.add("document", JsonParser.parseString(pending.document()));
         return body;
+    }
+
+    /** Identidade narrativa continua sendo a do perfil ativo; autoria usa a conta dona do alt. */
+    private static UUID accountProfile(ServerPlayer player) {
+        UUID owner = AltData.get(player.server).ownerOf(player.getUUID());
+        return owner == null ? player.getUUID() : owner;
+    }
+
+    private static boolean acceptRequest(ServerPlayer player) {
+        long now = System.currentTimeMillis();
+        Long last = LAST_REQUEST.get(player.getUUID());
+        if (last != null && now - last < 250L) return false;
+        LAST_REQUEST.put(player.getUUID(), now);
+        return true;
+    }
+
+    private static GameFacts.Subject diarySubject(ServerPlayer player) {
+        GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
+        // getName passa pelo mixin do essentials; getString retira os estilos sem aceitar
+        // identidade enviada pelo cliente.
+        String displayed = player.getName().getString().trim();
+        String name = displayed.isEmpty() ? subject.characterName() : displayed;
+        return new GameFacts.Subject(subject.profile(), subject.character(), name, subject.house());
     }
 
     private static List<DiaryPayloads.Summary> summaries(@Nullable JsonElement entries, String profile) {

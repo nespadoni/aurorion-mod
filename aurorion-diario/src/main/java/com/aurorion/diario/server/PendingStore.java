@@ -42,10 +42,16 @@ public final class PendingStore {
     public record Pending(String draftKey, String operationId, long entryId, int baseVersion,
                           String title, String loreDate, String document,
                           String profile, String characterId, String characterName,
-                          long savedAt, boolean conflict) {
+                          long savedAt, boolean conflict, String accountProfile) {
+        public Pending(String draftKey, String operationId, long entryId, int baseVersion,
+                       String title, String loreDate, String document, String profile,
+                       String characterId, String characterName, long savedAt, boolean conflict) {
+            this(draftKey, operationId, entryId, baseVersion, title, loreDate, document,
+                    profile, characterId, characterName, savedAt, conflict, profile);
+        }
         Pending withBase(long id, int version, boolean conflicted) {
             return new Pending(draftKey, operationId, id, version, title, loreDate, document,
-                    profile, characterId, characterName, savedAt, conflicted);
+                    profile, characterId, characterName, savedAt, conflicted, accountProfile);
         }
     }
 
