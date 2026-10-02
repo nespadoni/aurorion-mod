@@ -29,6 +29,28 @@ site).
 
 ## Como funciona
 
+### Testar a tela sem vínculo ou RCON
+
+Com o mod e o TesseraUI instalados no cliente, entre em um mundo e use **`/diario teste`**.
+É um comando do cliente: funciona no singleplayer e sem integração configurada no servidor.
+Abre a mesma tela do diário com um personagem fictício e 14 entradas para testar a lista e a
+paginação. Você pode criar entradas, editar título/data/texto, usar a formatação e a prévia,
+aguardar o salvamento automático e simular publicar/retirar.
+
+O aviso **TESTE LOCAL** identifica o modo. Os dados ficam só em memória durante aquela abertura;
+fechar e executar o comando de novo recria os exemplos. Nada é enviado ao servidor ou ao site.
+Nos runs de desenvolvimento do NeoForge, **`/diario` sem argumentos também abre o teste local**.
+Com o JAR instalado no jogo normal, `/diario` continua abrindo o diário vinculado;
+use `/diario teste` para testar a tela sem vínculo.
+
+No desenvolvimento pelo **aurorion-runs**, use `:aurorion-runs:runClient` ou
+`:aurorion-runs:runClient2`, entre em um mundo e execute `/diario` ou `/diario teste` no chat.
+O agregador carrega o `aurorion-diario` e copia automaticamente o TesseraUI de
+`mod-servidor-referencia/` para a pasta `mods/` de cada cliente antes de iniciar.
+Não é preciso copiar JARs manualmente, configurar o site, vincular uma conta ou iniciar RCON.
+
+### Integração
+
 - **Servidor** (`server/DiaryServer`): fala com o site pelo `SiteApi` do `aurorion-integracao`,
   com a credencial do servidor; o perfil e o personagem vêm da sessão do jogador, nunca da tela.
   Nada roda por tick: cada ação é uma chamada assíncrona, e a resposta volta para a thread do
@@ -53,10 +75,20 @@ site).
 - **TesseraUI 1.1** no cliente (`mod-servidor-referencia/tesseraui-1.1.jar`; LGPL-3.0). O servidor
   não precisa dele. **O jar precisa estar versionado no repositório** para o build da outra máquina.
 
-## O que validar ao compilar (outra máquina)
+## Validação da versão 0.1.2
 
+Build e 12 testes unitários aprovados em 01/10/2026, com autorização do usuário
+para compilar nesta máquina. O servidor dedicado de validação carregou Diário,
+Integração e Utils sem TesseraUI e concluiu os 7 GameTests da Trama.
+A validação visual da tela e os cenários reais com o backend abaixo continuam pendentes.
+
+- `runClient`: `/diario` e `/diario teste` sem vínculo, personagem ou RCON; conferir que a tela permanece
+  aberta depois de fechar o chat, paginação, escalas da GUI, edição, autosave local, prévia e
+  publicação simulada. Reabrir deve restaurar os exemplos. Com o JAR instalado fora dos runs de
+  desenvolvimento, conferir que `/diario` mantém o fluxo vinculado e `/diario teste` abre o teste.
 - `./gradlew :aurorion-diario:test` — `DiaryMarkupTest`, `PendingStoreTest`.
-- `runClient` + `runServer` com integração configurada para um backend de teste:
+- Cliente com os JARs instalados + servidor com integração configurada para um backend de teste
+  (fora dos runs de desenvolvimento, onde `/diario` abre o teste local):
   - `/vincular` com código do site; `/diario` sem vínculo mostra a orientação;
   - tela: cantos, cores e fontes do CSS (ajustar `diario.css` com o hot reload do Tessera se
     preciso), lista paginada, campos de título/data, barra de ferramentas, prévia com rolagem;
@@ -69,4 +101,5 @@ site).
   - publicar/retirar e conferir no perfil público do site;
   - cliente sem o mod → `/diario` manda o link do site; servidor dedicado sobe sem carregar classe do
     Tessera.
-- Conferir se o `runServer` do `aurorion-runs` aceita o TesseraUI no classpath (é mod de cliente).
+- `:aurorion-runs:runClient` e `:aurorion-runs:runClient2`: repetir `/diario teste` sem vínculo
+  e conferir o carregamento do TesseraUI. `:aurorion-runs:runServer` deve subir sem TesseraUI.

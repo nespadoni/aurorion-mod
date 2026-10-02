@@ -39,14 +39,70 @@ class AltDataTest {
         assertTrue(restored.nameTaken("neto_ALT"));
     }
 
-    @Test void oneAltPerAccountAndNoAltOfAnAlt() {
+    @Test void multipleAltsPerAccountAndNoAltOfAnAlt() {
         AltData data = new AltData();
         UUID owner = UUID.randomUUID();
         var alt = data.create(owner, "Neto_alt");
 
-        assertThrows(IllegalStateException.class, () -> data.create(owner, "Neto_a2"));
+        var second = data.create(owner, "Neto_a2");
+        assertNotEquals(alt.altId(), second.altId());
+        assertEquals(2, data.forOwner(owner).size());
         assertThrows(IllegalStateException.class, () -> data.create(alt.altId(), "Neto_a3"));
         assertThrows(IllegalArgumentException.class, () -> data.create(UUID.randomUUID(), "neto_alt"));
+    }
+
+    @Test void selectedAltSurvivesRestartAndCannotBelongToAnotherOwner() {
+        AltData data = new AltData();
+        UUID owner = UUID.randomUUID();
+        var first = data.create(owner, "Neto_alt");
+        var second = data.create(owner, "Neto_a2");
+        var foreign = data.create(UUID.randomUUID(), "Outro_alt");
+        data.select(owner, first.altId());
+        data.select(owner, second.altId());
+        assertThrows(IllegalArgumentException.class, () -> data.select(owner, foreign.altId()));
+
+        AltData restored = AltData.load(data.save(new CompoundTag(), null), null);
+        assertEquals(2, restored.forOwner(owner).size());
+        assertEquals(second.altId(), restored.byOwner(owner).altId());
+        assertFalse(restored.find(first.altId()).active());
+        restored.select(owner, null);
+        assertTrue(restored.forOwner(owner).stream().noneMatch(AltData.Alt::active));
+    }
+
+    @Test void legacySavePreservesIdentityAndSelectionWhenAddingAlts() {
+        UUID owner = UUID.randomUUID();
+        UUID legacyId = AltData.altIdOf(owner);
+        CompoundTag entry = new CompoundTag();
+        entry.putUUID("Player", owner);
+        entry.putUUID("AltId", legacyId);
+        entry.putString("AltName", "Neto_alt");
+        entry.putBoolean("Active", true);
+        var list = new net.minecraft.nbt.ListTag();
+        list.add(entry);
+        CompoundTag tag = new CompoundTag();
+        tag.put("Alts", list);
+
+        AltData loaded = AltData.load(tag, null);
+        loaded.create(owner, "Neto_a2");
+        AltData restored = AltData.load(loaded.save(new CompoundTag(), null), null);
+        assertEquals(legacyId, restored.byOwner(owner).altId());
+        assertEquals(owner, restored.ownerOf(legacyId));
+        assertTrue(restored.find(legacyId).active());
+        assertEquals(2, restored.forOwner(owner).size());
+    }
+
+    @Test void removingAnAltKeepsTheOtherIdentitiesAndSelection() {
+        AltData data = new AltData();
+        UUID owner = UUID.randomUUID();
+        var first = data.create(owner, "Neto_alt");
+        var second = data.create(owner, "Neto_a2");
+        data.select(owner, second.altId());
+        data.remove(first.altId());
+        assertEquals(second.altId(), data.byOwner(owner).altId());
+        assertTrue(data.byOwner(owner).active());
+        assertFalse(data.isAlt(first.altId()));
+        data.remove(second.altId());
+        assertNull(data.byOwner(owner));
     }
 
     /** Remover solta o vinculo; recriar devolve o mesmo UUID, e com ele o mesmo personagem. */

@@ -166,15 +166,16 @@ recebeu no pacote, então trocar uma frase não exige resource pack nem atualiza
 
 ## Segundo personagem da staff
 
-A staff pode ter **dois personagens na mesma conta**: o de staff, com OP, e um de jogador comum,
+A staff pode ter **vários personagens na mesma conta**: o de staff, com OP, e personagens alternativos,
 sem OP. Cada um tem inventário, casa, vidas, carteira, magias e nome próprios. Acabou o `/deop` para
 jogar e `/op` para moderar.
 
 | Comando | Quem usa | O que faz |
 |---|---|---|
-| `/personagem alt criar` | staff (nível 2), na conta principal | Cria o segundo personagem. Ele nasce **sem OP** |
+| `/personagem alt criar` | staff (nível 2), na conta principal | Cria mais um personagem alternativo. Ele nasce **sem OP** |
 | `/personagem trocar` | quem tem alt, dos dois lados | Troca de personagem: desconecta e reconecta como o outro |
-| `/personagem alt ver [jogador]` | staff | Vínculo conta ↔ alt, e quem entra no próximo login |
+| `/personagem trocar <perfil>` | dono dos alts | Escolhe um alt pelo perfil técnico ou UUID; `principal` volta à conta principal |
+| `/personagem alt ver [jogador]` | própria conta; staff para terceiros | Lista todos os alts e quem entra no próximo login |
 | `/personagem alt remover <jogador>` | console ou nível 4 | Desfaz o vínculo. Os dados do alt **ficam** no mundo |
 
 **Como funciona.** O alt é **outro jogador** para o servidor. No login, depois da autenticação da
@@ -182,6 +183,18 @@ Mojang, o perfil da conexão é trocado pelo do alt, que tem UUID próprio e fix
 conta, e nome técnico de perfil `Nick_alt`. Daí em diante vanilla e **todos** os mods, inclusive os de
 terceiros, veem outra pessoa. Por isso tudo fica separado sem nenhuma linha por mod, e o `ops.json`,
 que é por perfil, nunca tem o alt.
+
+É possível repetir `/personagem alt criar` na conta principal para cadastrar vários NPCs/personagens.
+Use `/personagem alt ver` para obter os perfis e `/personagem trocar Nick_a2` para escolher um deles.
+O comando sem argumento entra no primeiro alt a partir da principal e volta à principal a partir
+de qualquer alt. Cada um tem seu UUID e seus dados separados; criar outro não altera o alt existente.
+O cadastro antigo é lido automaticamente, preservando UUID, nome e seleção. Atualize
+`aurorion-core` e `aurorion-personagem` juntos. O novo formato com vários alts exige essas versões;
+para voltar ao formato antigo, restaure um backup dos dados do mundo.
+
+Para remover, informe o perfil específico em `/personagem alt remover <perfil>` (nível 4).
+O nome da conta principal só é aceito se ela tiver um único alt. Os dados do personagem removido
+continuam no mundo; criar novamente reutiliza o primeiro slot de UUID livre dessa conta.
 
 Na primeira entrada, o alt passa pela tela de criação e escolhe nome e sobrenome. É esse nome que os
 outros veem, e não o `Nick_alt`.
@@ -240,3 +253,8 @@ com conta premium, porque só ele exercita a chave de chat):
 - banir a conta principal barra os dois; `altLigado = false` faz entrar sempre na principal;
 - Voice Chat, AutoModpack e skin funcionando no alt;
 - `/personagem renomear` com o dono offline: o nome novo aparece sobre a cabeça no próximo login.
+
+Validação de múltiplos alts: carregar um cadastro antigo, criar mais dois alts, alternar entre todos
+e a principal, reiniciar o servidor e conferir a seleção e os inventários. Remover um alt específico
+deve preservar os demais; tentar selecionar o perfil de outra conta deve falhar. Os testes
+`AltDataTest` incluem migração do NBT antigo, persistência, seleção e remoção isolada.

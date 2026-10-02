@@ -69,7 +69,7 @@ public final class CreationConfig {
             .define("cobrarDeQuemJaJoga", true);
 
     public static final ModConfigSpec.BooleanValue ALT_ENABLED = B
-            .comment("Segundo personagem da staff (/personagem alt criar, /personagem trocar).",
+            .comment("Personagens alternativos da staff (/personagem alt criar, /personagem trocar <perfil>).",
                     "false: ninguem entra como alt, todo mundo entra na conta principal. E o rollback:",
                     "os arquivos e o cadastro dos alts ficam intactos e voltam a valer em true.")
             .define("altLigado", true);

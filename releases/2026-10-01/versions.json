@@ -1,0 +1,21 @@
+{
+  "aurorion_aeonita": "0.3.1",
+  "aurorion_areas": "0.6.1",
+  "aurorion_core": "0.6.3",
+  "aurorion_diario": "0.1.2",
+  "aurorion_economia": "0.3.1",
+  "aurorion_essentials": "0.7.1",
+  "aurorion_ethereal": "0.3.3",
+  "aurorion_integracao": "0.2.1",
+  "aurorion_limbo": "0.4.4",
+  "aurorion_magia": "0.4.2",
+  "aurorion_mundos": "0.1.1",
+  "aurorion_personagem": "0.3.0",
+  "aurorion_portais": "0.1.2",
+  "aurorion_profissoes": "0.4.3",
+  "aurorion_servicos": "0.1.1",
+  "aurorion_talk": "0.1.1",
+  "aurorion_trama": "0.1.0",
+  "aurorion_utils": "0.2.2",
+  "aurorion_vidas": "0.2.3"
+}

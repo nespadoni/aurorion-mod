@@ -88,16 +88,27 @@ public final class PersonagemCommand {
                 // Sem requires de proposito: quem esta no alt nao e OP e precisa conseguir voltar. Quem
                 // pode trocar e decidido pelo cadastro de alts, dentro do AltLogin.
                 .then(Commands.literal("trocar")
-                        .executes(context -> AltLogin.switchCharacter(context.getSource().getPlayerOrException()) ? 1 : 0))
+                        .executes(context -> AltLogin.switchCharacter(context.getSource().getPlayerOrException()) ? 1 : 0)
+                        .then(Commands.argument("perfil", StringArgumentType.word())
+                                .suggests((context, builder) -> {
+                                    ServerPlayer player = context.getSource().getPlayerOrException();
+                                    AltData data = AltData.get(player.server);
+                                    UUID owner = data.isAlt(player.getUUID()) ? data.ownerOf(player.getUUID()) : player.getUUID();
+                                    return net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                            java.util.stream.Stream.concat(java.util.stream.Stream.of("principal"),
+                                                    data.forOwner(owner).stream().map(AltData.Alt::altName)), builder);
+                                })
+                                .executes(context -> AltLogin.switchCharacter(context.getSource().getPlayerOrException(),
+                                        StringArgumentType.getString(context, "perfil")) ? 1 : 0)))
                 .then(Commands.literal("alt")
                         .then(Commands.literal("criar")
                                 .requires(source -> source.hasPermission(STAFF_LEVEL))
                                 .executes(PersonagemCommand::createAlt))
                         .then(Commands.literal("ver")
-                                .requires(source -> source.hasPermission(STAFF_LEVEL))
                                 .executes(context -> showAlt(context, context.getSource().getPlayerOrException().getUUID(),
                                         context.getSource().getPlayerOrException().getGameProfile().getName()))
                                 .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                        .requires(source -> source.hasPermission(STAFF_LEVEL))
                                         .executes(context -> {
                                             GameProfile profile = single(context);
                                             return showAlt(context, profile.getId(), profile.getName());
@@ -120,7 +131,7 @@ public final class PersonagemCommand {
             return 0;
         }
         if (!AltLogin.canCreate(player)) {
-            context.getSource().sendFailure(Component.literal("Esta conta já tem um segundo personagem. Veja com /personagem alt ver."));
+            context.getSource().sendFailure(Component.literal("A criação de alternativos está desligada ou esta conta não tem permissão."));
             return 0;
         }
 
@@ -130,8 +141,8 @@ public final class PersonagemCommand {
             return 0;
         }
 
-        context.getSource().sendSuccess(() -> Component.literal("Segundo personagem criado (perfil " + alt.altName()
-                + "). Ele não tem OP. Use /personagem trocar para entrar nele — na primeira vez você escolhe o nome."), true);
+        context.getSource().sendSuccess(() -> Component.literal("Personagem alternativo criado (perfil " + alt.altName()
+                + "). Ele não tem OP. Use /personagem trocar " + alt.altName() + " para entrar nele — na primeira vez você escolhe o nome."), true);
         return 1;
     }
 
@@ -140,25 +151,21 @@ public final class PersonagemCommand {
         AltData alts = AltData.get(server);
 
         UUID owner = alts.ownerOf(account);
-        if (owner != null) {
-            String ownerName = AltLogin.accountName(server, owner);
-            context.getSource().sendSuccess(() -> Component.literal(accountName + " é o segundo personagem de "
-                    + ownerName + "."), false);
-            return 1;
-        }
-
-        AltData.Alt alt = alts.byOwner(account);
-        if (alt == null) {
-            context.getSource().sendSuccess(() -> Component.literal(accountName + " não tem segundo personagem."), false);
+        UUID main = owner == null ? account : owner;
+        var characters = alts.forOwner(main);
+        if (characters.isEmpty()) {
+            context.getSource().sendSuccess(() -> Component.literal(accountName + " não tem personagens alternativos."), false);
             return 0;
         }
-
-        String text = accountName + " — segundo personagem: " + AltLogin.characterName(server, alt.altId(), alt.altName())
-                + "\nperfil: " + alt.altName()
-                + "\nid: " + alt.altId()
-                + "\npróximo login entra como: " + (alt.active() ? "segundo personagem" : "conta principal");
-        context.getSource().sendSuccess(() -> Component.literal(text), false);
-        return 1;
+        StringBuilder text = new StringBuilder("Alternativos de ").append(AltLogin.accountName(server, main));
+        for (AltData.Alt alt : characters) {
+            text.append("\n").append(AltLogin.characterName(server, alt.altId(), alt.altName()))
+                    .append(" | perfil: ").append(alt.altName()).append(" | id: ").append(alt.altId())
+                    .append(alt.active() ? " (próximo login)" : "");
+        }
+        text.append("\nUse /personagem trocar <perfil> ou /personagem trocar principal.");
+        context.getSource().sendSuccess(() -> Component.literal(text.toString()), false);
+        return characters.size();
     }
 
     /**
@@ -170,8 +177,11 @@ public final class PersonagemCommand {
         MinecraftServer server = context.getSource().getServer();
         AltData alts = AltData.get(server);
 
-        UUID owner = alts.isAlt(profile.getId()) ? alts.ownerOf(profile.getId()) : profile.getId();
-        AltData.Alt removed = owner == null ? null : alts.remove(owner);
+        if (!alts.isAlt(profile.getId()) && alts.forOwner(profile.getId()).size() > 1) {
+            context.getSource().sendFailure(Component.literal("Esta conta tem vários alternativos. Informe o perfil específico exibido em /personagem alt ver."));
+            return 0;
+        }
+        AltData.Alt removed = alts.remove(profile.getId());
         if (removed == null) {
             context.getSource().sendFailure(Component.literal(profile.getName() + " não tem segundo personagem."));
             return 0;
@@ -265,9 +275,11 @@ public final class PersonagemCommand {
         UUID altOwner = alts.ownerOf(account);
         if (altOwner != null) {
             line.append("\nsegundo personagem de: ").append(AltLogin.accountName(server, altOwner));
-        } else if (alts.byOwner(account) != null) {
-            AltData.Alt alt = alts.byOwner(account);
-            line.append("\nsegundo personagem: ").append(AltLogin.characterName(server, alt.altId(), alt.altName()));
+        } else {
+            for (AltData.Alt alt : alts.forOwner(account)) {
+                line.append("\nperfil alternativo: ").append(alt.altName()).append(" — ")
+                        .append(AltLogin.characterName(server, alt.altId(), alt.altName()));
+            }
         }
 
         String text = line.toString();

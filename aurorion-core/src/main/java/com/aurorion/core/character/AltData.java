@@ -5,6 +5,7 @@ import com.aurorion.core.data.SavedDataAccess;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
@@ -14,12 +15,14 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * O segundo personagem de uma conta de staff: a conta ADM e a conta de jogador.
+ * Os personagens alternativos de uma conta de staff, cada um com UUID proprio.
  *
  * <h2>Por que o alt e outro jogador, e nao outro arquivo</h2>
  *
@@ -57,14 +60,15 @@ public final class AltData extends SavedData {
         }
     }
 
-    private final Map<UUID, Alt> byOwner = new HashMap<>();
+    // Keyed by alt UUID; preserves creation order across saves.
+    private final Map<UUID, Alt> byAlt = new LinkedHashMap<>();
     private final Map<UUID, UUID> ownerOfAlt = new HashMap<>();
 
     public static AltData get(MinecraftServer server) {
         return ACCESS.get(server);
     }
 
-    /** O UUID do alt: fixo para a mesma conta, entao o alt e sempre o mesmo jogador. */
+    /** UUID do primeiro slot: preserva a identidade usada pelo cadastro antigo. */
     public static UUID altIdOf(UUID owner) {
         return UUID.nameUUIDFromBytes(("aurorion-alt:" + owner).getBytes(StandardCharsets.UTF_8));
     }
@@ -104,7 +108,31 @@ public final class AltData extends SavedData {
 
     @Nullable
     public Alt byOwner(UUID owner) {
-        return byOwner.get(owner);
+        return forOwner(owner).stream().filter(Alt::active).findFirst()
+                .orElseGet(() -> forOwner(owner).stream().findFirst().orElse(null));
+    }
+
+    public List<Alt> forOwner(UUID owner) {
+        return byAlt.values().stream().filter(alt -> alt.owner().equals(owner)).toList();
+    }
+
+    @Nullable
+    public Alt find(UUID altId) {
+        return byAlt.get(altId);
+    }
+
+    /** Select an owned alt, or null for the main account. Only one can be active. */
+    public void select(UUID owner, @Nullable UUID target) {
+        if (target != null && !owner.equals(ownerOf(target))) {
+            throw new IllegalArgumentException("Alt does not belong to account");
+        }
+        for (Alt alt : forOwner(owner)) {
+            boolean active = alt.altId().equals(target);
+            if (alt.active() != active) {
+                byAlt.put(alt.altId(), alt.withActive(active));
+                setDirty();
+            }
+        }
     }
 
     /** Dono do alt {@code alt}, ou null se esse UUID nao e alt de ninguem. */
@@ -120,49 +148,47 @@ public final class AltData extends SavedData {
     /** Algum alt ja usa este nome de perfil (sem diferenciar caixa)? */
     public boolean nameTaken(String profileName) {
         String key = profileName.toLowerCase(Locale.ROOT);
-        for (Alt alt : byOwner.values()) {
+        for (Alt alt : byAlt.values()) {
             if (alt.altName().toLowerCase(Locale.ROOT).equals(key)) return true;
         }
         return false;
     }
 
     public Map<UUID, Alt> all() {
-        return Collections.unmodifiableMap(byOwner);
+        return Collections.unmodifiableMap(byAlt);
     }
 
     /** Cadastra o alt da conta. Comeca inativo: quem cria ainda esta como a conta principal. */
     public Alt create(UUID owner, String altName) {
-        if (byOwner.containsKey(owner)) throw new IllegalStateException("Account already has an alt");
         if (ownerOfAlt.containsKey(owner)) throw new IllegalStateException("An alt cannot own an alt");
         if (altName.isBlank() || altName.length() > MAX_PROFILE_NAME || nameTaken(altName)) {
             throw new IllegalArgumentException("Invalid alt profile name");
         }
-        Alt alt = new Alt(owner, altIdOf(owner), altName, false);
-        byOwner.put(owner, alt);
+        UUID id = altIdOf(owner);
+        for (int slot = 2; byAlt.containsKey(id); slot++) {
+            id = UUID.nameUUIDFromBytes(("aurorion-alt:" + owner + ":" + slot).getBytes(StandardCharsets.UTF_8));
+        }
+        Alt alt = new Alt(owner, id, altName, false);
+        byAlt.put(id, alt);
         ownerOfAlt.put(alt.altId(), owner);
         setDirty();
         return alt;
     }
 
-    /** Qual dos dois entra no proximo login. */
+    /** Compatibilidade: seleciona o primeiro alt (ou o ja ativo), ou a principal. */
     public Alt setActive(UUID owner, boolean active) {
-        Alt alt = byOwner.get(owner);
+        Alt alt = byOwner(owner);
         if (alt == null) throw new IllegalStateException("Account has no alt");
-        if (alt.active() == active) return alt;
-        Alt updated = alt.withActive(active);
-        byOwner.put(owner, updated);
-        setDirty();
-        return updated;
+        select(owner, active ? alt.altId() : null);
+        return find(alt.altId());
     }
 
-    /**
-     * Desfaz o vinculo. Os arquivos do alt ficam no mundo: recriar o alt devolve o mesmo UUID e,
-     * com ele, o mesmo personagem.
-     */
+    /** Main-account target removes its first alt; alt UUID removes that specific alt. */
     @Nullable
-    public Alt remove(UUID owner) {
-        Alt alt = byOwner.remove(owner);
+    public Alt remove(UUID account) {
+        Alt alt = isAlt(account) ? find(account) : forOwner(account).stream().findFirst().orElse(null);
         if (alt == null) return null;
+        byAlt.remove(alt.altId());
         ownerOfAlt.remove(alt.altId());
         setDirty();
         return alt;
@@ -170,17 +196,23 @@ public final class AltData extends SavedData {
 
     static AltData load(CompoundTag tag, HolderLookup.Provider registries) {
         AltData data = new AltData();
-        PlayerMapNbt.read(tag, "Alts", data.byOwner, entry -> entry.hasUUID("AltId")
-                ? new Alt(entry.getUUID(PlayerMapNbt.KEY_PLAYER), entry.getUUID("AltId"),
-                        entry.getString("AltName"), entry.getBoolean("Active"))
-                : null);
-        data.byOwner.values().forEach(alt -> data.ownerOfAlt.put(alt.altId(), alt.owner()));
+        var entries = tag.getList("Alts", Tag.TAG_COMPOUND);
+        for (int i = 0; i < entries.size(); i++) {
+            CompoundTag entry = entries.getCompound(i);
+            if (!entry.hasUUID(PlayerMapNbt.KEY_PLAYER) || !entry.hasUUID("AltId")) continue;
+            // Legacy entries use Player as the owner. New entries have an explicit Owner.
+            UUID owner = entry.hasUUID("Owner") ? entry.getUUID("Owner") : entry.getUUID(PlayerMapNbt.KEY_PLAYER);
+            Alt alt = new Alt(owner, entry.getUUID("AltId"), entry.getString("AltName"), entry.getBoolean("Active"));
+            data.byAlt.put(alt.altId(), alt);
+            data.ownerOfAlt.put(alt.altId(), owner);
+        }
         return data;
     }
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        tag.put("Alts", PlayerMapNbt.write(byOwner, (entry, alt) -> {
+        tag.put("Alts", PlayerMapNbt.write(byAlt, (entry, alt) -> {
+            entry.putUUID("Owner", alt.owner());
             entry.putUUID("AltId", alt.altId());
             entry.putString("AltName", alt.altName());
             entry.putBoolean("Active", alt.active());

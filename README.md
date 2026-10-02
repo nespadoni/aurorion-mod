@@ -103,6 +103,14 @@ classpath e outra pelo diretório anunciado em `-Dfml.modFolders`.
 Para rodar só um subconjunto, use o `runClient` do próprio mod, ou fixe a lista no
 `aurorion-runs/build.gradle` com `loadedMods = [mods.aurorion_talk, mods.aurorion_aeonita]`.
 
+### Testando a tela do diário sem RCON
+
+Nos clientes `:aurorion-runs:runClient` e `:aurorion-runs:runClient2`, entre em um mundo e use
+`/diario teste`. O diário e o TesseraUI já são carregados pelo agregador. A tela abre com
+14 entradas de exemplo, sem vínculo ou personagem cadastrado; edição, autosave, prévia e
+publicação funcionam localmente. Os dados reiniciam ao reabrir. Veja
+[aurorion-diario/README.md](aurorion-diario/README.md) para os detalhes.
+
 ### Testando mecânica de dois jogadores
 
 Balão de fala, `/abduzir`, `/fakename`, sussurro e a Cerimônia de Vinculação no altar só dá para

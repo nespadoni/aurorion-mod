@@ -10,19 +10,20 @@ public final class DiaryClient {
 
     public static void open(DiaryPayloads.Open payload) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen instanceof DiaryScreen screen) screen.refresh(payload);
-        else minecraft.setScreen(new DiaryScreen(payload));
+        if (minecraft.screen instanceof DiaryScreen screen) {
+            if (!screen.isTest()) screen.refresh(payload);
+        } else minecraft.setScreen(new DiaryScreen(payload));
     }
 
     public static void entry(DiaryPayloads.Entry payload) {
-        if (Minecraft.getInstance().screen instanceof DiaryScreen screen) screen.load(payload);
+        if (Minecraft.getInstance().screen instanceof DiaryScreen screen && !screen.isTest()) screen.load(payload);
     }
 
     public static void status(DiaryPayloads.Status payload) {
-        if (Minecraft.getInstance().screen instanceof DiaryScreen screen) screen.onStatus(payload);
+        if (Minecraft.getInstance().screen instanceof DiaryScreen screen && !screen.isTest()) screen.onStatus(payload);
     }
 
     public static void conflict(DiaryPayloads.Conflict payload) {
-        if (Minecraft.getInstance().screen instanceof DiaryScreen screen) screen.onConflict(payload);
+        if (Minecraft.getInstance().screen instanceof DiaryScreen screen && !screen.isTest()) screen.onConflict(payload);
     }
 }

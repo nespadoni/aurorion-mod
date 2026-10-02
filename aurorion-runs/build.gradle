@@ -79,7 +79,14 @@ neoForge {
 
         configureEach {
             if (it.name == 'client' || it.name == 'client2') {
-                additionalRuntimeClasspathConfiguration.extendsFrom(configurations.clientModLibraries)
+                def clientRun = it
+                // O FML deve descobrir o TesseraUI como mod, nao so como classes Java.
+                // Cada cliente recebe os JARs na propria pasta mods antes de iniciar.
+                def prepareClientMods = tasks.register("prepare${clientRun.name.capitalize()}Mods", Copy) {
+                    from configurations.clientModLibraries
+                    into clientRun.gameDirectory.dir('mods')
+                }
+                taskBefore prepareClientMods
             }
             // Um diretorio por run: client, client2 e server nao dividem mundo,
             // options.txt nem log. Sem isso os dois clientes brigam pelos mesmos
