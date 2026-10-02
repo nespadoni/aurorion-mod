@@ -37,7 +37,8 @@
 
 .who {
     color: var(--gold-hi);
-    font-family: fantasy;
+    /* Usa a fonte do Minecraft: o JAR 1.1 não inclui assets/font/fantasy.json. */
+    font-family: default;
     font-size: 9px;
 }
 
@@ -131,7 +132,7 @@
     border: 1px solid var(--line);
     border-radius: 6px;
     padding: 6px 8px;
-    gap: 5px;
+    gap: 4px;
     flex-direction: column;
 }
 
@@ -146,7 +147,7 @@
     border: 1px solid var(--line);
     border-radius: 4px;
     padding: 3px 5px;
-    font-family: fantasy;
+    font-family: default;
     font-size: 9px;
     transition: border-color 160ms ease-out;
 }
@@ -189,8 +190,7 @@
 /* Situação do salvamento — a classe vem do estado (status-site, status-salvando…). */
 .status-site, .status-pendente, .status-salvando, .status-servidor, .status-erro,
 .status-conflito, .status-pronto, .status-leitura, .status-carregando {
-    flex: 1;
-    text-align: right;
+    text-align: left;
     font-size: 6px;
 }
 

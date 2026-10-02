@@ -1,0 +1,37 @@
+apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+dependencies {
+    modLibraries files(providers.gradleProperty('puffishSkillsJar')
+            .orElse("$rootDir/mod-servidor-referencia/puffish_skills-0.19.0-1.21-neoforge.jar").get())
+}
+
+// Real Pufferfish + Ethereal in a disposable dedicated server. Test mods never ship.
+evaluationDependsOn(':aurorion-ethereal')
+if (providers.gradleProperty('tramaTestMagicPack').isPresent()) evaluationDependsOn(':aurorion-magia')
+sourceSets { gameTest }
+configurations.gameTestImplementation.extendsFrom(configurations.implementation)
+configurations.gameTestCompileOnly.extendsFrom(configurations.compileOnly)
+configurations.gameTestRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+neoForge {
+    addModdingDependenciesTo sourceSets.gameTest
+    mods {
+        create('aurorion_trama_tests') { sourceSet sourceSets.gameTest }
+        create('aurorion_ethereal') { sourceSet project(':aurorion-ethereal').sourceSets.main }
+    }
+    runs {
+        client { loadedMods = [mods.aurorion_trama, mods.aurorion_core] }
+        server { loadedMods = [mods.aurorion_trama, mods.aurorion_core] }
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gameTest
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'aurorion_trama_tests'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+}
+dependencies {
+    gameTestImplementation sourceSets.main.output
+    gameTestImplementation project(':aurorion-ethereal').sourceSets.main.output
+    if (providers.gradleProperty('tramaTestMagicPack').isPresent())
+        gameTestRuntimeOnly files(project(':aurorion-magia').configurations.modLibraries)
+}

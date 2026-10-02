@@ -102,7 +102,14 @@ configurations {
 }
 
 neoForge.runs.named('client') {
-    additionalRuntimeClasspathConfiguration.extendsFrom(configurations.clientModLibraries)
+    def clientRun = it
+    // Estas dependencias sao MODS de cliente, e precisam ser descobertas pelo FML.
+    // additionalRuntimeClasspath serve para bibliotecas Java e nao registrou o TesseraUI.
+    def prepareClientMods = tasks.register('prepareClientMods', Copy) {
+        from configurations.clientModLibraries
+        into clientRun.gameDirectory.dir('mods')
+    }
+    taskBefore prepareClientMods
 }
 
 dependencies {

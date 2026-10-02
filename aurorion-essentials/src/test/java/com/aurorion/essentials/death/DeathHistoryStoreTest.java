@@ -55,6 +55,41 @@ class DeathHistoryStoreTest {
         }
     }
 
+    /** Devolver de novo entrega so o que faltou: o que ja tem recibo fica de fora, sem recusar o resto. */
+    @Test void batchReservationSkipsItemsThatAlreadyHaveAReceipt() throws IOException {
+        UUID id = UUID.randomUUID(), target = UUID.randomUUID();
+        try (DeathHistoryStore store = new DeathHistoryStore(root)) {
+            store.reserve(id, 2, snapshot(target), "Admin", target);
+            store.recordTaken(id, 5, "Admin", target);
+            int[] reserved = store.reserveItems(id, new int[]{1, 2, 3, 5}, snapshot(target), "devolver", "Admin", target);
+            assertArrayEquals(new int[]{1, 3}, reserved);
+            assertArrayEquals(new int[0], store.reserveItems(id, new int[]{1, 3}, snapshot(target), "pegar", "Admin", target));
+            // Qualquer item com recibo bloqueia a restauracao completa, venha de onde vier.
+            assertThrows(IOException.class, () -> store.reserve(id, -1, snapshot(target), "Admin", target));
+        }
+    }
+
+    /** ABORTED quer dizer que nada foi entregue: o item volta a poder ser recuperado. */
+    @Test void abortedReceiptsAreReleased() throws IOException {
+        UUID id = UUID.randomUUID(), target = UUID.randomUUID();
+        try (DeathHistoryStore store = new DeathHistoryStore(root)) {
+            int[] reserved = store.reserveItems(id, new int[]{0, 1}, snapshot(target), "devolver", "Admin", target);
+            store.finishItems(id, reserved, "ABORTED");
+            assertTrue(store.journal(id).isEmpty());
+            assertArrayEquals(new int[]{0, 1}, store.reserveItems(id, new int[]{0, 1}, snapshot(target), "devolver", "Admin", target));
+            store.finishItems(id, new int[]{0}, "FAILED");
+            assertEquals("FAILED", store.journal(id).getCompound("item_0").getString("Status"));
+        }
+    }
+
+    @Test void aFullRestoreBlocksBatchRecovery() throws IOException {
+        UUID id = UUID.randomUUID(), target = UUID.randomUUID();
+        try (DeathHistoryStore store = new DeathHistoryStore(root)) {
+            store.reserve(id, -1, snapshot(target), "Admin", target);
+            assertThrows(IOException.class, () -> store.reserveItems(id, new int[]{0}, snapshot(target), "devolver", "Admin", target));
+        }
+    }
+
     /**
      * O indice de nomes: e o que permite a staff consultar por "Bella Noob" em vez da UUID da conta,
      * inclusive semanas depois e com a pessoa offline.

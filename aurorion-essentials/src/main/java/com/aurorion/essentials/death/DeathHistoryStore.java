@@ -180,26 +180,99 @@ public final class DeathHistoryStore implements AutoCloseable {
 
     /** Reserve before mutation: repeats and a crash in the commit window cannot silently duplicate items. */
     public void reserve(UUID id, int item, CompoundTag backup, String actor, UUID target) throws IOException {
-        Path journalPath = root.resolve("restores").resolve(id + ".nbt");
+        Path journalPath = journalPath(id);
         CompoundTag journal = Files.exists(journalPath) ? read(journalPath) : new CompoundTag();
-        String key = item < 0 ? "full" : "item_" + item;
-        if (journal.contains("full") || journal.contains(key) || (item < 0 && !journal.isEmpty())) {
+        String key = item < 0 ? FULL : itemKey(item);
+        if (journal.contains(FULL) || journal.contains(key) || (item < 0 && !journal.isEmpty())) {
             throw new IOException("Esta recuperacao ja foi reservada/executada. Consulte a auditoria; nao sera repetida.");
         }
         write(root.resolve("backups").resolve(backup.getUUID("Id") + ".nbt"), backup);
-        CompoundTag receipt = new CompoundTag();
-        receipt.putString("Status", "RESERVED"); receipt.putString("Admin", actor);
-        receipt.putUUID("Target", target); receipt.putUUID("Backup", backup.getUUID("Id"));
-        receipt.putLong("Time", System.currentTimeMillis());
-        journal.put(key, receipt);
+        journal.put(key, receipt("RESERVED", item < 0 ? "restore" : "give", actor, target, backup.getUUID("Id")));
         write(journalPath, journal);
     }
 
     public void finish(UUID id, int item, String status) throws IOException {
-        Path path = root.resolve("restores").resolve(id + ".nbt");
+        finishItems(id, new int[]{item}, status);
+    }
+
+    // --- Recuperacao em lote (devolver / pegar) e retirada no criativo ---------------------------
+    //
+    // As chaves sao as mesmas do 'give' ("item_<n>"): um item entregue por qualquer caminho fica
+    // marcado para todos os outros. O 'restore' completo continua exigindo o registro intacto.
+
+    private static final String FULL = "full";
+
+    static String itemKey(int item) { return item < 0 ? FULL : "item_" + item; }
+
+    private Path journalPath(UUID id) { return root.resolve("restores").resolve(id + ".nbt"); }
+
+    /** Os recibos deste registro ({@code full}, {@code item_<n>}). Vazio se nada foi recuperado. */
+    public CompoundTag journal(UUID id) throws IOException {
+        Path path = journalPath(id);
+        return Files.exists(path) ? read(path) : new CompoundTag();
+    }
+
+    /**
+     * Reserva varios itens de uma vez. Os que ja tem recibo ficam de fora, em vez de recusar a operacao
+     * inteira: devolver duas vezes entrega so o que faltou na primeira (por falta de espaco, por exemplo).
+     *
+     * @return os indices efetivamente reservados, na ordem pedida; vazio se todos ja tinham recibo.
+     */
+    public int[] reserveItems(UUID id, int[] items, CompoundTag backup, String kind, String actor, UUID target)
+            throws IOException {
+        Path journalPath = journalPath(id);
+        CompoundTag journal = Files.exists(journalPath) ? read(journalPath) : new CompoundTag();
+        if (journal.contains(FULL)) {
+            throw new IOException("Este registro ja foi restaurado por completo (restore). Nada a entregar.");
+        }
+        int[] reserved = java.util.Arrays.stream(items).filter(item -> !journal.contains(itemKey(item))).toArray();
+        if (reserved.length == 0) return reserved;
+        write(root.resolve("backups").resolve(backup.getUUID("Id") + ".nbt"), backup);
+        for (int item : reserved) journal.put(itemKey(item), receipt("RESERVED", kind, actor, target, backup.getUUID("Id")));
+        write(journalPath, journal);
+        return reserved;
+    }
+
+    /**
+     * {@code ABORTED} apaga o recibo: nesse estado nada foi entregue (a troca nao chegou a comecar), e
+     * deixa-lo travaria o item para sempre. {@code RESERVED} e {@code FAILED} continuam travando.
+     */
+    public void finishItems(UUID id, int[] items, String status) throws IOException {
+        Path path = journalPath(id);
         CompoundTag journal = read(path);
-        journal.getCompound(item < 0 ? "full" : "item_" + item).putString("Status", status);
+        for (int item : items) {
+            String key = itemKey(item);
+            if (status.equals("ABORTED")) journal.remove(key);
+            else journal.getCompound(key).putString("Status", status);
+        }
         write(path, journal);
+    }
+
+    /**
+     * Item tirado pela staff no criativo, pela tela do historico. O item ja esta com ela quando isto
+     * roda, entao nao ha reserva: o recibo nasce {@code APPLIED}. A trava contra dupla retirada e o
+     * {@link RecoveryLedger}, na thread do servidor; este arquivo e o que sobrevive ao reinicio.
+     */
+    public void recordTaken(UUID id, int item, String actor, UUID admin) throws IOException {
+        Path path = journalPath(id);
+        CompoundTag journal = Files.exists(path) ? read(path) : new CompoundTag();
+        if (journal.contains(itemKey(item))) {
+            com.aurorion.essentials.AurorionEssentials.LOGGER.warn(
+                    "Death history: item {} do registro {} ja tinha recibo e foi retirado no criativo por {}", item, id, actor);
+            return;
+        }
+        CompoundTag receipt = receipt("APPLIED", "criativo", actor, admin, null);
+        journal.put(itemKey(item), receipt);
+        write(path, journal);
+    }
+
+    private static CompoundTag receipt(String status, String kind, String actor, UUID target, @Nullable UUID backup) {
+        CompoundTag receipt = new CompoundTag();
+        receipt.putString("Status", status); receipt.putString("Kind", kind); receipt.putString("Admin", actor);
+        receipt.putUUID("Target", target);
+        if (backup != null) receipt.putUUID("Backup", backup);
+        receipt.putLong("Time", System.currentTimeMillis());
+        return receipt;
     }
 
     private static CompoundTag summary(CompoundTag snapshot) {
@@ -208,6 +281,7 @@ public final class DeathHistoryStore implements AutoCloseable {
             summary.put(key, snapshot.get(key).copy());
         }
         if (snapshot.contains("CaptureError")) summary.putString("CaptureError", snapshot.getString("CaptureError"));
+        if (snapshot.contains("AccessoriesComplete")) summary.putBoolean("AccessoriesComplete", snapshot.getBoolean("AccessoriesComplete"));
         // Opcionais: snapshots anteriores ao personagem no registro nao tem estes campos.
         if (snapshot.hasUUID("Character")) summary.putUUID("Character", snapshot.getUUID("Character"));
         if (snapshot.contains("CharacterName")) summary.putString("CharacterName", snapshot.getString("CharacterName"));

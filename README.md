@@ -20,6 +20,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Vidas | [aurorion-vidas/](aurorion-vidas/) | Vidas limitadas por jogador, contador no HUD acima da fome, e exílio no Nether para quem zerar |
 | Aurorion Limbo | [aurorion-limbo/](aurorion-limbo/) | A dimensão de exílio e o **prazo** que corre nela; a Porta do Esquecido para quem ninguém foi buscar, a **morte definitiva** com epílogo, e a auditoria que a staff lê por RCON ou webhook |
 | Aurorion Personagem | [aurorion-personagem/](aurorion-personagem/) | Nome e sobrenome numa tela no primeiro login, e a troca de personagem depois da morte definitiva: identidade nova, progressão zerada, conta preservada |
+| Aurorion Trama do Eco | [aurorion-trama/README.md](aurorion-trama/README.md) | Árvore de 271 nós ligada às Casas, com 45 pontos por personagem e progressão automática por descobertas e prática ativa, sem XP por abates |
 | Aurorion Profissões | [aurorion-profissoes/](aurorion-profissoes/) | Médico, ferreiro, cozinheiro e arcanista: uma profissão por personagem, atendimento entre jogadores por interface e integrações com LSO, Quality Food e FoodSpoil |
 | Aurorion Magia | [aurorion-magia/](aurorion-magia/) | Addon do Iron's Spells: magia só com liberação da staff (`/aurorion spells`, por magia ou escola, espelhado no Iron's Restrictions) e dezessete magias autorais (três proibidas, só por concessão da staff), com selos mágicos e telas de possessão desenhados no cliente |
 | Aurorion Serviços | [aurorion-servicos/](aurorion-servicos/) | O app **Serviços** do celular: anúncios de profissionais por área, botão "Trabalhando", pedidos diretos e abertos (estilo iFood), vagas de trabalho com candidatura — tudo terminando numa conversa no próprio celular |
@@ -101,6 +102,14 @@ classpath e outra pelo diretório anunciado em `-Dfml.modFolders`.
 
 Para rodar só um subconjunto, use o `runClient` do próprio mod, ou fixe a lista no
 `aurorion-runs/build.gradle` com `loadedMods = [mods.aurorion_talk, mods.aurorion_aeonita]`.
+
+### Testando a tela do diário sem RCON
+
+Nos clientes `:aurorion-runs:runClient` e `:aurorion-runs:runClient2`, entre em um mundo e use
+`/diario teste`. O diário e o TesseraUI já são carregados pelo agregador. A tela abre com
+14 entradas de exemplo, sem vínculo ou personagem cadastrado; edição, autosave, prévia e
+publicação funcionam localmente. Os dados reiniciam ao reabrir. Veja
+[aurorion-diario/README.md](aurorion-diario/README.md) para os detalhes.
 
 ### Testando mecânica de dois jogadores
 

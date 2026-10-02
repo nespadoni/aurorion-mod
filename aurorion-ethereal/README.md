@@ -44,7 +44,7 @@ recolorir, trocar o lema ou botar limite de membros é editar arquivo e dar `/re
 | `name` | sim | texto (string simples ou componente JSON) |
 | `motto` | não | o que a casa diz de si; aparece no card e, em destaque, na revelação |
 | `description` | não | aparece no card, quebrada em linhas automaticamente |
-| `color` | não | `"#RRGGBB"`; tinge o card, o nome no chat e a linha da casa no holograma. Padrão branco |
+| `color` | não | `"#RRGGBB"`; tinge o card, o nome no chat, a linha da casa no holograma e o nome dos membros na tab (via `HouseGate.colorOf`, lido pelo `aurorion-essentials`). Padrão branco |
 | `ceremony` | não | `secondary` e `accent` completam a cor principal; `music` aponta para evento de som do resource pack |
 | `icon` | não | id de item desenhado no card. Item inexistente vira papel, não crash |
 | `capacity` | não | `0` (padrão) = sem limite. Acima disso a casa lota |

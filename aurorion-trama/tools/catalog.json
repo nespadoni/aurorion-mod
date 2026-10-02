@@ -1,0 +1,4250 @@
+[
+  {
+    "id": "C00",
+    "source_id": "C00",
+    "name": "Nexo da Trama",
+    "kind": "Nexo",
+    "required": 0,
+    "description": "Nó de convergência visual. Não concede poder por si só.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "C01",
+    "source_id": "C01",
+    "name": "Fio da Carne",
+    "kind": "Fio",
+    "required": 24,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "setor/ponte interno",
+    "parents": []
+  },
+  {
+    "id": "C02",
+    "source_id": "C02",
+    "name": "Fio da Guarda",
+    "kind": "Fio",
+    "required": 24,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "setor/ponte interno",
+    "parents": []
+  },
+  {
+    "id": "C03",
+    "source_id": "C03",
+    "name": "Fio do Ritmo",
+    "kind": "Fio",
+    "required": 24,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "setor/ponte interno",
+    "parents": []
+  },
+  {
+    "id": "C04",
+    "source_id": "C04",
+    "name": "Fio Arcano",
+    "kind": "Fio",
+    "required": 24,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "setor/ponte interno",
+    "parents": []
+  },
+  {
+    "id": "C05",
+    "source_id": "C05",
+    "name": "Fio do Horizonte",
+    "kind": "Fio",
+    "required": 24,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "setor/ponte interno",
+    "parents": []
+  },
+  {
+    "id": "C06",
+    "source_id": "C06",
+    "name": "Convergência Vital",
+    "kind": "Notável",
+    "required": 27,
+    "description": "VIT +2; ARM +1.",
+    "implementation": "A",
+    "source_parents": "C01",
+    "parents": [
+      "C01"
+    ],
+    "ratings": {
+      "VIT": 2,
+      "ARM": 1
+    }
+  },
+  {
+    "id": "C07",
+    "source_id": "C07",
+    "name": "Convergência Defensiva",
+    "kind": "Notável",
+    "required": 27,
+    "description": "ARM +2; KBR +1.",
+    "implementation": "A",
+    "source_parents": "C02",
+    "parents": [
+      "C02"
+    ],
+    "ratings": {
+      "ARM": 2,
+      "KBR": 1
+    }
+  },
+  {
+    "id": "C08",
+    "source_id": "C08",
+    "name": "Convergência Marcial",
+    "kind": "Notável",
+    "required": 27,
+    "description": "APS +2; MEL +1.",
+    "implementation": "A",
+    "source_parents": "C03",
+    "parents": [
+      "C03"
+    ],
+    "ratings": {
+      "APS": 2,
+      "MEL": 1
+    }
+  },
+  {
+    "id": "C09",
+    "source_id": "C09",
+    "name": "Convergência Arcana",
+    "kind": "Notável",
+    "required": 27,
+    "description": "MAG +2; MR +1.",
+    "implementation": "A",
+    "source_parents": "C04",
+    "parents": [
+      "C04"
+    ],
+    "ratings": {
+      "MAG": 2,
+      "MR": 1
+    }
+  },
+  {
+    "id": "C10",
+    "source_id": "C10",
+    "name": "Convergência Cinética",
+    "kind": "Notável",
+    "required": 27,
+    "description": "MOV +2; FALL +1.",
+    "implementation": "A",
+    "source_parents": "C05",
+    "parents": [
+      "C05"
+    ],
+    "ratings": {
+      "MOV": 2,
+      "FALL": 1
+    }
+  },
+  {
+    "id": "C11",
+    "source_id": "C11",
+    "name": "Mestria do Corpo",
+    "kind": "Maestria",
+    "required": 31,
+    "description": "25% da pontuação ARM também conta como VIT, limitado a +2 pontos equivalentes de VIT.",
+    "implementation": "C",
+    "source_parents": "C06",
+    "parents": [
+      "C06"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C12",
+    "source_id": "C12",
+    "name": "Mestria da Guarda",
+    "kind": "Maestria",
+    "required": 31,
+    "description": "25% da pontuação VIT também conta como ARM, limitado a +2 pontos equivalentes de ARM.",
+    "implementation": "C",
+    "source_parents": "C07",
+    "parents": [
+      "C07"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C13",
+    "source_id": "C13",
+    "name": "Mestria do Ritmo",
+    "kind": "Maestria",
+    "required": 31,
+    "description": "25% da pontuação MOV também conta como APS, limitado a +3 pontos equivalentes de APS.",
+    "implementation": "C",
+    "source_parents": "C08",
+    "parents": [
+      "C08"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C14",
+    "source_id": "C14",
+    "name": "Mestria da Trama",
+    "kind": "Maestria",
+    "required": 31,
+    "description": "25% da pontuação MR também conta como MAG, limitado a +3 pontos equivalentes de MAG.",
+    "implementation": "C",
+    "source_parents": "C09",
+    "parents": [
+      "C09"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C15",
+    "source_id": "C15",
+    "name": "Mestria do Horizonte",
+    "kind": "Maestria",
+    "required": 31,
+    "description": "25% da pontuação FALL também conta como MOV, limitado a +2 pontos equivalentes de MOV.",
+    "implementation": "C",
+    "source_parents": "C10",
+    "parents": [
+      "C10"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C16",
+    "source_id": "C16",
+    "name": "Coração de Crisal",
+    "kind": "Princípio",
+    "required": 38,
+    "description": "Efeitos de VIT, ARM, TGH, KBR e MR da árvore +25%; MEL, RNG, MAG e APS da árvore -20%.",
+    "implementation": "C",
+    "source_parents": "C11",
+    "parents": [
+      "C11"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C17",
+    "source_id": "C17",
+    "name": "Fio de Guerra",
+    "kind": "Princípio",
+    "required": 38,
+    "description": "Efeitos de MEL, RNG, MAG e APS da árvore +20%; VIT, ARM e TGH da árvore -25%.",
+    "implementation": "C",
+    "source_parents": "C13",
+    "parents": [
+      "C13"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C18",
+    "source_id": "C18",
+    "name": "Equilíbrio do Eco",
+    "kind": "Princípio",
+    "required": 38,
+    "description": "MEL, RNG e MAG recebem no mínimo 70% do maior bônus entre os três, mas cada um fica limitado a +6%.",
+    "implementation": "C",
+    "source_parents": "C14",
+    "parents": [
+      "C14"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C19",
+    "source_id": "C19",
+    "name": "Passo Entre Mundos",
+    "kind": "Princípio",
+    "required": 38,
+    "description": "Limite de MOV da árvore sobe de +4,2% para +6,0% e FALL de -16% para -20%; efeitos de ARM e KBR da árvore são reduzidos em 50%.",
+    "implementation": "C",
+    "source_parents": "C15",
+    "parents": [
+      "C15"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "C20",
+    "source_id": "C20",
+    "name": "Âncora Absoluta",
+    "kind": "Princípio",
+    "required": 38,
+    "description": "Bônus de MOV da árvore torna-se 0%; efeitos de ARM, TGH e KBR da árvore +50%.",
+    "implementation": "C",
+    "source_parents": "C12",
+    "parents": [
+      "C12"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "I00",
+    "source_id": "I00",
+    "name": "Origem Ignivar",
+    "kind": "Início",
+    "required": 0,
+    "description": "Nó inicial concedido automaticamente conforme a Casa; não concede atributo.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "IT1",
+    "source_id": "IT1",
+    "name": "Brasa Firme",
+    "kind": "Fio",
+    "required": 0,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "I00",
+    "parents": [
+      "I00"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "IT2",
+    "source_id": "IT2",
+    "name": "Passo de Guarda",
+    "kind": "Fio",
+    "required": 0,
+    "description": "KBR +1.",
+    "implementation": "A",
+    "source_parents": "IT1",
+    "parents": [
+      "IT1"
+    ],
+    "ratings": {
+      "KBR": 1
+    }
+  },
+  {
+    "id": "IT3",
+    "source_id": "IT3",
+    "name": "Pulso Marcial",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "IT2",
+    "parents": [
+      "IT2"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "IT4",
+    "source_id": "IT4",
+    "name": "Fôlego da Fênix",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "IT3",
+    "parents": [
+      "IT3"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "IT5",
+    "source_id": "IT5",
+    "name": "Marcha de Guerra",
+    "kind": "Fio",
+    "required": 0,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "IT4",
+    "parents": [
+      "IT4"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "IB1",
+    "source_id": "IB1",
+    "name": "Pele de Ferro",
+    "kind": "Fio",
+    "required": 0,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "IT1",
+    "parents": [
+      "IT1"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "IB2",
+    "source_id": "IB2",
+    "name": "Guarda Fechada",
+    "kind": "Fio",
+    "required": 0,
+    "description": "KBR +1.",
+    "implementation": "A",
+    "source_parents": "IB1",
+    "parents": [
+      "IB1"
+    ],
+    "ratings": {
+      "KBR": 1
+    }
+  },
+  {
+    "id": "IB3",
+    "source_id": "IB3",
+    "name": "Placas Sobrepostas",
+    "kind": "Fio",
+    "required": 2,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "IB2",
+    "parents": [
+      "IB2"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "IB4",
+    "source_id": "IB4",
+    "name": "Muralha em Movimento",
+    "kind": "Notável",
+    "required": 6,
+    "description": "ARM +2; MOV -1 ponto de rating (mínimo 0).",
+    "implementation": "A",
+    "source_parents": "IB3",
+    "parents": [
+      "IB3"
+    ],
+    "ratings": {
+      "ARM": 2,
+      "MOV": -1
+    }
+  },
+  {
+    "id": "IB5",
+    "source_id": "IB5",
+    "name": "Ossos Temperados",
+    "kind": "Fio",
+    "required": 0,
+    "description": "TGH +1.",
+    "implementation": "A",
+    "source_parents": "IB1",
+    "parents": [
+      "IB1"
+    ],
+    "ratings": {
+      "TGH": 1
+    }
+  },
+  {
+    "id": "IB6",
+    "source_id": "IB6",
+    "name": "Centro de Massa",
+    "kind": "Fio",
+    "required": 2,
+    "description": "KBR +1.",
+    "implementation": "A",
+    "source_parents": "IB5",
+    "parents": [
+      "IB5"
+    ],
+    "ratings": {
+      "KBR": 1
+    }
+  },
+  {
+    "id": "IB7",
+    "source_id": "IB7",
+    "name": "Postura Inabalável",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Enquanto não estiver sprintando por 2 s: +0,60 de armadura e +2% resistência a knockback; perde ao sprintar.",
+    "implementation": "C",
+    "source_parents": "IB6",
+    "parents": [
+      "IB6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "IB8",
+    "source_id": "IB8",
+    "name": "Reforço do Núcleo",
+    "kind": "Fio",
+    "required": 8,
+    "description": "TGH +1.",
+    "implementation": "A",
+    "source_parents": "IB4 / IB7",
+    "parents": [
+      "IB4",
+      "IB7"
+    ],
+    "ratings": {
+      "TGH": 1
+    }
+  },
+  {
+    "id": "IB9",
+    "source_id": "IB9",
+    "name": "Doutrina do Bastião",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "ARM +2; KBR +1.",
+    "implementation": "A",
+    "source_parents": "IB8",
+    "parents": [
+      "IB8"
+    ],
+    "ratings": {
+      "ARM": 2,
+      "KBR": 1
+    }
+  },
+  {
+    "id": "IE1",
+    "source_id": "IE1",
+    "name": "Pressão Ofensiva",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "IT3",
+    "parents": [
+      "IT3"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "IE2",
+    "source_id": "IE2",
+    "name": "Ritmo Quente",
+    "kind": "Fio",
+    "required": 0,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "IE1",
+    "parents": [
+      "IE1"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "IE3",
+    "source_id": "IE3",
+    "name": "Golpe Incandescente",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "IE2",
+    "parents": [
+      "IE2"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "IE4",
+    "source_id": "IE4",
+    "name": "Brasa Crescente",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Enquanto estiver acima de 70% de vida: +2% dano corpo a corpo.",
+    "implementation": "B",
+    "source_parents": "IE3",
+    "parents": [
+      "IE3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "IE5",
+    "source_id": "IE5",
+    "name": "Sangue Quente",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "IE1",
+    "parents": [
+      "IE1"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "IE6",
+    "source_id": "IE6",
+    "name": "Ritmo de Forja",
+    "kind": "Fio",
+    "required": 2,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "IE5",
+    "parents": [
+      "IE5"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "IE7",
+    "source_id": "IE7",
+    "name": "Última Centelha",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Abaixo de 35% de vida: +3% dano corpo a corpo e -2% velocidade de movimento.",
+    "implementation": "B",
+    "source_parents": "IE6",
+    "parents": [
+      "IE6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "IE8",
+    "source_id": "IE8",
+    "name": "Ímpeto Controlado",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "IE4 / IE7",
+    "parents": [
+      "IE4",
+      "IE7"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "IE9",
+    "source_id": "IE9",
+    "name": "Fênix Ferida",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Abaixo de 35% de vida, efeitos de VIT/ARM/TGH da árvore +25%; acima de 35%, dano corpo a corpo da árvore -3%.",
+    "implementation": "C",
+    "source_parents": "IE8",
+    "parents": [
+      "IE8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "ID1",
+    "source_id": "ID1",
+    "name": "Cadência",
+    "kind": "Fio",
+    "required": 0,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "IT5",
+    "parents": [
+      "IT5"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "ID2",
+    "source_id": "ID2",
+    "name": "Corte Medido",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "ID1",
+    "parents": [
+      "ID1"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "ID3",
+    "source_id": "ID3",
+    "name": "Passo Curto",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "ID2",
+    "parents": [
+      "ID2"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "ID4",
+    "source_id": "ID4",
+    "name": "Economia de Movimento",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Enquanto não estiver sprintando: +2% velocidade de ataque.",
+    "implementation": "B",
+    "source_parents": "ID3",
+    "parents": [
+      "ID3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "ID5",
+    "source_id": "ID5",
+    "name": "Alcance Marcial",
+    "kind": "Fio",
+    "required": 0,
+    "description": "EREACH +1.",
+    "implementation": "A",
+    "source_parents": "ID1",
+    "parents": [
+      "ID1"
+    ],
+    "ratings": {
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "ID6",
+    "source_id": "ID6",
+    "name": "Resistência ao Impacto",
+    "kind": "Fio",
+    "required": 2,
+    "description": "KBR +1.",
+    "implementation": "A",
+    "source_parents": "ID5",
+    "parents": [
+      "ID5"
+    ],
+    "ratings": {
+      "KBR": 1
+    }
+  },
+  {
+    "id": "ID7",
+    "source_id": "ID7",
+    "name": "Primeiro Contato",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Primeiro golpe contra alvo com 100% de vida causa +4% de dano corpo a corpo.",
+    "implementation": "B",
+    "source_parents": "ID6",
+    "parents": [
+      "ID6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "ID8",
+    "source_id": "ID8",
+    "name": "Varredura Treinada",
+    "kind": "Fio",
+    "required": 8,
+    "description": "SWEEP +1.",
+    "implementation": "A",
+    "source_parents": "ID4 / ID7",
+    "parents": [
+      "ID4",
+      "ID7"
+    ],
+    "ratings": {
+      "SWEEP": 1
+    }
+  },
+  {
+    "id": "ID9",
+    "source_id": "ID9",
+    "name": "Disciplina de Combate",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "MEL +2; APS +1.",
+    "implementation": "A",
+    "source_parents": "ID8",
+    "parents": [
+      "ID8"
+    ],
+    "ratings": {
+      "MEL": 2,
+      "APS": 1
+    }
+  },
+  {
+    "id": "IO1",
+    "source_id": "IO1",
+    "name": "Fôlego Persistente",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "IT4",
+    "parents": [
+      "IT4"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "IO2",
+    "source_id": "IO2",
+    "name": "Guarda do Corpo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "IO1",
+    "parents": [
+      "IO1"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "IO3",
+    "source_id": "IO3",
+    "name": "Resistência Moral",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "IO2",
+    "parents": [
+      "IO2"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "IO4",
+    "source_id": "IO4",
+    "name": "Vigília",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Acima de 75% de vida: -3% dano recebido de projéteis.",
+    "implementation": "B",
+    "source_parents": "IO3",
+    "parents": [
+      "IO3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "IO5",
+    "source_id": "IO5",
+    "name": "Último Homem",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "IO1",
+    "parents": [
+      "IO1"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "IO6",
+    "source_id": "IO6",
+    "name": "Quebra de Linha",
+    "kind": "Fio",
+    "required": 2,
+    "description": "EXPKB +1.",
+    "implementation": "A",
+    "source_parents": "IO5",
+    "parents": [
+      "IO5"
+    ],
+    "ratings": {
+      "EXPKB": 1
+    }
+  },
+  {
+    "id": "IO7",
+    "source_id": "IO7",
+    "name": "Sentinela",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Se não recebeu dano nos últimos 6 s, o próximo golpe recebido é reduzido em 8%; recarga interna de 10 s.",
+    "implementation": "B",
+    "source_parents": "IO6",
+    "parents": [
+      "IO6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "IO8",
+    "source_id": "IO8",
+    "name": "Armadura de Fé",
+    "kind": "Fio",
+    "required": 8,
+    "description": "TGH +1.",
+    "implementation": "A",
+    "source_parents": "IO4 / IO7",
+    "parents": [
+      "IO4",
+      "IO7"
+    ],
+    "ratings": {
+      "TGH": 1
+    }
+  },
+  {
+    "id": "IO9",
+    "source_id": "IO9",
+    "name": "Juramento de Pedra",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Acima de 50% de vida: -4% dano físico recebido; abaixo de 50%: bônus desliga e MOV da árvore recebe -2% adicional.",
+    "implementation": "C",
+    "source_parents": "IO8",
+    "parents": [
+      "IO8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "S00",
+    "source_id": "S00",
+    "name": "Origem Sylvara",
+    "kind": "Início",
+    "required": 0,
+    "description": "Nó inicial concedido automaticamente conforme a Casa; não concede atributo.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "ST1",
+    "source_id": "ST1",
+    "name": "Raiz Serena",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "S00",
+    "parents": [
+      "S00"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "ST2",
+    "source_id": "ST2",
+    "name": "Casca Flexível",
+    "kind": "Fio",
+    "required": 0,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "ST1",
+    "parents": [
+      "ST1"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "ST3",
+    "source_id": "ST3",
+    "name": "Passo de Musgo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "ST2",
+    "parents": [
+      "ST2"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "ST4",
+    "source_id": "ST4",
+    "name": "Mão Cultivadora",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "ST3",
+    "parents": [
+      "ST3"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "ST5",
+    "source_id": "ST5",
+    "name": "Respiração Verde",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "ST4",
+    "parents": [
+      "ST4"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "SR1",
+    "source_id": "SR1",
+    "name": "Seiva Forte",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "ST1",
+    "parents": [
+      "ST1"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "SR2",
+    "source_id": "SR2",
+    "name": "Casca Densa",
+    "kind": "Fio",
+    "required": 0,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "SR1",
+    "parents": [
+      "SR1"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "SR3",
+    "source_id": "SR3",
+    "name": "Raiz Profunda",
+    "kind": "Fio",
+    "required": 2,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "SR2",
+    "parents": [
+      "SR2"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "SR4",
+    "source_id": "SR4",
+    "name": "Enraizar",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Após 2 s sem sprintar: +0,40 armadura e -4% knockback recebido; perde ao sprintar.",
+    "implementation": "C",
+    "source_parents": "SR3",
+    "parents": [
+      "SR3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SR5",
+    "source_id": "SR5",
+    "name": "Fibra Viva",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "SR1",
+    "parents": [
+      "SR1"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "SR6",
+    "source_id": "SR6",
+    "name": "Madeira Antiga",
+    "kind": "Fio",
+    "required": 2,
+    "description": "TGH +1.",
+    "implementation": "A",
+    "source_parents": "SR5",
+    "parents": [
+      "SR5"
+    ],
+    "ratings": {
+      "TGH": 1
+    }
+  },
+  {
+    "id": "SR7",
+    "source_id": "SR7",
+    "name": "Queda Amortecida",
+    "kind": "Notável",
+    "required": 6,
+    "description": "FALL +2; SAFE +1.",
+    "implementation": "A",
+    "source_parents": "SR6",
+    "parents": [
+      "SR6"
+    ],
+    "ratings": {
+      "FALL": 2,
+      "SAFE": 1
+    }
+  },
+  {
+    "id": "SR8",
+    "source_id": "SR8",
+    "name": "Nó de Madeira",
+    "kind": "Fio",
+    "required": 8,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "SR4 / SR7",
+    "parents": [
+      "SR4",
+      "SR7"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "SR9",
+    "source_id": "SR9",
+    "name": "Cerne Ancestral",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "VIT +2; TGH +1.",
+    "implementation": "A",
+    "source_parents": "SR8",
+    "parents": [
+      "SR8"
+    ],
+    "ratings": {
+      "VIT": 2,
+      "TGH": 1
+    }
+  },
+  {
+    "id": "SA1",
+    "source_id": "SA1",
+    "name": "Pele Tolerante",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "ST2",
+    "parents": [
+      "ST2"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "SA2",
+    "source_id": "SA2",
+    "name": "Umidade Natural",
+    "kind": "Fio",
+    "required": 0,
+    "description": "WATER +1.",
+    "implementation": "A",
+    "source_parents": "SA1",
+    "parents": [
+      "SA1"
+    ],
+    "ratings": {
+      "WATER": 1
+    }
+  },
+  {
+    "id": "SA3",
+    "source_id": "SA3",
+    "name": "Casca Contra Fogo",
+    "kind": "Fio",
+    "required": 2,
+    "description": "BURN +1.",
+    "implementation": "A",
+    "source_parents": "SA2",
+    "parents": [
+      "SA2"
+    ],
+    "ratings": {
+      "BURN": 1
+    }
+  },
+  {
+    "id": "SA4",
+    "source_id": "SA4",
+    "name": "Resposta ao Ambiente",
+    "kind": "Notável",
+    "required": 6,
+    "description": "ENV +2: -2% dano de fogo, explosão, afogamento e veneno configurados.",
+    "implementation": "B",
+    "source_parents": "SA3",
+    "parents": [
+      "SA3"
+    ],
+    "ratings": {
+      "ENV": 2
+    }
+  },
+  {
+    "id": "SA5",
+    "source_id": "SA5",
+    "name": "Respiração Paciente",
+    "kind": "Fio",
+    "required": 0,
+    "description": "OXY +1.",
+    "implementation": "A",
+    "source_parents": "SA1",
+    "parents": [
+      "SA1"
+    ],
+    "ratings": {
+      "OXY": 1
+    }
+  },
+  {
+    "id": "SA6",
+    "source_id": "SA6",
+    "name": "Passo em Correnteza",
+    "kind": "Fio",
+    "required": 2,
+    "description": "WATER +1.",
+    "implementation": "A",
+    "source_parents": "SA5",
+    "parents": [
+      "SA5"
+    ],
+    "ratings": {
+      "WATER": 1
+    }
+  },
+  {
+    "id": "SA7",
+    "source_id": "SA7",
+    "name": "Memória da Dor",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Após sofrer fogo, explosão ou dano mágico, ganha +4% resistência ao mesmo grupo por 5 s; recarga 12 s.",
+    "implementation": "B",
+    "source_parents": "SA6",
+    "parents": [
+      "SA6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SA8",
+    "source_id": "SA8",
+    "name": "Tolerância Crescente",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "SA4 / SA7",
+    "parents": [
+      "SA4",
+      "SA7"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "SA9",
+    "source_id": "SA9",
+    "name": "Pele Adaptativa",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Memória da Dor sobe para +6% por 6 s, mas o primeiro golpe que ativa a adaptação causa +3% de dano recebido.",
+    "implementation": "C",
+    "source_parents": "SA8",
+    "parents": [
+      "SA8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SG1",
+    "source_id": "SG1",
+    "name": "Mão de Cultivo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "ST3",
+    "parents": [
+      "ST3"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "SG2",
+    "source_id": "SG2",
+    "name": "Fôlego Longo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "OXY +1.",
+    "implementation": "A",
+    "source_parents": "SG1",
+    "parents": [
+      "SG1"
+    ],
+    "ratings": {
+      "OXY": 1
+    }
+  },
+  {
+    "id": "SG3",
+    "source_id": "SG3",
+    "name": "Crescimento Lento",
+    "kind": "Fio",
+    "required": 2,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "SG2",
+    "parents": [
+      "SG2"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "SG4",
+    "source_id": "SG4",
+    "name": "Recuperação Natural",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Fora de combate por 10 s, cura 0,5 HP a cada 5 s até 60% da vida máxima.",
+    "implementation": "C",
+    "source_parents": "SG3",
+    "parents": [
+      "SG3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SG5",
+    "source_id": "SG5",
+    "name": "Ferramenta Familiar",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "SG1",
+    "parents": [
+      "SG1"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "SG6",
+    "source_id": "SG6",
+    "name": "Respiração Profunda",
+    "kind": "Fio",
+    "required": 2,
+    "description": "BURN +1.",
+    "implementation": "A",
+    "source_parents": "SG5",
+    "parents": [
+      "SG5"
+    ],
+    "ratings": {
+      "BURN": 1
+    }
+  },
+  {
+    "id": "SG7",
+    "source_id": "SG7",
+    "name": "Regeneração Contida",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Recuperação Natural pode curar até 75% da vida máxima; intervalo permanece 5 s.",
+    "implementation": "C",
+    "source_parents": "SG6",
+    "parents": [
+      "SG6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SG8",
+    "source_id": "SG8",
+    "name": "Ciclo Estável",
+    "kind": "Fio",
+    "required": 8,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "SG4 / SG7",
+    "parents": [
+      "SG4",
+      "SG7"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "SG9",
+    "source_id": "SG9",
+    "name": "Ciclo Vivo",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Fora de combate por 12 s, cura 0,5 HP a cada 4 s até 90% da vida; -4% dano causado enquanto a recuperação estiver ativa.",
+    "implementation": "C",
+    "source_parents": "SG8",
+    "parents": [
+      "SG8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SB1",
+    "source_id": "SB1",
+    "name": "Peso da Vida",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "ST4",
+    "parents": [
+      "ST4"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "SB2",
+    "source_id": "SB2",
+    "name": "Fluxo Misto",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "SB1",
+    "parents": [
+      "SB1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "SB3",
+    "source_id": "SB3",
+    "name": "Corpo Útil",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "SB2",
+    "parents": [
+      "SB2"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "SB4",
+    "source_id": "SB4",
+    "name": "Homeostase",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Se a diferença entre o maior e o menor de MEL/RNG/MAG for <=3 ratings, +1,5% a todos os três danos.",
+    "implementation": "B",
+    "source_parents": "SB3",
+    "parents": [
+      "SB3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "SB5",
+    "source_id": "SB5",
+    "name": "Passo Natural",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "SB1",
+    "parents": [
+      "SB1"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "SB6",
+    "source_id": "SB6",
+    "name": "Defesa Flexível",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "SB5",
+    "parents": [
+      "SB5"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "SB7",
+    "source_id": "SB7",
+    "name": "Resposta Equilibrada",
+    "kind": "Notável",
+    "required": 6,
+    "description": "VIT +1; MR +1; MOV +1.",
+    "implementation": "A",
+    "source_parents": "SB6",
+    "parents": [
+      "SB6"
+    ],
+    "ratings": {
+      "VIT": 1,
+      "MR": 1,
+      "MOV": 1
+    }
+  },
+  {
+    "id": "SB8",
+    "source_id": "SB8",
+    "name": "Centro Vivo",
+    "kind": "Fio",
+    "required": 8,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "SB4 / SB7",
+    "parents": [
+      "SB4",
+      "SB7"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "SB9",
+    "source_id": "SB9",
+    "name": "Harmonia Orgânica",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "Se VIT e o maior rating ofensivo diferirem em no máximo 4 pontos, +2% dano do maior tipo e +1% vida máxima.",
+    "implementation": "C",
+    "source_parents": "SB8",
+    "parents": [
+      "SB8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "N00",
+    "source_id": "N00",
+    "name": "Origem Nyx",
+    "kind": "Início",
+    "required": 0,
+    "description": "Nó inicial concedido automaticamente conforme a Casa; não concede atributo.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "NT1",
+    "source_id": "NT1",
+    "name": "Pensamento Frio",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "N00",
+    "parents": [
+      "N00"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NT2",
+    "source_id": "NT2",
+    "name": "Fio Inicial",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NT1",
+    "parents": [
+      "NT1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NT3",
+    "source_id": "NT3",
+    "name": "Passo Silencioso",
+    "kind": "Fio",
+    "required": 0,
+    "description": "SNEAK +1.",
+    "implementation": "A",
+    "source_parents": "NT2",
+    "parents": [
+      "NT2"
+    ],
+    "ratings": {
+      "SNEAK": 1
+    }
+  },
+  {
+    "id": "NT4",
+    "source_id": "NT4",
+    "name": "Olhar Longo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BREACH +1.",
+    "implementation": "A",
+    "source_parents": "NT3",
+    "parents": [
+      "NT3"
+    ],
+    "ratings": {
+      "BREACH": 1
+    }
+  },
+  {
+    "id": "NT5",
+    "source_id": "NT5",
+    "name": "Mão Precisa",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "NT4",
+    "parents": [
+      "NT4"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "NW1",
+    "source_id": "NW1",
+    "name": "Fio Azul",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NT1",
+    "parents": [
+      "NT1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NW2",
+    "source_id": "NW2",
+    "name": "Véu Curto",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NW1",
+    "parents": [
+      "NW1"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NW3",
+    "source_id": "NW3",
+    "name": "Geometria Arcana",
+    "kind": "Fio",
+    "required": 2,
+    "description": "BREACH +1.",
+    "implementation": "A",
+    "source_parents": "NW2",
+    "parents": [
+      "NW2"
+    ],
+    "ratings": {
+      "BREACH": 1
+    }
+  },
+  {
+    "id": "NW4",
+    "source_id": "NW4",
+    "name": "Concentração",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Após 2 s sem sprintar e sem receber dano: +3% dano mágico; perde ao mover em sprint ou ser atingido.",
+    "implementation": "C",
+    "source_parents": "NW3",
+    "parents": [
+      "NW3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "NW5",
+    "source_id": "NW5",
+    "name": "Trama Estável",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NW1",
+    "parents": [
+      "NW1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NW6",
+    "source_id": "NW6",
+    "name": "Olho Interior",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NW5",
+    "parents": [
+      "NW5"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NW7",
+    "source_id": "NW7",
+    "name": "Linha de Força",
+    "kind": "Notável",
+    "required": 6,
+    "description": "MAG +2; BREACH +1.",
+    "implementation": "A",
+    "source_parents": "NW6",
+    "parents": [
+      "NW6"
+    ],
+    "ratings": {
+      "MAG": 2,
+      "BREACH": 1
+    }
+  },
+  {
+    "id": "NW8",
+    "source_id": "NW8",
+    "name": "Precisão Rúnica",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NW4 / NW7",
+    "parents": [
+      "NW4",
+      "NW7"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NW9",
+    "source_id": "NW9",
+    "name": "Fio Claro",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "MAG +2; MR +1.",
+    "implementation": "A",
+    "source_parents": "NW8",
+    "parents": [
+      "NW8"
+    ],
+    "ratings": {
+      "MAG": 2,
+      "MR": 1
+    }
+  },
+  {
+    "id": "NC1",
+    "source_id": "NC1",
+    "name": "Passo Silencioso",
+    "kind": "Fio",
+    "required": 0,
+    "description": "SNEAK +1.",
+    "implementation": "A",
+    "source_parents": "NT2",
+    "parents": [
+      "NT2"
+    ],
+    "ratings": {
+      "SNEAK": 1
+    }
+  },
+  {
+    "id": "NC2",
+    "source_id": "NC2",
+    "name": "Mão Longa",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BREACH +1.",
+    "implementation": "A",
+    "source_parents": "NC1",
+    "parents": [
+      "NC1"
+    ],
+    "ratings": {
+      "BREACH": 1
+    }
+  },
+  {
+    "id": "NC3",
+    "source_id": "NC3",
+    "name": "Alcance Medido",
+    "kind": "Fio",
+    "required": 2,
+    "description": "EREACH +1.",
+    "implementation": "A",
+    "source_parents": "NC2",
+    "parents": [
+      "NC2"
+    ],
+    "ratings": {
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "NC4",
+    "source_id": "NC4",
+    "name": "Alvo Debilitado",
+    "kind": "Notável",
+    "required": 6,
+    "description": "+3% dano causado contra entidades que tenham ao menos um efeito negativo configurado.",
+    "implementation": "B",
+    "source_parents": "NC3",
+    "parents": [
+      "NC3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "NC5",
+    "source_id": "NC5",
+    "name": "Paciência",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NC1",
+    "parents": [
+      "NC1"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NC6",
+    "source_id": "NC6",
+    "name": "Ângulo Seguro",
+    "kind": "Fio",
+    "required": 2,
+    "description": "SNEAK +1.",
+    "implementation": "A",
+    "source_parents": "NC5",
+    "parents": [
+      "NC5"
+    ],
+    "ratings": {
+      "SNEAK": 1
+    }
+  },
+  {
+    "id": "NC7",
+    "source_id": "NC7",
+    "name": "Controle de Distância",
+    "kind": "Notável",
+    "required": 6,
+    "description": "BREACH +2; EREACH +1.",
+    "implementation": "A",
+    "source_parents": "NC6",
+    "parents": [
+      "NC6"
+    ],
+    "ratings": {
+      "BREACH": 2,
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "NC8",
+    "source_id": "NC8",
+    "name": "Mente Fria",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NC4 / NC7",
+    "parents": [
+      "NC4",
+      "NC7"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NC9",
+    "source_id": "NC9",
+    "name": "Domínio do Ritmo",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Enquanto agachado: +4% RNG e +4% MAG; enquanto sprintando: -4% RNG e -4% MAG.",
+    "implementation": "C",
+    "source_parents": "NC8",
+    "parents": [
+      "NC8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "NO1",
+    "source_id": "NO1",
+    "name": "Leitura de Superfície",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "NT3",
+    "parents": [
+      "NT3"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "NO2",
+    "source_id": "NO2",
+    "name": "Olhar Distante",
+    "kind": "Fio",
+    "required": 0,
+    "description": "BREACH +1.",
+    "implementation": "A",
+    "source_parents": "NO1",
+    "parents": [
+      "NO1"
+    ],
+    "ratings": {
+      "BREACH": 1
+    }
+  },
+  {
+    "id": "NO3",
+    "source_id": "NO3",
+    "name": "Passo de Sombra",
+    "kind": "Fio",
+    "required": 2,
+    "description": "SNEAK +1.",
+    "implementation": "A",
+    "source_parents": "NO2",
+    "parents": [
+      "NO2"
+    ],
+    "ratings": {
+      "SNEAK": 1
+    }
+  },
+  {
+    "id": "NO4",
+    "source_id": "NO4",
+    "name": "Análise de Estrutura",
+    "kind": "Notável",
+    "required": 6,
+    "description": "BBR +2; ao quebrar bloco com ferramenta correta, sem bônus adicional de drop.",
+    "implementation": "A",
+    "source_parents": "NO3",
+    "parents": [
+      "NO3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "NO5",
+    "source_id": "NO5",
+    "name": "Foco de Campo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "EREACH +1.",
+    "implementation": "A",
+    "source_parents": "NO1",
+    "parents": [
+      "NO1"
+    ],
+    "ratings": {
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "NO6",
+    "source_id": "NO6",
+    "name": "Movimento Contido",
+    "kind": "Fio",
+    "required": 2,
+    "description": "SNEAK +1.",
+    "implementation": "A",
+    "source_parents": "NO5",
+    "parents": [
+      "NO5"
+    ],
+    "ratings": {
+      "SNEAK": 1
+    }
+  },
+  {
+    "id": "NO7",
+    "source_id": "NO7",
+    "name": "Cartografia Mental",
+    "kind": "Notável",
+    "required": 6,
+    "description": "BREACH +2; MOV +1.",
+    "implementation": "A",
+    "source_parents": "NO6",
+    "parents": [
+      "NO6"
+    ],
+    "ratings": {
+      "BREACH": 2,
+      "MOV": 1
+    }
+  },
+  {
+    "id": "NO8",
+    "source_id": "NO8",
+    "name": "Mão de Estudioso",
+    "kind": "Fio",
+    "required": 8,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "NO4 / NO7",
+    "parents": [
+      "NO4",
+      "NO7"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "NO9",
+    "source_id": "NO9",
+    "name": "Olho da Trama",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "BREACH +2; EREACH +1; MOV -1.",
+    "implementation": "A",
+    "source_parents": "NO8",
+    "parents": [
+      "NO8"
+    ],
+    "ratings": {
+      "BREACH": 2,
+      "EREACH": 1,
+      "MOV": -1
+    }
+  },
+  {
+    "id": "NV1",
+    "source_id": "NV1",
+    "name": "Camada de Véu",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NT4",
+    "parents": [
+      "NT4"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NV2",
+    "source_id": "NV2",
+    "name": "Refração",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NV1",
+    "parents": [
+      "NV1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NV3",
+    "source_id": "NV3",
+    "name": "Mente Selada",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NV2",
+    "parents": [
+      "NV2"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NV4",
+    "source_id": "NV4",
+    "name": "Véu Reativo",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Ao receber dano mágico configurado: +3% redução mágica por 4 s; recarga 10 s.",
+    "implementation": "B",
+    "source_parents": "NV3",
+    "parents": [
+      "NV3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "NV5",
+    "source_id": "NV5",
+    "name": "Retorno de Fio",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NV1",
+    "parents": [
+      "NV1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "NV6",
+    "source_id": "NV6",
+    "name": "Defesa Simbólica",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NV5",
+    "parents": [
+      "NV5"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NV7",
+    "source_id": "NV7",
+    "name": "Contrafeitiço Passivo",
+    "kind": "Notável",
+    "required": 6,
+    "description": "MR +2; -1 ponto de rating MAG.",
+    "implementation": "A",
+    "source_parents": "NV6",
+    "parents": [
+      "NV6"
+    ],
+    "ratings": {
+      "MR": 2,
+      "MAG": -1
+    }
+  },
+  {
+    "id": "NV8",
+    "source_id": "NV8",
+    "name": "Silêncio Interior",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "NV4 / NV7",
+    "parents": [
+      "NV4",
+      "NV7"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "NV9",
+    "source_id": "NV9",
+    "name": "Mente Lacrada",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "-10% dano mágico configurado recebido; dano mágico causado pela árvore -6%.",
+    "implementation": "C",
+    "source_parents": "NV8",
+    "parents": [
+      "NV8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "V00",
+    "source_id": "V00",
+    "name": "Origem Venthra",
+    "kind": "Início",
+    "required": 0,
+    "description": "Nó inicial concedido automaticamente conforme a Casa; não concede atributo.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "VX1",
+    "source_id": "VT1",
+    "name": "Primeiro Impulso",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "V00",
+    "parents": [
+      "V00"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VX2",
+    "source_id": "VT2",
+    "name": "Cadência Leve",
+    "kind": "Fio",
+    "required": 0,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "VT1",
+    "parents": [
+      "VX1"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "VX3",
+    "source_id": "VT3",
+    "name": "Passo Seguro",
+    "kind": "Fio",
+    "required": 0,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "VT2",
+    "parents": [
+      "VX2"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "VX4",
+    "source_id": "VT4",
+    "name": "Olho de Falcão",
+    "kind": "Fio",
+    "required": 0,
+    "description": "RNG +1.",
+    "implementation": "A",
+    "source_parents": "VT3",
+    "parents": [
+      "VX3"
+    ],
+    "ratings": {
+      "RNG": 1
+    }
+  },
+  {
+    "id": "VX5",
+    "source_id": "VT5",
+    "name": "Vento Baixo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VT4",
+    "parents": [
+      "VX4"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VF1",
+    "source_id": "VF1",
+    "name": "Passo Leve",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VT1",
+    "parents": [
+      "VX1"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VF2",
+    "source_id": "VF2",
+    "name": "Aterrissagem",
+    "kind": "Fio",
+    "required": 0,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "VF1",
+    "parents": [
+      "VF1"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "VF3",
+    "source_id": "VF3",
+    "name": "Corrida Econômica",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VF2",
+    "parents": [
+      "VF2"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VF4",
+    "source_id": "VF4",
+    "name": "Vento de Cauda",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Após sprintar por 3 s contínuos: +1,5% MOV; perde 1 s após parar.",
+    "implementation": "C",
+    "source_parents": "VF3",
+    "parents": [
+      "VF3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VF5",
+    "source_id": "VF5",
+    "name": "Queda Curta",
+    "kind": "Fio",
+    "required": 0,
+    "description": "SAFE +1.",
+    "implementation": "A",
+    "source_parents": "VF1",
+    "parents": [
+      "VF1"
+    ],
+    "ratings": {
+      "SAFE": 1
+    }
+  },
+  {
+    "id": "VF6",
+    "source_id": "VF6",
+    "name": "Passo em Água",
+    "kind": "Fio",
+    "required": 2,
+    "description": "WATER +1.",
+    "implementation": "A",
+    "source_parents": "VF5",
+    "parents": [
+      "VF5"
+    ],
+    "ratings": {
+      "WATER": 1
+    }
+  },
+  {
+    "id": "VF7",
+    "source_id": "VF7",
+    "name": "Pés de Falcão",
+    "kind": "Notável",
+    "required": 6,
+    "description": "FALL +2; MOV +1.",
+    "implementation": "A",
+    "source_parents": "VF6",
+    "parents": [
+      "VF6"
+    ],
+    "ratings": {
+      "FALL": 2,
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VF8",
+    "source_id": "VF8",
+    "name": "Linha Rápida",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VF4 / VF7",
+    "parents": [
+      "VF4",
+      "VF7"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VF9",
+    "source_id": "VF9",
+    "name": "Mestre do Fluxo",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "MOV +2; FALL +1.",
+    "implementation": "A",
+    "source_parents": "VF8",
+    "parents": [
+      "VF8"
+    ],
+    "ratings": {
+      "MOV": 2,
+      "FALL": 1
+    }
+  },
+  {
+    "id": "VT1",
+    "source_id": "VT1",
+    "name": "Pulso Rápido",
+    "kind": "Fio",
+    "required": 0,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "VT2",
+    "parents": [
+      "VX2"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "VT2",
+    "source_id": "VT2",
+    "name": "Abertura Curta",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "VT1",
+    "parents": [
+      "VT1"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "VT3",
+    "source_id": "VT3",
+    "name": "Ritmo de Passos",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VT2",
+    "parents": [
+      "VT2"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VT4",
+    "source_id": "VT4",
+    "name": "Momentum",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Após sprintar por 3 s: +2% velocidade de ataque; termina 1 s após parar.",
+    "implementation": "C",
+    "source_parents": "VT3",
+    "parents": [
+      "VT3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VT5",
+    "source_id": "VT5",
+    "name": "Recuperação de Guarda",
+    "kind": "Fio",
+    "required": 0,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "VT1",
+    "parents": [
+      "VT1"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "VT6",
+    "source_id": "VT6",
+    "name": "Golpe em Passagem",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "VT5",
+    "parents": [
+      "VT5"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "VT7",
+    "source_id": "VT7",
+    "name": "Entrada Rápida",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Primeiro ataque até 2 s após encerrar sprint: +3% dano corpo a corpo; recarga 5 s.",
+    "implementation": "B",
+    "source_parents": "VT6",
+    "parents": [
+      "VT6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VT8",
+    "source_id": "VT8",
+    "name": "Cadência Alta",
+    "kind": "Fio",
+    "required": 8,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "VT4 / VT7",
+    "parents": [
+      "VT4",
+      "VT7"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "VT9",
+    "source_id": "VT9",
+    "name": "Ritmo de Venthra",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "APS +2; MOV +1.",
+    "implementation": "A",
+    "source_parents": "VT8",
+    "parents": [
+      "VT8"
+    ],
+    "ratings": {
+      "APS": 2,
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VP1",
+    "source_id": "VP1",
+    "name": "Olho Firme",
+    "kind": "Fio",
+    "required": 0,
+    "description": "RNG +1.",
+    "implementation": "A",
+    "source_parents": "VT3",
+    "parents": [
+      "VX3"
+    ],
+    "ratings": {
+      "RNG": 1
+    }
+  },
+  {
+    "id": "VP2",
+    "source_id": "VP2",
+    "name": "Trajetória Limpa",
+    "kind": "Fio",
+    "required": 0,
+    "description": "PSPD +1.",
+    "implementation": "A",
+    "source_parents": "VP1",
+    "parents": [
+      "VP1"
+    ],
+    "ratings": {
+      "PSPD": 1
+    }
+  },
+  {
+    "id": "VP3",
+    "source_id": "VP3",
+    "name": "Distância Útil",
+    "kind": "Fio",
+    "required": 2,
+    "description": "EREACH +1.",
+    "implementation": "A",
+    "source_parents": "VP2",
+    "parents": [
+      "VP2"
+    ],
+    "ratings": {
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "VP4",
+    "source_id": "VP4",
+    "name": "Respiração de Mira",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Enquanto agachado: +4% dano de projéteis.",
+    "implementation": "B",
+    "source_parents": "VP3",
+    "parents": [
+      "VP3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VP5",
+    "source_id": "VP5",
+    "name": "Tensão Constante",
+    "kind": "Fio",
+    "required": 0,
+    "description": "RNG +1.",
+    "implementation": "A",
+    "source_parents": "VP1",
+    "parents": [
+      "VP1"
+    ],
+    "ratings": {
+      "RNG": 1
+    }
+  },
+  {
+    "id": "VP6",
+    "source_id": "VP6",
+    "name": "Voo Estável",
+    "kind": "Fio",
+    "required": 2,
+    "description": "PSPD +1.",
+    "implementation": "A",
+    "source_parents": "VP5",
+    "parents": [
+      "VP5"
+    ],
+    "ratings": {
+      "PSPD": 1
+    }
+  },
+  {
+    "id": "VP7",
+    "source_id": "VP7",
+    "name": "Alvo Inteiro",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Projéteis contra alvo com 100% de vida causam +4% de dano.",
+    "implementation": "B",
+    "source_parents": "VP6",
+    "parents": [
+      "VP6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VP8",
+    "source_id": "VP8",
+    "name": "Mira Longa",
+    "kind": "Fio",
+    "required": 8,
+    "description": "RNG +1.",
+    "implementation": "A",
+    "source_parents": "VP4 / VP7",
+    "parents": [
+      "VP4",
+      "VP7"
+    ],
+    "ratings": {
+      "RNG": 1
+    }
+  },
+  {
+    "id": "VP9",
+    "source_id": "VP9",
+    "name": "Linha Perfeita",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Enquanto agachado e sem sprintar: +8% RNG; MEL da árvore -4% sempre.",
+    "implementation": "C",
+    "source_parents": "VP8",
+    "parents": [
+      "VP8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VA1",
+    "source_id": "VA1",
+    "name": "Reflexo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VT4",
+    "parents": [
+      "VX4"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "VA2",
+    "source_id": "VA2",
+    "name": "Corpo Solto",
+    "kind": "Fio",
+    "required": 0,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "VA1",
+    "parents": [
+      "VA1"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "VA3",
+    "source_id": "VA3",
+    "name": "Resposta Curta",
+    "kind": "Fio",
+    "required": 2,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "VA2",
+    "parents": [
+      "VA2"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "VA4",
+    "source_id": "VA4",
+    "name": "Reação de Fuga",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Ao receber dano: +2% MOV por 2 s; recarga 8 s.",
+    "implementation": "C",
+    "source_parents": "VA3",
+    "parents": [
+      "VA3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "VA5",
+    "source_id": "VA5",
+    "name": "Espaço Pessoal",
+    "kind": "Fio",
+    "required": 0,
+    "description": "EREACH +1.",
+    "implementation": "A",
+    "source_parents": "VA1",
+    "parents": [
+      "VA1"
+    ],
+    "ratings": {
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "VA6",
+    "source_id": "VA6",
+    "name": "Queda Treinada",
+    "kind": "Fio",
+    "required": 2,
+    "description": "SAFE +1.",
+    "implementation": "A",
+    "source_parents": "VA5",
+    "parents": [
+      "VA5"
+    ],
+    "ratings": {
+      "SAFE": 1
+    }
+  },
+  {
+    "id": "VA7",
+    "source_id": "VA7",
+    "name": "Passo Lateral",
+    "kind": "Notável",
+    "required": 6,
+    "description": "KBR +1; MOV +1; FALL +1.",
+    "implementation": "A",
+    "source_parents": "VA6",
+    "parents": [
+      "VA6"
+    ],
+    "ratings": {
+      "KBR": 1,
+      "MOV": 1,
+      "FALL": 1
+    }
+  },
+  {
+    "id": "VA8",
+    "source_id": "VA8",
+    "name": "Leitura de Abertura",
+    "kind": "Fio",
+    "required": 8,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "VA4 / VA7",
+    "parents": [
+      "VA4",
+      "VA7"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "VA9",
+    "source_id": "VA9",
+    "name": "Passo Entre Golpes",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Após receber dano, +3% MOV por 2 s e -3% dano causado durante o bônus; recarga 8 s.",
+    "implementation": "C",
+    "source_parents": "VA8",
+    "parents": [
+      "VA8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "A00",
+    "source_id": "A00",
+    "name": "Origem Aetheris",
+    "kind": "Início",
+    "required": 0,
+    "description": "Nó inicial concedido automaticamente conforme a Casa; não concede atributo.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "AX1",
+    "source_id": "AT1",
+    "name": "Eco Instável",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "A00",
+    "parents": [
+      "A00"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AX2",
+    "source_id": "AT2",
+    "name": "Limiar Móvel",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "AT1",
+    "parents": [
+      "AX1"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "AX3",
+    "source_id": "AT3",
+    "name": "Carne Transitória",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "AT2",
+    "parents": [
+      "AX2"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "AX4",
+    "source_id": "AT4",
+    "name": "Véu Interior",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "AT3",
+    "parents": [
+      "AX3"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "AX5",
+    "source_id": "AT5",
+    "name": "Forma Incerta",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "AT4",
+    "parents": [
+      "AX4"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "AT1",
+    "source_id": "AT1",
+    "name": "Matéria Incerta",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AT1",
+    "parents": [
+      "AX1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AT2",
+    "source_id": "AT2",
+    "name": "Carne Maleável",
+    "kind": "Fio",
+    "required": 0,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "AT1",
+    "parents": [
+      "AT1"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "AT3",
+    "source_id": "AT3",
+    "name": "Fio Cruzado",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "AT2",
+    "parents": [
+      "AT2"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "AT4",
+    "source_id": "AT4",
+    "name": "Troca Parcial",
+    "kind": "Notável",
+    "required": 6,
+    "description": "20% da pontuação VIT também conta como MAG, limitado a +2 MAG equivalentes; VIT não é perdido.",
+    "implementation": "C",
+    "source_parents": "AT3",
+    "parents": [
+      "AT3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "AT5",
+    "source_id": "AT5",
+    "name": "Passagem Curta",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "AT1",
+    "parents": [
+      "AT1"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "AT6",
+    "source_id": "AT6",
+    "name": "Forma Composta",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "AT5",
+    "parents": [
+      "AT5"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "AT7",
+    "source_id": "AT7",
+    "name": "Mistura de Frequências",
+    "kind": "Notável",
+    "required": 6,
+    "description": "MEL +1; RNG +1; MAG +1.",
+    "implementation": "A",
+    "source_parents": "AT6",
+    "parents": [
+      "AT6"
+    ],
+    "ratings": {
+      "MEL": 1,
+      "RNG": 1,
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AT8",
+    "source_id": "AT8",
+    "name": "Corpo Reescrito",
+    "kind": "Fio",
+    "required": 8,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "AT4 / AT7",
+    "parents": [
+      "AT4",
+      "AT7"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "AT9",
+    "source_id": "AT9",
+    "name": "Conversão Instável",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "30% da pontuação VIT conta também como MAG; efeito de VIT da árvore é reduzido em 30%.",
+    "implementation": "C",
+    "source_parents": "AT8",
+    "parents": [
+      "AT8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "AV1",
+    "source_id": "AV1",
+    "name": "Fio Negro",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AT2",
+    "parents": [
+      "AX2"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AV2",
+    "source_id": "AV2",
+    "name": "Casca Vazia",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "AV1",
+    "parents": [
+      "AV1"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "AV3",
+    "source_id": "AV3",
+    "name": "Pressão do Vazio",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AV2",
+    "parents": [
+      "AV2"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AV4",
+    "source_id": "AV4",
+    "name": "Vazio Controlado",
+    "kind": "Notável",
+    "required": 6,
+    "description": "MAG +3; VIT -1.",
+    "implementation": "A",
+    "source_parents": "AV3",
+    "parents": [
+      "AV3"
+    ],
+    "ratings": {
+      "MAG": 3,
+      "VIT": -1
+    }
+  },
+  {
+    "id": "AV5",
+    "source_id": "AV5",
+    "name": "Eco Ausente",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "AV1",
+    "parents": [
+      "AV1"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "AV6",
+    "source_id": "AV6",
+    "name": "Fome de Forma",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AV5",
+    "parents": [
+      "AV5"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AV7",
+    "source_id": "AV7",
+    "name": "Revestimento Nulo",
+    "kind": "Notável",
+    "required": 6,
+    "description": "MR +2; ARM -1.",
+    "implementation": "A",
+    "source_parents": "AV6",
+    "parents": [
+      "AV6"
+    ],
+    "ratings": {
+      "MR": 2,
+      "ARM": -1
+    }
+  },
+  {
+    "id": "AV8",
+    "source_id": "AV8",
+    "name": "Pulso Abissal",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AV4 / AV7",
+    "parents": [
+      "AV4",
+      "AV7"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AV9",
+    "source_id": "AV9",
+    "name": "Corpo Oco",
+    "kind": "Princípio",
+    "required": 18,
+    "description": "Cap de MAG da árvore sobe de +9% para +12%; bônus de VIT da árvore fica limitado a +3%.",
+    "implementation": "C",
+    "source_parents": "AV8",
+    "parents": [
+      "AV8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "AL1",
+    "source_id": "AL1",
+    "name": "Meio Passo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "AT3",
+    "parents": [
+      "AX3"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "AL2",
+    "source_id": "AL2",
+    "name": "Pulso Duplo",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "AL1",
+    "parents": [
+      "AL1"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "AL3",
+    "source_id": "AL3",
+    "name": "Sangue de Fronteira",
+    "kind": "Fio",
+    "required": 2,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "AL2",
+    "parents": [
+      "AL2"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "AL4",
+    "source_id": "AL4",
+    "name": "Estado Intermediário",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Entre 40% e 70% de vida: +2% MEL e +2% MAG.",
+    "implementation": "B",
+    "source_parents": "AL3",
+    "parents": [
+      "AL3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "AL5",
+    "source_id": "AL5",
+    "name": "Olhar de Fora",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AL1",
+    "parents": [
+      "AL1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AL6",
+    "source_id": "AL6",
+    "name": "Passo de Fronteira",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "AL5",
+    "parents": [
+      "AL5"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "AL7",
+    "source_id": "AL7",
+    "name": "Entre Dois Ritmos",
+    "kind": "Notável",
+    "required": 6,
+    "description": "APS +1; MAG +1; MOV +1.",
+    "implementation": "A",
+    "source_parents": "AL6",
+    "parents": [
+      "AL6"
+    ],
+    "ratings": {
+      "APS": 1,
+      "MAG": 1,
+      "MOV": 1
+    }
+  },
+  {
+    "id": "AL8",
+    "source_id": "AL8",
+    "name": "Corpo no Limiar",
+    "kind": "Fio",
+    "required": 8,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "AL4 / AL7",
+    "parents": [
+      "AL4",
+      "AL7"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "AL9",
+    "source_id": "AL9",
+    "name": "No Limiar",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "Entre 35% e 60% de vida: +4% dano total e +1,5% MOV; acima de 60%: -2% dano total; abaixo de 35%: -2% MOV.",
+    "implementation": "C",
+    "source_parents": "AL8",
+    "parents": [
+      "AL8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "AD1",
+    "source_id": "AD1",
+    "name": "Frequência Quebrada",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "AT4",
+    "parents": [
+      "AX4"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "AD2",
+    "source_id": "AD2",
+    "name": "Segunda Voz",
+    "kind": "Fio",
+    "required": 0,
+    "description": "RNG +1.",
+    "implementation": "A",
+    "source_parents": "AD1",
+    "parents": [
+      "AD1"
+    ],
+    "ratings": {
+      "RNG": 1
+    }
+  },
+  {
+    "id": "AD3",
+    "source_id": "AD3",
+    "name": "Terceiro Eco",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "AD2",
+    "parents": [
+      "AD2"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AD4",
+    "source_id": "AD4",
+    "name": "Assimetria",
+    "kind": "Notável",
+    "required": 6,
+    "description": "Maior entre MEL/RNG/MAG recebe +1%; menor recebe -1%.",
+    "implementation": "C",
+    "source_parents": "AD3",
+    "parents": [
+      "AD3"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "AD5",
+    "source_id": "AD5",
+    "name": "Passo Irregular",
+    "kind": "Fio",
+    "required": 0,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "AD1",
+    "parents": [
+      "AD1"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "AD6",
+    "source_id": "AD6",
+    "name": "Reflexo Distorcido",
+    "kind": "Fio",
+    "required": 2,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "AD5",
+    "parents": [
+      "AD5"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "AD7",
+    "source_id": "AD7",
+    "name": "Três Caminhos",
+    "kind": "Notável",
+    "required": 6,
+    "description": "MEL +1; RNG +1; MAG +1.",
+    "implementation": "A",
+    "source_parents": "AD6",
+    "parents": [
+      "AD6"
+    ],
+    "ratings": {
+      "MEL": 1,
+      "RNG": 1,
+      "MAG": 1
+    }
+  },
+  {
+    "id": "AD8",
+    "source_id": "AD8",
+    "name": "Padrão Quebrado",
+    "kind": "Fio",
+    "required": 8,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "AD4 / AD7",
+    "parents": [
+      "AD4",
+      "AD7"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "AD9",
+    "source_id": "AD9",
+    "name": "Dissonância",
+    "kind": "Maestria",
+    "required": 12,
+    "description": "O maior bônus ofensivo entre MEL/RNG/MAG recebe +2%; o menor recebe -2%.",
+    "implementation": "C",
+    "source_parents": "AD8",
+    "parents": [
+      "AD8"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "BIS1",
+    "source_id": "BIS1",
+    "name": "Cicatriz Antiga",
+    "kind": "Fio",
+    "required": 8,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "IT2 / ST1",
+    "parents": [
+      "IT2",
+      "ST1"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "BIS2",
+    "source_id": "BIS2",
+    "name": "Metal Vivo",
+    "kind": "Fio",
+    "required": 8,
+    "description": "ARM +1.",
+    "implementation": "A",
+    "source_parents": "BIS1",
+    "parents": [
+      "BIS1"
+    ],
+    "ratings": {
+      "ARM": 1
+    }
+  },
+  {
+    "id": "BIS3",
+    "source_id": "BIS3",
+    "name": "Calor Tolerado",
+    "kind": "Fio",
+    "required": 10,
+    "description": "BURN +1.",
+    "implementation": "A",
+    "source_parents": "BIS2",
+    "parents": [
+      "BIS2"
+    ],
+    "ratings": {
+      "BURN": 1
+    }
+  },
+  {
+    "id": "BIS4",
+    "source_id": "BIS4",
+    "name": "Raiz de Guerra",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "BIS3",
+    "parents": [
+      "BIS3"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "BIS5",
+    "source_id": "BIS5",
+    "name": "Queda de Tronco",
+    "kind": "Fio",
+    "required": 10,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "BIS4",
+    "parents": [
+      "BIS4"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "BIS6",
+    "source_id": "BIS6",
+    "name": "Carapaça Regenerada",
+    "kind": "Notável",
+    "required": 12,
+    "description": "VIT +2; ARM +1.",
+    "implementation": "A",
+    "source_parents": "BIS5",
+    "parents": [
+      "BIS5"
+    ],
+    "ratings": {
+      "VIT": 2,
+      "ARM": 1
+    }
+  },
+  {
+    "id": "BIS7",
+    "source_id": "BIS7",
+    "name": "Instinto de Sobrevivência",
+    "kind": "Notável",
+    "required": 14,
+    "description": "Abaixo de 40% de vida: +2% redução física; -1% MOV.",
+    "implementation": "B",
+    "source_parents": "BIS6",
+    "parents": [
+      "BIS6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "BIS8",
+    "source_id": "BIS8",
+    "name": "Carne e Casca",
+    "kind": "Maestria",
+    "required": 16,
+    "description": "VIT +1; ARM +1; TGH +1.",
+    "implementation": "A",
+    "source_parents": "BIS7",
+    "parents": [
+      "BIS7"
+    ],
+    "ratings": {
+      "VIT": 1,
+      "ARM": 1,
+      "TGH": 1
+    }
+  },
+  {
+    "id": "BSN1",
+    "source_id": "BSN1",
+    "name": "Seiva Rúnica",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "ST4 / NT3",
+    "parents": [
+      "ST4",
+      "NT3"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "BSN2",
+    "source_id": "BSN2",
+    "name": "Leitura de Raízes",
+    "kind": "Fio",
+    "required": 8,
+    "description": "BBR +1.",
+    "implementation": "A",
+    "source_parents": "BSN1",
+    "parents": [
+      "BSN1"
+    ],
+    "ratings": {
+      "BBR": 1
+    }
+  },
+  {
+    "id": "BSN3",
+    "source_id": "BSN3",
+    "name": "Memória Orgânica",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "BSN2",
+    "parents": [
+      "BSN2"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "BSN4",
+    "source_id": "BSN4",
+    "name": "Mão de Herbário",
+    "kind": "Fio",
+    "required": 10,
+    "description": "BREACH +1.",
+    "implementation": "A",
+    "source_parents": "BSN3",
+    "parents": [
+      "BSN3"
+    ],
+    "ratings": {
+      "BREACH": 1
+    }
+  },
+  {
+    "id": "BSN5",
+    "source_id": "BSN5",
+    "name": "Corpo de Estudo",
+    "kind": "Fio",
+    "required": 10,
+    "description": "VIT +1.",
+    "implementation": "A",
+    "source_parents": "BSN4",
+    "parents": [
+      "BSN4"
+    ],
+    "ratings": {
+      "VIT": 1
+    }
+  },
+  {
+    "id": "BSN6",
+    "source_id": "BSN6",
+    "name": "Fórmula Viva",
+    "kind": "Notável",
+    "required": 12,
+    "description": "MAG +2; VIT +1.",
+    "implementation": "A",
+    "source_parents": "BSN5",
+    "parents": [
+      "BSN5"
+    ],
+    "ratings": {
+      "MAG": 2,
+      "VIT": 1
+    }
+  },
+  {
+    "id": "BSN7",
+    "source_id": "BSN7",
+    "name": "Preparação",
+    "kind": "Notável",
+    "required": 14,
+    "description": "Enquanto não sprinta: +1,5% MAG e +2% BBR.",
+    "implementation": "C",
+    "source_parents": "BSN6",
+    "parents": [
+      "BSN6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "BSN8",
+    "source_id": "BSN8",
+    "name": "Alquimia da Mente",
+    "kind": "Maestria",
+    "required": 16,
+    "description": "MAG +1; MR +1; BBR +1.",
+    "implementation": "A",
+    "source_parents": "BSN7",
+    "parents": [
+      "BSN7"
+    ],
+    "ratings": {
+      "MAG": 1,
+      "MR": 1,
+      "BBR": 1
+    }
+  },
+  {
+    "id": "BNA1",
+    "source_id": "BNA1",
+    "name": "Fissura Lúcida",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "NT4 / AT1",
+    "parents": [
+      "NT4",
+      "AX1"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "BNA2",
+    "source_id": "BNA2",
+    "name": "Olho do Limiar",
+    "kind": "Fio",
+    "required": 8,
+    "description": "EREACH +1.",
+    "implementation": "A",
+    "source_parents": "BNA1",
+    "parents": [
+      "BNA1"
+    ],
+    "ratings": {
+      "EREACH": 1
+    }
+  },
+  {
+    "id": "BNA3",
+    "source_id": "BNA3",
+    "name": "Véu Fendido",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MR +1.",
+    "implementation": "A",
+    "source_parents": "BNA2",
+    "parents": [
+      "BNA2"
+    ],
+    "ratings": {
+      "MR": 1
+    }
+  },
+  {
+    "id": "BNA4",
+    "source_id": "BNA4",
+    "name": "Passo Improvável",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "BNA3",
+    "parents": [
+      "BNA3"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "BNA5",
+    "source_id": "BNA5",
+    "name": "Eco Duplo",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "BNA4",
+    "parents": [
+      "BNA4"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "BNA6",
+    "source_id": "BNA6",
+    "name": "Leitura do Vazio",
+    "kind": "Notável",
+    "required": 12,
+    "description": "MAG +2; MR +1.",
+    "implementation": "A",
+    "source_parents": "BNA5",
+    "parents": [
+      "BNA5"
+    ],
+    "ratings": {
+      "MAG": 2,
+      "MR": 1
+    }
+  },
+  {
+    "id": "BNA7",
+    "source_id": "BNA7",
+    "name": "Fenda Controlada",
+    "kind": "Notável",
+    "required": 14,
+    "description": "Após dano mágico recebido: +1,5% MOV por 3 s; recarga 10 s.",
+    "implementation": "C",
+    "source_parents": "BNA6",
+    "parents": [
+      "BNA6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "BNA8",
+    "source_id": "BNA8",
+    "name": "Véu Fraturado",
+    "kind": "Maestria",
+    "required": 16,
+    "description": "MAG +1; MOV +1; MR +1.",
+    "implementation": "A",
+    "source_parents": "BNA7",
+    "parents": [
+      "BNA7"
+    ],
+    "ratings": {
+      "MAG": 1,
+      "MOV": 1,
+      "MR": 1
+    }
+  },
+  {
+    "id": "BAV1",
+    "source_id": "BAV1",
+    "name": "Passo Fora do Eixo",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "AT3 / VT1",
+    "parents": [
+      "AX3",
+      "VX1"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "BAV2",
+    "source_id": "BAV2",
+    "name": "Trajetória Estranha",
+    "kind": "Fio",
+    "required": 8,
+    "description": "RNG +1.",
+    "implementation": "A",
+    "source_parents": "BAV1",
+    "parents": [
+      "BAV1"
+    ],
+    "ratings": {
+      "RNG": 1
+    }
+  },
+  {
+    "id": "BAV3",
+    "source_id": "BAV3",
+    "name": "Queda Entre Ecos",
+    "kind": "Fio",
+    "required": 10,
+    "description": "FALL +1.",
+    "implementation": "A",
+    "source_parents": "BAV2",
+    "parents": [
+      "BAV2"
+    ],
+    "ratings": {
+      "FALL": 1
+    }
+  },
+  {
+    "id": "BAV4",
+    "source_id": "BAV4",
+    "name": "Pulso Veloz",
+    "kind": "Fio",
+    "required": 10,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "BAV3",
+    "parents": [
+      "BAV3"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "BAV5",
+    "source_id": "BAV5",
+    "name": "Fio Errante",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MAG +1.",
+    "implementation": "A",
+    "source_parents": "BAV4",
+    "parents": [
+      "BAV4"
+    ],
+    "ratings": {
+      "MAG": 1
+    }
+  },
+  {
+    "id": "BAV6",
+    "source_id": "BAV6",
+    "name": "Movimento Improvável",
+    "kind": "Notável",
+    "required": 12,
+    "description": "MOV +2; FALL +1.",
+    "implementation": "A",
+    "source_parents": "BAV5",
+    "parents": [
+      "BAV5"
+    ],
+    "ratings": {
+      "MOV": 2,
+      "FALL": 1
+    }
+  },
+  {
+    "id": "BAV7",
+    "source_id": "BAV7",
+    "name": "Ataque de Passagem",
+    "kind": "Notável",
+    "required": 14,
+    "description": "Até 2 s após iniciar sprint: +2% RNG e +2% MAG; recarga da janela 5 s.",
+    "implementation": "B",
+    "source_parents": "BAV6",
+    "parents": [
+      "BAV6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "BAV8",
+    "source_id": "BAV8",
+    "name": "Passagem Instável",
+    "kind": "Maestria",
+    "required": 16,
+    "description": "MOV +1; RNG +1; MAG +1.",
+    "implementation": "A",
+    "source_parents": "BAV7",
+    "parents": [
+      "BAV7"
+    ],
+    "ratings": {
+      "MOV": 1,
+      "RNG": 1,
+      "MAG": 1
+    }
+  },
+  {
+    "id": "BVI1",
+    "source_id": "BVI1",
+    "name": "Passo de Investida",
+    "kind": "Fio",
+    "required": 8,
+    "description": "MOV +1.",
+    "implementation": "A",
+    "source_parents": "VT2 / IT5",
+    "parents": [
+      "VX2",
+      "IT5"
+    ],
+    "ratings": {
+      "MOV": 1
+    }
+  },
+  {
+    "id": "BVI2",
+    "source_id": "BVI2",
+    "name": "Ritmo Marcial",
+    "kind": "Fio",
+    "required": 8,
+    "description": "APS +1.",
+    "implementation": "A",
+    "source_parents": "BVI1",
+    "parents": [
+      "BVI1"
+    ],
+    "ratings": {
+      "APS": 1
+    }
+  },
+  {
+    "id": "BVI3",
+    "source_id": "BVI3",
+    "name": "Impacto Preparado",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "BVI2",
+    "parents": [
+      "BVI2"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "BVI4",
+    "source_id": "BVI4",
+    "name": "Base Firme",
+    "kind": "Fio",
+    "required": 10,
+    "description": "KBR +1.",
+    "implementation": "A",
+    "source_parents": "BVI3",
+    "parents": [
+      "BVI3"
+    ],
+    "ratings": {
+      "KBR": 1
+    }
+  },
+  {
+    "id": "BVI5",
+    "source_id": "BVI5",
+    "name": "Abertura de Linha",
+    "kind": "Fio",
+    "required": 10,
+    "description": "MEL +1.",
+    "implementation": "A",
+    "source_parents": "BVI4",
+    "parents": [
+      "BVI4"
+    ],
+    "ratings": {
+      "MEL": 1
+    }
+  },
+  {
+    "id": "BVI6",
+    "source_id": "BVI6",
+    "name": "Carga Disciplinada",
+    "kind": "Notável",
+    "required": 12,
+    "description": "MOV +1; APS +1; MEL +1.",
+    "implementation": "A",
+    "source_parents": "BVI5",
+    "parents": [
+      "BVI5"
+    ],
+    "ratings": {
+      "MOV": 1,
+      "APS": 1,
+      "MEL": 1
+    }
+  },
+  {
+    "id": "BVI7",
+    "source_id": "BVI7",
+    "name": "Quebra de Formação",
+    "kind": "Notável",
+    "required": 14,
+    "description": "Primeiro ataque após 3 s sprintando: +4% MEL; recarga 8 s.",
+    "implementation": "B",
+    "source_parents": "BVI6",
+    "parents": [
+      "BVI6"
+    ],
+    "ratings": {}
+  },
+  {
+    "id": "BVI8",
+    "source_id": "BVI8",
+    "name": "Marcha de Guerra",
+    "kind": "Maestria",
+    "required": 16,
+    "description": "APS +1; MEL +1; KBR +1.",
+    "implementation": "A",
+    "source_parents": "BVI7",
+    "parents": [
+      "BVI7"
+    ],
+    "ratings": {
+      "APS": 1,
+      "MEL": 1,
+      "KBR": 1
+    }
+  }
+]

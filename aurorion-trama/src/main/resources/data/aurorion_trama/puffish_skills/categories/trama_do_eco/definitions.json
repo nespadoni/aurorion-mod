@@ -1,0 +1,7319 @@
+{
+  "C00": {
+    "title": {
+      "text": "Nexo da Trama",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "Nó de convergência visual. Não concede poder por si só."
+    },
+    "extra_description": {
+      "text": "C00 · Nexo · Formação: 24 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 24
+  },
+  "C01": {
+    "title": {
+      "text": "Fio da Carne",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "C01 · Fio · Formação: 24 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 24
+  },
+  "C02": {
+    "title": {
+      "text": "Fio da Guarda",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "C02 · Fio · Formação: 24 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 24
+  },
+  "C03": {
+    "title": {
+      "text": "Fio do Ritmo",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "C03 · Fio · Formação: 24 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 24
+  },
+  "C04": {
+    "title": {
+      "text": "Fio Arcano",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "C04 · Fio · Formação: 24 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 24
+  },
+  "C05": {
+    "title": {
+      "text": "Fio do Horizonte",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "C05 · Fio · Formação: 24 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 24
+  },
+  "C06": {
+    "title": {
+      "text": "Convergência Vital",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "VIT +2; ARM +1."
+    },
+    "extra_description": {
+      "text": "C06 · Notável · Formação: 27 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 27
+  },
+  "C07": {
+    "title": {
+      "text": "Convergência Defensiva",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "ARM +2; KBR +1."
+    },
+    "extra_description": {
+      "text": "C07 · Notável · Formação: 27 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 27
+  },
+  "C08": {
+    "title": {
+      "text": "Convergência Marcial",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "APS +2; MEL +1."
+    },
+    "extra_description": {
+      "text": "C08 · Notável · Formação: 27 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 27
+  },
+  "C09": {
+    "title": {
+      "text": "Convergência Arcana",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "MAG +2; MR +1."
+    },
+    "extra_description": {
+      "text": "C09 · Notável · Formação: 27 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 27
+  },
+  "C10": {
+    "title": {
+      "text": "Convergência Cinética",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "MOV +2; FALL +1."
+    },
+    "extra_description": {
+      "text": "C10 · Notável · Formação: 27 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 27
+  },
+  "C11": {
+    "title": {
+      "text": "Mestria do Corpo",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "25% da pontuação ARM também conta como VIT, limitado a +2 pontos equivalentes de VIT."
+    },
+    "extra_description": {
+      "text": "C11 · Maestria · Formação: 31 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 31
+  },
+  "C12": {
+    "title": {
+      "text": "Mestria da Guarda",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "25% da pontuação VIT também conta como ARM, limitado a +2 pontos equivalentes de ARM."
+    },
+    "extra_description": {
+      "text": "C12 · Maestria · Formação: 31 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 31
+  },
+  "C13": {
+    "title": {
+      "text": "Mestria do Ritmo",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "25% da pontuação MOV também conta como APS, limitado a +3 pontos equivalentes de APS."
+    },
+    "extra_description": {
+      "text": "C13 · Maestria · Formação: 31 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 31
+  },
+  "C14": {
+    "title": {
+      "text": "Mestria da Trama",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "25% da pontuação MR também conta como MAG, limitado a +3 pontos equivalentes de MAG."
+    },
+    "extra_description": {
+      "text": "C14 · Maestria · Formação: 31 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 31
+  },
+  "C15": {
+    "title": {
+      "text": "Mestria do Horizonte",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "25% da pontuação FALL também conta como MOV, limitado a +2 pontos equivalentes de MOV."
+    },
+    "extra_description": {
+      "text": "C15 · Maestria · Formação: 31 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 31
+  },
+  "C16": {
+    "title": {
+      "text": "Coração de Crisal",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "Efeitos de VIT, ARM, TGH, KBR e MR da árvore +25%; MEL, RNG, MAG e APS da árvore -20%."
+    },
+    "extra_description": {
+      "text": "C16 · Princípio · Formação: 38 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 38
+  },
+  "C17": {
+    "title": {
+      "text": "Fio de Guerra",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "Efeitos de MEL, RNG, MAG e APS da árvore +20%; VIT, ARM e TGH da árvore -25%."
+    },
+    "extra_description": {
+      "text": "C17 · Princípio · Formação: 38 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 38
+  },
+  "C18": {
+    "title": {
+      "text": "Equilíbrio do Eco",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "MEL, RNG e MAG recebem no mínimo 70% do maior bônus entre os três, mas cada um fica limitado a +6%."
+    },
+    "extra_description": {
+      "text": "C18 · Princípio · Formação: 38 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 38
+  },
+  "C19": {
+    "title": {
+      "text": "Passo Entre Mundos",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "Limite de MOV da árvore sobe de +4,2% para +6,0% e FALL de -16% para -20%; efeitos de ARM e KBR da árvore são reduzidos em 50%."
+    },
+    "extra_description": {
+      "text": "C19 · Princípio · Formação: 38 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 38
+  },
+  "C20": {
+    "title": {
+      "text": "Âncora Absoluta",
+      "color": "#dfd5b0"
+    },
+    "description": {
+      "text": "Bônus de MOV da árvore torna-se 0%; efeitos de ARM, TGH e KBR da árvore +50%."
+    },
+    "extra_description": {
+      "text": "C20 · Princípio · Formação: 38 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:echo_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 38
+  },
+  "I00": {
+    "title": {
+      "text": "Origem Ignivar",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Concedida pelo servidor conforme sua Casa. As outras Casas continuam acessíveis pelas pontes."
+    },
+    "extra_description": {
+      "text": "I00 · Início · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "IT1": {
+    "title": {
+      "text": "Brasa Firme",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "IT1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IT2": {
+    "title": {
+      "text": "Passo de Guarda",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "KBR +1."
+    },
+    "extra_description": {
+      "text": "IT2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IT3": {
+    "title": {
+      "text": "Pulso Marcial",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "IT3 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IT4": {
+    "title": {
+      "text": "Fôlego da Fênix",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "IT4 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IT5": {
+    "title": {
+      "text": "Marcha de Guerra",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "IT5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IB1": {
+    "title": {
+      "text": "Pele de Ferro",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "IB1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IB2": {
+    "title": {
+      "text": "Guarda Fechada",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "KBR +1."
+    },
+    "extra_description": {
+      "text": "IB2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IB3": {
+    "title": {
+      "text": "Placas Sobrepostas",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "IB3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "IB4": {
+    "title": {
+      "text": "Muralha em Movimento",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +2; MOV -1 ponto de rating (mínimo 0)."
+    },
+    "extra_description": {
+      "text": "IB4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "IB5": {
+    "title": {
+      "text": "Ossos Temperados",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "TGH +1."
+    },
+    "extra_description": {
+      "text": "IB5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IB6": {
+    "title": {
+      "text": "Centro de Massa",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "KBR +1."
+    },
+    "extra_description": {
+      "text": "IB6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "IB7": {
+    "title": {
+      "text": "Postura Inabalável",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Enquanto não estiver sprintando por 2 s: +0,60 de armadura e +2% resistência a knockback; perde ao sprintar."
+    },
+    "extra_description": {
+      "text": "IB7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "IB8": {
+    "title": {
+      "text": "Reforço do Núcleo",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "TGH +1."
+    },
+    "extra_description": {
+      "text": "IB8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "IB9": {
+    "title": {
+      "text": "Doutrina do Bastião",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +2; KBR +1."
+    },
+    "extra_description": {
+      "text": "IB9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "IE1": {
+    "title": {
+      "text": "Pressão Ofensiva",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "IE1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IE2": {
+    "title": {
+      "text": "Ritmo Quente",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "IE2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IE3": {
+    "title": {
+      "text": "Golpe Incandescente",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "IE3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "IE4": {
+    "title": {
+      "text": "Brasa Crescente",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Enquanto estiver acima de 70% de vida: +2% dano corpo a corpo."
+    },
+    "extra_description": {
+      "text": "IE4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "IE5": {
+    "title": {
+      "text": "Sangue Quente",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "IE5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IE6": {
+    "title": {
+      "text": "Ritmo de Forja",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "IE6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "IE7": {
+    "title": {
+      "text": "Última Centelha",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Abaixo de 35% de vida: +3% dano corpo a corpo e -2% velocidade de movimento."
+    },
+    "extra_description": {
+      "text": "IE7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "IE8": {
+    "title": {
+      "text": "Ímpeto Controlado",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "IE8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "IE9": {
+    "title": {
+      "text": "Fênix Ferida",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Abaixo de 35% de vida, efeitos de VIT/ARM/TGH da árvore +25%; acima de 35%, dano corpo a corpo da árvore -3%."
+    },
+    "extra_description": {
+      "text": "IE9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "ID1": {
+    "title": {
+      "text": "Cadência",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "ID1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ID2": {
+    "title": {
+      "text": "Corte Medido",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "ID2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ID3": {
+    "title": {
+      "text": "Passo Curto",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "ID3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "ID4": {
+    "title": {
+      "text": "Economia de Movimento",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Enquanto não estiver sprintando: +2% velocidade de ataque."
+    },
+    "extra_description": {
+      "text": "ID4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "ID5": {
+    "title": {
+      "text": "Alcance Marcial",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "EREACH +1."
+    },
+    "extra_description": {
+      "text": "ID5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ID6": {
+    "title": {
+      "text": "Resistência ao Impacto",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "KBR +1."
+    },
+    "extra_description": {
+      "text": "ID6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "ID7": {
+    "title": {
+      "text": "Primeiro Contato",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Primeiro golpe contra alvo com 100% de vida causa +4% de dano corpo a corpo."
+    },
+    "extra_description": {
+      "text": "ID7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "ID8": {
+    "title": {
+      "text": "Varredura Treinada",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "SWEEP +1."
+    },
+    "extra_description": {
+      "text": "ID8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "ID9": {
+    "title": {
+      "text": "Disciplina de Combate",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +2; APS +1."
+    },
+    "extra_description": {
+      "text": "ID9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "IO1": {
+    "title": {
+      "text": "Fôlego Persistente",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "IO1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IO2": {
+    "title": {
+      "text": "Guarda do Corpo",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "IO2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IO3": {
+    "title": {
+      "text": "Resistência Moral",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "IO3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "IO4": {
+    "title": {
+      "text": "Vigília",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Acima de 75% de vida: -3% dano recebido de projéteis."
+    },
+    "extra_description": {
+      "text": "IO4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "IO5": {
+    "title": {
+      "text": "Último Homem",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "IO5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "IO6": {
+    "title": {
+      "text": "Quebra de Linha",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "EXPKB +1."
+    },
+    "extra_description": {
+      "text": "IO6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "IO7": {
+    "title": {
+      "text": "Sentinela",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Se não recebeu dano nos últimos 6 s, o próximo golpe recebido é reduzido em 8%; recarga interna de 10 s."
+    },
+    "extra_description": {
+      "text": "IO7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "IO8": {
+    "title": {
+      "text": "Armadura de Fé",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "TGH +1."
+    },
+    "extra_description": {
+      "text": "IO8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "IO9": {
+    "title": {
+      "text": "Juramento de Pedra",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Acima de 50% de vida: -4% dano físico recebido; abaixo de 50%: bônus desliga e MOV da árvore recebe -2% adicional."
+    },
+    "extra_description": {
+      "text": "IO9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "S00": {
+    "title": {
+      "text": "Origem Sylvara",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Concedida pelo servidor conforme sua Casa. As outras Casas continuam acessíveis pelas pontes."
+    },
+    "extra_description": {
+      "text": "S00 · Início · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "ST1": {
+    "title": {
+      "text": "Raiz Serena",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "ST1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ST2": {
+    "title": {
+      "text": "Casca Flexível",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "ST2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ST3": {
+    "title": {
+      "text": "Passo de Musgo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "ST3 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ST4": {
+    "title": {
+      "text": "Mão Cultivadora",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "ST4 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ST5": {
+    "title": {
+      "text": "Respiração Verde",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "ST5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SR1": {
+    "title": {
+      "text": "Seiva Forte",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "SR1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SR2": {
+    "title": {
+      "text": "Casca Densa",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "SR2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SR3": {
+    "title": {
+      "text": "Raiz Profunda",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "SR3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SR4": {
+    "title": {
+      "text": "Enraizar",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Após 2 s sem sprintar: +0,40 armadura e -4% knockback recebido; perde ao sprintar."
+    },
+    "extra_description": {
+      "text": "SR4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SR5": {
+    "title": {
+      "text": "Fibra Viva",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "SR5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SR6": {
+    "title": {
+      "text": "Madeira Antiga",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "TGH +1."
+    },
+    "extra_description": {
+      "text": "SR6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SR7": {
+    "title": {
+      "text": "Queda Amortecida",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "FALL +2; SAFE +1."
+    },
+    "extra_description": {
+      "text": "SR7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SR8": {
+    "title": {
+      "text": "Nó de Madeira",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "SR8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "SR9": {
+    "title": {
+      "text": "Cerne Ancestral",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +2; TGH +1."
+    },
+    "extra_description": {
+      "text": "SR9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "SA1": {
+    "title": {
+      "text": "Pele Tolerante",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "SA1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SA2": {
+    "title": {
+      "text": "Umidade Natural",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "WATER +1."
+    },
+    "extra_description": {
+      "text": "SA2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SA3": {
+    "title": {
+      "text": "Casca Contra Fogo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BURN +1."
+    },
+    "extra_description": {
+      "text": "SA3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SA4": {
+    "title": {
+      "text": "Resposta ao Ambiente",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "ENV +2: -2% dano de fogo, explosão, afogamento e veneno configurados."
+    },
+    "extra_description": {
+      "text": "SA4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SA5": {
+    "title": {
+      "text": "Respiração Paciente",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "OXY +1."
+    },
+    "extra_description": {
+      "text": "SA5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SA6": {
+    "title": {
+      "text": "Passo em Correnteza",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "WATER +1."
+    },
+    "extra_description": {
+      "text": "SA6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SA7": {
+    "title": {
+      "text": "Memória da Dor",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Após sofrer fogo, explosão ou dano mágico, ganha +4% resistência ao mesmo grupo por 5 s; recarga 12 s."
+    },
+    "extra_description": {
+      "text": "SA7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SA8": {
+    "title": {
+      "text": "Tolerância Crescente",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "SA8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "SA9": {
+    "title": {
+      "text": "Pele Adaptativa",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Memória da Dor sobe para +6% por 6 s, mas o primeiro golpe que ativa a adaptação causa +3% de dano recebido."
+    },
+    "extra_description": {
+      "text": "SA9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "SG1": {
+    "title": {
+      "text": "Mão de Cultivo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "SG1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SG2": {
+    "title": {
+      "text": "Fôlego Longo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "OXY +1."
+    },
+    "extra_description": {
+      "text": "SG2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SG3": {
+    "title": {
+      "text": "Crescimento Lento",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "SG3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SG4": {
+    "title": {
+      "text": "Recuperação Natural",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Fora de combate por 10 s, cura 0,5 HP a cada 5 s até 60% da vida máxima."
+    },
+    "extra_description": {
+      "text": "SG4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SG5": {
+    "title": {
+      "text": "Ferramenta Familiar",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "SG5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SG6": {
+    "title": {
+      "text": "Respiração Profunda",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BURN +1."
+    },
+    "extra_description": {
+      "text": "SG6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SG7": {
+    "title": {
+      "text": "Regeneração Contida",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Recuperação Natural pode curar até 75% da vida máxima; intervalo permanece 5 s."
+    },
+    "extra_description": {
+      "text": "SG7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SG8": {
+    "title": {
+      "text": "Ciclo Estável",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "SG8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "SG9": {
+    "title": {
+      "text": "Ciclo Vivo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Fora de combate por 12 s, cura 0,5 HP a cada 4 s até 90% da vida; -4% dano causado enquanto a recuperação estiver ativa."
+    },
+    "extra_description": {
+      "text": "SG9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "SB1": {
+    "title": {
+      "text": "Peso da Vida",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "SB1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SB2": {
+    "title": {
+      "text": "Fluxo Misto",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "SB2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SB3": {
+    "title": {
+      "text": "Corpo Útil",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "SB3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SB4": {
+    "title": {
+      "text": "Homeostase",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Se a diferença entre o maior e o menor de MEL/RNG/MAG for <=3 ratings, +1,5% a todos os três danos."
+    },
+    "extra_description": {
+      "text": "SB4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SB5": {
+    "title": {
+      "text": "Passo Natural",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "SB5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "SB6": {
+    "title": {
+      "text": "Defesa Flexível",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "SB6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "SB7": {
+    "title": {
+      "text": "Resposta Equilibrada",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1; MR +1; MOV +1."
+    },
+    "extra_description": {
+      "text": "SB7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "SB8": {
+    "title": {
+      "text": "Centro Vivo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "SB8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "SB9": {
+    "title": {
+      "text": "Harmonia Orgânica",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Se VIT e o maior rating ofensivo diferirem em no máximo 4 pontos, +2% dano do maior tipo e +1% vida máxima."
+    },
+    "extra_description": {
+      "text": "SB9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "N00": {
+    "title": {
+      "text": "Origem Nyx",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "Concedida pelo servidor conforme sua Casa. As outras Casas continuam acessíveis pelas pontes."
+    },
+    "extra_description": {
+      "text": "N00 · Início · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "NT1": {
+    "title": {
+      "text": "Pensamento Frio",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NT1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NT2": {
+    "title": {
+      "text": "Fio Inicial",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NT2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NT3": {
+    "title": {
+      "text": "Passo Silencioso",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "SNEAK +1."
+    },
+    "extra_description": {
+      "text": "NT3 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NT4": {
+    "title": {
+      "text": "Olhar Longo",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +1."
+    },
+    "extra_description": {
+      "text": "NT4 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NT5": {
+    "title": {
+      "text": "Mão Precisa",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "NT5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NW1": {
+    "title": {
+      "text": "Fio Azul",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NW1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NW2": {
+    "title": {
+      "text": "Véu Curto",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NW2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NW3": {
+    "title": {
+      "text": "Geometria Arcana",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +1."
+    },
+    "extra_description": {
+      "text": "NW3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NW4": {
+    "title": {
+      "text": "Concentração",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "Após 2 s sem sprintar e sem receber dano: +3% dano mágico; perde ao mover em sprint ou ser atingido."
+    },
+    "extra_description": {
+      "text": "NW4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NW5": {
+    "title": {
+      "text": "Trama Estável",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NW5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NW6": {
+    "title": {
+      "text": "Olho Interior",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NW6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NW7": {
+    "title": {
+      "text": "Linha de Força",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +2; BREACH +1."
+    },
+    "extra_description": {
+      "text": "NW7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NW8": {
+    "title": {
+      "text": "Precisão Rúnica",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NW8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "NW9": {
+    "title": {
+      "text": "Fio Claro",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +2; MR +1."
+    },
+    "extra_description": {
+      "text": "NW9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "NC1": {
+    "title": {
+      "text": "Passo Silencioso",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "SNEAK +1."
+    },
+    "extra_description": {
+      "text": "NC1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NC2": {
+    "title": {
+      "text": "Mão Longa",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +1."
+    },
+    "extra_description": {
+      "text": "NC2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NC3": {
+    "title": {
+      "text": "Alcance Medido",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "EREACH +1."
+    },
+    "extra_description": {
+      "text": "NC3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NC4": {
+    "title": {
+      "text": "Alvo Debilitado",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "+3% dano causado contra entidades que tenham ao menos um efeito negativo configurado."
+    },
+    "extra_description": {
+      "text": "NC4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NC5": {
+    "title": {
+      "text": "Paciência",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NC5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NC6": {
+    "title": {
+      "text": "Ângulo Seguro",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "SNEAK +1."
+    },
+    "extra_description": {
+      "text": "NC6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NC7": {
+    "title": {
+      "text": "Controle de Distância",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +2; EREACH +1."
+    },
+    "extra_description": {
+      "text": "NC7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NC8": {
+    "title": {
+      "text": "Mente Fria",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NC8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "NC9": {
+    "title": {
+      "text": "Domínio do Ritmo",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "Enquanto agachado: +4% RNG e +4% MAG; enquanto sprintando: -4% RNG e -4% MAG."
+    },
+    "extra_description": {
+      "text": "NC9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "NO1": {
+    "title": {
+      "text": "Leitura de Superfície",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "NO1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NO2": {
+    "title": {
+      "text": "Olhar Distante",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +1."
+    },
+    "extra_description": {
+      "text": "NO2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NO3": {
+    "title": {
+      "text": "Passo de Sombra",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "SNEAK +1."
+    },
+    "extra_description": {
+      "text": "NO3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NO4": {
+    "title": {
+      "text": "Análise de Estrutura",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BBR +2; ao quebrar bloco com ferramenta correta, sem bônus adicional de drop."
+    },
+    "extra_description": {
+      "text": "NO4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NO5": {
+    "title": {
+      "text": "Foco de Campo",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "EREACH +1."
+    },
+    "extra_description": {
+      "text": "NO5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NO6": {
+    "title": {
+      "text": "Movimento Contido",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "SNEAK +1."
+    },
+    "extra_description": {
+      "text": "NO6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NO7": {
+    "title": {
+      "text": "Cartografia Mental",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +2; MOV +1."
+    },
+    "extra_description": {
+      "text": "NO7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NO8": {
+    "title": {
+      "text": "Mão de Estudioso",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "NO8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "NO9": {
+    "title": {
+      "text": "Olho da Trama",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "BREACH +2; EREACH +1; MOV -1."
+    },
+    "extra_description": {
+      "text": "NO9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "NV1": {
+    "title": {
+      "text": "Camada de Véu",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NV1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NV2": {
+    "title": {
+      "text": "Refração",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NV2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NV3": {
+    "title": {
+      "text": "Mente Selada",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NV3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NV4": {
+    "title": {
+      "text": "Véu Reativo",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "Ao receber dano mágico configurado: +3% redução mágica por 4 s; recarga 10 s."
+    },
+    "extra_description": {
+      "text": "NV4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NV5": {
+    "title": {
+      "text": "Retorno de Fio",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "NV5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "NV6": {
+    "title": {
+      "text": "Defesa Simbólica",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NV6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "NV7": {
+    "title": {
+      "text": "Contrafeitiço Passivo",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +2; -1 ponto de rating MAG."
+    },
+    "extra_description": {
+      "text": "NV7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "NV8": {
+    "title": {
+      "text": "Silêncio Interior",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "NV8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "NV9": {
+    "title": {
+      "text": "Mente Lacrada",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "-10% dano mágico configurado recebido; dano mágico causado pela árvore -6%."
+    },
+    "extra_description": {
+      "text": "NV9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "V00": {
+    "title": {
+      "text": "Origem Venthra",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Concedida pelo servidor conforme sua Casa. As outras Casas continuam acessíveis pelas pontes."
+    },
+    "extra_description": {
+      "text": "V00 · Início · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "VX1": {
+    "title": {
+      "text": "Primeiro Impulso",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VX1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VX2": {
+    "title": {
+      "text": "Cadência Leve",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "VX2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VX3": {
+    "title": {
+      "text": "Passo Seguro",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "VX3 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VX4": {
+    "title": {
+      "text": "Olho de Falcão",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "RNG +1."
+    },
+    "extra_description": {
+      "text": "VX4 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VX5": {
+    "title": {
+      "text": "Vento Baixo",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VX5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VF1": {
+    "title": {
+      "text": "Passo Leve",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VF1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VF2": {
+    "title": {
+      "text": "Aterrissagem",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "VF2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VF3": {
+    "title": {
+      "text": "Corrida Econômica",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VF3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VF4": {
+    "title": {
+      "text": "Vento de Cauda",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Após sprintar por 3 s contínuos: +1,5% MOV; perde 1 s após parar."
+    },
+    "extra_description": {
+      "text": "VF4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VF5": {
+    "title": {
+      "text": "Queda Curta",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "SAFE +1."
+    },
+    "extra_description": {
+      "text": "VF5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VF6": {
+    "title": {
+      "text": "Passo em Água",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "WATER +1."
+    },
+    "extra_description": {
+      "text": "VF6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VF7": {
+    "title": {
+      "text": "Pés de Falcão",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "FALL +2; MOV +1."
+    },
+    "extra_description": {
+      "text": "VF7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VF8": {
+    "title": {
+      "text": "Linha Rápida",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VF8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "VF9": {
+    "title": {
+      "text": "Mestre do Fluxo",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +2; FALL +1."
+    },
+    "extra_description": {
+      "text": "VF9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "VT1": {
+    "title": {
+      "text": "Pulso Rápido",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "VT1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VT2": {
+    "title": {
+      "text": "Abertura Curta",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "VT2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VT3": {
+    "title": {
+      "text": "Ritmo de Passos",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VT3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VT4": {
+    "title": {
+      "text": "Momentum",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Após sprintar por 3 s: +2% velocidade de ataque; termina 1 s após parar."
+    },
+    "extra_description": {
+      "text": "VT4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VT5": {
+    "title": {
+      "text": "Recuperação de Guarda",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "VT5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VT6": {
+    "title": {
+      "text": "Golpe em Passagem",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "VT6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VT7": {
+    "title": {
+      "text": "Entrada Rápida",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Primeiro ataque até 2 s após encerrar sprint: +3% dano corpo a corpo; recarga 5 s."
+    },
+    "extra_description": {
+      "text": "VT7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VT8": {
+    "title": {
+      "text": "Cadência Alta",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "VT8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "VT9": {
+    "title": {
+      "text": "Ritmo de Venthra",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +2; MOV +1."
+    },
+    "extra_description": {
+      "text": "VT9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "VP1": {
+    "title": {
+      "text": "Olho Firme",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "RNG +1."
+    },
+    "extra_description": {
+      "text": "VP1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VP2": {
+    "title": {
+      "text": "Trajetória Limpa",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "PSPD +1."
+    },
+    "extra_description": {
+      "text": "VP2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VP3": {
+    "title": {
+      "text": "Distância Útil",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "EREACH +1."
+    },
+    "extra_description": {
+      "text": "VP3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VP4": {
+    "title": {
+      "text": "Respiração de Mira",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Enquanto agachado: +4% dano de projéteis."
+    },
+    "extra_description": {
+      "text": "VP4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VP5": {
+    "title": {
+      "text": "Tensão Constante",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "RNG +1."
+    },
+    "extra_description": {
+      "text": "VP5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VP6": {
+    "title": {
+      "text": "Voo Estável",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "PSPD +1."
+    },
+    "extra_description": {
+      "text": "VP6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VP7": {
+    "title": {
+      "text": "Alvo Inteiro",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Projéteis contra alvo com 100% de vida causam +4% de dano."
+    },
+    "extra_description": {
+      "text": "VP7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VP8": {
+    "title": {
+      "text": "Mira Longa",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "RNG +1."
+    },
+    "extra_description": {
+      "text": "VP8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "VP9": {
+    "title": {
+      "text": "Linha Perfeita",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Enquanto agachado e sem sprintar: +8% RNG; MEL da árvore -4% sempre."
+    },
+    "extra_description": {
+      "text": "VP9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "VA1": {
+    "title": {
+      "text": "Reflexo",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "VA1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VA2": {
+    "title": {
+      "text": "Corpo Solto",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "VA2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VA3": {
+    "title": {
+      "text": "Resposta Curta",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "VA3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VA4": {
+    "title": {
+      "text": "Reação de Fuga",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Ao receber dano: +2% MOV por 2 s; recarga 8 s."
+    },
+    "extra_description": {
+      "text": "VA4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VA5": {
+    "title": {
+      "text": "Espaço Pessoal",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "EREACH +1."
+    },
+    "extra_description": {
+      "text": "VA5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "VA6": {
+    "title": {
+      "text": "Queda Treinada",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "SAFE +1."
+    },
+    "extra_description": {
+      "text": "VA6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "VA7": {
+    "title": {
+      "text": "Passo Lateral",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "KBR +1; MOV +1; FALL +1."
+    },
+    "extra_description": {
+      "text": "VA7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "VA8": {
+    "title": {
+      "text": "Leitura de Abertura",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "VA8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "VA9": {
+    "title": {
+      "text": "Passo Entre Golpes",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Após receber dano, +3% MOV por 2 s e -3% dano causado durante o bônus; recarga 8 s."
+    },
+    "extra_description": {
+      "text": "VA9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "A00": {
+    "title": {
+      "text": "Origem Aetheris",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "Concedida pelo servidor conforme sua Casa. As outras Casas continuam acessíveis pelas pontes."
+    },
+    "extra_description": {
+      "text": "A00 · Início · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "AX1": {
+    "title": {
+      "text": "Eco Instável",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AX1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AX2": {
+    "title": {
+      "text": "Limiar Móvel",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "AX2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AX3": {
+    "title": {
+      "text": "Carne Transitória",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "AX3 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AX4": {
+    "title": {
+      "text": "Véu Interior",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "AX4 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AX5": {
+    "title": {
+      "text": "Forma Incerta",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "AX5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AT1": {
+    "title": {
+      "text": "Matéria Incerta",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AT1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AT2": {
+    "title": {
+      "text": "Carne Maleável",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "AT2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AT3": {
+    "title": {
+      "text": "Fio Cruzado",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "AT3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AT4": {
+    "title": {
+      "text": "Troca Parcial",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "20% da pontuação VIT também conta como MAG, limitado a +2 MAG equivalentes; VIT não é perdido."
+    },
+    "extra_description": {
+      "text": "AT4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AT5": {
+    "title": {
+      "text": "Passagem Curta",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "AT5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AT6": {
+    "title": {
+      "text": "Forma Composta",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "AT6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AT7": {
+    "title": {
+      "text": "Mistura de Frequências",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MEL +1; RNG +1; MAG +1."
+    },
+    "extra_description": {
+      "text": "AT7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AT8": {
+    "title": {
+      "text": "Corpo Reescrito",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "AT8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "AT9": {
+    "title": {
+      "text": "Conversão Instável",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "30% da pontuação VIT conta também como MAG; efeito de VIT da árvore é reduzido em 30%."
+    },
+    "extra_description": {
+      "text": "AT9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "AV1": {
+    "title": {
+      "text": "Fio Negro",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AV1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AV2": {
+    "title": {
+      "text": "Casca Vazia",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "AV2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AV3": {
+    "title": {
+      "text": "Pressão do Vazio",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AV3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AV4": {
+    "title": {
+      "text": "Vazio Controlado",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +3; VIT -1."
+    },
+    "extra_description": {
+      "text": "AV4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AV5": {
+    "title": {
+      "text": "Eco Ausente",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "AV5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AV6": {
+    "title": {
+      "text": "Fome de Forma",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AV6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AV7": {
+    "title": {
+      "text": "Revestimento Nulo",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MR +2; ARM -1."
+    },
+    "extra_description": {
+      "text": "AV7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AV8": {
+    "title": {
+      "text": "Pulso Abissal",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AV8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "AV9": {
+    "title": {
+      "text": "Corpo Oco",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "Cap de MAG da árvore sobe de +9% para +12%; bônus de VIT da árvore fica limitado a +3%."
+    },
+    "extra_description": {
+      "text": "AV9 · Princípio · Formação: 18 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 1,
+    "required_spent_points": 18
+  },
+  "AL1": {
+    "title": {
+      "text": "Meio Passo",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "AL1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AL2": {
+    "title": {
+      "text": "Pulso Duplo",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "AL2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AL3": {
+    "title": {
+      "text": "Sangue de Fronteira",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "AL3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AL4": {
+    "title": {
+      "text": "Estado Intermediário",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "Entre 40% e 70% de vida: +2% MEL e +2% MAG."
+    },
+    "extra_description": {
+      "text": "AL4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AL5": {
+    "title": {
+      "text": "Olhar de Fora",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AL5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AL6": {
+    "title": {
+      "text": "Passo de Fronteira",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "AL6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AL7": {
+    "title": {
+      "text": "Entre Dois Ritmos",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "APS +1; MAG +1; MOV +1."
+    },
+    "extra_description": {
+      "text": "AL7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AL8": {
+    "title": {
+      "text": "Corpo no Limiar",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "AL8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "AL9": {
+    "title": {
+      "text": "No Limiar",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "Entre 35% e 60% de vida: +4% dano total e +1,5% MOV; acima de 60%: -2% dano total; abaixo de 35%: -2% MOV."
+    },
+    "extra_description": {
+      "text": "AL9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "AD1": {
+    "title": {
+      "text": "Frequência Quebrada",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "AD1 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AD2": {
+    "title": {
+      "text": "Segunda Voz",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "RNG +1."
+    },
+    "extra_description": {
+      "text": "AD2 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AD3": {
+    "title": {
+      "text": "Terceiro Eco",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "AD3 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AD4": {
+    "title": {
+      "text": "Assimetria",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "Maior entre MEL/RNG/MAG recebe +1%; menor recebe -1%."
+    },
+    "extra_description": {
+      "text": "AD4 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AD5": {
+    "title": {
+      "text": "Passo Irregular",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "AD5 · Fio · Formação: 0 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "AD6": {
+    "title": {
+      "text": "Reflexo Distorcido",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "AD6 · Fio · Formação: 2 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 2
+  },
+  "AD7": {
+    "title": {
+      "text": "Três Caminhos",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MEL +1; RNG +1; MAG +1."
+    },
+    "extra_description": {
+      "text": "AD7 · Notável · Formação: 6 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 6
+  },
+  "AD8": {
+    "title": {
+      "text": "Padrão Quebrado",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "AD8 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "AD9": {
+    "title": {
+      "text": "Dissonância",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "O maior bônus ofensivo entre MEL/RNG/MAG recebe +2%; o menor recebe -2%."
+    },
+    "extra_description": {
+      "text": "AD9 · Maestria · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "BIS1": {
+    "title": {
+      "text": "Cicatriz Antiga",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "BIS1 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BIS2": {
+    "title": {
+      "text": "Metal Vivo",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "ARM +1."
+    },
+    "extra_description": {
+      "text": "BIS2 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BIS3": {
+    "title": {
+      "text": "Calor Tolerado",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "BURN +1."
+    },
+    "extra_description": {
+      "text": "BIS3 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BIS4": {
+    "title": {
+      "text": "Raiz de Guerra",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "BIS4 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BIS5": {
+    "title": {
+      "text": "Queda de Tronco",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "BIS5 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BIS6": {
+    "title": {
+      "text": "Carapaça Regenerada",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +2; ARM +1."
+    },
+    "extra_description": {
+      "text": "BIS6 · Notável · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "BIS7": {
+    "title": {
+      "text": "Instinto de Sobrevivência",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "Abaixo de 40% de vida: +2% redução física; -1% MOV."
+    },
+    "extra_description": {
+      "text": "BIS7 · Notável · Formação: 14 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 14
+  },
+  "BIS8": {
+    "title": {
+      "text": "Carne e Casca",
+      "color": "#ed7444"
+    },
+    "description": {
+      "text": "VIT +1; ARM +1; TGH +1."
+    },
+    "extra_description": {
+      "text": "BIS8 · Maestria · Formação: 16 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 16
+  },
+  "BSN1": {
+    "title": {
+      "text": "Seiva Rúnica",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "BSN1 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BSN2": {
+    "title": {
+      "text": "Leitura de Raízes",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BBR +1."
+    },
+    "extra_description": {
+      "text": "BSN2 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BSN3": {
+    "title": {
+      "text": "Memória Orgânica",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "BSN3 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BSN4": {
+    "title": {
+      "text": "Mão de Herbário",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "BREACH +1."
+    },
+    "extra_description": {
+      "text": "BSN4 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BSN5": {
+    "title": {
+      "text": "Corpo de Estudo",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "VIT +1."
+    },
+    "extra_description": {
+      "text": "BSN5 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BSN6": {
+    "title": {
+      "text": "Fórmula Viva",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MAG +2; VIT +1."
+    },
+    "extra_description": {
+      "text": "BSN6 · Notável · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "BSN7": {
+    "title": {
+      "text": "Preparação",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "Enquanto não sprinta: +1,5% MAG e +2% BBR."
+    },
+    "extra_description": {
+      "text": "BSN7 · Notável · Formação: 14 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 14
+  },
+  "BSN8": {
+    "title": {
+      "text": "Alquimia da Mente",
+      "color": "#67bc86"
+    },
+    "description": {
+      "text": "MAG +1; MR +1; BBR +1."
+    },
+    "extra_description": {
+      "text": "BSN8 · Maestria · Formação: 16 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:oak_sapling"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 16
+  },
+  "BNA1": {
+    "title": {
+      "text": "Fissura Lúcida",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "BNA1 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BNA2": {
+    "title": {
+      "text": "Olho do Limiar",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "EREACH +1."
+    },
+    "extra_description": {
+      "text": "BNA2 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BNA3": {
+    "title": {
+      "text": "Véu Fendido",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MR +1."
+    },
+    "extra_description": {
+      "text": "BNA3 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BNA4": {
+    "title": {
+      "text": "Passo Improvável",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "BNA4 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BNA5": {
+    "title": {
+      "text": "Eco Duplo",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "BNA5 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BNA6": {
+    "title": {
+      "text": "Leitura do Vazio",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +2; MR +1."
+    },
+    "extra_description": {
+      "text": "BNA6 · Notável · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "BNA7": {
+    "title": {
+      "text": "Fenda Controlada",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "Após dano mágico recebido: +1,5% MOV por 3 s; recarga 10 s."
+    },
+    "extra_description": {
+      "text": "BNA7 · Notável · Formação: 14 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 14
+  },
+  "BNA8": {
+    "title": {
+      "text": "Véu Fraturado",
+      "color": "#8a9cea"
+    },
+    "description": {
+      "text": "MAG +1; MOV +1; MR +1."
+    },
+    "extra_description": {
+      "text": "BNA8 · Maestria · Formação: 16 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:amethyst_shard"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 16
+  },
+  "BAV1": {
+    "title": {
+      "text": "Passo Fora do Eixo",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "BAV1 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BAV2": {
+    "title": {
+      "text": "Trajetória Estranha",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "RNG +1."
+    },
+    "extra_description": {
+      "text": "BAV2 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BAV3": {
+    "title": {
+      "text": "Queda Entre Ecos",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "FALL +1."
+    },
+    "extra_description": {
+      "text": "BAV3 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BAV4": {
+    "title": {
+      "text": "Pulso Veloz",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "BAV4 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BAV5": {
+    "title": {
+      "text": "Fio Errante",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MAG +1."
+    },
+    "extra_description": {
+      "text": "BAV5 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BAV6": {
+    "title": {
+      "text": "Movimento Improvável",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +2; FALL +1."
+    },
+    "extra_description": {
+      "text": "BAV6 · Notável · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "BAV7": {
+    "title": {
+      "text": "Ataque de Passagem",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "Até 2 s após iniciar sprint: +2% RNG e +2% MAG; recarga da janela 5 s."
+    },
+    "extra_description": {
+      "text": "BAV7 · Notável · Formação: 14 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 14
+  },
+  "BAV8": {
+    "title": {
+      "text": "Passagem Instável",
+      "color": "#ca82d6"
+    },
+    "description": {
+      "text": "MOV +1; RNG +1; MAG +1."
+    },
+    "extra_description": {
+      "text": "BAV8 · Maestria · Formação: 16 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_pearl"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 16
+  },
+  "BVI1": {
+    "title": {
+      "text": "Passo de Investida",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1."
+    },
+    "extra_description": {
+      "text": "BVI1 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BVI2": {
+    "title": {
+      "text": "Ritmo Marcial",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1."
+    },
+    "extra_description": {
+      "text": "BVI2 · Fio · Formação: 8 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 8
+  },
+  "BVI3": {
+    "title": {
+      "text": "Impacto Preparado",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "BVI3 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BVI4": {
+    "title": {
+      "text": "Base Firme",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "KBR +1."
+    },
+    "extra_description": {
+      "text": "BVI4 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BVI5": {
+    "title": {
+      "text": "Abertura de Linha",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MEL +1."
+    },
+    "extra_description": {
+      "text": "BVI5 · Fio · Formação: 10 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 0.8,
+    "cost": 1,
+    "required_spent_points": 10
+  },
+  "BVI6": {
+    "title": {
+      "text": "Carga Disciplinada",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "MOV +1; APS +1; MEL +1."
+    },
+    "extra_description": {
+      "text": "BVI6 · Notável · Formação: 12 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 12
+  },
+  "BVI7": {
+    "title": {
+      "text": "Quebra de Formação",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "Primeiro ataque após 3 s sprintando: +4% MEL; recarga 8 s."
+    },
+    "extra_description": {
+      "text": "BVI7 · Notável · Formação: 14 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "task"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 14
+  },
+  "BVI8": {
+    "title": {
+      "text": "Marcha de Guerra",
+      "color": "#eed173"
+    },
+    "description": {
+      "text": "APS +1; MEL +1; KBR +1."
+    },
+    "extra_description": {
+      "text": "BVI8 · Maestria · Formação: 16 pontos gastos. Bônus sujeitos aos limites da Trama."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:feather"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 16
+  }
+}

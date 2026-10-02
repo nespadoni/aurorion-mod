@@ -29,10 +29,11 @@ side = "BOTH"
 
 # Biblioteca compartilhada do ecossistema. Obrigatoria: sem ela este mod nao carrega.
 # Ordering AFTER garante que o core ja esteja pronto quando este mod inicializar.
+# 0.6.1: HouseGate.colorOf (cor da casa na tab).
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.5.0,)"
+versionRange = "[0.6.1,)"
 ordering = "AFTER"
 side = "BOTH"
 

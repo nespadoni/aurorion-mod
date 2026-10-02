@@ -117,7 +117,8 @@ public final class DeathHistoryEvents {
         String id = tag.getUUID("Id").toString();
         if (saved) {
             message.append(button(" [TP]", "/deathhistory tp " + id, "Ir ao local da morte (OP 2+)"));
-            message.append(button(" [Inventario]", "/deathhistory view " + id, "Consultar snapshot sem retirar itens"));
+            message.append(button(" [Inventario]", "/deathhistory view " + id,
+                    "Abrir inventario, Curios/Accessories e ender chest da morte (devolver e pegar ficam no chat)"));
             // Pelo nome, nao pela UUID: e assim que a staff vai procurar de novo amanha.
             String who = tag.contains("FakeNamePlain") ? tag.getString("FakeNamePlain") : tag.getString("Name");
             message.append(button(" [Historico]", "/deathhistory " + StringArgumentType.escapeIfRequired(who),
@@ -141,6 +142,7 @@ public final class DeathHistoryEvents {
     @SubscribeEvent public static void stop(ServerStoppedEvent event) {
         PENDING.clear();
         pendingBytes = 0;
+        RecoveryLedger.clear();
         if (store != null) store.close();
         store = null; owner = null;
     }

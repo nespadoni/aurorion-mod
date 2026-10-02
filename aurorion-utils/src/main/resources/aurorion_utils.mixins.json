@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.aurorion.utils.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["MimicryClientUseMixin"],
+  "client": ["DisposedDynamicTextureMixin"],
+  "injectors": {"defaultRequire": 1}
+}

@@ -13,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +48,13 @@ import java.util.stream.Collectors;
  */
 public final class DiaryScreen extends TesseraScreen {
     private static final long AUTOSAVE_DELAY_MS = 2_000L;
-    private static final int TOP_H = 52;
+    private static final int TOP_H = 64;
     private static final int FOOT_H = 24;
     private static final int ENTRY_H = 26;
 
     private final List<DiaryPayloads.Summary> entries = new ArrayList<>();
+    @Nullable
+    private final DiaryTestSession testSession;
     private String character;
     private String siteUrl;
 
@@ -92,12 +95,26 @@ public final class DiaryScreen extends TesseraScreen {
     private static String css = "";
 
     public DiaryScreen(DiaryPayloads.Open payload) {
+        this(payload, null);
+    }
+
+    private DiaryScreen(DiaryPayloads.Open payload, @Nullable DiaryTestSession testSession) {
         super(Component.literal("Diário"));
+        this.testSession = testSession;
         this.character = payload.character();
         this.siteUrl = payload.siteUrl();
         this.entries.addAll(payload.entries());
         if (!entries.isEmpty()) request("abrir", entries.get(0).id());
         else startNew();
+    }
+
+    static DiaryScreen forTesting() {
+        DiaryTestSession session = new DiaryTestSession();
+        return new DiaryScreen(session.openPayload(), session);
+    }
+
+    boolean isTest() {
+        return testSession != null;
     }
 
     // ── Ciclo de vida da tela ───────────────────────────────────────────────────
@@ -108,13 +125,8 @@ public final class DiaryScreen extends TesseraScreen {
         String keep = editor != null ? editor.getValue() : markup;
         clearWidgets();
 
-        int w = Math.min(width - 16, 600);
-        int h = Math.min(height - 16, 340);
-        int x = (width - w) / 2;
-        int y = (height - h) / 2;
-        int side = Math.min(150, w / 3);
-        int mx = x + side + 6;
-        int mw = w - side - 6;
+        int[] f = frame();
+        int x = f[0], y = f[1], w = f[2], h = f[3], side = f[4], mx = f[5], mw = f[6];
         ex = mx + 6;
         ey = y + TOP_H + 6;
         ew = mw - 12;
@@ -122,7 +134,12 @@ public final class DiaryScreen extends TesseraScreen {
 
         editor = new MultiLineEditBox(font, ex, ey, ew, eh,
                 Component.literal("Escreva como o seu personagem… ## título, > citação, - lista, **negrito**, *itálico*"),
-                Component.literal("Texto do diário"));
+                Component.literal("Texto do diário")) {
+            @Override
+            protected void renderBackground(GuiGraphics graphics) {
+                // A moldura Tessera já desenha o fundo e a borda do editor.
+            }
+        };
         editor.setCharacterLimit(DiaryPayloads.MARKUP_EDIT);
         loading = true;
         editor.setValue(keep);
@@ -158,11 +175,13 @@ public final class DiaryScreen extends TesseraScreen {
         Map<String, Runnable> clicks = new HashMap<>();
         Map<String, TesseraInputState> inputs = Map.of("titulo", titleState, "data", dateState);
         TesseraPanel next = TesseraPanel.column(0, 0, width, height);
-        next.addAbsolute(build(sidebarHtml(clicks, h), clicks, inputs, x, y, side, h), x, y, side, h);
-        next.addAbsolute(build(topHtml(clicks), clicks, inputs, mx, y, mw, TOP_H), mx, y, mw, TOP_H);
+        // TesseraUI 1.1: addAbsolute(widget, top, left, right, bottom), não x/y/w/h.
+        // O tamanho já é definido em build(); MIN_VALUE deixa right/bottom sem âncora.
+        next.addAbsolute(build(sidebarHtml(clicks, side, h), clicks, inputs, x, y, side, h), y, x, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        next.addAbsolute(build(topHtml(clicks, mw), clicks, inputs, mx, y, mw, TOP_H), y, mx, Integer.MIN_VALUE, Integer.MIN_VALUE);
         next.addAbsolute(build("<col class=\"frame\"></col>", clicks, inputs, mx, y + TOP_H + 2, mw, h - TOP_H - FOOT_H - 4),
-                mx, y + TOP_H + 2, mw, h - TOP_H - FOOT_H - 4);
-        next.addAbsolute(build(footerHtml(clicks), clicks, inputs, mx, y + h - FOOT_H, mw, FOOT_H), mx, y + h - FOOT_H, mw, FOOT_H);
+                y + TOP_H + 2, mx, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        next.addAbsolute(build(footerHtml(clicks), clicks, inputs, mx, y + h - FOOT_H, mw, FOOT_H), y + h - FOOT_H, mx, Integer.MIN_VALUE, Integer.MIN_VALUE);
         next.layout();
         root = next;
         if (editor != null) {
@@ -284,14 +303,14 @@ public final class DiaryScreen extends TesseraScreen {
         savedDate = dateState.text;
         savedMarkup = text;
         setState("salvando", "Salvando…");
-        PacketDistributor.sendToServer(new DiaryPayloads.Save(draftKey, UUID.randomUUID().toString(), entryId, version,
+        send(new DiaryPayloads.Save(draftKey, UUID.randomUUID().toString(), entryId, version,
                 limit(title, DiaryPayloads.TITLE), limit(dateState.text.strip(), DiaryPayloads.LORE_DATE), text));
     }
 
     private void open(long id) {
         if (dirty && !readOnly) save();
-        request("abrir", id);
         setState("carregando", "Abrindo…");
+        request("abrir", id);
     }
 
     private void startNew() {
@@ -305,7 +324,7 @@ public final class DiaryScreen extends TesseraScreen {
         draftKey = UUID.randomUUID().toString();
         fill("", "", "");
         opened = true;
-        setState("pronto", "Nova entrada — será salva automaticamente.");
+        setState("pronto", isTest() ? "TESTE LOCAL — nova entrada; dados temporários." : "Nova entrada — será salva automaticamente.");
     }
 
     private void togglePreview() {
@@ -321,8 +340,8 @@ public final class DiaryScreen extends TesseraScreen {
             if (dirty) save();
             return;
         }
-        PacketDistributor.sendToServer(new DiaryPayloads.Publish(entryId, version, publish));
         setState("salvando", publish ? "Publicando…" : "Retirando a publicação…");
+        send(new DiaryPayloads.Publish(entryId, version, publish));
     }
 
     private void keepMine() {
@@ -349,7 +368,12 @@ public final class DiaryScreen extends TesseraScreen {
     }
 
     private void request(String action, long id) {
-        PacketDistributor.sendToServer(new DiaryPayloads.Request(action, id));
+        send(new DiaryPayloads.Request(action, id));
+    }
+
+    private void send(CustomPacketPayload payload) {
+        if (testSession != null) testSession.handle(this, payload);
+        else PacketDistributor.sendToServer(payload);
     }
 
     // ── Respostas do servidor ───────────────────────────────────────────────────
@@ -381,7 +405,7 @@ public final class DiaryScreen extends TesseraScreen {
             // O servidor já está mandando a cópia ao site; se o site a recusou, chega um conflito.
             setState("servidor", "Cópia guardada no servidor — sincroniza sozinha com o site.");
         } else {
-            setState("site", "Salvo no site");
+            setState("site", isTest() ? "TESTE LOCAL — edite, salve e confira a prévia." : "Salvo no site");
         }
     }
 
@@ -395,7 +419,8 @@ public final class DiaryScreen extends TesseraScreen {
                 version = payload.version();
                 flags = payload.flags();
                 upsertSummary();
-                setState(dirty ? "pendente" : "site", dirty ? "Alterações não salvas…" : "Salvo no site");
+                setState(dirty ? "pendente" : "site", dirty ? "Alterações não salvas…"
+                        : isTest() ? "TESTE LOCAL — salvo em memória." : "Salvo no site");
                 if (publishAfterSave && !dirty) {
                     publishAfterSave = false;
                     publish(true);
@@ -485,7 +510,7 @@ public final class DiaryScreen extends TesseraScreen {
 
     // ── HTML das regiões ────────────────────────────────────────────────────────
 
-    private String sidebarHtml(Map<String, Runnable> clicks, int height) {
+    private String sidebarHtml(Map<String, Runnable> clicks, int width, int height) {
         clicks.put("nova", this::startNew);
         int perPage = Math.max(1, (height - 86) / ENTRY_H);
         int pages = Math.max(1, (entries.size() + perPage - 1) / perPage);
@@ -495,7 +520,8 @@ public final class DiaryScreen extends TesseraScreen {
 
         StringBuilder html = new StringBuilder("<col class=\"side\">")
                 .append("<label class=\"kicker\">DIÁRIO DE</label>")
-                .append("<label class=\"who\">").append(esc(character)).append("</label>")
+                .append("<label class=\"who\" tooltip=\"").append(esc(character)).append("\">")
+                .append(esc(font.plainSubstrByWidth(character, Math.max(1, (width - 16) * 7 / 9)))).append("</label>")
                 .append("<button class=\"new\" onclick=\"nova\">+ Nova entrada</button>")
                 .append("<col class=\"list\">");
         int from = page * perPage;
@@ -506,7 +532,7 @@ public final class DiaryScreen extends TesseraScreen {
             boolean active = entry.id() == entryId && opened;
             html.append("<col class=\"").append(active ? "entry-on" : "entry").append("\">")
                     .append("<button class=\"entry-title\" onclick=\"").append(handler).append("\">")
-                    .append(esc(clip(entry.title().isBlank() ? "Sem título" : entry.title(), 26))).append("</button>")
+                    .append(esc(font.plainSubstrByWidth(entry.title().isBlank() ? "Sem título" : entry.title(), Math.max(1, width - 24)))).append("</button>")
                     .append(badge(entry.flags()))
                     .append("</col>");
         }
@@ -528,13 +554,14 @@ public final class DiaryScreen extends TesseraScreen {
         return "<label class=\"badge-draft\">RASCUNHO</label>";
     }
 
-    private String topHtml(Map<String, Runnable> clicks) {
+    private String topHtml(Map<String, Runnable> clicks, int width) {
         clicks.put("fmt_negrito", () -> format("**", "**", false));
         clicks.put("fmt_italico", () -> format("*", "*", false));
         clicks.put("fmt_titulo", () -> format("## ", "", true));
         clicks.put("fmt_citacao", () -> format("> ", "", true));
         clicks.put("fmt_lista", () -> format("- ", "", true));
         clicks.put("fmt_separador", () -> format("---", "", true));
+        boolean compact = width < 260;
         String disabled = readOnly || !opened ? " disabled=\"true\"" : "";
         return "<col class=\"top\">"
                 + "<row class=\"fields\">"
@@ -544,12 +571,13 @@ public final class DiaryScreen extends TesseraScreen {
                 + "<row class=\"tools\">"
                 + "<button class=\"tool\" onclick=\"fmt_negrito\" tooltip=\"Negrito\">N</button>"
                 + "<button class=\"tool\" onclick=\"fmt_italico\" tooltip=\"Itálico\">I</button>"
-                + "<button class=\"tool-wide\" onclick=\"fmt_titulo\" tooltip=\"Título\">Título</button>"
-                + "<button class=\"tool-wide\" onclick=\"fmt_citacao\" tooltip=\"Citação\">Citação</button>"
-                + "<button class=\"tool-wide\" onclick=\"fmt_lista\" tooltip=\"Lista\">Lista</button>"
+                + "<button class=\"tool-wide\" onclick=\"fmt_titulo\" tooltip=\"Título\">" + (compact ? "T" : "Título") + "</button>"
+                + "<button class=\"tool-wide\" onclick=\"fmt_citacao\" tooltip=\"Citação\">" + (compact ? "&gt;" : "Citação") + "</button>"
+                + "<button class=\"tool-wide\" onclick=\"fmt_lista\" tooltip=\"Lista\">" + (compact ? "-" : "Lista") + "</button>"
                 + "<button class=\"tool\" onclick=\"fmt_separador\" tooltip=\"Separador\">—</button>"
-                + "<label class=\"status-" + esc(state) + "\">" + esc(clip(stateText, 70)) + "</label>"
                 + "</row>"
+                + "<label class=\"status-" + esc(state) + "\" tooltip=\"" + esc(stateText) + "\">"
+                + esc(font.plainSubstrByWidth(stateText, Math.max(1, (width - 16) * 7 / 6))) + "</label>"
                 + "</col>";
     }
 
@@ -558,7 +586,7 @@ public final class DiaryScreen extends TesseraScreen {
             clicks.put("manter", this::keepMine);
             clicks.put("usar_site", this::takeSite);
             return "<row class=\"foot-conflict\">"
-                    + "<label class=\"conflict-text\">" + esc(clip(stateText, 60)) + "</label>"
+                    // O aviso completo já está na barra de situação, com tooltip.
                     + "<button class=\"btn\" onclick=\"usar_site\">Usar a do site</button>"
                     + "<button class=\"btn-primary\" onclick=\"manter\">Manter a minha</button>"
                     + "</row>";
@@ -569,7 +597,7 @@ public final class DiaryScreen extends TesseraScreen {
         clicks.put("fechar", this::onClose);
         boolean published = (flags & DiaryPayloads.PUBLISHED) != 0;
         boolean changes = (flags & DiaryPayloads.CHANGES) != 0 || dirty || saving;
-        String publishLabel = !published ? "Publicar" : changes ? "Publicar atualização" : "Publicado";
+        String publishLabel = !published ? "Publicar" : changes ? "Atualizar" : "Publicado";
         StringBuilder html = new StringBuilder("<row class=\"foot\">")
                 .append("<button class=\"btn\" onclick=\"previa\">").append(preview ? "Editar" : "Prévia").append("</button>");
         if (published) html.append("<button class=\"btn\" onclick=\"retirar\">Retirar</button>");

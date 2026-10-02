@@ -48,7 +48,7 @@ public final class AltLogin {
      */
     private static final Set<UUID> ONLINE_ALTS = ConcurrentHashMap.newKeySet();
 
-    private static final int NAME_ATTEMPTS = 10;
+    private static final int NAME_ATTEMPTS = 1000;
 
     private AltLogin() {
     }
@@ -84,6 +84,7 @@ public final class AltLogin {
         }
 
         GameProfile swapped = new GameProfile(alt.altId(), alt.altName());
+        if (server.getProfileCache() != null) server.getProfileCache().add(swapped);
         // As propriedades carregam a skin. O alt pode trocar a dele com o /skin do SkinRestorer.
         swapped.getProperties().putAll(real.getProperties());
 
@@ -109,15 +110,16 @@ public final class AltLogin {
         ONLINE_ALTS.clear();
     }
 
-    /** Pode criar alt: e staff na conta principal, e ainda nao tem. */
+    /** Pode criar alts: staff na conta principal, com a funcionalidade ligada. */
     public static boolean canCreate(ServerPlayer player) {
         AltData alts = AltData.get(player.server);
-        return !alts.isAlt(player.getUUID()) && alts.byOwner(player.getUUID()) == null && player.hasPermissions(2);
+        return CreationConfig.ALT_ENABLED.get() && !alts.isAlt(player.getUUID()) && player.hasPermissions(2);
     }
 
     /** Cria o alt da conta de quem chamou. @return o alt, ou null se nenhum nome de perfil estava livre */
     @Nullable
     public static AltData.Alt create(ServerPlayer owner) {
+        if (!canCreate(owner)) throw new IllegalStateException("Cannot create an alt from this account");
         MinecraftServer server = owner.server;
         AltData alts = AltData.get(server);
 
@@ -129,6 +131,9 @@ public final class AltLogin {
         if (name == null) return null;
 
         AltData.Alt alt = alts.create(owner.getUUID(), name);
+        if (server.getProfileCache() != null) {
+            server.getProfileCache().add(new GameProfile(alt.altId(), alt.altName()));
+        }
         PlayerList players = server.getPlayerList();
         if (players.isUsingWhitelist() && players.isWhiteListed(owner.getGameProfile())) {
             players.getWhiteList().add(new UserWhiteListEntry(new GameProfile(alt.altId(), alt.altName())));
@@ -178,6 +183,10 @@ public final class AltLogin {
      * @return false (com a mensagem ja enviada) quando nao ha para onde trocar
      */
     public static boolean switchCharacter(ServerPlayer player) {
+        return switchCharacter(player, null);
+    }
+
+    public static boolean switchCharacter(ServerPlayer player, @Nullable String requested) {
         MinecraftServer server = player.server;
         if (!CreationConfig.ALT_ENABLED.get()) {
             player.sendSystemMessage(Component.literal("A troca de personagem está desligada neste servidor."));
@@ -193,19 +202,38 @@ public final class AltLogin {
             return false;
         }
 
-        alts.setActive(owner, !fromAlt);
+        UUID target = fromAlt ? owner : alt.altId();
+        if (requested != null) {
+            if (requested.equalsIgnoreCase("principal")) {
+                target = owner;
+            } else {
+                AltData.Alt chosen = alts.forOwner(owner).stream()
+                        .filter(candidate -> candidate.altName().equalsIgnoreCase(requested)
+                                || candidate.altId().toString().equalsIgnoreCase(requested)).findFirst().orElse(null);
+                if (chosen == null) {
+                    player.sendSystemMessage(Component.literal("Personagem não encontrado nesta conta. Use /personagem alt ver."));
+                    return false;
+                }
+                target = chosen.altId();
+            }
+        }
+        if (target.equals(player.getUUID())) {
+            player.sendSystemMessage(Component.literal("Você já está neste personagem."));
+            return false;
+        }
+        UUID previous = alt.active() ? alt.altId() : null;
+        alts.select(owner, target.equals(owner) ? null : target);
         try {
             SavedDataAccess.flushAll(server);
         } catch (IOException failure) {
-            // Sem gravar, um crash agora faria a pessoa entrar no personagem errado: desfaz e avisa.
-            alts.setActive(owner, fromAlt);
+            alts.select(owner, previous);
             AurorionPersonagem.LOGGER.error("Nao consegui gravar a troca de personagem.", failure);
             player.sendSystemMessage(Component.literal("O servidor não conseguiu gravar a troca. Tente de novo."));
             return false;
         }
 
-        UUID target = fromAlt ? owner : alt.altId();
-        String targetName = characterName(server, target, fromAlt ? null : alt.altName());
+        AltData.Alt selected = alts.find(target);
+        String targetName = characterName(server, target, selected == null ? null : selected.altName());
         AurorionPersonagem.LOGGER.info("{} troca de personagem: {} -> {}.",
                 player.getGameProfile().getName(), player.getUUID(), target);
 

@@ -24,7 +24,11 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 public final class ProfessionEvents {
     private ProfessionEvents() {}
     @SubscribeEvent public static void login(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) ProfessionsNetwork.sync(player);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ProfessionsNetwork.sync(player);
+            FoodCompat.stripNoneQuality(player.getInventory());
+            FoodCompat.stripNoneQuality(player.getEnderChestInventory());
+        }
     }
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) { ServiceManager.forget(event.getEntity().getUUID()); }
     @SubscribeEvent public static void respawn(PlayerEvent.PlayerRespawnEvent event) {
