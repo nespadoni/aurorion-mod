@@ -11,6 +11,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
@@ -92,6 +93,19 @@ public final class DeathSnapshot {
             tag.putBoolean("CuriosComplete", false);
             AurorionEssentials.LOGGER.error("Death history: Curios capture failed for {}", player.getUUID(), e);
         }
+        // Accessories e outro sistema de slots, separado do Curios (Artifacts, Simple Hats). Falhar aqui
+        // nao invalida o resto: so marca o registro, e a lista mostra "[Accessories incompleto]".
+        tag.putBoolean("AccessoriesComplete", false);
+        try {
+            for (var group : DeathAccessories.slots(player).entrySet()) {
+                for (int i = 0; i < group.getValue().getContainerSize(); i++) {
+                    add(items, group.getKey(), i, group.getValue().getItem(i), player);
+                }
+            }
+            tag.putBoolean("AccessoriesComplete", true);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            AurorionEssentials.LOGGER.error("Death history: Accessories capture failed for {}", player.getUUID(), e);
+        }
         tag.put("Items", items);
         ListTag effects = new ListTag();
         var ops = player.registryAccess().createSerializationContext(NbtOps.INSTANCE);
@@ -140,13 +154,17 @@ public final class DeathSnapshot {
     public static Runnable prepareFull(CompoundTag tag, ServerPlayer target) throws ReflectiveOperationException {
         if (!tag.getBoolean("CuriosComplete")) throw new IllegalStateException("Snapshot incompleto de Curios.");
         Map<String, IItemHandlerModifiable> curios = DeathCurios.slots(target);
+        ListTag entries = tag.getList("Items", Tag.TAG_COMPOUND);
+        // Registro anterior a ponte com o Accessories nao tem esses grupos: os slots ficam como estao, e
+        // a API nem e consultada (um Accessories quebrado nao impede restaurar um registro sem ele).
+        boolean hasAccessories = entries.stream().anyMatch(raw -> DeathAccessories.owns(((CompoundTag) raw).getString("Group")));
+        Map<String, Container> accessories = hasAccessories ? DeathAccessories.slots(target) : Map.of();
         List<ItemStack> keep = new ArrayList<>();
         for (int i = 0; i < target.getInventory().getContainerSize(); i++) {
             ItemStack current = target.getInventory().getItem(i);
             if (KeptOnDeath.is(current)) keep.add(current.copy());
         }
         List<Runnable> changes = new ArrayList<>();
-        ListTag entries = tag.getList("Items", Tag.TAG_COMPOUND);
         ItemStack cursor = ItemStack.EMPTY;
         int cursorSlot = -1;
         for (Tag raw : entries) {
@@ -163,6 +181,10 @@ public final class DeathSnapshot {
                 changes.add(() -> target.getEnderChestInventory().setItem(slot, stack.copy()));
             } else if (group.equals("cursor")) {
                 cursor = stack;
+            } else if (DeathAccessories.owns(group)) {
+                Container container = accessories.get(group);
+                if (container == null || slot < 0 || slot >= container.getContainerSize()) throw new IllegalStateException("Slot Accessories indisponivel: " + group + "/" + slot);
+                changes.add(() -> container.setItem(slot, stack.copy()));
             } else {
                 IItemHandlerModifiable handler = curios.get(group);
                 if (handler == null || slot < 0 || slot >= handler.getSlots()) throw new IllegalStateException("Slot Curios indisponivel: " + group + "/" + slot);

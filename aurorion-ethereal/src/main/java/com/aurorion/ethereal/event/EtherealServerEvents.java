@@ -25,6 +25,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import com.aurorion.core.house.HouseChangedEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -54,6 +56,8 @@ public final class EtherealServerEvents {
     public static void onDatapackSync(OnDatapackSyncEvent event) {
         if (event.getPlayer() == null) {
             BoardService.refreshHouses(event.getPlayerList().getServer());
+            // A cor de uma casa pode ter mudado: a tab de todo mundo e repintada uma vez.
+            NeoForge.EVENT_BUS.post(new HouseChangedEvent(event.getPlayerList().getServer(), null));
         }
     }
 

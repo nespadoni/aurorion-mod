@@ -104,7 +104,8 @@ menciona um jogador em Minecraft vanilla:
 - Broadcast de conquista
 - Entrada/saída do servidor ("X entrou no jogo")
 - Nametag acima da cabeça (com a cor de time por cima, como já acontece hoje)
-- Tab list (via `getTabListDisplayName`, sincronizado explicitamente — ver arquitetura)
+- Tab list (via `getTabListDisplayName` e da entrada do pacote, sincronizado explicitamente — ver
+  arquitetura e "Cor da casa na tab")
 - Feedback de comando que menciona o jogador (`/tell`, `/tp`, etc.)
 
 **O que continua com o nome real, de propósito:**
@@ -125,7 +126,9 @@ exibida — então dá para sempre reverter a máscara quando necessário.
 ```
 fakename/    FakeName (valor: raw + Component + texto puro), LegacyColorCodes (parser "&"),
              FakeNameRegistry (cache uuid -> nome falso, comum a cliente e servidor)
-mixin/       PlayerNameMixin — unico ponto de injeção, em Player#getName()/getTabListDisplayName()
+mixin/       PlayerNameMixin (Player#getName), TabListNameMixin e PlayerInfoEntryMixin (tab)
+tab/         TabNameFormat (pinta so o nome dentro da linha), TabNames (cor da casa de quem esta
+             online), TabListConfig
 server/      FakeNameData (persistência), FakeNameManager (validação + broadcast + refresh da
              tab list), FakeNameEvents (join/leave)
 network/     SyncFakeNamesPayload (snapshot no login), UpdateFakeNamePayload (delta na troca)
@@ -241,19 +244,46 @@ Comandos, limites e roteiro de validação: [DEATH-HISTORY.md](DEATH-HISTORY.md)
   sugere os nomes conhecidos. Acha até quem já trocou de nome depois de morrer.
 - `/deathhistory view <pessoa> <n>` e `/deathhistory tp <pessoa> <n>`: a n-ésima morte da lista
   (`#1` é a mais recente). É a forma de trabalhar pelo console, sem UUID.
-- `/deathhistory view <id> [pagina]`: inventário somente para consulta.
+- `/deathhistory view <id> [aba]`: abre a morte numa tela com abas — inventário (cada item no slot
+  onde estava), **Curios e Accessories** e ender chest. Somente consulta; **no criativo, clicar num
+  item pega o item**, como num baú (uma vez só por item).
 - `/deathhistory tp <id>`: teleporte ao local da morte.
-- `/deathhistory give <id> <indice> <destinatario> confirm`: recupera uma pilha em slot livre.
+- `/deathhistory devolver <pessoa> <n> confirm` (ou `<id> confirm`): devolve ao dono o que caiu na
+  morte, cada item no slot de origem quando vazio. Nunca sobrescreve; o que não couber sai numa
+  próxima chamada.
+- `/deathhistory pegar <pessoa> <n> confirm` (ou `<id> confirm`): o mesmo, para o inventário de quem
+  pediu — para entregar em mãos.
+- `/deathhistory give <id> <indice> <destinatario> confirm`: recupera uma pilha em slot livre (o
+  índice está no tooltip da tela).
 - `/deathhistory restore <id> <destinatario> confirm`: restaura inventário, equipamento,
-  ender chest, Curios, efeitos, XP e fome, criando backup antes. O backup também aceita consulta/restauração.
+  ender chest, Curios, Accessories, efeitos, XP e fome, criando backup antes. O backup também aceita
+  consulta/restauração.
 
-Tudo exige OP 2+. Não há devolução automática nem alteração de drops/keepInventory.
+Tudo exige OP 2+. Cada item sai uma única vez por registro, por qualquer caminho. Não há devolução
+automática nem alteração de drops/keepInventory.
 
 **Rede de seguranca da morte.** Um mod com bug no `LivingDeathEvent` derrubava o servidor e deixava o
 jogador em zero de vida sem morrer (crash de 23/09/2026, `jonesbounty`). O `DeathListenerGuardMixin`
 envolve o disparo desse evento num `try/catch`: o listener quebrado perde o turno, a morte acontece
 inteira e o stack trace vai para o log. Detalhes e limites em
 [DEATH-HISTORY.md](DEATH-HISTORY.md).
+
+## Cor da casa na tab
+
+O nome do personagem aparece na tab **na cor da casa** (`aurorion-ethereal`), lida pelo contrato
+`HouseGate` do core. Só o trecho do nome muda: se outro mod monta a linha — o Just Essentials, com
+prefixo de grupo (`[Admin]`) e sufixo de vanish (`[Oculto]`) —, o resto fica como ele mandou. Se a
+linha de outro mod trouxer o nick da conta, o trecho vira o nome do personagem: a tab não entrega
+quem está por trás da máscara.
+
+Dois pontos pintam: o `TabListNameMixin` (agora no `RETURN` de `getTabListDisplayName`, depois do
+evento `TabListNameFormat` do NeoForge) e o `PlayerInfoEntryMixin`, no construtor de toda entrada da
+tab — inclusive as que o Just Essentials monta e reenvia a cada `refreshTicks`. Nada roda por tick: a
+cor é lida no login e de novo só quando o Ethereal avisa (`HouseChangedEvent` do core) — `/casa
+definir`, a cerimônia ou um `/reload` que mude a cor de uma casa. Quem não tem casa fica com a cor que já tinha.
+
+Config `config/aurorion/essentials-tablist-server.toml`: `houseColor = true`. Precisa do core 0.6.1+
+e, para ter cor, do Ethereal 0.3.1+.
 
 ## Telefone Mattupolis e Simple Voice Chat
 

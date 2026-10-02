@@ -51,6 +51,18 @@ public final class HouseGate {
          */
         @Nullable
         Component nameOf(ResourceLocation house);
+
+        /**
+         * @return a cor da casa em RGB ({@code 0xRRGGBB}), ou {@code null} se o id nao existe mais no
+         * catalogo. Quem pergunta hoje e a tab list do {@code aurorion-essentials}.
+         *
+         * <p>{@code default} para um Ethereal mais antigo que este contrato continuar carregando: ele so
+         * responde "sem cor", e o nome fica como estava.
+         */
+        @Nullable
+        default Integer colorOf(ResourceLocation house) {
+            return null;
+        }
     }
 
     @Nullable
@@ -83,6 +95,18 @@ public final class HouseGate {
     public static boolean exists(ResourceLocation house) {
         Houses current = houses;
         return current != null && current.exists(house);
+    }
+
+    /**
+     * A cor da casa do jogador, ou {@code null} quando ele nao tem casa, a casa sumiu do catalogo ou nao
+     * ha sistema de casas. Para pintar um nome, os tres casos sao o mesmo: fica a cor que ja tinha.
+     */
+    @Nullable
+    public static Integer colorOf(MinecraftServer server, UUID player) {
+        Houses current = houses;
+        if (current == null) return null;
+        ResourceLocation house = current.of(server, player);
+        return house == null ? null : current.colorOf(house);
     }
 
     /** O nome da casa para mostrar a um jogador; cai no id quando nao ha catalogo que a conheca. */

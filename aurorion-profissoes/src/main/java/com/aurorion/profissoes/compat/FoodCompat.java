@@ -18,7 +18,6 @@ public final class FoodCompat {
     private static boolean initialized;
     private static Method randomQuality, freshness, snapshot, decayRate;
     private static DataComponentType<Object> qualityComponent;
-    private static Object noQuality;
     private FoodCompat() {}
     @SuppressWarnings("unchecked")
     private static synchronized void init() {
@@ -28,7 +27,6 @@ public final class FoodCompat {
             if (ModList.get().isLoaded("quality_food")) {
                 var quality = Class.forName("de.cadentem.quality_food.core.codecs.Quality");
                 randomQuality = quality.getMethod("getRandom", ItemStack.class, int.class);
-                noQuality = quality.getField("NONE").get(null);
                 qualityComponent = (DataComponentType<Object>)net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE
                         .get(net.minecraft.resources.ResourceLocation.parse("quality_food:quality"));
             }
@@ -63,7 +61,11 @@ public final class FoodCompat {
         }
         if (qualityComponent != null) {
             try {
-                stack.set(qualityComponent, chef ? randomQuality.invoke(null, stack, ProfessionsConfig.CHEF_QUALITY.get()) : noQuality);
+                Object quality = chef ? randomQuality.invoke(null, stack, ProfessionsConfig.CHEF_QUALITY.get()) : null;
+                // Sem qualidade e sem o componente, nunca Quality.NONE gravado: a copia que volta do
+                // disco/rede vira o xadrez roxo e preto no slot (ver QualityNone).
+                if (QualityNone.isNone(quality)) stack.remove(qualityComponent);
+                else stack.set(qualityComponent, quality);
             } catch (ReflectiveOperationException error) { throw new IllegalStateException("Falha ao aplicar qualidade", error); }
         }
         // Nao apaga datas, snapshots, congelamento ou outros dados do FoodSpoil.
@@ -94,6 +96,27 @@ public final class FoodCompat {
     }
     public static boolean samePreparation(ItemStack a, ItemStack b) {
         init();
-        return grade(a) == grade(b) && (qualityComponent == null || java.util.Objects.equals(a.get(qualityComponent), b.get(qualityComponent)));
+        if (grade(a) != grade(b)) return false;
+        if (qualityComponent == null) return true;
+        Object qa = a.get(qualityComponent), qb = b.get(qualityComponent);
+        return QualityNone.isNone(qa) ? QualityNone.isNone(qb) : java.util.Objects.equals(qa, qb);
+    }
+
+    /**
+     * Tira o "none" gravado por versoes anteriores (ver {@link QualityNone}). Com o componente, a comida
+     * antiga nao empilhava com a nova, que ja nasce sem ele. Chamado no login, so no inventario e no
+     * ender chest: baus se resolvem na leitura pelo mixin, sem varrer o mundo.
+     */
+    public static void stripNoneQuality(net.minecraft.world.Container container) {
+        if (!qualityAvailable()) return;
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack stack = container.getItem(slot);
+            if (stack.isEmpty()) continue;
+            Object quality = stack.get(qualityComponent);
+            if (quality != null && QualityNone.isNone(quality)) {
+                stack.remove(qualityComponent);
+                container.setChanged();
+            }
+        }
     }
 }

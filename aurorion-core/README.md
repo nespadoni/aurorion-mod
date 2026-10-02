@@ -47,7 +47,7 @@ sem que os dois se conheçam:
 | Contrato | Quem responde | Quem pergunta |
 |---|---|---|
 | [`character/CharacterGate`](src/main/java/com/aurorion/core/character/CharacterGate.java) | `aurorion-personagem` | `aurorion-limbo` |
-| [`house/HouseGate`](src/main/java/com/aurorion/core/house/HouseGate.java) | `aurorion-ethereal` | `aurorion-areas` |
+| [`house/HouseGate`](src/main/java/com/aurorion/core/house/HouseGate.java), [`HouseChangedEvent`](src/main/java/com/aurorion/core/house/HouseChangedEvent.java) | `aurorion-ethereal` | `aurorion-areas`, `aurorion-essentials` (cor da casa na tab) |
 
 A alternativa seria um mod importar o outro — o que torna um obrigatório para o outro, contra a
 [SDD §3](../SDD.md) — ou alcançá-lo por reflexão, como se faz com mod de terceiro. Entre dois mods

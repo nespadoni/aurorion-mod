@@ -79,6 +79,12 @@ public final class AurorionEthereal {
                 House found = HouseCatalog.get(house);
                 return found == null ? null : found.coloredName();
             }
+
+            @Override
+            public Integer colorOf(ResourceLocation house) {
+                House found = HouseCatalog.get(house);
+                return found == null ? null : found.color();
+            }
         });
     }
 }

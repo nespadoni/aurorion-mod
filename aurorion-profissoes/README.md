@@ -142,6 +142,29 @@ O `FoodSpoilContractTest` valida os três pontos contra o jar instalado, inclusi
 **ainda** não corrigiu o bug — se corrigir, o teste falha avisando que o remendo pode ser apagado.
 Ele é pulado sem `AURORION_FOODSPOIL_JAR`.
 
+### Correção: xadrez roxo e preto na comida sem qualidade
+
+Comida feita por quem não é cozinheiro aparecia no slot com o quadrado roxo e preto de textura
+faltando por cima. A causa era nossa, na interação com um detalhe do Quality Food 2.3.6.
+
+O Quality Food só pula o desenho do ícone de qualidade quando `quality == Quality.NONE` —
+**comparação por referência** (o mesmo `==` está em `Quality.getType()` e em
+`QualityUtils.isValidQuality`). O `FoodCompat.finish` gravava o próprio `Quality.NONE` no componente
+da comida comum. Salvar o item ou mandá-lo ao cliente devolve uma **cópia** igual ao NONE, mas outro
+objeto: ela passa no teste, o tipo cai em `QualityType.NONE`, cujo ícone é `quality_food:none` — um
+sprite que não existe. Daí a textura faltando.
+
+- **Comida nova:** sem qualidade agora é **sem o componente**; nada de NONE gravado.
+- **Comida que já existe:** o `QualityUtilsMixin` troca qualquer cópia do NONE (e do
+  `PLAYER_PLACED`) pelo original em `QualityUtils.getQuality` — conserta a tela até nos baús, sem
+  varrer o mundo. No login o componente "none" também sai do inventário e do ender chest, para a
+  comida antiga voltar a empilhar com a nova.
+- O empilhamento especial do FoodSpoil trata "sem componente" e "none" como o mesmo preparo.
+
+O `QualityFoodContractTest` confere contra o jar que o Quality Food **ainda** compara por referência:
+se uma versão nova corrigir, o teste falha avisando que o `aurorion$canonicalNone` pode sair. É pulado
+sem `AURORION_QUALITY_FOOD_JAR`.
+
 ## Arcanista
 
 - Qualquer personagem pode usar as duas primeiras opções da mesa de encantamentos, com nível máximo

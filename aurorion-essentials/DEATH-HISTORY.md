@@ -8,12 +8,17 @@ Mods que alterem o inventário antes desse listener precisam ser verificados no 
 ## Conteúdo
 
 UUID, nome real, causa, horário UTC, dimensão, posição, orientação, inventário, armadura,
-offhand, ender chest, cursor, Curios normais/cosméticos, efeitos, XP, fome e NBT completo
-serializado pelo jogador. O NBT bruto e a serialização própria do Curios ficam arquivados.
+offhand, ender chest, cursor, Curios normais/cosméticos, Accessories normais/cosméticos, efeitos, XP,
+fome e NBT completo serializado pelo jogador. O NBT bruto e a serialização própria do Curios ficam arquivados.
 Dados em bancos externos, arquivos próprios ou somente em memória não fazem parte desse NBT.
 
+O pack tem **dois** sistemas de acessório que não se falam: Curios (Relics, Malum, Iron's
+Spellbooks, Cataclysm…) e Accessories (Artifacts, Simple Hats). Os dois são capturados, por reflexão,
+sem tornar nenhum obrigatório. Falha só no Accessories marca o registro com
+`[Accessories incompleto]` e não invalida o resto.
+
 `restore ... confirm` substitui os slots presentes no snapshot e os efeitos, XP e fome.
-Slots Curios precisam continuar disponíveis; item/mod removido ou mudança de DataVersion
+Slots Curios e Accessories precisam continuar disponíveis; item/mod removido ou mudança de DataVersion
 recusa a operação. O cursor salvo vai para um slot vazio do inventário salvo; sem espaço,
 use recuperação individual. O destinatário precisa estar vivo, conectado e com menus fechados.
 `give ... confirm` recupera uma pilha num slot livre, sem sobrescrever nada. Curios recuperado
@@ -49,11 +54,62 @@ auditoria do Relicário e do Fio da Volta.
 /deathhistory <pessoa> [pagina]
 /deathhistory view <pessoa> <n>
 /deathhistory tp   <pessoa> <n>
-/deathhistory view <id> [pagina]
+/deathhistory view <id> [aba]
 /deathhistory tp <id>
+/deathhistory devolver <pessoa> <n> confirm [duplicar]
+/deathhistory devolver <id> confirm [duplicar]
+/deathhistory pegar <pessoa> <n> confirm [duplicar]
+/deathhistory pegar <id> confirm [duplicar]
 /deathhistory give <id> <indice> <destinatario> confirm [duplicar]
 /deathhistory restore <id> <destinatario> confirm [duplicar]
 ```
+
+### A tela da morte (`view`)
+
+Um baú de seis linhas montado só no servidor (o cliente vê um baú comum). A última linha tem as abas
+**Inventário**, **Curios e acessórios** e **Ender chest**, um papel com a causa, data, local, XP,
+efeitos e o estado das recuperações, e as setas de página.
+
+- **Inventário:** cada item onde estava — armadura e mão secundária na primeira linha (o cursor no
+  fim dela), o inventário no meio, a hotbar embaixo.
+- **Curios e acessórios:** só os slots ocupados do Curios e do Accessories (normais e cosméticos) e
+  slots extras de inventário de outros mods, paginados.
+- **Ender chest:** os 27 slots.
+
+O tooltip de cada item mostra o índice do `give` (`#12 · curios/ring/0`) e se ele é mantido na morte
+ou já foi recuperado. `view <id> [aba]` abre direto na aba 1, 2 ou 3.
+
+**Somente consulta, exceto no criativo.** Com a staff no modo criativo, clicar num item **pega o
+item de verdade**, como num baú: clique comum (cursor), shift-clique (inventário), tecla numérica
+(hotbar). Cada item sai uma vez só e some da tela, como num baú: a retirada grava o mesmo recibo do
+`give`, vai para o log e trava
+`devolver`/`pegar`/`give` daquele item. Item mantido na morte, já recuperado, ou de morte cujo espólio
+já voltou pelo Relicário não sai pela tela. Fora do criativo, todo clique na tela é recusado e o que
+já saiu continua visível, marcado "Já recuperado".
+
+### Devolver e pegar
+
+- **`devolver`** entrega ao **dono da morte** (precisa estar online) o que caiu: inventário,
+  armadura, mão secundária, cursor, Curios e Accessories. Cada item volta ao **slot de origem** quando
+  ele está vazio — armadura no corpo, anel no Curios, chapéu no Accessories —, senão ao primeiro slot
+  livre do inventário. A pessoa recebe um aviso no chat.
+- **`pegar`** faz o mesmo para o **seu** inventário (para entregar em mãos, ou quando o dono está
+  offline). Tudo vai para slots livres; nada é equipado.
+
+Os dois **nunca sobrescrevem nada** — só ocupam slot vazio —, e ficam de fora: o ender chest (não cai
+na morte), itens mantidos na morte, itens já recuperados por qualquer caminho e, no `devolver`, o item
+**idêntico** que já está no mesmo slot (keepInventory, item que não cai, ou a pessoa já catou e
+guardou no mesmo lugar). O que não couber fica sem recibo: libere espaço e repita o comando, e só o
+que faltou é entregue. O resumo no chat diz quantos foram, quantos já estavam com a pessoa, quantos já
+tinham saído e o nome dos que não couberam, e avisa se o personagem atual da conta não é o que morreu.
+
+O `view` imprime no chat os botões **[Devolver ao dono]** e **[Pegar para mim]**: eles só
+**preenchem** o comando (com `confirm`, ou `confirm duplicar` quando o Relicário já devolveu o
+espólio); o Enter é da staff.
+
+Mesmo fluxo do `restore`: backup do destinatário, reserva dos recibos na fila de IO, conferência de
+que o inventário não mudou, entrega, save imediato. Falha no meio desfaz (esvazia de novo os slots
+ocupados).
 
 ### Achar a pessoa sem saber a UUID
 
@@ -108,7 +164,9 @@ Em `<mundo>/aurorion/death-history/`:
   nick da conta. Nome repetido aponta para a conta da morte mais recente; teto de 4096 nomes, podando
   os mais antigos (o `/fakename` é livre, então sem teto o índice cresceria para sempre).
 - `backups/<id>.nbt`: estado anterior à recuperação; aceita `view` e `restore` pelo ID.
-- `restores/<id>.nbt`: administrador, destinatário, backup, data e estado da recuperação.
+- `restores/<id>.nbt`: um recibo por item (`item_<n>`) ou pela restauração completa (`full`):
+  administrador, destinatário, tipo (`give`, `devolver`, `pegar`, `criativo`, `restore`), backup,
+  data e estado. Qualquer caminho que entregue o item `n` grava `item_<n>` e trava os outros.
 
 Config `config/aurorion/essentials-death-history-server.toml`: `enabled=true`, `deathsPerPlayer=100`
 (10–1000). Retenção remove somente mortes antigas daquele jogador. Backups e recibos são
@@ -126,8 +184,14 @@ permissão e inventário/XP. Repetição é recusada. Recuperação completa blo
 parcial impede completa posterior, mas permite outros índices. Não se recolhem drops nem se
 detecta se itens já foram encontrados: a staff decide se a restituição é devida.
 
-`RESERVED`, `FAILED` e `ABORTED` permanecem bloqueados para impedir duplicação após falha/crash.
-Consulte log, backup e destinatário antes de intervenção manual no recibo; não há retry automático.
+`RESERVED` e `FAILED` permanecem bloqueados para impedir duplicação após falha/crash. `ABORTED`
+(nada foi entregue: o inventário mudou durante a reserva, a pessoa caiu, quem pediu perdeu o OP)
+**apaga o recibo** e libera o item para outra tentativa. Consulte log, backup e destinatário antes
+de intervenção manual no recibo; não há retry automático.
+
+Na thread do servidor há ainda uma trava em memória (`RecoveryLedger`): a retirada no criativo
+acontece no clique, sem esperar disco, e um `devolver` com a reserva ainda na fila não pode entregar o
+mesmo item. Todo caminho marca ali antes de ir ao disco e confere ali antes de entregar.
 `APPLIED` significa concluída. O save vanilla do destinatário é solicitado após aplicar,
 e o journal é finalizado depois. Esses arquivos não formam uma transação atômica única;
 a reserva é conservadora diante de interrupções.
@@ -174,7 +238,18 @@ Não executar Gradle nesta máquina de edição. Esta implementação ainda não
   NOBODY nenhuma; EVERYONE conserva regra vanilla. Tela de morte continua informando a causa.
 - Offline, paginação, reinício, retenção e consulta/restauração de backup por ID.
 - Tentar todas as retiradas na tela e revogar OP enquanto aberta.
-- Restaurar ao dono e outro destinatário; conferir componentes, efeitos, XP, Curios e ender chest.
+- Restaurar ao dono e outro destinatário; conferir componentes, efeitos, XP, Curios, Accessories
+  (Artifacts, Simple Hats) e ender chest.
+- Tela: as três abas, setas de página com muitos Curios, tooltip com `#n`, papel de informações.
+  Fora do criativo nenhum clique tira item (inclusive shift, tecla numérica, arrastar, duplo clique,
+  Q, clique do meio). No criativo: clique, shift e tecla numérica pegam o item **sem** o texto do
+  tooltip; o mesmo item não sai duas vezes (fechar e abrir de novo, reiniciar o servidor); o recibo
+  `criativo` aparece em `restores/<id>.nbt` e a linha no log.
+- `devolver` com a pessoa online e offline; armadura/Curios/Accessories voltando ao slot de origem;
+  inventário cheio (resumo com os que faltaram) e repetição entregando só o resto; item idêntico já
+  no slot não duplica; ender chest e Fio da Volta/Relicário ficam de fora.
+- `pegar` com e sem espaço; com o dono já tendo recebido parte pelo `devolver`.
+- `restore` completo recusado depois de qualquer `give`/`devolver`/`pegar`/retirada no criativo.
 - Repetição, comandos simultâneos, desconexão, morte, menu aberto e troca de itens durante IO.
 - Falhas de disco/fila/rename antes do commit não alteram inventário; simular crash após reserva.
 - Teleporte para dimensão ausente, borda, lava e vazio; recusar sem ponto seguro fora de espectador.

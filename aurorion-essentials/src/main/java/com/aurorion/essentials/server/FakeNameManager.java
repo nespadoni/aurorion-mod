@@ -4,6 +4,7 @@ import com.aurorion.essentials.fakename.FakeName;
 import com.aurorion.essentials.fakename.FakeNameRegistry;
 import com.aurorion.essentials.network.SyncFakeNamesPayload;
 import com.aurorion.essentials.network.UpdateFakeNamePayload;
+import com.aurorion.essentials.tab.TabNames;
 import com.aurorion.essentials.voice.VoiceNameSync;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.MinecraftServer;
@@ -128,13 +129,16 @@ public final class FakeNameManager {
         }
         PacketDistributor.sendToPlayer(player, new SyncFakeNamesPayload(online));
 
+        // A cor da casa tambem so e conhecida agora: a entrada da tab que o vanilla mandou no login
+        // saiu sem ela.
+        boolean houseColor = TabNames.track(player);
         if (ownRaw != null) {
             PacketDistributor.sendToAllPlayers(new UpdateFakeNamePayload(player.getUUID(), Optional.of(ownRaw)));
             // O nome so entra no registry agora, entao o que tiver sido calculado durante o login
             // ainda e o nick da Mojang.
             player.refreshDisplayName();
-            refreshTabList(server, player.getUUID());
         }
+        if (ownRaw != null || houseColor) refreshTabList(server, player.getUUID());
         // Fora do 'if': o Voice Chat pode ter criado o estado da pessoa antes deste login, ainda com o
         // nick, e quem nao tem nome de personagem tambem precisa do estado conferido.
         VoiceNameSync.refresh(player);
@@ -143,5 +147,6 @@ public final class FakeNameManager {
     /** So limpa o cache em memoria — o que esta em disco continua valendo se o jogador voltar. */
     public static void onPlayerLeave(ServerPlayer player) {
         FakeNameRegistry.remove(player.getUUID());
+        TabNames.forget(player.getUUID());
     }
 }

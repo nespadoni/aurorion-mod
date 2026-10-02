@@ -1,5 +1,6 @@
 package com.aurorion.ethereal.house;
 
+import com.aurorion.core.house.HouseChangedEvent;
 import com.aurorion.core.house.HouseGate;
 import com.aurorion.core.integration.GameFacts;
 import com.aurorion.ethereal.AurorionEthereal;
@@ -13,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,6 +165,8 @@ public final class HouseManager {
         }
         BoardService.refreshHouses(server);
         publishChange(server, player, previous);
+        // Quem mostra algo pela casa (cor na tab) atualiza aqui, em vez de conferir por tick.
+        NeoForge.EVENT_BUS.post(new HouseChangedEvent(server, player));
         return true;
     }
 
