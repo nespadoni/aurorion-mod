@@ -19,11 +19,11 @@ public final class ProfessionClient {
     @SubscribeEvent public static void logout(ClientPlayerNetworkEvent.LoggingOut event) { ProfessionApi.clientProfession = Profession.NONE; }
     public static void open(PanelPayload payload) { Minecraft.getInstance().setScreen(new ProfessionScreen(payload)); }
 
-    /** Uma resposta do servidor na mesma aba mantem a rolagem: comprar o 5o item nao volta a lista ao topo. */
+    /** A resposta a uma escolha atualiza a tela aberta: rolagem e texto digitado continuam. */
     public static void openNpc(NpcScreenPayload payload) {
         var minecraft = Minecraft.getInstance();
-        int scroll = minecraft.screen instanceof NpcScreen old && old.tab() == payload.tab() ? old.scroll() : 0;
-        minecraft.setScreen(new NpcScreen(payload, scroll));
+        if (minecraft.screen instanceof NpcScreen open && !open.closed()) open.update(payload);
+        else minecraft.setScreen(new NpcScreen(payload));
     }
 
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers event) {

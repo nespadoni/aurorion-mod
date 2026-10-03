@@ -2,116 +2,168 @@
   "npcs": [
     {
       "id": "medico_principal",
-      "display_name": "Médico do Vilarejo",
+      "display_name": "Enfermeira da Casa de Cura",
       "title": "Casa de Cura",
       "profession": "medico",
-      "skin": "",
-      "slim_skin": false,
-      "greeting": "Sente-se. Deixe-me ver esses ferimentos.",
+      "greeting": "Sente-se e me mostre onde dói. Cobro pelo tamanho do estrago.",
       "dialogue": [
-        "Quando um médico da cidade está por perto, prefiro que você o procure.",
-        "Mas ninguém sai daqui sangrando enquanto eu estiver de plantão."
+        "Quando há um médico da cidade por perto, eu o chamo: ele cobra menos e cuida melhor.",
+        "Mas ninguém sai daqui sangrando enquanto eu estiver de plantão.",
+        "Curativos e ervas você mesmo pode usar. Kits e tônicos, só nas mãos de um médico."
       ],
       "fallback_radius": 64,
       "services": [
         {
-          "name": "Cura Completa",
-          "description": "Trata todas as partes do corpo e restaura a saúde, sem recuperar vidas de morte.",
-          "action_type": "command",
-          "command": "bodydamage heal {player} all 100",
-          "cost_item": "minecraft:emerald",
-          "cost_amount": 5,
+          "name": "Curativo",
+          "description": "Ferida leve: vida acima da metade e nenhum membro muito ferido.",
+          "action_type": "heal",
+          "tier": "leve",
+          "cost_money": "1",
+          "cooldown_seconds": 30
+        },
+        {
+          "name": "Tratar Ferimento",
+          "description": "Ferimento moderado: vida ou algum membro abaixo da metade, sem lesão grave.",
+          "action_type": "heal",
+          "tier": "moderado",
+          "cost_money": "2",
+          "cooldown_seconds": 30
+        },
+        {
+          "name": "Tratar Lesão Grave",
+          "description": "Uma lesão grave (fratura, membro quase perdido). Trata o corpo inteiro.",
+          "action_type": "heal",
+          "tier": "grave",
+          "cost_money": "6",
           "cooldown_seconds": 60
         },
         {
-          "name": "Primeiros Socorros",
-          "description": "Tratamento nativo: vida e lesões do LSO.",
+          "name": "Trauma Crítico",
+          "description": "Duas ou mais lesões graves, ou uma com a vida no fim. Trata o corpo inteiro.",
           "action_type": "heal",
-          "cost_money": "2,5",
-          "cooldown_seconds": 120
+          "tier": "critico",
+          "cost_money": "12",
+          "cooldown_seconds": 60
         }
       ],
       "trades": [
-        {
-          "id": "kit_medico",
-          "item_id": "legendarysurvivaloverhaul:medkit",
-          "amount": 1,
-          "price_item": "minecraft:emerald",
-          "price_amount": 8,
-          "max_stock": 3,
-          "restock": "daily"
-        }
+        { "id": "bandagem", "item_id": "legendarysurvivaloverhaul:bandage", "amount": 1, "price_money": "0,8" },
+        { "id": "ervas", "item_id": "legendarysurvivaloverhaul:healing_herbs", "amount": 1, "price_money": "0,6" },
+        { "id": "gesso", "item_id": "legendarysurvivaloverhaul:plaster", "amount": 1, "price_money": "1,5" },
+        { "id": "morfina", "item_id": "legendarysurvivaloverhaul:morphine", "amount": 1, "price_money": "2", "max_stock": 4, "restock": "daily" },
+        { "id": "tonico", "item_id": "legendarysurvivaloverhaul:tonic", "amount": 1, "price_money": "4", "max_stock": 3, "restock": "daily" },
+        { "id": "kit_medico", "item_id": "legendarysurvivaloverhaul:medkit", "amount": 1, "price_money": "5", "max_stock": 3, "restock": "daily" }
       ]
     },
     {
       "id": "ferreiro_vila",
-      "display_name": "Ferreiro Mestre",
+      "display_name": "Ferreira Mestra",
       "title": "Forja da Vila",
       "profession": "ferreiro",
-      "greeting": "Aço bom não se apressa. O que você precisa?",
+      "greeting": "Aço bom não se apressa. Mostre a peça e eu digo quanto custa.",
+      "dialogue": [
+        "Reparo cobrado pelo desgaste: quanto mais gasto, mais martelo.",
+        "Tem ferreiro da cidade por aí? Vá até ele. A minha forja é para quando não há ninguém.",
+        "Etiquetas eu gravo na hora. Diga o nome e eu entrego pronta."
+      ],
       "fallback_radius": 64,
       "fallback_blocks_trades": false,
       "services": [
         {
-          "name": "Restaurar Equipamento",
-          "description": "Segure o equipamento danificado na mão principal.",
+          "name": "Comprar Etiqueta com Nome",
+          "description": "Digite o nome e a ferreira vende a etiqueta já gravada (até 50 caracteres).",
+          "action_type": "name_tag",
+          "cost_money": "2",
+          "cooldown_seconds": 5
+        },
+        {
+          "name": "Reparo Leve",
+          "description": "Até 25% de desgaste. Segure o equipamento na mão principal.",
           "action_type": "repair",
-          "cost_item": "minecraft:iron_ingot",
-          "cost_amount": 2
+          "tier": "leve",
+          "cost_money": "1,3"
+        },
+        {
+          "name": "Reparo Médio",
+          "description": "De 25% a 50% de desgaste. Encantamentos são preservados.",
+          "action_type": "repair",
+          "tier": "medio",
+          "cost_money": "2,5"
+        },
+        {
+          "name": "Reparo Pesado",
+          "description": "De 50% a 75% de desgaste. Encantamentos são preservados.",
+          "action_type": "repair",
+          "tier": "pesado",
+          "cost_money": "5"
+        },
+        {
+          "name": "Restaurar Peça Quase Destruída",
+          "description": "Acima de 75% de desgaste. Encantamentos são preservados.",
+          "action_type": "repair",
+          "tier": "quase_destruido",
+          "cost_money": "7,5"
         }
       ],
       "trades": [
-        {
-          "id": "espada_diamante",
-          "item_id": "minecraft:diamond_sword",
-          "amount": 1,
-          "price_item": "minecraft:emerald",
-          "price_amount": 10,
-          "max_stock": 5,
-          "restock": "restart"
-        },
-        {
-          "id": "espada_afiada",
-          "item_id": "minecraft:iron_sword",
-          "components": "[enchantments={levels:{\"minecraft:sharpness\":2}},custom_name='\"Lâmina da Vila\"']",
-          "amount": 1,
-          "price_money": "15",
-          "stock_limit": 2,
-          "restock": "daily"
-        },
-        {
-          "id": "lingotes",
-          "item_id": "minecraft:iron_ingot",
-          "amount": 8,
-          "price_item": "minecraft:emerald",
-          "price_amount": 3,
-          "max_stock": -1
-        }
+        { "id": "ferro", "item_id": "minecraft:iron_ingot", "amount": 64, "price_money": "1,2" },
+        { "id": "ouro", "item_id": "minecraft:gold_ingot", "amount": 64, "price_money": "2,3" },
+        { "id": "cobre", "item_id": "minecraft:copper_ingot", "amount": 64, "price_money": "0,5" },
+        { "id": "carvao", "item_id": "minecraft:coal", "amount": 64, "price_money": "0,3" },
+        { "id": "obsidiana", "item_id": "minecraft:obsidian", "amount": 64, "price_money": "0,8" },
+        { "id": "diamante", "item_id": "minecraft:diamond", "amount": 1, "price_money": "0,5", "max_stock": 8, "restock": "daily" },
+        { "id": "detrito_antigo", "item_id": "minecraft:ancient_debris", "amount": 1, "price_money": "0,8", "max_stock": 4, "restock": "daily" },
+        { "id": "netherita", "item_id": "minecraft:netherite_ingot", "amount": 1, "price_money": "4", "max_stock": 2, "restock": "daily" },
+        { "id": "espada_ferro", "item_id": "minecraft:iron_sword", "amount": 1, "price_money": "1" },
+        { "id": "picareta_ferro", "item_id": "minecraft:iron_pickaxe", "amount": 1, "price_money": "1,5" },
+        { "id": "machado_ferro", "item_id": "minecraft:iron_axe", "amount": 1, "price_money": "1,5" },
+        { "id": "pa_ferro", "item_id": "minecraft:iron_shovel", "amount": 1, "price_money": "0,5" },
+        { "id": "escudo", "item_id": "minecraft:shield", "amount": 1, "price_money": "1" },
+        { "id": "elmo_ferro", "item_id": "minecraft:iron_helmet", "amount": 1, "price_money": "1,5" },
+        { "id": "peitoral_ferro", "item_id": "minecraft:iron_chestplate", "amount": 1, "price_money": "2,5" },
+        { "id": "calcas_ferro", "item_id": "minecraft:iron_leggings", "amount": 1, "price_money": "2" },
+        { "id": "botas_ferro", "item_id": "minecraft:iron_boots", "amount": 1, "price_money": "1" },
+        { "id": "espada_diamante", "item_id": "minecraft:diamond_sword", "amount": 1, "price_money": "3", "max_stock": 3, "restock": "daily" },
+        { "id": "picareta_diamante", "item_id": "minecraft:diamond_pickaxe", "amount": 1, "price_money": "4", "max_stock": 3, "restock": "daily" }
       ]
     },
     {
       "id": "cozinheira_taverna",
-      "display_name": "Cozinheira da Taverna",
+      "display_name": "Chef da Taverna",
       "title": "Taverna",
       "profession": "cozinheiro",
-      "greeting": "Tem ensopado no fogo e pão saindo do forno.",
+      "greeting": "Tem ensopado no fogo e pão saindo do forno. Sente-se.",
+      "dialogue": [
+        "Comida simples sai barata. Prato que dá força, esse tem preço de cozinha.",
+        "Se o cozinheiro da cidade estiver por perto, ele finaliza seu prato por menos."
+      ],
+      "fallback_radius": 64,
       "services": [
         {
           "name": "Finalizar Prato",
-          "description": "Segure até 16 alimentos frescos na mão principal.",
+          "description": "Lote de até 16 alimentos frescos na mão principal: qualidade de cozinheiro e conservação melhor.",
           "action_type": "finish_food",
-          "cost_item": "minecraft:honey_bottle",
-          "cost_amount": 1
+          "cost_money": "1,5"
         }
       ],
       "trades": [
-        {
-          "item_id": "minecraft:bread",
-          "amount": 6,
-          "price_money": "1",
-          "max_stock": 32,
-          "restock": "daily"
-        }
+        { "id": "pao", "item_id": "minecraft:bread", "amount": 16, "price_money": "0,2" },
+        { "id": "batata_assada", "item_id": "minecraft:baked_potato", "amount": 16, "price_money": "0,2" },
+        { "id": "bife", "item_id": "minecraft:cooked_beef", "amount": 16, "price_money": "0,4" },
+        { "id": "porco_assado", "item_id": "minecraft:cooked_porkchop", "amount": 16, "price_money": "0,4" },
+        { "id": "cenoura_dourada", "item_id": "minecraft:golden_carrot", "amount": 16, "price_money": "0,6" },
+        { "id": "sanduiche_ovo", "item_id": "farmersdelight:egg_sandwich", "amount": 1, "price_money": "0,5" },
+        { "id": "sanduiche_frango", "item_id": "farmersdelight:chicken_sandwich", "amount": 1, "price_money": "0,5" },
+        { "id": "wrap_carneiro", "item_id": "farmersdelight:mutton_wrap", "amount": 1, "price_money": "0,8" },
+        { "id": "hamburguer", "item_id": "farmersdelight:hamburger", "amount": 1, "price_money": "0,8" },
+        { "id": "ensopado_carne", "item_id": "farmersdelight:beef_stew", "amount": 1, "price_money": "1,2", "max_stock": 16, "restock": "daily" },
+        { "id": "sopa_legumes", "item_id": "farmersdelight:vegetable_soup", "amount": 1, "price_money": "1,2", "max_stock": 16, "restock": "daily" },
+        { "id": "canja", "item_id": "farmersdelight:chicken_soup", "amount": 1, "price_money": "1,2", "max_stock": 16, "restock": "daily" },
+        { "id": "bife_batatas", "item_id": "farmersdelight:steak_and_potatoes", "amount": 1, "price_money": "2,5", "max_stock": 8, "restock": "daily" },
+        { "id": "massa_almondegas", "item_id": "farmersdelight:pasta_with_meatballs", "amount": 1, "price_money": "2,5", "max_stock": 8, "restock": "daily" },
+        { "id": "torta_pastor", "item_id": "farmersdelight:shepherds_pie", "amount": 1, "price_money": "2,5", "max_stock": 8, "restock": "daily" },
+        { "id": "banquete_presunto", "item_id": "farmersdelight:honey_glazed_ham_block", "amount": 1, "price_money": "8", "max_stock": 2, "restock": "daily" },
+        { "id": "banquete_frango", "item_id": "farmersdelight:roast_chicken_block", "amount": 1, "price_money": "8", "max_stock": 2, "restock": "daily" }
       ]
     },
     {
@@ -119,9 +171,29 @@
       "display_name": "Arcanista da Torre",
       "title": "Torre Arcana",
       "profession": "arcanista",
-      "greeting": "Não toque nos frascos azuis.",
+      "greeting": "Não toque nos frascos azuis. Livros, poções ou uma inscrição?",
       "adm_dialogue": "",
+      "dialogue": [
+        "Segure o equipamento na mão principal e escolha a inscrição. Pago o pó, você paga o poder.",
+        "Livro comum na mão vira livro encantado — mas só um ferreiro aplica livro na bigorna.",
+        "Um arcanista da cidade por perto faz o mesmo trabalho por bem menos."
+      ],
+      "fallback_radius": 64,
       "services": [
+        { "name": "Afiação III", "description": "Encantamento médio para espadas e machados.", "action_type": "enchant", "enchantment": "minecraft:sharpness", "level": 3, "cost_money": "5" },
+        { "name": "Afiação V", "description": "Máximo comum. Acima do limite da mesa de quem não é arcanista.", "action_type": "enchant", "enchantment": "minecraft:sharpness", "level": 5, "cost_money": "14" },
+        { "name": "Proteção III", "description": "Encantamento médio para armaduras.", "action_type": "enchant", "enchantment": "minecraft:protection", "level": 3, "cost_money": "5" },
+        { "name": "Proteção IV", "description": "Máximo comum para armaduras.", "action_type": "enchant", "enchantment": "minecraft:protection", "level": 4, "cost_money": "14" },
+        { "name": "Eficiência III", "description": "Encantamento médio para ferramentas.", "action_type": "enchant", "enchantment": "minecraft:efficiency", "level": 3, "cost_money": "5" },
+        { "name": "Eficiência V", "description": "Máximo comum para ferramentas.", "action_type": "enchant", "enchantment": "minecraft:efficiency", "level": 5, "cost_money": "14" },
+        { "name": "Inquebrável III", "description": "Alto: sem Mending no servidor, durabilidade vale ouro.", "action_type": "enchant", "enchantment": "minecraft:unbreaking", "level": 3, "cost_money": "10" },
+        { "name": "Força III", "description": "Encantamento médio para arcos.", "action_type": "enchant", "enchantment": "minecraft:power", "level": 3, "cost_money": "5" },
+        { "name": "Queda Suave IV", "description": "Alto, para botas.", "action_type": "enchant", "enchantment": "minecraft:feather_falling", "level": 4, "cost_money": "10" },
+        { "name": "Fortuna III", "description": "Categoria Fortune/Looting/Silk Touch.", "action_type": "enchant", "enchantment": "minecraft:fortune", "level": 3, "cost_money": "18" },
+        { "name": "Toque de Seda", "description": "Categoria Fortune/Looting/Silk Touch.", "action_type": "enchant", "enchantment": "minecraft:silk_touch", "level": 1, "cost_money": "18" },
+        { "name": "Saque III", "description": "Categoria Fortune/Looting/Silk Touch.", "action_type": "enchant", "enchantment": "minecraft:looting", "level": 3, "cost_money": "18" },
+        { "name": "Concentrar Poção", "description": "Segure uma poção: versão mais forte (efeito da glowstone).", "action_type": "potion_strength", "cost_money": "4" },
+        { "name": "Prolongar Poção", "description": "Segure uma poção: versão mais longa (efeito da redstone).", "action_type": "potion_duration", "cost_money": "4" },
         {
           "name": "Bênção da Visão",
           "description": "Visão noturna por 10 minutos.",
@@ -130,49 +202,65 @@
             "effect give {player} minecraft:night_vision 600 0 true",
             "particle minecraft:enchant {x} {y} {z} 0.5 1 0.5 0.5 60"
           ],
-          "cost_item": "minecraft:lapis_lazuli",
-          "cost_amount": 4,
+          "cost_money": "2,5",
           "cooldown_seconds": 600
         }
       ],
       "trades": [
-        {
-          "item_id": "minecraft:potion",
-          "components": "[potion_contents={potion:\"minecraft:healing\"}]",
-          "amount": 1,
-          "price_item": "minecraft:emerald",
-          "price_amount": 2,
-          "max_stock": 10,
-          "restock": "daily"
-        }
+        { "id": "pocao_cura_forte", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:strong_healing\"}]", "amount": 1, "price_money": "4", "max_stock": 8, "restock": "daily" },
+        { "id": "pocao_regeneracao_forte", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:strong_regeneration\"}]", "amount": 1, "price_money": "7", "max_stock": 4, "restock": "daily" },
+        { "id": "pocao_regeneracao_longa", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:long_regeneration\"}]", "amount": 1, "price_money": "7", "max_stock": 4, "restock": "daily" },
+        { "id": "pocao_forca_forte", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:strong_strength\"}]", "amount": 1, "price_money": "4", "max_stock": 6, "restock": "daily" },
+        { "id": "pocao_forca_longa", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:long_strength\"}]", "amount": 1, "price_money": "4", "max_stock": 6, "restock": "daily" },
+        { "id": "pocao_velocidade_forte", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:strong_swiftness\"}]", "amount": 1, "price_money": "4", "max_stock": 6, "restock": "daily" },
+        { "id": "pocao_resistencia_fogo_longa", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:long_fire_resistance\"}]", "amount": 1, "price_money": "3", "max_stock": 8, "restock": "daily" },
+        { "id": "pocao_respiracao_longa", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:long_water_breathing\"}]", "amount": 1, "price_money": "3", "max_stock": 8, "restock": "daily" },
+        { "id": "pocao_queda_lenta_longa", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:long_slow_falling\"}]", "amount": 1, "price_money": "3", "max_stock": 8, "restock": "daily" },
+        { "id": "pocao_visao_noturna_longa", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:long_night_vision\"}]", "amount": 1, "price_money": "1,5", "max_stock": 10, "restock": "daily" },
+        { "id": "pocao_mestre_tartaruga", "item_id": "minecraft:potion", "components": "[potion_contents={potion:\"minecraft:strong_turtle_master\"}]", "amount": 1, "price_money": "12", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_afiacao_v", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:sharpness\":5}}]", "amount": 1, "price_money": "14", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_protecao_iv", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:protection\":4}}]", "amount": 1, "price_money": "14", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_eficiencia_v", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:efficiency\":5}}]", "amount": 1, "price_money": "14", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_inquebravel_iii", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:unbreaking\":3}}]", "amount": 1, "price_money": "10", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_forca_v", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:power\":5}}]", "amount": 1, "price_money": "14", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_queda_suave_iv", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:feather_falling\":4}}]", "amount": 1, "price_money": "10", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_respiracao_iii", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:respiration\":3}}]", "amount": 1, "price_money": "10", "max_stock": 2, "restock": "daily" },
+        { "id": "livro_fortuna_iii", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:fortune\":3}}]", "amount": 1, "price_money": "18", "max_stock": 1, "restock": "daily" },
+        { "id": "livro_saque_iii", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:looting\":3}}]", "amount": 1, "price_money": "18", "max_stock": 1, "restock": "daily" },
+        { "id": "livro_toque_seda", "item_id": "minecraft:enchanted_book", "components": "[stored_enchantments={levels:{\"minecraft:silk_touch\":1}}]", "amount": 1, "price_money": "18", "max_stock": 1, "restock": "daily" },
+        { "id": "lapis", "item_id": "minecraft:lapis_lazuli", "amount": 64, "price_money": "0,6" },
+        { "id": "redstone", "item_id": "minecraft:redstone", "amount": 64, "price_money": "0,5" },
+        { "id": "glowstone", "item_id": "minecraft:glowstone_dust", "amount": 64, "price_money": "0,6" },
+        { "id": "livros", "item_id": "minecraft:book", "amount": 16, "price_money": "0,3" },
+        { "id": "vara_blaze", "item_id": "minecraft:blaze_rod", "amount": 16, "price_money": "0,8" },
+        { "id": "perola_ender", "item_id": "minecraft:ender_pearl", "amount": 16, "price_money": "0,8" }
       ]
     },
     {
       "id": "mercador_geral",
-      "display_name": "Mercador Geral",
+      "display_name": "Mercador do Empório",
       "title": "Empório",
       "profession": "mercador",
-      "greeting": "De tudo um pouco, pelo preço justo.",
+      "greeting": "De tudo um pouco, em lote e pelo preço da Academia.",
       "dialogue": [
-        "As caravanas chegam toda manhã. O estoque renova de dia em dia."
+        "Eu vendo, não compro. Quem quer converter estoque em óbolos procura outro jogador ou uma ordem pública.",
+        "Lote grande, preço pequeno: o que a farm produz aos milhares vale pouco por unidade."
       ],
       "trades": [
-        {
-          "item_id": "minecraft:torch",
-          "amount": 16,
-          "price_money": "0,5",
-          "max_stock": -1
-        },
-        {
-          "id": "pergaminho_marcado",
-          "item_id": "minecraft:paper",
-          "amount": 1,
-          "nbt_data": "{aurorion_pergaminho:1b}",
-          "price_item": "minecraft:emerald",
-          "price_amount": 1,
-          "max_stock": 10,
-          "restock": "daily"
-        }
+        { "id": "pedra", "item_id": "minecraft:cobblestone", "amount": 512, "price_money": "0,2" },
+        { "id": "madeira", "item_id": "minecraft:oak_log", "amount": 256, "price_money": "0,2" },
+        { "id": "terra", "item_id": "minecraft:dirt", "amount": 512, "price_money": "0,2" },
+        { "id": "areia", "item_id": "minecraft:sand", "amount": 512, "price_money": "0,2" },
+        { "id": "trigo", "item_id": "minecraft:wheat", "amount": 256, "price_money": "0,2" },
+        { "id": "vidro", "item_id": "minecraft:glass", "amount": 128, "price_money": "0,3" },
+        { "id": "tijolos", "item_id": "minecraft:bricks", "amount": 128, "price_money": "0,3" },
+        { "id": "tochas", "item_id": "minecraft:torch", "amount": 64, "price_money": "0,2" },
+        { "id": "flechas", "item_id": "minecraft:arrow", "amount": 64, "price_money": "0,3" },
+        { "id": "couro", "item_id": "minecraft:leather", "amount": 32, "price_money": "0,5" },
+        { "id": "linha", "item_id": "minecraft:string", "amount": 64, "price_money": "0,3" },
+        { "id": "polvora", "item_id": "minecraft:gunpowder", "amount": 64, "price_money": "0,6" },
+        { "id": "papel", "item_id": "minecraft:paper", "amount": 64, "price_money": "0,3" },
+        { "id": "agua_purificada", "item_id": "legendarysurvivaloverhaul:purified_water_bottle", "amount": 4, "price_money": "0,3" }
       ]
     }
   ]

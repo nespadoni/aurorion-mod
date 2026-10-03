@@ -1,0 +1,300 @@
+/* NPCs de ofício do Aurorion — fundo escuro, marfim e dourado, com a cor de cada ofício no destaque.
+   Só propriedades que o TesseraUI 1.1 entende (as mesmas do diario.css): cores, bordas,
+   border-radius, flex, padding/gap, width/height, fonte, opacity, transition e @keyframes.
+   Cada elemento usa UMA classe; variações por ofício são classes próprias (kicker-ferreiro…). */
+
+:root {
+    --bg: rgba(12, 10, 16, 0.95);
+    --bg-soft: rgba(28, 23, 34, 0.92);
+    --bg-row: rgba(36, 30, 44, 0.78);
+    --bg-hover: rgba(58, 47, 70, 0.95);
+    --line: rgba(215, 168, 87, 0.28);
+    --gold: #d7a857;
+    --gold-hi: #ffe9a7;
+    --ink: #f3ead8;
+    --soft: #c9bfae;
+    --faint: #8f8676;
+    --ok: #7ee2a0;
+    --warn: #f6b85a;
+    --bad: #f28b82;
+    --medico: #6fd3b8;
+    --ferreiro: #ef8f52;
+    --cozinheiro: #f2c46d;
+    --arcanista: #b48cff;
+    --corretor: #8ab4f8;
+    --mercador: #d7a857;
+}
+
+/* ── Moldura (a cor da borda é a do ofício) ─────────────────────────────── */
+
+.frame-medico, .frame-ferreiro, .frame-cozinheiro, .frame-arcanista, .frame-corretor, .frame-mercador {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    animation: chegar 380ms ease-out 1;
+}
+
+.frame-medico { border-color: rgba(111, 211, 184, 0.45); }
+.frame-ferreiro { border-color: rgba(239, 143, 82, 0.45); }
+.frame-cozinheiro { border-color: rgba(242, 196, 109, 0.45); }
+.frame-arcanista { border-color: rgba(180, 140, 255, 0.45); }
+.frame-corretor { border-color: rgba(138, 180, 248, 0.45); }
+.frame-mercador { border-color: rgba(215, 168, 87, 0.45); }
+
+@keyframes chegar {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+
+/* ── Cabeçalho ──────────────────────────────────────────────────────────── */
+
+.head {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+}
+
+/* Painel transparente que só posiciona um texto do cabeçalho. */
+.cell {
+    background: transparent;
+    padding: 0;
+}
+
+.kicker-medico, .kicker-ferreiro, .kicker-cozinheiro, .kicker-arcanista, .kicker-corretor, .kicker-mercador {
+    font-size: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.kicker-medico { color: var(--medico); }
+.kicker-ferreiro { color: var(--ferreiro); }
+.kicker-cozinheiro { color: var(--cozinheiro); }
+.kicker-arcanista { color: var(--arcanista); }
+.kicker-corretor { color: var(--corretor); }
+.kicker-mercador { color: var(--mercador); }
+
+.name {
+    color: var(--gold-hi);
+    font-family: default;
+    font-size: 10px;
+}
+
+.saldo {
+    align-items: center;
+    justify-content: center;
+    background: rgba(215, 168, 87, 0.10);
+    border: 1px solid rgba(215, 168, 87, 0.35);
+    border-radius: 6px;
+}
+
+.saldo-t {
+    color: var(--gold);
+    font-size: 7px;
+}
+
+.greet {
+    color: var(--soft);
+    font-size: 7px;
+    text-align: left;
+}
+
+.spacer { flex: 1; }
+
+/* ── Abas ───────────────────────────────────────────────────────────────── */
+
+.tabs {
+    gap: 4px;
+    align-items: center;
+}
+
+.tab {
+    background: var(--bg-soft);
+    color: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-size: 7px;
+    text-transform: uppercase;
+    transition: background 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.tab:hover {
+    background: var(--bg-hover);
+    color: var(--ink);
+    border-color: var(--gold);
+}
+
+.tab-on-medico, .tab-on-ferreiro, .tab-on-cozinheiro, .tab-on-arcanista, .tab-on-corretor, .tab-on-mercador {
+    color: #16110b;
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-size: 7px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.tab-on-medico { background: var(--medico); }
+.tab-on-ferreiro { background: var(--ferreiro); }
+.tab-on-cozinheiro { background: var(--cozinheiro); }
+.tab-on-arcanista { background: var(--arcanista); }
+.tab-on-corretor { background: var(--corretor); }
+.tab-on-mercador { background: var(--mercador); }
+
+/* ── Linhas da loja e dos serviços ──────────────────────────────────────── */
+
+.slot {
+    background: rgba(6, 5, 9, 0.85);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+}
+
+.row {
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px;
+    background: var(--bg-row);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition: background 140ms ease-out, border-color 140ms ease-out;
+}
+
+.row:hover {
+    background: var(--bg-hover);
+    border-color: var(--line);
+}
+
+.txt {
+    flex: 1;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.t {
+    color: var(--ink);
+    font-size: 8px;
+    text-align: left;
+}
+
+.d {
+    color: var(--faint);
+    font-size: 6px;
+    text-align: left;
+}
+
+.price {
+    color: var(--gold);
+    font-size: 7px;
+    text-align: left;
+}
+
+.why {
+    color: var(--warn);
+    font-size: 7px;
+    text-align: left;
+}
+
+.field {
+    width: 120px;
+    background: rgba(6, 5, 9, 0.9);
+    color: var(--gold-hi);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 5px;
+    font-size: 7px;
+    transition: border-color 150ms ease-out;
+}
+
+.field:focus {
+    border-color: var(--gold);
+}
+
+.buy {
+    width: 64px;
+    background: var(--gold);
+    color: #16110b;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 7px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 150ms ease-out;
+}
+
+.buy:hover {
+    background: var(--gold-hi);
+}
+
+.buy-off {
+    width: 64px;
+    background: rgba(60, 54, 48, 0.6);
+    color: var(--faint);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 7px;
+    text-transform: uppercase;
+}
+
+/* ── Conversa ───────────────────────────────────────────────────────────── */
+
+.talk {
+    flex-direction: column;
+    gap: 1px;
+    padding: 5px 8px;
+    background: var(--bg-row);
+    border-radius: 4px;
+}
+
+.line {
+    color: var(--ink);
+    font-size: 7px;
+    text-align: left;
+}
+
+.empty {
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+}
+
+/* ── Rodapé ─────────────────────────────────────────────────────────────── */
+
+.foot {
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+}
+
+.hint { color: var(--faint); font-size: 6px; text-align: left; }
+.notice-ok { color: var(--ok); font-size: 7px; text-align: left; }
+.notice-err { color: var(--bad); font-size: 7px; text-align: left; }
+
+.page {
+    background: var(--bg-row);
+    color: var(--soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 7px;
+}
+
+.page:hover { background: var(--bg-hover); color: var(--ink); }
+.page-label { color: var(--faint); font-size: 6px; }
+
+.btn {
+    background: var(--bg-row);
+    color: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 7px;
+    text-transform: uppercase;
+    transition: background 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.btn:hover {
+    background: var(--bg-hover);
+    color: var(--ink);
+    border-color: var(--gold);
+}

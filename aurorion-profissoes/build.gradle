@@ -11,9 +11,17 @@ neoForge {
     }
 }
 
+// O TesseraUI vem da pasta de referencia, como no aurorion-diario: o que compila e o que roda no
+// pack sao o mesmo arquivo. Outro caminho com -PtesseraUiJar=C:/caminho/tesseraui.jar.
+def referencia = { String propriedade, String arquivo ->
+    files(providers.gradleProperty(propriedade).orElse("$rootDir/mod-servidor-referencia/$arquivo").get())
+}
+
 // Jars opcionais somente para validar o pack local, sem embutir dependencias no artefato.
 dependencies {
     implementation project(':aurorion-economia').sourceSets.main.output
+    // A tela dos NPCs e HTML/CSS do Tessera: runtime exclusivo dos runs de cliente.
+    clientModLibraries referencia('tesseraUiJar', 'tesseraui-1.1.jar')
     ['lsoJar', 'qualityFoodJar', 'foodSpoilJar'].each { key ->
         if (providers.gradleProperty(key).isPresent()) {
             runtimeOnly files(providers.gradleProperty(key).get())

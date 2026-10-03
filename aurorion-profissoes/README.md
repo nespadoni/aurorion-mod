@@ -183,13 +183,52 @@ sem `AURORION_QUALITY_FOOD_JAR`.
 
 ## NPCs de ofício
 
-NPCs que cobrem o atendimento **quando não há um profissional jogador por perto**. Configurados
-inteiramente no servidor, em `config/aurorion/npcs.json` — sem rebuild. Na primeira subida sem o
-arquivo, o exemplo embutido (médico, ferreiro, cozinheira, arcanista e mercador geral) é copiado.
+NPCs que cobrem o atendimento **quando não há um profissional jogador por perto**.
 
-Clique direito no NPC abre a tela do ofício: **Comprar itens**, **Serviços e cuidados** e
-**Conversar**. O cliente só desenha; preço, estoque, saldo, distância (8 blocos) e regras são
-conferidos de novo no servidor a cada escolha.
+**O catálogo mora no mod** (`aurorion_profissoes/npcs.default.json`, dentro do jar): enfermeira,
+ferreira, chef, arcanista e mercador, com skins, serviços, lojas e preços da Economia do Ato 2.
+**Atualizar o jar atualiza os NPCs** — nada fica congelado na config do servidor.
+
+Ajustes do servidor vão em `config/aurorion/npcs_extras.json` (criado vazio), mesmo formato, aplicados
+com `/npc recarregar` sem rebuild. NPC com **id novo** é acrescentado; com o **id de um NPC do mod**,
+substitui aquele NPC inteiro. `/npc exemplo exportar` grava uma cópia do catálogo do mod em
+`config/aurorion/npcs_exemplo.json` para consulta (essa cópia não é carregada).
+
+O `npcs.json` das versões até a 0.4.x é **aposentado** na primeira leitura: vira
+`npcs.json.antigo-<data>` e deixa de valer, com aviso no log e em `/npc listar`. Se havia algo
+editado à mão nele, copie o NPC para o `npcs_extras.json`.
+
+**Esmeralda não é moeda em Aurorion.** `price_item`/`cost_item` com `minecraft:emerald` é recusado
+no carregamento (a oferta ou o serviço some e o aviso aparece em `/npc listar`). Preço é em
+óbolos/fragmentos (`_money`); `_item` fica para material de verdade.
+
+Clique direito no NPC abre a tela do ofício, em HTML/CSS do **TesseraUI** (`assets/aurorion_profissoes/ui/npc.css`):
+cabeçalho com nome, saldo da carteira e saudação; abas **Loja**, **Serviços** e **Conversar**; o item
+real desenhado em cada oferta (com encantamento/poção e tooltip); paginação pela roda do mouse ou
+pelo rodapé. A cor de destaque segue o ofício. O cliente só desenha; preço, estoque, saldo, distância
+(8 blocos) e regras são conferidos de novo no servidor a cada escolha. O TesseraUI é exigido **só no
+cliente**; o servidor nunca carrega classe dele.
+
+### Preços: Economia do Ato 2
+
+O exemplo segue o *Manual Operacional V3* da economia:
+
+- **Serviços** custam cerca de **2,5×** o preço de referência do profissional jogador (regra do “NPC
+  de emergência”), e são bloqueados quando há um jogador do ofício por perto (ver Plantão).
+- **Itens** seguem a coluna **“NPC vende”** da tabela-base, no lote da tabela (ex.: 512 pedras por
+  2 F, 64 ferros por 1 O 2 F). Item sem linha na tabela foi classificado pela tabela de classes.
+- O pagamento sai da carteira e **é destruído** (100% burn, como o manual manda para NPC
+  emergencial). NPC **não compra** nada.
+
+| Serviço | Referência do jogador | NPC |
+|---|---:|---:|
+| Curativo / ferimento moderado | 3–8 F | 1 O / 2 O |
+| Lesão grave / trauma crítico | 2–6 O | 6 O / 12 O |
+| Reparo leve / médio / pesado / quase destruído | 5 F / 1 O / 2 O / 3 O | 1,3 / 2,5 / 5 / 7,5 O |
+| Encantamento médio / alto / máximo comum | 2 / 4 / 5–6 O | 5 / 10 / 14 O |
+| Fortune, Looting, Silk Touch | 6–8 O | 18 O |
+| Concentrar ou prolongar poção | 1,5–2 O | 4 O |
+| Etiqueta com nome | — | 2 O |
 
 ### Comandos da staff (nível 2)
 
@@ -197,15 +236,16 @@ conferidos de novo no servidor a cada escolha.
 /npc criar <id>           invoca o NPC na sua posição, olhando para onde você olha
 /npc definir <id>         troca o id do NPC mais próximo (até 4 blocos)
 /npc skin <textura> [wide|slim]  troca a skin do NPC mais próximo e salva no mundo
-/npc skin padrao          volta a usar skin e modelo definidos no npcs.json
+/npc skin padrao          volta à skin do ofício (ou à do catálogo, se ele definir uma)
 /npc remover              remove o NPC mais próximo (até 4 blocos); /kill também funciona
 /npc listar               ids carregados e avisos do arquivo
 /npc recarregar           relê o JSON e atualiza nome/skin dos NPCs carregados
 /npc estoque <id> repor   repõe o estoque das ofertas limitadas
+/npc exemplo exportar     grava o catálogo do mod em config/aurorion/npcs_exemplo.json, só para consulta
 ```
 
-A entidade guarda o `id` e, opcionalmente, uma skin escolhida in-game. Nome, skin padrão, serviços
-e loja vêm do JSON. Editar e recarregar muda todos os corpos daquele id, exceto a skin dos corpos
+A entidade guarda o `id` e, opcionalmente, uma skin escolhida in-game. Nome, serviços e loja vêm do
+JSON; a skin vem do ofício, embutida no mod. Editar e recarregar muda todos os corpos daquele id, exceto a skin dos corpos
 com override. Um JSON que nem é JSON **não** derruba os NPCs já carregados.
 
 ### Plantão: o NPC não concorre com jogadores
@@ -266,8 +306,10 @@ A loja continua aberta, a menos que `fallback_blocks_trades` seja `true`. Mercad
 | Campo | Observação |
 |---|---|
 | `profession` | `medico`, `ferreiro`, `cozinheiro`, `arcanista`, `corretor`, `mercador`/`nenhuma`. Aceita `doctor`, `blacksmith`, `chef`, `arcanist`, `alquimista`, `merchant`. |
-| `skin` | Textura 64×64 de resource pack. Vazio: Steve/Alex. Caminho inexistente aparece como textura faltando. |
-| `action_type` | `command`, `heal`, `repair`, `finish_food`. Sem o campo: `command` se houver comando. |
+| `skin` | **Opcional.** Sem ele, o NPC usa a skin embutida do ofício (`NpcSkins`): médico → enfermeira, ferreiro → ferreira (ambas de braço fino), cozinheiro → chef, arcanista → arcanista, mercador/corretor → mercador. Só preencha para trocar: textura 64×64 de resource pack; caminho inexistente aparece como textura faltando. `slim_skin` só vale junto com `skin`. |
+| `action_type` | `command`, `heal`, `repair`, `finish_food`, `enchant`, `potion_strength`, `potion_duration`, `name_tag`. Sem o campo: `command` se houver comando. |
+| `tier` | Só em `heal` e `repair`: a faixa que o serviço atende — `leve`, `medio`/`moderado`, `pesado`/`grave`, `critico`/`quase_destruido` (ou 1–4). Sem o campo: qualquer faixa. |
+| `enchantment` / `level` | Só em `enchant`: id do encantamento e nível aplicado. Mending é recusado; nível acima de `specialistEnchantmentMaxLevel` também. |
 | `command` / `commands` | Um texto ou lista (até 8); `/` inicial opcional. Rodam em qualquer tipo de ação. |
 | `cost_*` / `price_*` | `_item` (+ `_amount`, padrão 1) e/ou `_money` em óbolos da Economia (`"12"`, `"2,5"`). Nada: gratuito. `price_item_id` também é aceito. |
 | `max_stock` | Ou `stock_limit`. `-1` (padrão) = infinito. Estoque do NPC, compartilhado entre jogadores. |
@@ -279,9 +321,21 @@ A loja continua aberta, a menos que `fallback_blocks_trades` seja `true`. Mercad
 **Ações nativas**
 
 - `heal`: vida cheia e, com o LSO, todas as partes do corpo tratadas (inclusive lesão grave).
-  Recusa se o jogador já está saudável — ninguém paga por nada.
-- `repair`: durabilidade total do equipamento na mão principal.
+  Recusa se o jogador já está saudável — ninguém paga por nada. Com `tier`, só atende aquela
+  gravidade: **leve** (vida e membros acima de 50%), **moderado** (algo abaixo de 50%, sem lesão
+  grave), **grave** (uma lesão grave do LSO ou membro abaixo de 25%), **crítico** (duas lesões graves,
+  ou uma com a vida em 25% ou menos). A tela diz qual faixa é a do paciente.
+- `repair`: durabilidade total do equipamento na mão principal, encantamentos preservados. Com
+  `tier`, só atende aquele desgaste: até 25%, 50%, 75% ou acima.
 - `finish_food`: o mesmo acabamento do cozinheiro (Quality Food), com as mesmas exigências de lote.
+- `enchant`: aplica `enchantment` no nível `level` ao item da mão principal, com as regras da
+  inscrição do arcanista (compatível com o item e com os encantamentos que ele já tem). Livro comum
+  vira livro encantado. Não rebaixa: se o item já tem o nível, recusa.
+- `potion_strength` / `potion_duration`: o efeito da glowstone/redstone na poção da mão principal,
+  pelas receitas reais do jogo, sem precisar do catalisador.
+- `name_tag`: a tela mostra um campo de texto; o jogador digita o nome e recebe uma **etiqueta já
+  gravada**. Mesmo filtro da bigorna (sem `§`, até 50 caracteres), conferido de novo no servidor;
+  o nome sai no log. Enter no campo também grava.
 
 **Comandos** rodam como o servidor (nível 4), posicionados no jogador e com ele como executor:
 `@s` e `@p` apontam para quem pagou. Marcadores: `{player}`, `{uuid}`, `{npc}`, `{x}`, `{y}`, `{z}`. Como os comandos rodam com permissão 4, `{player}` só entra cru se o nome for de conta Mojang (`[A-Za-z0-9_]`, até 16); qualquer outro nome (possível em offline-mode, como `@a`) vira o UUID, para não virar seletor.
@@ -335,7 +389,9 @@ num raio limitado e sem carregar chunks.
 .\gradlew.bat buildAll
 ```
 
-JAR instalável em `../build/jars-servidor/aurorion_profissoes-neoforge-1.21.1-0.1.0.jar`.
+JAR instalável em `../build/jars-servidor/aurorion_profissoes-neoforge-1.21.1-0.5.0.jar`.
+A partir da 0.5.0 o protocolo de rede é o `"3"`: cliente e servidor precisam da mesma versão, e o
+cliente precisa do `tesseraui-1.1.jar` (já exigido pelo diário).
 JUnit cobre persistência, primeira ajuda e sessões. GameTests usam jogadores simulados,
 menus vanilla e os mods reais para conferir aceite, repetição, troca de item, distância,
 materiais/XP, Mending, ferimentos, poções e produção/conservação de comida.

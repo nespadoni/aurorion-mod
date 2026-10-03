@@ -7,9 +7,11 @@ import com.google.gson.*;
 import net.minecraft.resources.ResourceLocation;
 import java.util.*;
 import java.util.regex.Pattern;
+import static com.aurorion.profissoes.npc.NpcDefinition.TIER_ANY;
+import static com.aurorion.profissoes.npc.NpcDefinition.TIER_MAX;
 
 /**
- * Le o {@code npcs.json} da staff.
+ * Le um catalogo de NPCs: o embutido no mod ou o {@code npcs_extras.json} da staff.
  *
  * <p>Arquivo escrito a mao erra, entao o erro fica <b>no menor pedaco possivel</b>: uma oferta
  * quebrada some sozinha, um servico quebrado some sozinho, e so um NPC sem {@code id} valido e
@@ -113,8 +115,46 @@ public final class NpcConfigParser {
         var action = action(type, path + ".action_type");
         if (action == ActionType.COMMAND && commands.isEmpty())
             throw new Invalid(path + ": action_type \"command\" exige \"command\" ou \"commands\".");
+
+        var tierValue = first(json, "tier", "faixa", "gravidade", "dano");
+        int tier = tierValue == null ? TIER_ANY : tier(tierValue, path + "." + keyOf(json, "tier", "faixa", "gravidade", "dano"));
+        if (tier != TIER_ANY && !action.tiered())
+            throw new Invalid(path + ".tier: só vale para action_type \"heal\" e \"repair\".");
+
+        String enchantment = "";
+        int level = 0;
+        if (action == ActionType.ENCHANT) {
+            enchantment = text(json, path, "", "enchantment", "encantamento");
+            if (enchantment.isEmpty() || ResourceLocation.tryParse(enchantment) == null)
+                throw new Invalid(path + ".enchantment: obrigatório em \"enchant\" (ex.: \"minecraft:sharpness\").");
+            if (ResourceLocation.parse(enchantment).equals(ResourceLocation.withDefaultNamespace("mending")))
+                throw new Invalid(path + ".enchantment: Mending é reservado a equipamentos autorizados pela staff.");
+            level = integer(json, path, 1, 1, 255, "level", "nivel");
+        }
         return new Service(name, text(json, path, "", "description", "descricao"), action, commands,
-                cost(json, path, "cost"), integer(json, path, 0, 0, 7 * 24 * 3600, "cooldown_seconds"));
+                cost(json, path, "cost"), integer(json, path, 0, 0, 7 * 24 * 3600, "cooldown_seconds"),
+                tier, enchantment, level);
+    }
+
+    /** 1 a 4, ou o nome da faixa: leve, medio/moderado, pesado/grave, critico/quase_destruido. */
+    private static int tier(JsonElement value, String path) {
+        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
+            double number = value.getAsDouble();
+            if (number != Math.rint(number) || number < TIER_ANY || number > TIER_MAX)
+                throw new Invalid(path + ": use um número de 0 a " + TIER_MAX + " ou o nome da faixa.");
+            return (int) number;
+        }
+        if (!value.isJsonPrimitive()) throw new Invalid(path + ": esperado texto ou número.");
+        return switch (value.getAsString().trim().toLowerCase(Locale.ROOT)) {
+            case "", "qualquer", "any" -> TIER_ANY;
+            case "leve", "light", "minor" -> 1;
+            case "medio", "médio", "moderado", "moderada", "medium", "moderate" -> 2;
+            case "pesado", "pesada", "grave", "heavy", "severe" -> 3;
+            case "critico", "crítico", "critica", "crítica", "trauma", "quase_destruido", "quase destruído",
+                 "quase_destruído", "destruido", "destruído", "critical" -> 4;
+            default -> throw new Invalid(path + ": \"" + value.getAsString()
+                    + "\" desconhecido (leve, medio/moderado, pesado/grave, critico/quase_destruido).");
+        };
     }
 
     private static Trade trade(JsonObject json, String path, int index) {
@@ -140,6 +180,9 @@ public final class NpcConfigParser {
         if (!item.isEmpty() && ResourceLocation.tryParse(item) == null)
             throw new Invalid(path + "." + prefix + "_item: \"" + item + "\" não é um id válido.");
         if (item.isEmpty() && amount > 0) throw new Invalid(path + "." + prefix + "_amount: informe também " + prefix + "_item.");
+        // Economia do Ato 2: a moeda é o óbolo. Esmeralda de aldeão não compra nada em Aurorion.
+        if (!item.isEmpty() && amount > 0 && ResourceLocation.parse(item).equals(ResourceLocation.withDefaultNamespace("emerald")))
+            throw new Invalid(path + "." + prefix + "_item: esmeralda não é moeda em Aurorion; use " + prefix + "_money (óbolos).");
         String moneyText = text(json, path, "", prefix + "_money");
         long money = 0;
         if (!moneyText.isEmpty() && !moneyText.equals("0")) {
@@ -170,7 +213,12 @@ public final class NpcConfigParser {
             case "heal", "cura", "curar" -> ActionType.HEAL;
             case "repair", "reparo", "reparar" -> ActionType.REPAIR;
             case "finish_food", "finalizar_prato" -> ActionType.FINISH_FOOD;
-            default -> throw new Invalid(path + ": \"" + value + "\" desconhecido (command, heal, repair, finish_food).");
+            case "enchant", "encantar", "encantamento" -> ActionType.ENCHANT;
+            case "potion_strength", "concentrar_pocao", "concentrar_poção" -> ActionType.POTION_STRENGTH;
+            case "potion_duration", "prolongar_pocao", "prolongar_poção" -> ActionType.POTION_DURATION;
+            case "name_tag", "nametag", "etiqueta", "etiqueta_nome" -> ActionType.NAME_TAG;
+            default -> throw new Invalid(path + ": \"" + value + "\" desconhecido (command, heal, repair, finish_food, "
+                    + "enchant, potion_strength, potion_duration, name_tag).");
         };
     }
 

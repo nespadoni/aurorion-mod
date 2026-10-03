@@ -38,6 +38,14 @@ versionRange = "[0.1.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
+# A tela dos NPCs de ofício é HTML/CSS do TesseraUI. Só o cliente desenha; o servidor nunca carrega classe dele.
+[[dependencies.${mod_id}]]
+modId = "tesseraui"
+type = "required"
+versionRange = "[1.1,)"
+ordering = "AFTER"
+side = "CLIENT"
+
 [[mixins]]
 config = "aurorion_profissoes.mixins.json"
 

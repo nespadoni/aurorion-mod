@@ -93,8 +93,11 @@ public class ProfessionNpcEntity extends PathfinderMob {
         } else {
             var definition = loaded.definition();
             setCustomName(Component.literal(definition.displayName()));
-            entityData.set(SKIN, hasSkinOverride ? skinOverride : definition.skin());
-            entityData.set(SLIM, hasSkinOverride ? slimOverride : definition.slimSkin());
+            // Sem "skin" no JSON vale a skin embutida do oficio, com o modelo (largo/fino) dela.
+            boolean custom = !definition.skin().isEmpty();
+            var builtIn = NpcSkins.of(definition.profession());
+            entityData.set(SKIN, hasSkinOverride ? skinOverride : custom ? definition.skin() : builtIn.texture());
+            entityData.set(SLIM, hasSkinOverride ? slimOverride : custom ? definition.slimSkin() : builtIn.slim());
         }
         setCustomNameVisible(true);
     }

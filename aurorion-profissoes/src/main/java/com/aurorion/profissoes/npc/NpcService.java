@@ -17,16 +17,25 @@ import com.aurorion.profissoes.npc.NpcDefinition.ActionType;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringUtil;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import java.time.LocalDate;
 import java.util.regex.Pattern;
 import java.util.*;
+import static com.aurorion.profissoes.npc.NpcDefinition.TIER_ANY;
+import static com.aurorion.profissoes.npc.NpcDefinition.tierLabel;
 
 /**
  * Atendimento dos NPCs de oficio.
@@ -106,7 +115,7 @@ public final class NpcService {
             return;
         }
         switch (payload.kind()) {
-            case NpcActionPayload.SERVICE -> show(player, npc, tab, service(player, npc, loaded, payload.index(), now));
+            case NpcActionPayload.SERVICE -> show(player, npc, tab, service(player, npc, loaded, payload.index(), now, payload.text()));
             case NpcActionPayload.TRADE -> show(player, npc, tab, trade(player, npc, loaded, payload.index()));
             case NpcActionPayload.TALK -> {
                 if (AdmDialogues.open(player, npc, loaded.definition().admDialogue())) SESSIONS.remove(player.getUUID());
@@ -122,7 +131,7 @@ public final class NpcService {
         if (!player.connection.hasChannel(NpcScreenPayload.TYPE.id())) return;
         var loaded = NpcCatalog.get(npc.npcId());
         if (loaded == null) {
-            player.displayClientMessage(Component.literal("Este NPC não está configurado em config/aurorion/npcs.json."), true);
+            player.displayClientMessage(Component.literal("Este NPC não existe no catálogo (/npc listar mostra os ids)."), true);
             return;
         }
         var definition = loaded.definition();
@@ -137,8 +146,9 @@ public final class NpcService {
                 try { checkService(player, definition, entry, i, now); }
                 catch (Refusal refusal) { reason = refusal.getMessage(); }
             }
+            String input = entry.service().action() == ActionType.NAME_TAG ? "Nome gravado na etiqueta" : "";
             services.add(new NpcScreenPayload.ServiceRow(clip(entry.service().name(), 128), clip(entry.service().description(), 512),
-                    clip(describe(entry.cost()), 256), reason == null, clip(reason == null ? "" : reason, 512)));
+                    clip(describe(entry.cost()), 256), reason == null, clip(reason == null ? "" : reason, 512), input));
         }
 
         var trades = new ArrayList<NpcScreenPayload.TradeRow>();
@@ -163,25 +173,38 @@ public final class NpcService {
 
         UUID token = UUID.randomUUID();
         SESSIONS.put(player.getUUID(), new Session(token, npc.getUUID(), definition.id(), NpcCatalog.version(), now + SESSION_MILLIS));
+        String balance = "Saldo: " + Money.describe(Wallet.balance(player.server, player.getUUID()));
         PacketDistributor.sendToPlayer(player, new NpcScreenPayload(token, clip(definition.displayName(), 128),
-                clip(eyebrow.toUpperCase(Locale.ROOT), 128), clip(greeting, 512),
+                clip(eyebrow.toUpperCase(Locale.ROOT), 128), definition.profession().id(), clip(greeting, 512), clip(balance, 128),
                 outcome == null ? "" : clip(outcome.message, 512), outcome != null && outcome.error, tab, adm,
                 services, trades, dialogue));
     }
 
     // --- servicos ------------------------------------------------------------------------------
 
-    private static Outcome service(ServerPlayer player, ProfessionNpcEntity npc, LoadedNpc loaded, int index, long now) {
+    private static Outcome service(ServerPlayer player, ProfessionNpcEntity npc, LoadedNpc loaded, int index, long now, String text) {
         if (index < 0 || index >= loaded.services().size()) return Outcome.fail("Serviço inválido.");
         var definition = loaded.definition();
         var entry = loaded.services().get(index);
         var service = entry.service();
         String blocked = professionalNearby(player, npc, definition);
         if (blocked != null) return Outcome.fail(blocked);
-        try { checkService(player, definition, entry, index, now); }
-        catch (Refusal refusal) { return Outcome.fail(refusal.getMessage()); }
+        // O resultado e montado antes de cobrar: se o item nao aceita, ninguem paga.
+        ItemStack prepared = ItemStack.EMPTY;
+        String engraving = "";
+        try {
+            checkService(player, definition, entry, index, now);
+            switch (service.action()) {
+                case ENCHANT -> prepared = enchanted(player, entry);
+                case POTION_STRENGTH, POTION_DURATION -> prepared = brewed(player, service.action());
+                case NAME_TAG -> engraving = tagName(text);
+                default -> { }
+            }
+        } catch (Refusal refusal) { return Outcome.fail(refusal.getMessage()); }
 
         charge(player, entry.cost());
+        final String engraved = engraving;
+        final ItemStack result = prepared;
         boolean done = switch (service.action()) {
             case HEAL -> { heal(player); yield true; }
             case REPAIR -> { player.getMainHandItem().setDamageValue(0); yield true; }
@@ -191,6 +214,8 @@ public final class NpcService {
                 player.setItemInHand(InteractionHand.MAIN_HAND, food);
                 yield true;
             }
+            case ENCHANT, POTION_STRENGTH, POTION_DURATION -> { player.setItemInHand(InteractionHand.MAIN_HAND, result); yield true; }
+            case NAME_TAG -> { give(player, nameTag(engraved), 1); yield true; }
             case COMMAND -> false;
         };
         boolean commands = runCommands(player, definition, service.commands());
@@ -207,8 +232,9 @@ public final class NpcService {
             COOLDOWNS.put(cooldownKey(player, definition, index), now + service.cooldownSeconds() * 1000L);
         }
         player.inventoryMenu.broadcastChanges();
-        AurorionProfissoes.LOGGER.info("NPC {}: servico '{}' para {} ({}).", definition.id(), service.name(),
-                player.getGameProfile().getName(), describe(entry.cost()));
+        AurorionProfissoes.LOGGER.info("NPC {}: servico '{}' para {} ({}){}.", definition.id(), service.name(),
+                player.getGameProfile().getName(), describe(entry.cost()), engraved.isEmpty() ? "" : " nome \"" + engraved + "\"");
+        if (service.action() == ActionType.NAME_TAG) return Outcome.ok("Etiqueta gravada: “" + engraved + "”.");
         return Outcome.ok("Serviço realizado: " + service.name() + ".");
     }
 
@@ -220,14 +246,23 @@ public final class NpcService {
         var hand = player.getMainHandItem();
         switch (service.action()) {
             case HEAL -> {
-                if (player.getHealth() >= player.getMaxHealth() && !lsoHurt(player)) throw new Refusal("Você já está saudável.");
+                int severity = severity(player);
+                if (severity == 0) throw new Refusal("Você já está saudável.");
+                if (service.tier() != TIER_ANY && service.tier() != severity)
+                    throw new Refusal("Seu caso é " + tierLabel(ActionType.HEAL, severity) + ": escolha o atendimento dessa faixa.");
             }
             case REPAIR -> {
                 if (hand.isEmpty() || hand.getCount() != 1 || !hand.isDamageableItem())
                     throw new Refusal("Segure o equipamento na mão principal.");
                 if (!hand.isDamaged()) throw new Refusal("Este equipamento não está danificado.");
                 if (!hand.isRepairable()) throw new Refusal("Este equipamento não aceita reparo.");
+                int worn = damageTier(hand);
+                if (service.tier() != TIER_ANY && service.tier() != worn)
+                    throw new Refusal("Dano " + tierLabel(ActionType.REPAIR, worn) + ": escolha o reparo dessa faixa.");
             }
+            case ENCHANT -> enchanted(player, entry);
+            case POTION_STRENGTH, POTION_DURATION -> brewed(player, service.action());
+            case NAME_TAG -> { }
             case FINISH_FOOD -> {
                 if (!FoodCompat.qualityAvailable()) throw new Refusal("A integração Quality Food está indisponível.");
                 if (!FoodCompat.isFood(hand) || hand.getCount() > 16) throw new Refusal("Segure um lote de até 16 alimentos na mão principal.");
@@ -239,10 +274,84 @@ public final class NpcService {
         if (!canAfford(player, entry.cost())) throw new Refusal("Você precisa de " + describe(entry.cost()) + ".");
     }
 
-    private static boolean lsoHurt(ServerPlayer player) {
-        for (var part : LsoCompat.parts(player).values())
-            if (part.aurorionCritical() || part.aurorionHealth() < part.aurorionMaxHealth()) return true;
-        return false;
+    /**
+     * A faixa da tabela medica da Economia: 0 saudavel, 1 leve, 2 moderado, 3 grave (uma lesao grave
+     * do LSO, ou um membro abaixo de 25%), 4 critico (duas lesoes graves, ou uma com a vida no fim).
+     * Sem o LSO, so a vida conta.
+     */
+    static int severity(ServerPlayer player) {
+        float health = player.getHealth() / Math.max(1F, player.getMaxHealth());
+        float worst = health;
+        int critical = 0;
+        for (var part : LsoCompat.parts(player).values()) {
+            if (part.aurorionCritical()) critical++;
+            if (part.aurorionMaxHealth() > 0) worst = Math.min(worst, part.aurorionHealth() / part.aurorionMaxHealth());
+        }
+        if (critical >= 2 || (critical == 1 && health <= .25F)) return 4;
+        if (critical == 1 || worst < .25F) return 3;
+        if (worst >= 1F) return 0;
+        return worst >= .5F ? 1 : 2;
+    }
+
+    /** Faixa de reparo pelo desgaste: ate 25% leve, 50% medio, 75% pesado, acima quase destruido. */
+    static int damageTier(ItemStack stack) {
+        double worn = stack.getDamageValue() / (double) Math.max(1, stack.getMaxDamage());
+        return worn <= .25 ? 1 : worn <= .5 ? 2 : worn <= .75 ? 3 : 4;
+    }
+
+    /**
+     * O item da mao com o encantamento do servico. Mesmas regras da inscricao do arcanista jogador:
+     * so equipamento compativel ou livro comum, sem conflito com o que ja existe, nunca Mending (o
+     * parser recusa).
+     */
+    private static ItemStack enchanted(ServerPlayer player, LoadedService entry) {
+        var enchant = entry.enchantment();
+        int level = entry.service().level();
+        if (enchant == null) throw new Refusal("Encantamento indisponível neste servidor.");
+        var hand = player.getMainHandItem();
+        if (hand.isEmpty() || hand.getCount() != 1 || !EnchantmentHelper.canStoreEnchantments(hand) || hand.is(Items.ENCHANTED_BOOK))
+            throw new Refusal("Segure um equipamento ou um livro comum na mão principal.");
+        var original = EnchantmentHelper.getEnchantmentsForCrafting(hand);
+        if (original.getLevel(enchant) >= level) throw new Refusal("Este item já tem esse encantamento nesse nível.");
+        if (!hand.is(Items.BOOK) && !enchant.value().canEnchant(hand)) throw new Refusal("Este encantamento não serve para este item.");
+        for (var existing : original.keySet())
+            if (!existing.equals(enchant) && !Enchantment.areCompatible(existing, enchant))
+                throw new Refusal("Incompatível com " + Enchantment.getFullname(existing, original.getLevel(existing)).getString() + ".");
+        var merged = new ItemEnchantments.Mutable(original);
+        merged.set(enchant, level);
+        ItemStack result = hand.is(Items.BOOK) ? hand.transmuteCopy(Items.ENCHANTED_BOOK) : hand.copy();
+        EnchantmentHelper.setEnchantments(result, merged.toImmutable());
+        return result;
+    }
+
+    /** A pocao da mao concentrada (glowstone) ou prolongada (redstone), pelas receitas reais do jogo. */
+    private static ItemStack brewed(ServerPlayer player, ActionType action) {
+        var hand = player.getMainHandItem();
+        var catalyst = new ItemStack(action == ActionType.POTION_STRENGTH ? Items.GLOWSTONE_DUST : Items.REDSTONE);
+        var brewing = player.level().potionBrewing();
+        if (hand.isEmpty() || hand.getCount() != 1 || !brewing.hasMix(hand, catalyst))
+            throw new Refusal("Segure uma poção que aceite este aprimoramento, uma de cada vez.");
+        var result = brewing.mix(catalyst, hand);
+        if (ItemStack.isSameItemSameComponents(hand, result)) throw new Refusal("Esta poção já atingiu o limite.");
+        return result;
+    }
+
+    /**
+     * O nome digitado, com o mesmo filtro da bigorna: sem codigos de cor (§) nem caracteres de
+     * controle, ate {@link AnvilMenu#MAX_NAME_LENGTH}. O cliente ja limita, mas o pacote pode vir forjado.
+     */
+    static String tagName(String text) {
+        String name = StringUtil.filterText(text == null ? "" : text).strip();
+        if (name.isEmpty()) throw new Refusal("Escreva o nome que vai na etiqueta.");
+        if (name.length() > AnvilMenu.MAX_NAME_LENGTH)
+            throw new Refusal("Nome longo demais: até " + AnvilMenu.MAX_NAME_LENGTH + " caracteres.");
+        return name;
+    }
+
+    private static ItemStack nameTag(String name) {
+        var tag = new ItemStack(Items.NAME_TAG);
+        tag.set(DataComponents.CUSTOM_NAME, Component.literal(name));
+        return tag;
     }
 
     /** Cura nativa: vida vanilla e, com o LSO, todas as partes do corpo (inclusive a marca de lesao grave). */

@@ -12,7 +12,7 @@ import java.util.*;
  * A tela de um NPC de oficio, ja decidida pelo servidor: o cliente nao sabe preco, estoque, saldo
  * nem se ha um profissional por perto — recebe cada linha com o motivo pronto e so desenha.
  */
-public record NpcScreenPayload(UUID token, String title, String eyebrow, String greeting,
+public record NpcScreenPayload(UUID token, String title, String eyebrow, String profession, String greeting, String balance,
                                String notice, boolean noticeError, int tab, boolean admDialogue,
                                List<ServiceRow> services, List<TradeRow> trades, List<String> dialogue)
         implements CustomPacketPayload {
@@ -20,7 +20,8 @@ public record NpcScreenPayload(UUID token, String title, String eyebrow, String 
     public static final int MAX_ROWS = 32, MAX_LINES = 16;
     public static final Type<NpcScreenPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(AurorionProfissoes.MOD_ID, "npc_screen"));
 
-    public record ServiceRow(String title, String detail, String cost, boolean enabled, String reason) {}
+    /** {@code input}: texto de exemplo do campo que o servico pede (nome da etiqueta); vazio = sem campo. */
+    public record ServiceRow(String title, String detail, String cost, boolean enabled, String reason, String input) {}
     /** {@code stock} e o que resta; {@code -1} para infinito. */
     public record TradeRow(ItemStack result, int amount, ItemStack priceIcon, String price, int stock,
                            boolean enabled, String reason) {}
@@ -32,13 +33,13 @@ public record NpcScreenPayload(UUID token, String title, String eyebrow, String 
     }
 
     public static final StreamCodec<RegistryFriendlyByteBuf, NpcScreenPayload> STREAM_CODEC = StreamCodec.of((buf, data) -> {
-        buf.writeUUID(data.token); buf.writeUtf(data.title, 128); buf.writeUtf(data.eyebrow, 128);
-        buf.writeUtf(data.greeting, 512); buf.writeUtf(data.notice, 512); buf.writeBoolean(data.noticeError);
+        buf.writeUUID(data.token); buf.writeUtf(data.title, 128); buf.writeUtf(data.eyebrow, 128); buf.writeUtf(data.profession, 32);
+        buf.writeUtf(data.greeting, 512); buf.writeUtf(data.balance, 128); buf.writeUtf(data.notice, 512); buf.writeBoolean(data.noticeError);
         buf.writeVarInt(data.tab); buf.writeBoolean(data.admDialogue);
         buf.writeVarInt(data.services.size());
         for (var row : data.services) {
             buf.writeUtf(row.title, 128); buf.writeUtf(row.detail, 512); buf.writeUtf(row.cost, 256);
-            buf.writeBoolean(row.enabled); buf.writeUtf(row.reason, 512);
+            buf.writeBoolean(row.enabled); buf.writeUtf(row.reason, 512); buf.writeUtf(row.input, 128);
         }
         buf.writeVarInt(data.trades.size());
         for (var row : data.trades) {
@@ -49,13 +50,13 @@ public record NpcScreenPayload(UUID token, String title, String eyebrow, String 
         buf.writeVarInt(data.dialogue.size());
         for (var line : data.dialogue) buf.writeUtf(line, 512);
     }, buf -> {
-        UUID token = buf.readUUID(); String title = buf.readUtf(128), eyebrow = buf.readUtf(128);
-        String greeting = buf.readUtf(512), notice = buf.readUtf(512); boolean noticeError = buf.readBoolean();
+        UUID token = buf.readUUID(); String title = buf.readUtf(128), eyebrow = buf.readUtf(128), profession = buf.readUtf(32);
+        String greeting = buf.readUtf(512), balance = buf.readUtf(128), notice = buf.readUtf(512); boolean noticeError = buf.readBoolean();
         int tab = buf.readVarInt(); boolean adm = buf.readBoolean();
         int services = count(buf.readVarInt(), MAX_ROWS);
         var serviceRows = new ArrayList<ServiceRow>(services);
         for (int i = 0; i < services; i++)
-            serviceRows.add(new ServiceRow(buf.readUtf(128), buf.readUtf(512), buf.readUtf(256), buf.readBoolean(), buf.readUtf(512)));
+            serviceRows.add(new ServiceRow(buf.readUtf(128), buf.readUtf(512), buf.readUtf(256), buf.readBoolean(), buf.readUtf(512), buf.readUtf(128)));
         int trades = count(buf.readVarInt(), MAX_ROWS);
         var tradeRows = new ArrayList<TradeRow>(trades);
         for (int i = 0; i < trades; i++)
@@ -64,7 +65,7 @@ public record NpcScreenPayload(UUID token, String title, String eyebrow, String 
         int lines = count(buf.readVarInt(), MAX_LINES);
         var dialogue = new ArrayList<String>(lines);
         for (int i = 0; i < lines; i++) dialogue.add(buf.readUtf(512));
-        return new NpcScreenPayload(token, title, eyebrow, greeting, notice, noticeError, tab, adm, serviceRows, tradeRows, dialogue);
+        return new NpcScreenPayload(token, title, eyebrow, profession, greeting, balance, notice, noticeError, tab, adm, serviceRows, tradeRows, dialogue);
     });
 
     private static int count(int size, int max) {

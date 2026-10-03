@@ -15,10 +15,10 @@ class NpcConfigParserTest {
         var result = NpcConfigParser.parse("""
                 {"npcs":[
                   {"id":"medico_principal","display_name":"Médico do Vilarejo","profession":"medico",
-                   "services":[{"name":"Cura Completa","cost_item":"minecraft:emerald","cost_amount":5,
+                   "services":[{"name":"Cura Completa","cost_item":"minecraft:iron_ingot","cost_amount":5,
                                 "command":"/bodydamage heal {player} all 100"}]},
                   {"id":"ferreiro_vila","display_name":"Ferreiro Mestre","profession":"blacksmith",
-                   "trades":[{"item_id":"minecraft:diamond_sword","amount":1,"price_item":"minecraft:emerald",
+                   "trades":[{"item_id":"minecraft:diamond_sword","amount":1,"price_item":"minecraft:iron_ingot",
                               "price_amount":10,"max_stock":5}]}
                 ]}""");
         assertEquals(java.util.List.of(), result.errors());
@@ -27,7 +27,7 @@ class NpcConfigParserTest {
         var service = doctor.services().get(0);
         assertEquals(ActionType.COMMAND, service.action());
         assertEquals(java.util.List.of("bodydamage heal {player} all 100"), service.commands());
-        assertEquals(new Cost("minecraft:emerald", 5, 0), service.cost());
+        assertEquals(new Cost("minecraft:iron_ingot", 5, 0), service.cost());
         var smith = result.npcs().get(1);
         assertEquals(Profession.SMITH, smith.profession());
         var trade = smith.trades().get(0);
@@ -39,14 +39,14 @@ class NpcConfigParserTest {
     @Test void aliasesMoneyAndInfiniteStock() {
         var result = NpcConfigParser.parse("""
                 {"npcs":[{"id":"mercador","profession":"mercador","trades":[
-                  {"id":"tochas","item_id":"minecraft:torch","amount":16,"price_item_id":"minecraft:emerald",
+                  {"id":"tochas","item_id":"minecraft:torch","amount":16,"price_item_id":"minecraft:iron_ingot",
                    "price_money":"2,5","stock_limit":-1,"restock":"diario","nbt_data":{"marca":1}}]}]}""");
         assertTrue(result.errors().isEmpty(), result.errors().toString());
         var npc = result.npcs().get(0);
         assertEquals(Profession.NONE, npc.profession());
         assertEquals("mercador", npc.displayName());
         var trade = npc.trades().get(0);
-        assertEquals(new Cost("minecraft:emerald", 1, 25), trade.price());
+        assertEquals(new Cost("minecraft:iron_ingot", 1, 25), trade.price());
         assertFalse(trade.limited());
         assertEquals(Restock.DAILY, trade.restock());
         assertEquals("{\"marca\":1}", trade.nbtData());
@@ -70,6 +70,55 @@ class NpcConfigParserTest {
         assertEquals(4, result.errors().size(), result.errors().toString());
         assertTrue(result.errors().stream().anyMatch(e -> e.startsWith("npcs[0].trades[0].price_amount")));
         assertTrue(result.errors().stream().anyMatch(e -> e.startsWith("npcs[2].id")));
+    }
+
+    @Test void tiersEnchantAndNameTagLoad() {
+        var result = NpcConfigParser.parse("""
+                {"npcs":[{"id":"oficina","profession":"ferreiro","services":[
+                  {"name":"Reparo leve","action_type":"repair","tier":"leve","cost_money":"1,3"},
+                  {"name":"Trauma","action_type":"cura","gravidade":"crítico","cost_money":"12"},
+                  {"name":"Reparo 2","action_type":"repair","tier":2},
+                  {"name":"Afiação","action_type":"encantar","encantamento":"minecraft:sharpness","nivel":5},
+                  {"name":"Etiqueta","action_type":"etiqueta","cost_money":"2"},
+                  {"name":"Concentrar","action_type":"potion_strength"}]}]}""");
+        assertTrue(result.errors().isEmpty(), result.errors().toString());
+        var services = result.npcs().get(0).services();
+        assertEquals(1, services.get(0).tier());
+        assertEquals(13, services.get(0).cost().money());
+        assertEquals(ActionType.HEAL, services.get(1).action());
+        assertEquals(4, services.get(1).tier());
+        assertEquals(2, services.get(2).tier());
+        assertEquals(ActionType.ENCHANT, services.get(3).action());
+        assertEquals("minecraft:sharpness", services.get(3).enchantment());
+        assertEquals(5, services.get(3).level());
+        assertEquals(ActionType.NAME_TAG, services.get(4).action());
+        assertEquals(ActionType.POTION_STRENGTH, services.get(5).action());
+    }
+
+    @Test void misusedServiceFieldsAreRejectedAlone() {
+        var result = NpcConfigParser.parse("""
+                {"npcs":[{"id":"oficina","services":[
+                  {"name":"Faixa no comando","command":"say oi","tier":"leve"},
+                  {"name":"Mending","action_type":"enchant","enchantment":"minecraft:mending"},
+                  {"name":"Sem encantamento","action_type":"enchant"},
+                  {"name":"Faixa inventada","action_type":"heal","tier":"enorme"},
+                  {"name":"Ok","action_type":"heal","tier":"grave"}]}]}""");
+        assertEquals(4, result.errors().size(), result.errors().toString());
+        assertEquals(1, result.npcs().get(0).services().size());
+        assertTrue(result.errors().stream().anyMatch(e -> e.contains("Mending")));
+    }
+
+    @Test void emeraldIsNotCurrency() {
+        var result = NpcConfigParser.parse("""
+                {"npcs":[{"id":"velho","services":[{"name":"Cura","action_type":"heal","cost_item":"minecraft:emerald","cost_amount":5}],
+                  "trades":[{"item_id":"minecraft:paper","price_item":"minecraft:emerald"},
+                            {"item_id":"minecraft:torch","amount":16,"price_money":"0,5"}]}]}""");
+        assertEquals(2, result.errors().size(), result.errors().toString());
+        assertTrue(result.errors().stream().allMatch(e -> e.contains("esmeralda")));
+        var npc = result.npcs().get(0);
+        assertTrue(npc.services().isEmpty());
+        assertEquals(1, npc.trades().size());
+        assertEquals("minecraft:torch", npc.trades().get(0).itemId());
     }
 
     @Test void unreadableFileIsReportedAsUnreadable() {

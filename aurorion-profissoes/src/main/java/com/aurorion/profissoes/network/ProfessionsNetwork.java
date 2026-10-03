@@ -17,8 +17,8 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class ProfessionsNetwork {
     private ProfessionsNetwork() {}
     @SubscribeEvent public static void register(RegisterPayloadHandlersEvent event) {
-        // "2": os pacotes dos NPCs de oficio entraram no protocolo.
-        var registrar = event.registrar("2");
+        // "3": tela dos NPCs com saldo, campo de texto (etiqueta) e texto na acao.
+        var registrar = event.registrar("3");
         registrar.playToServer(NpcActionPayload.TYPE, NpcActionPayload.STREAM_CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) context.enqueueWork(() -> NpcService.action(player, payload));
         });

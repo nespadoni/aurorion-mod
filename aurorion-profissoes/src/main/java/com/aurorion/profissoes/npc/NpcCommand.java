@@ -14,6 +14,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import org.jetbrains.annotations.Nullable;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
@@ -26,8 +27,9 @@ import java.util.List;
  * /npc skin ...             troca a textura somente do NPC mais proximo
  * /npc remover             remove o NPC mais proximo (ate 4 blocos)
  * /npc listar              ids carregados e avisos do arquivo
- * /npc recarregar          le config/aurorion/npcs.json de novo e atualiza os NPCs carregados
+ * /npc recarregar          le o catalogo do mod e config/aurorion/npcs_extras.json e atualiza os NPCs carregados
  * /npc estoque &lt;id&gt; repor  repoe o estoque das ofertas limitadas de um NPC
+ * /npc exemplo exportar    grava o catalogo do mod em config/aurorion/npcs_exemplo.json, para consulta
  * </pre>
  */
 @EventBusSubscriber(modid = AurorionProfissoes.MOD_ID)
@@ -56,6 +58,7 @@ public final class NpcCommand {
         root.then(Commands.literal("recarregar").executes(NpcCommand::reload));
         root.then(Commands.literal("estoque").then(Commands.argument("id", StringArgumentType.word()).suggests(IDS)
                 .then(Commands.literal("repor").executes(NpcCommand::restock))));
+        root.then(Commands.literal("exemplo").then(Commands.literal("exportar").executes(NpcCommand::exportExample)));
         event.getDispatcher().register(root);
     }
 
@@ -124,14 +127,14 @@ public final class NpcCommand {
         var npc = nearest(source);
         if (npc == null) { source.sendFailure(Component.literal("Nenhum NPC a até 4 blocos.")); return 0; }
         npc.clearSkinOverride();
-        source.sendSuccess(() -> Component.literal("Skin do NPC voltou para a configuração do npcs.json."), true);
+        source.sendSuccess(() -> Component.literal("Skin do NPC voltou à padrão do ofício."), true);
         return 1;
     }
 
     private static int list(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var ids = List.copyOf(NpcCatalog.ids());
-        source.sendSuccess(() -> Component.literal(ids.isEmpty() ? "Nenhum NPC configurado em " + NpcCatalog.file()
+        source.sendSuccess(() -> Component.literal(ids.isEmpty() ? "Nenhum NPC carregado (catálogo do mod + " + NpcCatalog.file() + ")"
                 : "NPCs (" + ids.size() + "): " + String.join(", ", ids)), false);
         reportErrors(source, NpcCatalog.errors());
         return ids.size();
@@ -145,6 +148,21 @@ public final class NpcCommand {
                 + " configurado(s), " + bodies + " atualizado(s) no mundo."), true);
         reportErrors(source, errors);
         return NpcCatalog.ids().size();
+    }
+
+    /** Copia de consulta do catalogo do mod; nao e carregada (ver NpcCatalog#exportBuiltIn). */
+    private static int exportExample(CommandContext<CommandSourceStack> context) {
+        var source = context.getSource();
+        try {
+            var target = NpcCatalog.exportBuiltIn();
+            source.sendSuccess(() -> Component.literal("Catálogo do mod copiado para " + target
+                    + ". É só para consulta: ajustes vão em " + NpcCatalog.file().getFileName() + "."), false);
+            return 1;
+        } catch (IOException error) {
+            AurorionProfissoes.LOGGER.error("NPCs: nao consegui exportar o catalogo.", error);
+            source.sendFailure(Component.literal("Não consegui exportar o catálogo: " + error.getMessage()));
+            return 0;
+        }
     }
 
     private static int restock(CommandContext<CommandSourceStack> context) {
@@ -163,8 +181,8 @@ public final class NpcCommand {
     }
 
     private static void unknown(CommandSourceStack source, String id) {
-        source.sendFailure(Component.literal("NPC \"" + id + "\" não existe em " + NpcCatalog.file()
-                + ". Use /npc recarregar depois de editar."));
+        source.sendFailure(Component.literal("NPC \"" + id + "\" não existe no catálogo do mod nem em " + NpcCatalog.file()
+                + ". Use /npc listar para ver os ids."));
     }
 
     private static void reportErrors(CommandSourceStack source, List<String> errors) {
