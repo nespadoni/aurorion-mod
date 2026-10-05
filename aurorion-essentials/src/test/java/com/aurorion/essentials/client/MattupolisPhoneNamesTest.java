@@ -53,6 +53,12 @@ class MattupolisPhoneNamesTest {
         assertEquals("Morgana is offline.", MattupolisPhoneNames.replaceTokens("alex is offline.", NAMES));
     }
 
+    @Test
+    void mentionsInsideQuotedTweetsUseTheCharacterHandle() {
+        assertEquals("Falando com @arthur_pendragon e @morgana.",
+                MattupolisPhoneNames.replaceTokens("Falando com @Steve_42 e @alex.", NAMES));
+    }
+
     /** Nick colado em outra palavra nao e o nick: "Alexandre" nao vira "Morganaandre". */
     @Test
     void onlyReplacesWholeWords() {

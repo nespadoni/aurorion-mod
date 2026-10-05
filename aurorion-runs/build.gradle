@@ -116,6 +116,15 @@ dependencies {
         implementation files(modProject.configurations.modLibraries)
         clientModLibraries files(modProject.configurations.clientModLibraries)
     }
+
+    // O telefone MikasRevs entra SO aqui. Nenhum mod Aurorion compila contra ele (essentials,
+    // economia e servicos falam com o telefone por @Pseudo e reflexao, e funcionam sem ele), entao
+    // ele nao pode ir para o 'modLibraries' de um subprojeto: viraria classpath de compilacao. Aqui
+    // ele so existe em runtime, para testar no client/servidor de dev as integracoes do telefone
+    // (contatos/conversas por personagem, fakename no Gram/MattuTweet, anexos de foto, ligacoes).
+    // Outro arquivo com -PphoneJar=C:/caminho/telefone.jar.
+    implementation files(providers.gradleProperty('phoneJar')
+            .orElse("$rootDir/mod-servidor-referencia/mattupolisphone112.jar").get())
 }
 
 // Nada aqui e publicavel; o jar vazio deste projeto so atrapalharia.

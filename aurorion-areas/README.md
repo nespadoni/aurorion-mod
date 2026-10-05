@@ -19,6 +19,7 @@ Depende do `aurorion-core` **0.2.0+** (contrato `HouseGate`). A barreira de casa
 - Exceções por personagem, regra e área.
 - **Áreas de casa**: barreira invisível que só deixa passar quem é daquela casa do `aurorion-ethereal`.
 - **Água tratada por área**: só a torneira, ou toda a água da área, enche o cantil purificado (Legendary Survival Overhaul).
+- **Trava das samambaias do LSO**: a Sun Fern e a Ice Fern não derrubam mais o servidor quando o Crop Critters troca a planta por erva daninha durante o crescimento.
 - Vida e dano de monstros definidos no nascimento, sem acumular multiplicadores ao recarregar chunks.
 - Ambientes por datapack: sons individuais, escuridão, cegueira curta, sombra periférica, neblina e ataques invisíveis.
 - **Neblina compatível com shaders**: com um pacote carregado no Iris, ela é desenhada em espaço de tela, e não pelo `RenderFog` do vanilla — que o shader ignora.

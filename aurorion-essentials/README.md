@@ -9,6 +9,11 @@ Comandos essenciais de servidor para o ecossistema Aurorion. Features:
 - **privacidade dos avisos** — quem vê entrada/saída, conquista e morte no chat.
 - **`/ajuda`** — pedido de socorro do jogador, entregue a quem está moderando.
 - **`/aurorion diagnostico`** — filas da integração e rascunhos do diário, para OP nível 2/console.
+- **telefone** — contatos e conversas por personagem, fakename nas redes sociais e importação de fotos locais.
+- **`/streamer on`** — esconde avisos administrativos no chat apenas de quem está transmitindo.
+
+As correções do telefone, as fotos da galeria e o modo streamer da **0.7.4** estão descritos em
+[Telefone e modo streamer](../docs/TELEFONE-STREAMER-2026-10-04.md), com instruções de uso e validação.
 
 `/ajuda` aceita um pedido a cada 30 segundos por conta principal, inclusive após troca de alt ou relog.
 Consultas de nicks offline em `/gritar` e `/deathhistory` são assíncronas. Os limites e a validação

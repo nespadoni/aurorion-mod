@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
@@ -47,6 +48,33 @@ class PhoneCharacterStorageTest {
     }
 
     @Test
+    void offlineMainAccountIsRecognizedWithoutClaimingAnAlt() {
+        String nick = "MainAccount";
+        UUID online = UUID.fromString("00000000-0000-0000-0000-000000000002");
+        UUID offline = UUID.nameUUIDFromBytes(("OfflinePlayer:" + nick).getBytes(StandardCharsets.UTF_8));
+        assertTrue(PhoneCharacterStorage.isMainProfile(online, nick, online, nick));
+        assertTrue(PhoneCharacterStorage.isMainProfile(offline, nick, online, nick));
+        assertFalse(PhoneCharacterStorage.isMainProfile(MAIN, "AltAccount", online, nick));
+        assertFalse(PhoneCharacterStorage.isMainProfile(MAIN, nick, online, nick));
+    }
+
+    @Test
+    void migrationNeverOverwritesTheCurrentCharacterOrTouchesAnotherCharacter() throws IOException {
+        Path root = Files.createDirectories(game.resolve(PhoneCharacterStorage.ROOT));
+        Path main = Files.createDirectories(PhoneCharacterStorage.characterDir(game, MAIN));
+        Path alt = Files.createDirectories(PhoneCharacterStorage.characterDir(game, UUID.randomUUID()));
+        Files.writeString(root.resolve("notes.properties"), "legacy notes");
+        Files.writeString(main.resolve("notes.properties"), "current notes");
+        Files.writeString(alt.resolve("contacts.properties"), "alt contacts");
+
+        PhoneCharacterStorage.migrateLegacy(game, main);
+
+        assertEquals("current notes", Files.readString(main.resolve("notes.properties")));
+        assertEquals("alt contacts", Files.readString(alt.resolve("contacts.properties")));
+        assertEquals("legacy notes", Files.readString(root.resolve("notes.properties")));
+    }
+
+    @Test
     void legacyFilesMoveToTheMainAccountOnce() throws IOException {
         Path root = Files.createDirectories(game.resolve("mattupolis_phone"));
         Files.writeString(root.resolve("notes.properties"), "note.count=1");
@@ -65,6 +93,36 @@ class PhoneCharacterStorageTest {
         Files.writeString(root.resolve("wallpaper.properties"), "home=x");
         PhoneCharacterStorage.migrateLegacy(game, dir);
         assertFalse(Files.exists(dir.resolve("wallpaper.properties")));
+    }
+
+    @Test
+    void anUnreadableLegacyAgendaDoesNotBlockTheRestOfTheMigration() throws IOException {
+        Path root = Files.createDirectories(game.resolve(PhoneCharacterStorage.ROOT));
+        Path dir = Files.createDirectories(PhoneCharacterStorage.characterDir(game, MAIN));
+        Files.writeString(root.resolve("contacts.properties"), "contact.count=");
+        Files.writeString(dir.resolve("contacts.properties"), "contact.count=0");
+        Files.writeString(root.resolve("notes.properties"), "note.count=1");
+
+        PhoneCharacterStorage.migrateLegacy(game, dir);
+
+        assertEquals("note.count=1", Files.readString(dir.resolve("notes.properties")));
+        assertTrue(Files.exists(dir.resolve(PhoneCharacterStorage.MIGRATED_MARKER)));
+        assertEquals("contact.count=", Files.readString(root.resolve("contacts.properties")));
+    }
+
+    @Test
+    void aSecondMainFolderDoesNotTakeWhatTheFirstMigrationLeftInTheRoot() throws IOException {
+        Path root = Files.createDirectories(game.resolve(PhoneCharacterStorage.ROOT));
+        Path online = Files.createDirectories(PhoneCharacterStorage.characterDir(game, MAIN));
+        Files.writeString(online.resolve(PhoneCharacterStorage.MIGRATED_MARKER), "ok");
+        Files.writeString(root.resolve("contacts.properties"), "copia de recuperacao");
+        Path offline = PhoneCharacterStorage.characterDir(game, UUID.randomUUID());
+
+        PhoneCharacterStorage.migrateLegacy(game, offline);
+
+        assertFalse(Files.exists(offline.resolve("contacts.properties")));
+        assertTrue(Files.exists(root.resolve("contacts.properties")));
+        assertTrue(Files.exists(offline.resolve(PhoneCharacterStorage.MIGRATED_MARKER)));
     }
 
     @Test

@@ -47,7 +47,7 @@ public final class MattupolisPhoneNames {
     private static final Map<String, UUID> BY_NICK = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     /** Nick para nome do personagem, de quem esta offline tambem. Vem do servidor. */
-    private static final Map<String, String> DIRECTORY = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private static final PhoneNameDirectoryCache DIRECTORY = new PhoneNameDirectoryCache();
 
     /** Texto original para texto exibido. Limpo quando enche ou quando um nome muda. */
     private static final Map<String, String> SHOWN = new HashMap<>();
@@ -60,11 +60,9 @@ public final class MattupolisPhoneNames {
     private static final int MIN_NICK = 3;
     private static final int MAX_NICK = 16;
 
-    private static ClientPacketListener connection;
     private static boolean indexed;
     private static long refreshedAt;
     private static long signature;
-    private static int directoryVersion;
 
     private MattupolisPhoneNames() {}
 
@@ -74,6 +72,22 @@ public final class MattupolisPhoneNames {
         if (!ready()) return text;
         String exact = exactOrHandle(text);
         return exact != null ? exact : text;
+    }
+
+    /** Nome vivo do autor, resolvido pela chave da conta, mesmo se o post guardou um nome antigo. */
+    public static String socialAuthor(String username, String storedDisplayName) {
+        if (!ready()) return storedDisplayName;
+        return PhoneSocialNames.author(username, storedDisplayName, MattupolisPhoneNames::exact);
+    }
+
+    /** Comentarios mostram o nome completo; o @ tecnico do registro nao e uma identidade visual. */
+    public static String socialName(String username) {
+        return socialAuthor(username, username);
+    }
+
+    /** A inicial vem do nome do personagem, inclusive quando o registro original tem @nick. */
+    public static String socialInitial(String username) {
+        return PhoneSocialNames.initial(socialName(username));
     }
 
     /**
@@ -115,13 +129,13 @@ public final class MattupolisPhoneNames {
         if (typed == null || typed.isBlank()) return typed;
         if (!ready()) return typed;
         String wanted = typed.trim();
-        if (BY_NICK.containsKey(wanted) || DIRECTORY.containsKey(wanted)) return wanted;
+        if (BY_NICK.containsKey(wanted) || DIRECTORY.entries().containsKey(wanted)) return wanted;
 
         for (Map.Entry<String, UUID> entry : BY_NICK.entrySet()) {
             FakeName fake = FakeNameRegistry.get(entry.getValue());
             if (fake != null && fake.plain().equalsIgnoreCase(wanted)) return entry.getKey();
         }
-        for (Map.Entry<String, String> entry : DIRECTORY.entrySet()) {
+        for (Map.Entry<String, String> entry : DIRECTORY.entries().entrySet()) {
             if (entry.getValue().equalsIgnoreCase(wanted)) return entry.getKey();
         }
         return typed;
@@ -132,12 +146,12 @@ public final class MattupolisPhoneNames {
      * so as mudancas, e um nome vazio tira o nick do diretorio.
      */
     public static void applyDirectory(boolean replace, Map<String, String> entries) {
-        if (replace) DIRECTORY.clear();
-        entries.forEach((nick, name) -> {
-            if (name == null || name.isBlank()) DIRECTORY.remove(nick);
-            else DIRECTORY.put(nick, name);
-        });
-        directoryVersion++;
+        ClientPacketListener current = Minecraft.getInstance().getConnection();
+        if (current == null) return;
+        // O pacote de login chega antes do primeiro desenho. Vincule a conexao aqui, ou o primeiro
+        // refreshIndex apaga o diretorio que acabou de chegar e perde os nomes de quem esta offline.
+        bindConnection(current);
+        DIRECTORY.apply(replace, entries);
         SHOWN.clear();
     }
 
@@ -172,13 +186,7 @@ public final class MattupolisPhoneNames {
     }
 
     private static void refreshIndex(ClientPacketListener current) {
-        if (connection != current) {
-            BY_NICK.clear();
-            DIRECTORY.clear();
-            SHOWN.clear();
-            connection = current;
-            indexed = false;
-        }
+        bindConnection(current);
 
         long now = Util.getMillis();
         if (!needsRefresh(indexed, refreshedAt, now)) return;
@@ -195,7 +203,7 @@ public final class MattupolisPhoneNames {
 
         // O cache de textos so vale enquanto nenhum nome mudar. Conferir e barato: uma volta pelos
         // nomes de quem esta online, uma vez por segundo.
-        long names = BY_NICK.size() * 31L + directoryVersion;
+        long names = BY_NICK.size() * 31L + DIRECTORY.version();
         for (var entry : FakeNameRegistry.all().entrySet()) {
             names = names * 31 + (entry.getKey().hashCode() ^ entry.getValue().plain().hashCode());
         }
@@ -203,6 +211,13 @@ public final class MattupolisPhoneNames {
             signature = names;
             SHOWN.clear();
         }
+    }
+
+    private static void bindConnection(ClientPacketListener current) {
+        if (!DIRECTORY.bind(current)) return;
+        BY_NICK.clear();
+        SHOWN.clear();
+        indexed = false;
     }
 
     /**
@@ -238,6 +253,7 @@ public final class MattupolisPhoneNames {
             if (size < MIN_NICK || size > MAX_NICK) continue;
             String name = resolver.apply(text.substring(start, i));
             if (name == null) continue;
+            if (start > 0 && text.charAt(start - 1) == '@') name = handleOf(name);
             if (out == null) out = new StringBuilder(length + 16);
             out.append(text, copied, start).append(name);
             copied = i;

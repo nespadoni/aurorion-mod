@@ -34,8 +34,9 @@ versionRange = "[0.5.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
-# Agua tratada nas areas que concedem a regra 'agua_pura'. Sem o LSO no pack, este config nao e
-# carregado e nada aqui existe -- o resto do modulo funciona igual.
+# Agua tratada nas areas que concedem a regra 'agua_pura', e a trava que impede a Sun/Ice Fern do
+# LSO de derrubar o servidor quando o Crop Critters troca a planta. Sem o LSO no pack, este config
+# nao e carregado e nada aqui existe -- o resto do modulo funciona igual.
 [[mixins]]
 config = "aurorion_areas.lso.mixins.json"
 requiredMods = ["legendarysurvivaloverhaul"]

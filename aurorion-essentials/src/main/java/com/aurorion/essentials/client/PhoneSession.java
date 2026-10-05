@@ -8,6 +8,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -41,6 +42,7 @@ public final class PhoneSession {
     private static final String GUI = "com.mattupolis.phone.client.gui.";
 
     private static boolean reportedFailure;
+    private static int saveTicks;
 
     private PhoneSession() {
     }
@@ -55,18 +57,36 @@ public final class PhoneSession {
         Path dir = PhoneCharacterStorage.characterDir(gameDir, profile);
 
         // Uma saida sem LoggingOut (queda de conexao no meio do login) deixaria o estado do anterior.
+        PhoneConversations.flush();
+        PhoneConversations.discardSession();
         resetMemory();
-        if (profile.equals(minecraft.getUser().getProfileId())) PhoneCharacterStorage.migrateLegacy(gameDir, dir);
+        if (PhoneCharacterStorage.isMainProfile(profile, player.getGameProfile().getName(),
+                minecraft.getUser().getProfileId(), minecraft.getUser().getName())) {
+            PhoneCharacterStorage.migrateLegacy(gameDir, dir);
+        }
         PhoneCharacterStorage.activate(dir);
+        PhoneConversations.beginSession(dir);
+        saveTicks = 0;
     }
 
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         if (!ModList.get().isLoaded("mattupolis_phone")) return;
+        if (PhoneCharacterStorage.activeDir() == null) return;
         // Os passos do dia sao gravados com atraso; grava agora, enquanto a pasta ainda e a deste personagem.
         invoke("PhoneHealthStore", "saveNow");
+        PhoneConversations.flush();
+        PhoneConversations.discardSession();
         resetMemory();
         PhoneCharacterStorage.activate(null);
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        if (PhoneCharacterStorage.activeDir() == null) return;
+        if (++saveTicks < 20) return;
+        saveTicks = 0;
+        PhoneConversations.flush();
     }
 
     /**
@@ -77,6 +97,7 @@ public final class PhoneSession {
         // Agenda e conversas: sai o que e de jogador; a conversa de sistema do proprio telefone fica.
         forgetPlayerThreads();
         set("PhoneMessagesStore", "playerContactsLoaded", false);
+        set("PhoneMessagesStore", "loadingPlayerContacts", false);
         clear("PhoneMessagesStore", "PHONE_ID_TO_PLAYER");
         clear("PhoneMessagesStore", "PLAYER_TO_PHONE_ID");
         set("PhoneMessagesStore", "CURRENT_OPEN_THREAD_ID", "");
@@ -90,6 +111,7 @@ public final class PhoneSession {
         clear("PhoneInstagramDmStore", "THREADS");
         clear("PhoneInstagramDmStore", "MESSAGES");
         clear("PhoneInstagramDmStore", "PROCESSED_NETWORK_IDS");
+        clear("PhoneInstagramDmStore", "DM_PHOTO_TEXTURES");
         set("PhoneInstagramDmStore", "currentOpenThreadId", "");
         invoke("PhoneInstagramStore", "clearNotifications");
         invoke("PhoneTwitterStore", "clearNotifications");

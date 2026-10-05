@@ -62,6 +62,7 @@ public final class PhoneContactCleanup {
         try {
             forgetContacts(plan);
             forgetBankFavorites(plan);
+            PhoneConversations.forgetGramContacts(plan);
         } catch (ClassNotFoundException phoneNotInstalled) {
             return;
         } catch (ReflectiveOperationException | RuntimeException e) {
@@ -76,8 +77,12 @@ public final class PhoneContactCleanup {
         if (plan.wipeAll() && characterDir != null) {
             // A lista de resets tratados fica: e ela que impede este mesmo reset de apagar, na proxima
             // entrada, o que o personagem novo ja tiver gravado.
-            PhoneCharacterStorage.wipe(characterDir, Set.of(PROCESSED_FILE, PhoneCharacterStorage.MIGRATED_MARKER));
+            PhoneConversations.resetCharacter(characterDir, Set.of(PROCESSED_FILE, PhoneCharacterStorage.MIGRATED_MARKER));
             PhoneSession.resetMemory();
+            PhoneConversations.beginSession(characterDir);
+        } else {
+            PhoneConversations.messagesChanged();
+            PhoneConversations.flush();
         }
 
         processed.addAll(plan.newlyProcessed());

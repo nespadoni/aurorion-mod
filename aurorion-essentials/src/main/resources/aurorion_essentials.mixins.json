@@ -15,6 +15,7 @@
     "WhisperCommandMixin"
   ],
   "client": [
+    "StreamerChatListenerMixin",
     "PhoneDisplayNameMixin",
     "PhoneContactNameMixin",
     "PhoneCallingNameMixin",

@@ -4,6 +4,7 @@ import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.essentials.cleanup.CleanupConfig;
 import com.aurorion.essentials.death.DeathHistoryConfig;
 import com.aurorion.essentials.privacy.PrivacyConfig;
+import com.aurorion.essentials.streamer.StreamerConfig;
 import com.aurorion.essentials.tab.TabListConfig;
 import com.aurorion.essentials.voice.VoiceConfig;
 import com.mojang.logging.LogUtils;
@@ -29,5 +30,6 @@ public class AurorionEssentials {
         AurorionConfigs.register(container, ModConfig.Type.SERVER, PrivacyConfig.SPEC, "privacy");
         AurorionConfigs.register(container, ModConfig.Type.SERVER, VoiceConfig.SPEC, "voice");
         AurorionConfigs.register(container, ModConfig.Type.SERVER, TabListConfig.SPEC, "tablist");
+        AurorionConfigs.register(container, ModConfig.Type.CLIENT, StreamerConfig.SPEC, "streamer");
     }
 }

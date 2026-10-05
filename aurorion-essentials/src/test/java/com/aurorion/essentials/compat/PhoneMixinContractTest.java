@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.FieldInsnNode;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -175,10 +176,10 @@ class PhoneMixinContractTest {
     @Test
     void sessionResetFieldsExist() throws IOException {
         List<List<String>> fields = List.of(
-                List.of("PhoneMessagesStore", "playerContactsLoaded", "PHONE_ID_TO_PLAYER", "PLAYER_TO_PHONE_ID",
+                List.of("PhoneMessagesStore", "playerContactsLoaded", "loadingPlayerContacts", "PHONE_ID_TO_PLAYER", "PLAYER_TO_PHONE_ID",
                         "CURRENT_OPEN_THREAD_ID", "CURRENT_PLAYER_PHONE_ID", "THREADS", "MESSAGES", "UNREAD_COUNTS"),
                 List.of("PhoneMailStore", "MAILS"),
-                List.of("PhoneInstagramDmStore", "THREADS", "MESSAGES", "PROCESSED_NETWORK_IDS", "currentOpenThreadId"),
+                List.of("PhoneInstagramDmStore", "THREADS", "MESSAGES", "PROCESSED_NETWORK_IDS", "currentOpenThreadId", "DM_PHOTO_TEXTURES"),
                 List.of("PhoneNotesStore", "loaded", "NOTES"),
                 List.of("PhoneCalendarStore", "loaded", "REMINDERS"),
                 List.of("PhoneCaseStore", "loaded", "currentCaseId"),
@@ -206,6 +207,59 @@ class PhoneMixinContractTest {
             assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneGpsScreen"), "clearGpsTarget", "()V");
             assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneInstagramStore"), "clearNotifications", "()V");
             assertHasStaticMethod(readPhoneClass(phone, "com.mattupolis.phone.client.gui.PhoneTwitterStore"), "clearNotifications", "()V");
+        }
+    }
+
+    /** Nenhum require=0 pode esconder uma atualizacao do telefone que deixe o historico sem gravar. */
+    @Test
+    void conversationPersistenceHooksExistWithTheExactDescriptors() throws IOException {
+        try (ZipFile phone = phoneJar()) {
+            for (String mixinName : List.of("PhoneMessagesPersistenceMixin", "PhoneGramPersistenceMixin")) {
+                ClassNode mixin = readMixin(mixinName);
+                for (String target : targets(mixin)) {
+                    ClassNode owner = readPhoneClass(phone, target);
+                    for (var handler : mixin.methods) {
+                        if (handler.visibleAnnotations == null) continue;
+                        for (var annotation : handler.visibleAnnotations) {
+                            if (!annotation.desc.endsWith("/Inject;")) continue;
+                            @SuppressWarnings("unchecked")
+                            List<String> selectors = (List<String>) value(annotation, "method");
+                            for (String selector : selectors) {
+                                assertTrue(owner.methods.stream().anyMatch(method -> (method.name + method.desc).equals(selector)
+                                                && (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0),
+                                        mixinName + ": " + target + "." + selector);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Os records sao restaurados diretamente, sem chamar metodos que enviam mensagens ou notificacoes. */
+    @Test
+    void persistedConversationRecordsRemainPublicAndUseSupportedComponentTypes() throws IOException {
+        Set<String> supported = Set.of("Ljava/lang/String;", "Ljava/nio/file/Path;", "I", "J", "Z");
+        try (ZipFile phone = phoneJar()) {
+            for (String recordName : List.of("PhoneMessagesStore$PhoneThread", "PhoneMessagesStore$PhoneMessage",
+                    "PhoneInstagramDmStore$InstaThread", "PhoneInstagramDmStore$InstaMessage")) {
+                ClassNode record = readPhoneClass(phone, "com.mattupolis.phone.client.gui." + recordName);
+                assertNotNull(record.recordComponents, recordName);
+                assertTrue((record.access & org.objectweb.asm.Opcodes.ACC_PUBLIC) != 0, recordName);
+                StringBuilder constructor = new StringBuilder("(");
+                for (var component : record.recordComponents) {
+                    assertTrue(supported.contains(component.descriptor), recordName + "." + component.name);
+                    constructor.append(component.descriptor);
+                    assertTrue(record.methods.stream().anyMatch(method -> method.name.equals(component.name)
+                                    && method.desc.equals("()" + component.descriptor)
+                                    && (method.access & org.objectweb.asm.Opcodes.ACC_PUBLIC) != 0),
+                            recordName + "." + component.name);
+                }
+                constructor.append(")V");
+                assertTrue(record.methods.stream().anyMatch(method -> method.name.equals("<init>")
+                                && method.desc.contentEquals(constructor)
+                                && (method.access & org.objectweb.asm.Opcodes.ACC_PUBLIC) != 0), recordName);
+            }
         }
     }
 
@@ -256,6 +310,23 @@ class PhoneMixinContractTest {
             ClassNode market = readPhoneClass(phone, "com.mattupolis.phone.server.marketplace.PhoneMarketplaceServerStore");
             assertHasStaticMethod(market, "ensureLoaded", "(Lnet/minecraft/server/MinecraftServer;)V");
             assertHasStaticMethod(market, "save", "(Lnet/minecraft/server/MinecraftServer;)V");
+        }
+    }
+
+    /** Sem estas chamadas o {@code PhonePhotoFormatMixin} nao entra e fotos recebidas voltam a falhar em silencio. */
+    @Test
+    void receivedPhotosAreStillDecodedThroughNativeImageRead() throws IOException {
+        List<List<String>> loaders = List.of(
+                List.of("PhoneMessagesStore", "getTextureForMessage"),
+                List.of("PhoneInstagramDmStore", "registerPhotoTexture"),
+                List.of("PhoneTwitterStore", "registerProfileTexture"));
+        try (ZipFile phone = phoneJar()) {
+            for (List<String> loader : loaders) {
+                ClassNode type = readPhoneClass(phone, "com.mattupolis.phone.client.gui." + loader.get(0));
+                assertTrue(type.methods.stream().anyMatch(method -> method.name.equals(loader.get(1))
+                        && (method.access & org.objectweb.asm.Opcodes.ACC_STATIC) != 0), type.name + "." + loader.get(1));
+                assertCalls(type, loader.get(1), "com/mojang/blaze3d/platform/NativeImage", "read");
+            }
         }
     }
 

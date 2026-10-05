@@ -3,7 +3,8 @@
   "package": "com.aurorion.areas.mixin.lso",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "CanteenFillMixin"
+    "CanteenFillMixin",
+    "FernTickGuardMixin"
   ],
   "injectors": {
     "defaultRequire": 1

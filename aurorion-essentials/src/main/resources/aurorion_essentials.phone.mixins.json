@@ -9,13 +9,24 @@
     "PhoneCallChatNameMixin"
   ],
   "client": [
+    "PhoneSocialIdentityAccessor",
+    "PhoneTweetDisplayNameAccessor",
+    "PhoneTwitterAuthorNameMixin",
+    "PhoneSocialCommentNameMixin",
+    "PhoneMessagesPersistenceMixin",
+    "PhoneGramPersistenceMixin",
     "PhoneOverlayNamesMixin",
     "PhoneCallOverlayNameMixin",
     "PhoneAvatarInitialMixin",
     "PhoneMailRecipientMixin",
     "PhoneBankRecipientMixin",
     "PhoneStoragePathMixin",
-    "PhoneGalleryPathMixin"
+    "PhoneGalleryPathMixin",
+    "PhoneMessageAttachMixin",
+    "PhonePhotoPickerMixin",
+    "PhoneGramPostChoiceMixin",
+    "PhoneGalleryImportMixin",
+    "PhonePhotoFormatMixin"
   ],
   "injectors": {
     "defaultRequire": 0
