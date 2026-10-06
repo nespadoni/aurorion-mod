@@ -156,7 +156,7 @@ public final class DolorUniversusSpell extends AurorionSpell {
                 LivingEntity target = hold.resolve(serverLevel);
                 if (target == null) continue;
                 DamageSources.ignoreNextKnockback(target);
-                DamageSources.applyDamage(target, damage, getDamageSource(entity));
+                FriendlyFire.applyDamage(target, damage, getDamageSource(entity));
                 target.addEffect(new MobEffectInstance(MagiaEffects.CRUCIATUS, EFFECT_TICKS, 0, false, false, true), entity);
             }
             sound(entity, SoundEvents.WARDEN_HEARTBEAT, 2.0f, 0.6f);

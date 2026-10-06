@@ -2,7 +2,9 @@ package com.aurorion.magia.entity;
 
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.registry.MagiaEntities;
+import com.aurorion.magia.registry.MagiaSpells;
 import com.aurorion.magia.spell.AurorionSpell;
+import com.aurorion.magia.spell.FriendlyFire;
 import com.aurorion.magia.spell.Displacement;
 import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.core.BlockPos;
@@ -89,6 +91,8 @@ public class SpellZoneEntity extends Entity {
     /** Dano do furacao por segundo em quem fica dentro dele. */
     private static final float STORM_DAMAGE = 2;
     private static final int STORM_HURT_INTERVAL = 20;
+    /** A Poca de Sangue drena a cada meio segundo. */
+    private static final int POOL_INTERVAL = 10;
     /** A que distancia a frente o furacao procura parede. */
     private static final double WALL_LOOKAHEAD = 2;
     /** Abertura e fechamento do desenho, em ticks. */
@@ -122,7 +126,9 @@ public class SpellZoneEntity extends Entity {
         /** Coluna: quem entra sobe e desce leve. */
         COLUMN,
         /** Furacao: anda em linha reta puxando quem esta no caminho. */
-        STORM;
+        STORM,
+        /** Poca de Sangue: acompanha quem mergulhou nela, prende e drena quem pisar dentro. */
+        POCA;
 
         private static final Shape[] VALUES = values();
 
@@ -233,6 +239,7 @@ public class SpellZoneEntity extends Entity {
             case WARD -> ward();
             case COLUMN -> column();
             case STORM -> storm();
+            case POCA -> pool();
         }
     }
 
@@ -304,12 +311,36 @@ public class SpellZoneEntity extends Entity {
     }
 
     /**
+     * A Poca de Sangue do Vladimir: segue quem mergulhou, e a cada meio segundo drena quem esta dentro
+     * — o dano vira vida de quem esta na poca — e o prende com lentidao forte.
+     */
+    private void pool() {
+        LivingEntity owner = owner();
+        if (owner == null || !owner.isAlive()) {
+            discard();
+            return;
+        }
+        setPos(owner.getX(), owner.getY(), owner.getZ());
+        if (tickCount % POOL_INTERVAL != 0) return;
+        float drained = 0;
+        for (LivingEntity victim : inside(radius(), height())) {
+            if (!FriendlyFire.spares(owner, victim)) {
+                victim.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, POOL_INTERVAL + 5, 2, false, false, true), owner);
+                if (FriendlyFire.applyDamage(victim, power, MagiaSpells.LACUS_SANGUINIS.get().getDamageSource(owner))) {
+                    drained += power;
+                }
+            }
+        }
+        if (drained > 0) owner.heal(drained * 0.5F);
+    }
+
+    /**
      * O golpe do vento. Sai com o tipo {@code aurorion_magia:turbo_ventorum}, que <b>nomeia quem
      * conjurou</b> na mensagem de morte: morrer no turbilhao e morrer pela mao de quem o levantou.
      * Armadura e encantamento continuam valendo — o vento nao ignora nada.
      */
     private void bruise(LivingEntity victim) {
-        DamageSources.applyDamage(victim, STORM_DAMAGE * power, new DamageSource(
+        FriendlyFire.applyDamage(victim, STORM_DAMAGE * power, new DamageSource(
                 level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE),
                 owner()));
     }

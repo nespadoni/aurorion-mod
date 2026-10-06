@@ -550,8 +550,7 @@ public final class ClientSpellVisuals {
             case TERROR_AURA -> {
                 if (target != null) dread(level, a, target, random, stride);
             }
-            default -> {
-            }
+            default -> KitVisuals.particles(level, a, target, stride, time);
         }
     }
 
@@ -762,7 +761,7 @@ public final class ClientSpellVisuals {
      * Da mao ao alvo. Os pontos torcem em helice em volta da linha reta, com amplitude zero nas
      * pontas — parece um raio preso nos dois corpos, nao uma nuvem.
      */
-    private static void beam(ClientLevel level, Vec3 from, Vec3 to, int stride, long time,
+    static void beam(ClientLevel level, Vec3 from, Vec3 to, int stride, long time,
                              ParticleOptions main, ParticleOptions dark, double twist) {
         Vec3 delta = to.subtract(from);
         double length = delta.length();
@@ -812,7 +811,7 @@ public final class ClientSpellVisuals {
         level.addParticle(SILVER, target.getX() - Math.cos(angle) * radius, y, target.getZ() - Math.sin(angle) * radius, 0, 0, 0);
     }
 
-    private static void ring(ClientLevel level, Vec3 center, double radius, int count, ParticleOptions particle, double speed) {
+    static void ring(ClientLevel level, Vec3 center, double radius, int count, ParticleOptions particle, double speed) {
         for (int i = 0; i < count; i++) {
             double angle = i * Math.PI * 2 / count;
             double cos = Math.cos(angle), sin = Math.sin(angle);
@@ -820,7 +819,7 @@ public final class ClientSpellVisuals {
         }
     }
 
-    private static void burst(ClientLevel level, Vec3 at, ParticleOptions particle, int count, double speed) {
+    static void burst(ClientLevel level, Vec3 at, ParticleOptions particle, int count, double speed) {
         RandomSource random = level.random;
         for (int i = 0; i < count; i++) {
             level.addParticle(particle, at.x, at.y, at.z,
@@ -890,12 +889,12 @@ public final class ClientSpellVisuals {
         return target.position().add(0, target.getEyeHeight() - 0.2, 0);
     }
 
-    private static Vec3 offset(RandomSource random, double spread) {
+    static Vec3 offset(RandomSource random, double spread) {
         return new Vec3((random.nextDouble() - 0.5) * spread, (random.nextDouble() - 0.5) * spread,
                 (random.nextDouble() - 0.5) * spread);
     }
 
-    private static ParticleOptions dust(float r, float g, float b, float scale) {
+    static ParticleOptions dust(float r, float g, float b, float scale) {
         return new DustParticleOptions(new Vector3f(r, g, b), scale);
     }
 

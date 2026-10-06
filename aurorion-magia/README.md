@@ -114,6 +114,31 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Tempo Suspenso ⛔ | `tempus_sistere` | Ender | longa 1 s | parar o tempo num salão inteiro, até conjurar de novo |
 | Sentença Final ⛔ | `mortem_dico` | Eldritch | instantânea | morte instantânea, de um ou de todos |
 | Tormento Coletivo ⛔ | `dolor_universus` | Sangue | contínua 3–7 s | Cruciatus em área, no ar |
+| Centelha Final | `lux_finalis` | Sagrado | longa 1 s | feixe de 48 blocos que fere e Ilumina; o próximo golpe detona a luz |
+| Têmpera do Destino | `temperies_fati` | Ender | longa 0,75 s | estase dourada numa área: todos imóveis e intocáveis |
+| Puxão Biônico | `manus_rapax` | Raio | instantânea | garra que puxa o primeiro que tocar |
+| Campo Estático | `campus_staticus` | Raio | instantânea | arranca escudos, fere e silencia; golpes marcam por 20 s |
+| Barril Explosivo | `dolium_ardens` | Fogo | instantânea | barril em arco que explode e afasta do centro |
+| Bomba Megainfernal | `pyrobolus_infernalis` | Fogo | longa 1 s | bomba de longuíssimo alcance, mais forte no centro |
+| Bigorna Celeste | `incus_caelestis` | Evocação | instantânea | bigorna do céu na cabeça do alvo — letal se ele não andar |
+| Capricho | `mutatio_ferae` | Natureza | instantânea | vira o alvo num guaxinim |
+| Colheita Farta | `messis_uberrima` | Eldritch | contínua 2 s | drena vida em volta; colheita no fim |
+| Tempestade de Corvos | `procella_corvorum` | Eldritch | longa 1,5 s | salto e revoada de corvos ferindo em volta |
+| Transfusão | `transfusio_sanguinis` | Sangue | instantânea | rouba vida; a 3ª sai potencializada |
+| Poça de Sangue | `lacus_sanguinis` | Sangue | instantânea | 2 s inalvejável, drenando quem pisa na poça |
+| Maré de Sangue | `aestus_sanguinis` | Sangue | contínua até 1,5 s | carrega com a vida e estoura em volta |
+| Hemopraga | `pestis_sanguinea` | Sangue | instantânea | infecta a área: +10% de dano recebido e cobrança no fim |
+| Shuriken Laminado | `stellae_laminatae` | Ender | instantânea | shurikens de você e das sombras, atravessando |
+| Sombra Viva | `umbra_viva` | Ender | instantânea, reconjurável | sombra que avança; de novo, troca de lugar |
+| Corte Sombrio | `sectio_umbrae` | Ender | instantânea | corte em área de você e das sombras |
+| Marca Fatal | `signum_mortis` | Ender | instantânea | aparece atrás do alvo; a marca repete o dano |
+| Flecha de Reconhecimento | `sagitta_exploratrix` | Raio | instantânea (arco) | encanta a próxima flecha: revela inimigos |
+| Flecha de Choque | `sagitta_fulminis` | Raio | instantânea (arco) | encanta a próxima flecha: descarga em área |
+| Fúria do Caçador | `furor_venatoris` | Raio | instantânea ×3 (arco) | três rajadas que atravessam paredes |
+| Esfera Espiritual ⛔ | `sphaera_spiritus` | Sagrado | contínua até 8 s | a Genki Dama: explosão com cratera |
+| Possessão ⛔ | `possessio_corporis` | Eldritch | longa 2 s, reconjurável | assumir o corpo de outro jogador e falar por ele |
+| Justiça Demaciana ⛔ | `iustitia_demaciae` | Sagrado | longa 0,75 s (espada) | espada do céu; executa abaixo do limiar |
+| Morte Vinda das Profundezas ⛔ | `mors_ex_profundis` | Gelo | instantânea | X que executa abaixo do limiar e devolve a magia |
 
 Os ids completos são `aurorion_magia:<invocação>`. Escola, nível máximo, raridade e cooldown são
 só o padrão; ver "Trocar escola" abaixo.
@@ -126,7 +151,7 @@ Cinco magias têm duas formas, e o gatilho é o mesmo em todas: **conjurar agach
 |---|---|---|
 | Queda Forçada | um alvo mirado | onda em volta de você (6 a 14 blocos) |
 | Olhar Cativo | um alvo mirado | todos em volta (14 a 30 blocos) |
-| Voz Interdita | um alvo mirado (tira ou devolve) | cala todos em volta, menos aliados (5 a 9 blocos, até 8) |
+| Voz Interdita | um alvo mirado (tira ou devolve) | cala todos em volta (5 a 9 blocos, até 8) |
 | Sentença Final ⛔ | um alvo mirado | todos em volta (nível 2+: 8 ou 14 blocos) |
 | Mão Vazia | mão principal | mão secundária |
 
@@ -513,9 +538,135 @@ dois lados pelo `tickCount` que o vanilla já incrementa. As partículas e a geo
 É um `EntityType` só (`aurorion_magia:zona_de_magia`) para as três formas, e não três: registro
 sincronizado é conteúdo que nunca mais sai do modpack ([SDD §6.1](../SDD.md)).
 
+### Magias de kit
+
+Vinte e cinco magias inspiradas em kits de campeões (League of Legends e Valorant) e na Genki Dama.
+O nome conhecido vem da tradução; a invocação, em latim, é o id. Quatro delas são proibidas e estão
+em "Magias proibidas ⛔", abaixo.
+
+O que elas arremessam — barril, bomba, bigorna, shuriken, a esfera, o arco da Têmpera e a garra — é
+uma entidade só, `aurorion_magia:projetil_de_magia`, com a forma num byte sincronizado (o mesmo
+raciocínio da zona de vento). A Sombra Viva do Zed é a outra, `aurorion_magia:sombra_viva`. As duas
+são `noSave`: nada disso volta depois de um restart.
+
+**PvP.** Entre jogadores, toda magia de kit — inclusive as que não ferem, como puxar, silenciar, virar
+bicho e possuir — só alcança quem está num lugar com PvP: o `pvp` do servidor e a regra `pvp` do
+`aurorion-areas`, conferida na posição da vítima. Puxão e Campo Estático só puxam, silenciam e tiram
+escudo de quem o golpe de fato alcançou. Estase e inalvejável seguram tudo, execuções incluídas; só
+`/kill` e o vazio do mundo passam.
+
+### Centelha Final — *Lux Finalis*
+Um segundo acumulando luz e sai um feixe reto de 48 blocos, que para no primeiro bloco sólido e fere
+todos os inimigos no caminho. Quem for atingido fica **Iluminado** por 6 s: o próximo golpe de quem
+conjurou — espada, flecha ou outra magia — consome a marca e causa metade do dano do feixe a mais. A
+própria Centelha detona a marca que já estava lá e depois a renova.
+
+### Têmpera do Destino — *Temperies Fati*
+Um arco dourado voa até o ponto mirado (até 40 blocos). Onde cai, **todos** no raio (4,25 a 5,75
+blocos) ficam em **estase** por 2,5 s: imóveis, suspensos no ar, sem usar item nem conjurar, e
+**intocáveis** — nenhum dano entra, nem do próprio conjurador. Pega aliado, inimigo, criatura e quem
+conjurou, se estiver dentro. Chefes (`imune_deslocamento`) ficam de fora.
+
+### Puxão Biônico — *Manus Rapax*
+Uma mão elétrica voa reto por 20 blocos e agarra o primeiro vivo que tocar: dano, e um puxão até a
+frente de quem conjurou, chegando com meio segundo de lentidão forte. Chefe leva o dano e não sai do
+lugar.
+
+### Campo Estático — *Campus Staticus*
+Ativo: uma descarga de 6 blocos arranca os corações de absorção (maçã dourada, escudo de magia) dos
+inimigos, fere e silencia por 1,5 s (sem chat, sem voz, sem magia). Passivo: por 20 s, cada golpe
+corpo a corpo de quem conjurou marca o alvo; um segundo depois a marca estoura em choque.
+
+### Barril Explosivo — *Dolium Ardens*
+Um barril em arco até o ponto mirado (até 30 blocos). Explode ferindo os inimigos em 5 a 6 blocos e
+os joga para longe do centro — quanto mais perto, mais longe. Não quebra bloco, não põe fogo, não
+mexe em aliado.
+
+### Bomba Megainfernal — *Pyrobolus Infernalis*
+Mira de até `alcanceBomba` blocos (128 por padrão). A bomba sobe num arco alto e leva de 1 a 2 s
+para cair; um alvo vermelho aparece no chão para quem está perto. Dano cheio a 2 blocos do centro,
+caindo até 60% na borda (6 a 7 blocos). Não quebra bloco.
+
+### Bigorna Celeste — *Incus Caelestis*
+Mira um alvo (até 24 blocos): uma bigorna nasce 22 blocos acima **do lugar onde ele estava** e cai
+em cerca de um segundo, com um círculo de aviso no chão. Quem estiver debaixo dela no impacto morre
+(dano de 1000 que ignora armadura, encantamento e escudo; totem salva, criativo não sente). Quem
+andar escapa: ela bate no chão, fica um instante e some. **Nunca vira bloco.** Com teto em cima do
+alvo, ela nasce logo abaixo do teto. Chefe leva 30 de dano, e não 1000 (e, com `magiasIgnoramTime`
+desligado, aliado de quem conjurou passa ileso).
+
+### Capricho — *Mutatio Ferae*
+O alvo vira um **guaxinim** (o do Alex's Mobs; sem ele, raposa) por 2,5 a 4 s: anda devagar, não
+ataca, não usa item e não conjura. Vida, hitbox e nome continuam os dele. O servidor manda no efeito
+`polimorfo`; cada cliente desenha o bicho no lugar do corpo.
+
+### Colheita Farta — *Messis Uberrima*
+Contínua, até 2 s: a cada meio segundo drena todos os inimigos em 6 blocos, e 60% do dano volta como
+vida. Quem segurar até o fim colhe: um último golpe que vai até o triplo com a vida que falta a cada
+um. Soltar antes encerra sem a colheita.
+
+### Tempestade de Corvos — *Procella Corvorum*
+1,5 s de concentração, um salto de até 8 blocos para onde se olha, e uma revoada gira em volta de
+quem conjurou por 5 a 7 s, ferindo duas vezes por segundo quem estiver a 5 blocos. O relógio é o
+efeito `tempestade_de_corvos`, que tica só em quem conjurou.
+
+### Transfusão — *Transfusio Sanguinis*
+Rouba vida de um alvo à vista (16 blocos): o dano vira 30% de cura. A **terceira** conjuração seguida
+sai potencializada — 1,8× o dano, o dobro da cura e 2 s de velocidade; a barra de ação avisa quando a
+reserva enche.
+
+### Poça de Sangue — *Lacus Sanguinis*
+Paga 20% da vida atual (sem dano: armadura não abate) e mergulha por 2 s: **inalvejável** — invisível,
+nenhum dano o alcança, nenhuma mira o escolhe, nenhuma criatura o persegue —, mas sem atacar. Quem
+pisar na poça (3 blocos, que acompanha quem mergulhou) fica muito lento e é drenado; metade do que a
+poça drena volta como vida.
+
+### Maré de Sangue — *Aestus Sanguinis*
+Contínua, até 1,5 s: cada meio segundo segurando custa 4% da vida máxima. Ao soltar, estoura em 8
+blocos com dano de 0,5× a 1,5× conforme a carga; com a carga cheia, deixa lento. Só atinge quem está
+à vista — parede protege.
+
+### Hemopraga — *Pestis Sanguinea*
+Infecta os inimigos numa área de 4,5 blocos (até 24 blocos de distância) por 4 s: eles recebem **10%
+a mais de dano de tudo**. Quando a praga vence, cobra: dano mágico em cada infectado e cura de 30%
+dele para quem conjurou. Leite cura a praga — e aí a cobrança não vem.
+
+### Shuriken Laminado — *Stellae Laminatae*
+Quem conjura e cada Sombra Viva arremessam um shuriken para o ponto mirado (as sombras miram o mesmo
+ponto, então cruzam o alvo). Cada um atravessa todos no caminho e para no primeiro bloco.
+
+### Sombra Viva — *Umbra Viva*
+A sombra avança 8 blocos e fica 5 a 7 s. **Conjurar de novo troca de lugar com ela** (reconjuração
+do Iron's: a recarga só começa depois da troca, ou quando a sombra some). Até duas sombras por
+pessoa, contando a da Marca Fatal. Passiva: quem conjura e uma sombra acertando o mesmo inimigo com a
+mesma conjuração devolve 20 de mana, uma vez por conjuração.
+
+### Corte Sombrio — *Sectio Umbrae*
+Quem conjura e cada sombra giram as lâminas (3,5 blocos). Cada inimigo toma o dano uma vez só; quem a
+**sombra** corta fica lento por 2 s.
+
+### Marca Fatal — *Signum Mortis*
+Inalvejável por um instante, quem conjura aparece atrás do alvo (12 blocos) e deixa uma Sombra Viva
+onde estava. O alvo fica marcado por 3 s; todo dano de quem marcou nesse tempo é somado e, quando a
+marca vence, 30/40/50% da soma é repetido de uma vez, mais o dano base.
+
+### Flecha de Reconhecimento — *Sagitta Exploratrix*
+**Exige arco ou besta na mão.** Encanta a **próxima flecha** disparada em até 30 s. Onde ela cravar,
+pulsa duas vezes (uma por segundo) e revela os inimigos em 15 blocos que ela "vê" — Brilho do vanilla,
+visível através das paredes, por 4 a 6 s. Parede entre a flecha e a pessoa esconde.
+
+### Flecha de Choque — *Sagitta Fulminis*
+**Exige arco ou besta na mão.** Encanta a próxima flecha: onde ela bater — chão, parede ou alguém —
+descarrega em 3 blocos, além do dano da própria flecha. Não quica como no Valorant.
+
+### Fúria do Caçador — *Furor Venatoris*
+**Exige arco ou besta na mão.** Três disparos, cada um uma conjuração, em até 6 s: um feixe de 60
+blocos que **atravessa paredes**, fere e revela todos no caminho. A recarga começa depois do terceiro.
+
 ### Magias proibidas ⛔
 
-Tempus Sistere, Mortem Dico e Dolor Universus são magias **proibidas**. Jogador nenhum as consegue
+Tempus Sistere, Mortem Dico, Dolor Universus, Sphaera Spiritus (a Esfera Espiritual), Possessio
+Corporis, Iustitia Demaciae e Mors ex Profundis são magias **proibidas**. Jogador nenhum as consegue
 sozinho; só a staff concede.
 
 | Regra | Como |
@@ -532,7 +683,7 @@ Para conceder a um personagem:
 /createScroll aurorion_magia:tempus_sistere 3        (pergaminho do nível desejado, do Iron's)
 ```
 
-No criativo, a aba **Aurorion — Magias** traz o pergaminho de cada uma das 23 magias em todos
+No criativo, a aba **Aurorion — Magias** traz o pergaminho de cada uma das 49 magias em todos
 os níveis, na ordem do registro (as proibidas por último). Ter o pergaminho não libera: conjurar
 continua exigindo a liberação, e a staff passa pelo `staffBypass`.
 
@@ -625,6 +776,52 @@ número próprio; o raio está ali para a cena, junto com o rugido grave por cim
 **Visual:** um selo de espinhos do tamanho do raio sob quem conjura, uma mancha escura de sangue no
 chão, feixes vermelho-negros da mão até cada suspenso e os raios caindo em volta.
 
+### Esfera Espiritual — *Sphaera Spiritus* ⛔
+A Genki Dama. Segurando a conjuração com os braços erguidos, a esfera cresce sobre a cabeça de quem
+conjura por até 8 s — todo mundo em volta a vê crescer —, e quem conjura anda devagar. Ao soltar, ela
+é arremessada devagar para onde se mira e explode no primeiro toque.
+
+A explosão é **totalmente destrutiva**: fere (até 2× o poder com a carga cheia, metade disso na borda)
+e arremessa todos no raio — aliado também —, menos quem conjurou; o raio vai de 3 a 10/12/14 blocos
+com a carga. E abre cratera (`esferaQuebraBlocos`, ligada por padrão), com uma explosão do vanilla de
+força até 6 que segue o `blockExplosionDropDecay` (nem todo bloco quebrado vira item). Se a carga for
+interrompida — estase, possessão, silêncio —, a esfera se desfaz em vez de sair. A cratera **não** se abre onde quem conjurou não poderia construir (proteção de spawn),
+em área do `aurorion-areas` que proíba magia no ponto do impacto, nem em bloco lacrado; mods de
+proteção que tratam `ExplosionEvent` continuam valendo. Soltar antes de 1 s desfaz a esfera e devolve
+a recarga.
+
+### Possessão — *Possessio Corporis* ⛔
+2 s de concentração mirando outro **jogador** (12 blocos) e quem conjura entra no corpo dele por 15 a
+25 s. O alvo é conferido de novo no fim da concentração (ninguém possuído duas vezes, nada de alvo que
+fugiu ou entrou em área sem PvP):
+
+- quem possui fica invisível, intocável e sem atacar, quebrar ou usar nada; anda, pula, agacha e olha
+  normalmente, e a cada tick o servidor põe o corpo do possuído exatamente ali, olhando para lá — para
+  quem está em volta, é o possuído que anda;
+- o possuído não anda por conta própria, não usa item, não ataca, não conjura — mas **fala**;
+- o que quem possui digita no chat sai **com o nome do possuído**, inclusive no balão do
+  `aurorion-talk`. Os dois falam pela mesma boca. No Voice Chat, a voz de quem possui já sai do mesmo
+  lugar.
+
+Conjurar de novo (sem concentração) devolve o corpo antes do tempo. Também acaba com a morte de
+qualquer um dos dois, ao deslogar e ao trocar de dimensão. Quem possuía volta para onde estava quando
+conjurou. Custo: um teleporte do possuído por tick, só enquanto alguém está possuído.
+
+### Justiça Demaciana — *Iustitia Demaciae* ⛔
+**Só sai com espada na mão** (tag `minecraft:swords` ou espada de mod). Quem conjura ergue a espada
+durante 0,75 s e a desce num golpe por cima da cabeça — animações de golpe do próprio Iron's, no
+mesmo motor de animação (playerAnimator) do Better Combat. No alvo (10 blocos), uma espada dourada
+gigante cai do céu. Dano de magia: base + 30% da vida que falta. Abaixo do limiar
+(`limiarJustica`: 25/30/35%), **execução** — totem não salva. O alvo é conferido de novo quando a
+concentração termina: se nesse meio-tempo ele entrou em estase, em área sem PvP ou no criativo, o
+golpe não desce.
+
+### Morte Vinda das Profundezas — *Mors ex Profundis* ⛔
+Um X de água se desenha no chão mirado (24 blocos), orientado para a frente de quem conjurou, e
+detona meio segundo depois. Quem estiver sobre o X e abaixo do limiar (`limiarProfundezas`:
+20/25/30%) é **executado**, sem totem; o resto leva o dano. Executar alguém **devolve a magia na
+hora**: a recarga some.
+
 ### Possessão: a tela de quem é controlado
 
 Quem está sob uma magia de controle vê e ouve diferente, para passar a ideia de possessão. Tudo é
@@ -641,6 +838,10 @@ efeito.
 | Voz Interdita | faixa negra subindo do pé da tela, com uma costura como boca fechada | — | — |
 | Mão do Algoz | bordas violeta apertando enquanto é segurado | — | — |
 | Mundo Vazio | quase nada: sombra fria nas bordas e um chiado de riscos horizontais | — | — |
+| Possessão (possuído) | moldura negra fechando por todos os lados e "NON ES TUUS" piscando no alto | segue quem possui | — |
+| Possessão (quem possui) | sombra roxa leve nas bordas; o corpo possuído some da própria vista | — | — |
+| Têmpera do Destino | véu dourado parado, sem pulso | — | — |
+| Capricho | bordas verdes | — | — |
 
 Todos os efeitos de câmera respeitam a opção vanilla "Efeitos de distorção" (acessibilidade), e o
 tremor respeita também `cameraShake`.
@@ -895,6 +1096,21 @@ O `aurorion-areas` usa as mesmas duas peças na névoa da Floresta Negra.
 `config/aurorion/magia-server.toml`: `staffBypass`, `authoritative`, `forbiddenSpells`,
 `dominationRadius`, e a seção `[passivas]` com `dreadRadius`, `dreadKneelRadius`, `dreadProstrates`,
 `dreadSparesAllies` e `healingTouchHealsHostiles`. (`dreadDarkens` saiu: a aura não cega mais.)
+A seção `[aliados]` tem `magiasIgnoramTime`; a `[destruicao]` tem `esferaQuebraBlocos`,
+`limiarJustica`, `limiarProfundezas` e `alcanceBomba`.
+
+### Magia entre aliados — `magiasIgnoramTime`
+
+Ligada (padrão), **magia acerta qualquer pessoa, de qualquer time**: nenhuma magia poupa aliado — nem
+as do Aurorion, nem as do Iron's — e o dano entra mesmo com o fogo amigo do time desligado. Por baixo,
+o Iron's e o vanilla recusam dano cujo *causador* é do mesmo time; entre aliados, o dano sai com quem
+conjurou só como entidade direta, sem causador (`FriendlyFire`). A mensagem de morte continua com o
+nome de quem conjurou, mas matar um aliado com magia não conta abate. Área sem PvP (servidor ou
+`aurorion-areas`) continua protegendo. Desligada, toda magia volta a poupar o próprio time.
+
+Fica de fora o que não é dano de magia: a Presença Aterradora tem chave própria
+(`dreadSparesAllies`), e mob dominado pelo Imperium continua não atacando o mestre nem os aliados dele.
+Projéteis do próprio Iron's que atravessam aliados sem colidir (decisão interna do projétil) não mudam.
 
 `config/aurorion/magia-client.toml`: `visualDistance` (até 32, o limite do vanilla para partículas),
 `cameraShake` (0 desliga).

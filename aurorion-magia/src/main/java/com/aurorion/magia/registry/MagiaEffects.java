@@ -5,6 +5,7 @@ import com.aurorion.magia.effect.AirborneEffect;
 import com.aurorion.magia.effect.BoundEffect;
 import com.aurorion.magia.effect.CagedEffect;
 import com.aurorion.magia.effect.CaptiveEffect;
+import com.aurorion.magia.effect.CrowStormEffect;
 import com.aurorion.magia.effect.CruciatusEffect;
 import com.aurorion.magia.effect.DashingEffect;
 import com.aurorion.magia.effect.DisorientedEffect;
@@ -14,6 +15,9 @@ import com.aurorion.magia.effect.DrowningEffect;
 import com.aurorion.magia.effect.GenuflectedEffect;
 import com.aurorion.magia.effect.KneelingEffect;
 import com.aurorion.magia.effect.MagiaEffect;
+import com.aurorion.magia.effect.PossessedEffect;
+import com.aurorion.magia.effect.PossessingEffect;
+import com.aurorion.magia.effect.StasisEffect;
 import com.aurorion.magia.effect.ThrownEffect;
 import com.aurorion.magia.effect.TimeStopEffect;
 import net.minecraft.core.registries.Registries;
@@ -133,6 +137,62 @@ public final class MagiaEffects {
     /** Lancado para o alto pelo impacto: sem conjurar, sem dano de queda ao descer. */
     public static final DeferredHolder<MobEffect, AirborneEffect> AIRBORNE =
             EFFECTS.register("lancado", AirborneEffect::new);
+
+    // --- Luz, destino e eletricidade ---------------------------------------------------------------
+
+    /** Centelha Final: marcado pela luz. O proximo golpe de quem marcou detona a marca. */
+    public static final DeferredHolder<MobEffect, MobEffect> ILLUMINATED = EFFECTS.register("iluminado",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0xFFF3A6));
+
+    /** Tempera do Destino: suspenso fora do tempo, intocavel e imovel. */
+    public static final DeferredHolder<MobEffect, StasisEffect> STASIS =
+            EFFECTS.register("estase", StasisEffect::new);
+
+    /** Campo Estatico ligado: os golpes corpo a corpo de quem o tem marcam o alvo. */
+    public static final DeferredHolder<MobEffect, MobEffect> STATIC_FIELD = EFFECTS.register("campo_estatico",
+            () -> new MagiaEffect(MobEffectCategory.BENEFICIAL, 0x55B9FF));
+
+    /** Marcado pelo Campo Estatico: quando o efeito acaba, a marca estoura em choque. */
+    public static final DeferredHolder<MobEffect, MobEffect> STATIC_MARK = EFFECTS.register("marca_estatica",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x9BE3FF));
+
+    // --- Corvos, sangue e sombra -------------------------------------------------------------------
+
+    /** Tempestade de Corvos: a revoada em volta de quem conjurou, e o relogio dela. */
+    public static final DeferredHolder<MobEffect, CrowStormEffect> CROW_STORM =
+            EFFECTS.register("tempestade_de_corvos", CrowStormEffect::new);
+
+    /** Hemopraga: recebe mais dano de tudo, e quando acaba o sangue cobra o resto. */
+    public static final DeferredHolder<MobEffect, MobEffect> HEMOPLAGUE = EFFECTS.register("hemopraga",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x8E0B1E));
+
+    /** Poca de Sangue e Marca Fatal: nao e alvo de golpe, magia, flecha nem criatura. */
+    public static final DeferredHolder<MobEffect, MobEffect> UNTARGETABLE = EFFECTS.register("inalvejavel",
+            () -> new MagiaEffect(MobEffectCategory.BENEFICIAL, 0x5C0012));
+
+    /** Marca Fatal: quando acaba, repete parte do dano que quem marcou causou enquanto ela durou. */
+    public static final DeferredHolder<MobEffect, MobEffect> DEATH_MARK = EFFECTS.register("marca_fatal",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x3B0A0A));
+
+    // --- Forma, corpo e arco -----------------------------------------------------------------------
+
+    /** Capricho: virou bicho. Anda devagar, nao ataca, nao usa item, nao conjura. */
+    public static final DeferredHolder<MobEffect, MobEffect> POLYMORPH = EFFECTS.register("polimorfo",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x9CCB61)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("polimorfo_speed"),
+                            -0.35, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
+    /** Possessao: o corpo tomado. Fala, e mais nada. */
+    public static final DeferredHolder<MobEffect, PossessedEffect> POSSESSED =
+            EFFECTS.register("possuido", PossessedEffect::new);
+
+    /** Possessao: quem esta dentro do corpo de outro, e o relogio da possessao. */
+    public static final DeferredHolder<MobEffect, PossessingEffect> POSSESSING =
+            EFFECTS.register("possuindo", PossessingEffect::new);
+
+    /** Sova: a proxima flecha do arco sai encantada. Amplificador 0 = reconhecimento, 1 = choque. */
+    public static final DeferredHolder<MobEffect, MobEffect> IMBUED_ARROW = EFFECTS.register("flecha_imbuida",
+            () -> new MagiaEffect(MobEffectCategory.BENEFICIAL, 0x8FD3FF));
 
     private MagiaEffects() {
     }

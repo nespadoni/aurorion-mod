@@ -48,7 +48,7 @@ public final class Drowning {
     /** O golpe de quem ja esta sem ar. Chamado pelo tick do efeito, meio segundo de intervalo. */
     public static void suffocate(LivingEntity entity, float damage) {
         if (!(entity.level() instanceof ServerLevel level)) return;
-        entity.hurt(source(level, entity), damage);
+        entity.hurt(FriendlyFire.source(source(level, entity), entity), damage);
         AurorionSpell.sound(entity, SoundEvents.PLAYER_HURT_DROWN, 0.7f, 0.9f);
     }
 

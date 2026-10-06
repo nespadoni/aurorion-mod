@@ -1,6 +1,8 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.entity.MagiaProjectileEntity;
+import com.aurorion.magia.entity.ShadowEntity;
 import com.aurorion.magia.entity.SpellZoneEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -30,6 +32,34 @@ public final class MagiaEntities {
                     .clientTrackingRange(6)
                     .updateInterval(1)
                     .build("zona_de_magia"));
+
+    /**
+     * O que as magias arremessam: esfera, barril, bomba, bigorna, shuriken, a Tempera e a garra
+     * ({@link MagiaProjectileEntity}). Alcance de rastreio de 8 chunks: a Bomba Megainfernal cai a mais
+     * de cem blocos de quem a jogou, e quem esta embaixo precisa ve-la chegando.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<MagiaProjectileEntity>> PROJECTILE =
+            ENTITIES.register("projetil_de_magia", () -> EntityType.Builder
+                    .<MagiaProjectileEntity>of(MagiaProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 0.6F)
+                    .fireImmune()
+                    .noSummon()
+                    .noSave()
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .build("projetil_de_magia"));
+
+    /** A Sombra Viva do Zed ({@link ShadowEntity}). */
+    public static final DeferredHolder<EntityType<?>, EntityType<ShadowEntity>> SHADOW =
+            ENTITIES.register("sombra_viva", () -> EntityType.Builder
+                    .<ShadowEntity>of(ShadowEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.8F)
+                    .fireImmune()
+                    .noSummon()
+                    .noSave()
+                    .clientTrackingRange(6)
+                    .updateInterval(1)
+                    .build("sombra_viva"));
 
     private MagiaEntities() {
     }

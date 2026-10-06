@@ -1,6 +1,8 @@
 package com.aurorion.magia.spell;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.compat.FrozenLink;
+import com.aurorion.magia.registry.MagiaEffects;
 import io.redspace.ironsspellbooks.api.config.DefaultConfig;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
@@ -108,7 +110,8 @@ public abstract class AurorionSpell extends AbstractSpell {
                           Predicate<LivingEntity> filter) {
         return Utils.preCastTargetHelper(level, caster, data, this, range, AIM_ASSIST, true,
                 target -> target != caster && !untouchable(target)
-                        && (allowAllies || !DamageSources.isFriendlyFireBetween(caster, target))
+                        && !target.hasEffect(MagiaEffects.UNTARGETABLE)
+                        && (allowAllies || !FriendlyFire.spares(caster, target))
                         && filter.test(target));
     }
 
@@ -121,6 +124,23 @@ public abstract class AurorionSpell extends AbstractSpell {
      */
     public static boolean untouchable(Entity entity) {
         return entity.isInvulnerable() && !(entity instanceof Player);
+    }
+
+    /**
+     * O conjurador esta num estado em que nenhuma magia sai: o mesmo que o gate de conjuracao do
+     * {@code MagiaServerEvents} recusa. Serve as magias continuas que soltam algo ao <i>terminar</i> a
+     * carga (Esfera, Mare de Sangue): o Iron's chama o fim da carga tanto quando o jogador solta o
+     * botao quanto quando a conjuracao e interrompida por estase, possessao ou silencio — e so a
+     * primeira pode lancar.
+     */
+    public static boolean castBlocked(LivingEntity caster) {
+        return !caster.isAlive()
+                || caster.hasEffect(MagiaEffects.SILENCED) || caster.hasEffect(MagiaEffects.DISORIENTED)
+                || caster.hasEffect(MagiaEffects.CRUCIATUS) || caster.hasEffect(MagiaEffects.KNEELING)
+                || caster.hasEffect(MagiaEffects.AIRBORNE) || caster.hasEffect(MagiaEffects.STASIS)
+                || caster.hasEffect(MagiaEffects.POLYMORPH) || caster.hasEffect(MagiaEffects.POSSESSED)
+                || caster.hasEffect(MagiaEffects.POSSESSING)
+                || FrozenLink.isFrozen(caster);
     }
 
     /** O alvo escolhido na mira; para mob conjurador, o alvo da IA. */

@@ -105,7 +105,7 @@ public final class VoxInterdictaSpell extends AurorionSpell {
     /** So jogadores, e nunca quem esta do lado de quem conjura. */
     private static List<LivingEntity> area(ServerLevel level, LivingEntity caster, int spellLevel) {
         return AreaCast.victims(level, caster, caster.position(), radius(spellLevel), MAX_TARGETS,
-                target -> target instanceof ServerPlayer && !caster.isAlliedTo(target));
+                target -> target instanceof ServerPlayer && !FriendlyFire.spares(caster, target));
     }
 
     /** Segunda conjuracao no mesmo alvo: pode falar. O microfone volta pelo fim do efeito. */

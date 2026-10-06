@@ -66,7 +66,7 @@ public final class VinculumCarnificisSpell extends AurorionSpell {
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
         return aim(level, entity, playerMagicData, RANGE, true,
-                target -> Binding.isBound(target) || !DamageSources.isFriendlyFireBetween(entity, target));
+                target -> Binding.isBound(target) || !FriendlyFire.spares(entity, target));
     }
 
     @Override

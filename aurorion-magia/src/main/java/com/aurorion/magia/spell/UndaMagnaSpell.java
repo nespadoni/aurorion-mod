@@ -119,7 +119,7 @@ public final class UndaMagnaSpell extends AurorionSpell {
         launch(victim, new Vec3(away.x * force, 0.42 + 0.03 * spellLevel, away.z * force));
         victim.resetFallDistance();
         victim.clearFire();
-        DamageSources.applyDamage(victim, getSpellPower(spellLevel, caster), getDamageSource(caster));
+        FriendlyFire.applyDamage(victim, getSpellPower(spellLevel, caster), getDamageSource(caster));
         sound(victim, SoundEvents.PLAYER_SPLASH, 0.9f, 0.9f);
     }
 

@@ -229,8 +229,7 @@ public final class SigilRenderer {
                 drawMesh(out, pose, SEAL_MAJOR, radius * .3F, .1F, 0x000000, .95F * fade, .006F);
                 pose.popPose();
             }
-            default -> {
-            }
+            default -> KitVisuals.ink(pose, out, camera, level, a, partial);
         }
     }
 
@@ -540,8 +539,7 @@ public final class SigilRenderer {
                 layered(out, pose, SEAL_WAVE, radius * 1.2F, 0x1C6FA8, 0xD6F4FF, fade * .7F);
                 pose.popPose();
             }
-            default -> {
-            }
+            default -> KitVisuals.glow(pose, out, camera, level, a, partial);
         }
     }
 
@@ -584,12 +582,12 @@ public final class SigilRenderer {
     // --- Ajudantes ---------------------------------------------------------------------------
 
     /** Empilha uma pose com origem no ponto do mundo. Quem chama fecha com {@code popPose}. */
-    private static void at(PoseStack pose, Vec3 camera, Vec3 world) {
+    static void at(PoseStack pose, Vec3 camera, Vec3 world) {
         pose.pushPose();
         pose.translate(world.x - camera.x, world.y - camera.y, world.z - camera.z);
     }
 
-    private static void spin(PoseStack pose, float life, float degreesPerTick) {
+    static void spin(PoseStack pose, float life, float degreesPerTick) {
         pose.mulPose(ROTATION.rotationY(life * degreesPerTick * Mth.DEG_TO_RAD));
     }
 
@@ -601,7 +599,7 @@ public final class SigilRenderer {
     }
 
     /** Uma malha de raio 1 escalada; a largura dos tracos e em blocos, independente do raio. */
-    private static void drawMesh(VertexConsumer out, PoseStack pose, float[] mesh, float radius, float width,
+    static void drawMesh(VertexConsumer out, PoseStack pose, float[] mesh, float radius, float width,
                                  int color, float alpha, float height) {
         if (radius <= .001F || alpha <= .004F) return;
         pose.pushPose();
@@ -611,7 +609,7 @@ public final class SigilRenderer {
     }
 
     /** Tres camadas como os selos da cerimonia: halo largo e fraco, traco medio, fio brilhante. */
-    private static void layered(VertexConsumer out, PoseStack pose, float[] mesh, float radius, int main, int accent,
+    static void layered(VertexConsumer out, PoseStack pose, float[] mesh, float radius, int main, int accent,
                                 float alpha) {
         drawMesh(out, pose, mesh, radius, .045F * radius, main, alpha * .16F, 0);
         drawMesh(out, pose, mesh, radius, .02F * radius, accent, alpha * .8F, .002F);

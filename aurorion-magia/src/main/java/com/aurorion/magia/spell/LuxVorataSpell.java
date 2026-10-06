@@ -128,7 +128,7 @@ public final class LuxVorataSpell extends AurorionSpell {
 
         // A escuridao em quem esta dentro. Aliado de time passa: a magia e do grupo que a lancou.
         for (LivingEntity victim : AreaCast.victims(level, caster, caster.position(), radius, MAX_TARGETS,
-                target -> !caster.isAlliedTo(target))) {
+                target -> !FriendlyFire.spares(caster, target))) {
             victim.addEffect(new MobEffectInstance(MobEffects.DARKNESS, duration, 0, false, false, true), caster);
             victim.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, BLINDNESS_TICKS, 0, false, false, true), caster);
             victim.clearFire();

@@ -86,10 +86,18 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
             case WARD -> ward(glow, pose, matrix, radius, height, life, fade);
             case COLUMN -> column(glow, pose, matrix, radius, height, life, fade);
             case STORM -> storm(glow, pose, matrix, radius, height, life, fade);
+            case POCA -> pool(glow, matrix, radius, life, fade);
         }
         pose.popPose();
 
         particles(zone, life);
+    }
+
+    /** A Poca de Sangue: disco vermelho-escuro no chao, com a borda pulsando. */
+    private static void pool(VertexConsumer glow, Matrix4f matrix, float radius, float life, float fade) {
+        float pulse = .85F + .15F * Mth.sin(life * .3F);
+        SigilGeometry.band(glow, matrix, radius * .15F, radius * pulse, .03F, 0x8E0B1E, .35F * fade, 48);
+        SigilGeometry.band(glow, matrix, radius * pulse * .92F, radius * pulse, .04F, 0xD0202E, .7F * fade, 48);
     }
 
     private static float breath(float life) {
@@ -175,6 +183,16 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
         RandomSource random = minecraft.level.random;
         float radius = zone.radius();
         float height = zone.height();
+        if (zone.shape() == SpellZoneEntity.Shape.POCA) {
+            // Sangue borbulhando no chao, e nao vento.
+            for (int i = 0; i < Math.max(1, 4 / stride); i++) {
+                double angle = random.nextDouble() * Math.PI * 2;
+                double r = Math.sqrt(random.nextDouble()) * radius;
+                minecraft.level.addParticle(ClientSpellVisuals.BLOOD, center.x + Math.cos(angle) * r, center.y + 0.1,
+                        center.z + Math.sin(angle) * r, 0, 0.05, 0);
+            }
+            return;
+        }
         int count = Math.max(1, 3 / stride);
         for (int i = 0; i < count; i++) {
             double angle = random.nextDouble() * Math.PI * 2 + life * .2;
@@ -189,6 +207,7 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
                 case WARD -> 0.02;
                 case COLUMN -> 0.35;
                 case STORM -> 0.12;
+                case POCA -> 0.05;
             };
             minecraft.level.addParticle(BREEZE, x, center.y + y, z, swirl.x, rise, swirl.z);
             if (random.nextInt(4) == 0) {

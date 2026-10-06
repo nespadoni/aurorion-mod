@@ -140,7 +140,7 @@ public final class MortemDicoSpell extends AurorionSpell {
 
         DamageSource death = new DamageSource(
                 level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), caster);
-        target.hurt(death, Float.MAX_VALUE);
+        target.hurt(FriendlyFire.source(death, target), Float.MAX_VALUE);
         if (target.isAlive()) target.kill();
 
         sound(level, feet, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.6f, 1.6f);

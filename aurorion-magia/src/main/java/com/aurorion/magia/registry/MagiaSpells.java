@@ -1,26 +1,51 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.spell.AestusSanguinisSpell;
 import com.aurorion.magia.spell.AspectusCaptusSpell;
+import com.aurorion.magia.spell.CampusStaticusSpell;
 import com.aurorion.magia.spell.CarcerAquaeSpell;
 import com.aurorion.magia.spell.ColumnaVentiSpell;
 import com.aurorion.magia.spell.DeiectioCorporisSpell;
+import com.aurorion.magia.spell.DoliumArdensSpell;
 import com.aurorion.magia.spell.DolorCruciatusSpell;
 import com.aurorion.magia.spell.DolorUniversusSpell;
 import com.aurorion.magia.spell.FerrumLigatumSpell;
+import com.aurorion.magia.spell.FurorVenatorisSpell;
 import com.aurorion.magia.spell.GenuaFlecteSpell;
-import com.aurorion.magia.spell.ImpetusVentiSpell;
 import com.aurorion.magia.spell.ImperiumMentisSpell;
+import com.aurorion.magia.spell.ImpetusVentiSpell;
+import com.aurorion.magia.spell.IncusCaelestisSpell;
+import com.aurorion.magia.spell.IustitiaDemaciaeSpell;
+import com.aurorion.magia.spell.LacusSanguinisSpell;
+import com.aurorion.magia.spell.LuxFinalisSpell;
 import com.aurorion.magia.spell.LuxVorataSpell;
-import com.aurorion.magia.spell.MundusVacuusSpell;
 import com.aurorion.magia.spell.ManusCarnificisSpell;
+import com.aurorion.magia.spell.ManusRapaxSpell;
 import com.aurorion.magia.spell.ManusVacuaSpell;
+import com.aurorion.magia.spell.MessisUberrimaSpell;
+import com.aurorion.magia.spell.MorsExProfundisSpell;
 import com.aurorion.magia.spell.MortemDicoSpell;
+import com.aurorion.magia.spell.MundusVacuusSpell;
+import com.aurorion.magia.spell.MutatioFeraeSpell;
+import com.aurorion.magia.spell.PestisSanguineaSpell;
+import com.aurorion.magia.spell.PossessioCorporisSpell;
+import com.aurorion.magia.spell.ProcellaCorvorumSpell;
+import com.aurorion.magia.spell.PyrobolusInfernalisSpell;
+import com.aurorion.magia.spell.SagittaExploratrixSpell;
+import com.aurorion.magia.spell.SagittaFulminisSpell;
+import com.aurorion.magia.spell.SectioUmbraeSpell;
 import com.aurorion.magia.spell.SigillumClausumSpell;
+import com.aurorion.magia.spell.SignumMortisSpell;
+import com.aurorion.magia.spell.SphaeraSpiritusSpell;
+import com.aurorion.magia.spell.StellaeLaminataeSpell;
 import com.aurorion.magia.spell.SubmersioSpell;
+import com.aurorion.magia.spell.TemperiesFatiSpell;
 import com.aurorion.magia.spell.TempusSistereSpell;
+import com.aurorion.magia.spell.TransfusioSanguinisSpell;
 import com.aurorion.magia.spell.TranspositioSpell;
 import com.aurorion.magia.spell.TurboVentorumSpell;
+import com.aurorion.magia.spell.UmbraVivaSpell;
 import com.aurorion.magia.spell.UndaMagnaSpell;
 import com.aurorion.magia.spell.VentusCustosSpell;
 import com.aurorion.magia.spell.VinculumCarnificisSpell;
@@ -102,6 +127,66 @@ public final class MagiaSpells {
             SPELLS.register("mortem_dico", MortemDicoSpell::new);
     public static final DeferredHolder<AbstractSpell, DolorUniversusSpell> DOLOR_UNIVERSUS =
             SPELLS.register("dolor_universus", DolorUniversusSpell::new);
+    public static final DeferredHolder<AbstractSpell, SphaeraSpiritusSpell> SPHAERA_SPIRITUS =
+            SPELLS.register("sphaera_spiritus", SphaeraSpiritusSpell::new);
+    public static final DeferredHolder<AbstractSpell, PossessioCorporisSpell> POSSESSIO_CORPORIS =
+            SPELLS.register("possessio_corporis", PossessioCorporisSpell::new);
+    public static final DeferredHolder<AbstractSpell, IustitiaDemaciaeSpell> IUSTITIA_DEMACIAE =
+            SPELLS.register("iustitia_demaciae", IustitiaDemaciaeSpell::new);
+    public static final DeferredHolder<AbstractSpell, MorsExProfundisSpell> MORS_EX_PROFUNDIS =
+            SPELLS.register("mors_ex_profundis", MorsExProfundisSpell::new);
+
+    // --- Ultimates: luz, destino, eletricidade, fogo e ferro -------------------------------------
+    public static final DeferredHolder<AbstractSpell, LuxFinalisSpell> LUX_FINALIS =
+            SPELLS.register("lux_finalis", LuxFinalisSpell::new);
+    public static final DeferredHolder<AbstractSpell, TemperiesFatiSpell> TEMPERIES_FATI =
+            SPELLS.register("temperies_fati", TemperiesFatiSpell::new);
+    public static final DeferredHolder<AbstractSpell, ManusRapaxSpell> MANUS_RAPAX =
+            SPELLS.register("manus_rapax", ManusRapaxSpell::new);
+    public static final DeferredHolder<AbstractSpell, CampusStaticusSpell> CAMPUS_STATICUS =
+            SPELLS.register("campus_staticus", CampusStaticusSpell::new);
+    public static final DeferredHolder<AbstractSpell, DoliumArdensSpell> DOLIUM_ARDENS =
+            SPELLS.register("dolium_ardens", DoliumArdensSpell::new);
+    public static final DeferredHolder<AbstractSpell, PyrobolusInfernalisSpell> PYROBOLUS_INFERNALIS =
+            SPELLS.register("pyrobolus_infernalis", PyrobolusInfernalisSpell::new);
+    public static final DeferredHolder<AbstractSpell, IncusCaelestisSpell> INCUS_CAELESTIS =
+            SPELLS.register("incus_caelestis", IncusCaelestisSpell::new);
+    public static final DeferredHolder<AbstractSpell, MutatioFeraeSpell> MUTATIO_FERAE =
+            SPELLS.register("mutatio_ferae", MutatioFeraeSpell::new);
+
+    // --- Corvos ----------------------------------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, MessisUberrimaSpell> MESSIS_UBERRIMA =
+            SPELLS.register("messis_uberrima", MessisUberrimaSpell::new);
+    public static final DeferredHolder<AbstractSpell, ProcellaCorvorumSpell> PROCELLA_CORVORUM =
+            SPELLS.register("procella_corvorum", ProcellaCorvorumSpell::new);
+
+    // --- Sangue: o kit inteiro -------------------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, TransfusioSanguinisSpell> TRANSFUSIO_SANGUINIS =
+            SPELLS.register("transfusio_sanguinis", TransfusioSanguinisSpell::new);
+    public static final DeferredHolder<AbstractSpell, LacusSanguinisSpell> LACUS_SANGUINIS =
+            SPELLS.register("lacus_sanguinis", LacusSanguinisSpell::new);
+    public static final DeferredHolder<AbstractSpell, AestusSanguinisSpell> AESTUS_SANGUINIS =
+            SPELLS.register("aestus_sanguinis", AestusSanguinisSpell::new);
+    public static final DeferredHolder<AbstractSpell, PestisSanguineaSpell> PESTIS_SANGUINEA =
+            SPELLS.register("pestis_sanguinea", PestisSanguineaSpell::new);
+
+    // --- Sombra: o kit inteiro -------------------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, StellaeLaminataeSpell> STELLAE_LAMINATAE =
+            SPELLS.register("stellae_laminatae", StellaeLaminataeSpell::new);
+    public static final DeferredHolder<AbstractSpell, UmbraVivaSpell> UMBRA_VIVA =
+            SPELLS.register("umbra_viva", UmbraVivaSpell::new);
+    public static final DeferredHolder<AbstractSpell, SectioUmbraeSpell> SECTIO_UMBRAE =
+            SPELLS.register("sectio_umbrae", SectioUmbraeSpell::new);
+    public static final DeferredHolder<AbstractSpell, SignumMortisSpell> SIGNUM_MORTIS =
+            SPELLS.register("signum_mortis", SignumMortisSpell::new);
+
+    // --- Arco: so com arco ou besta na mao -------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, SagittaExploratrixSpell> SAGITTA_EXPLORATRIX =
+            SPELLS.register("sagitta_exploratrix", SagittaExploratrixSpell::new);
+    public static final DeferredHolder<AbstractSpell, SagittaFulminisSpell> SAGITTA_FULMINIS =
+            SPELLS.register("sagitta_fulminis", SagittaFulminisSpell::new);
+    public static final DeferredHolder<AbstractSpell, FurorVenatorisSpell> FUROR_VENATORIS =
+            SPELLS.register("furor_venatoris", FurorVenatorisSpell::new);
 
     private MagiaSpells() {
     }

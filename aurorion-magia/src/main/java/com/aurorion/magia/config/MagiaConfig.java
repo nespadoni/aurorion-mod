@@ -20,6 +20,12 @@ public final class MagiaConfig {
     public static final ModConfigSpec.BooleanValue DREAD_SPARE_ALLIES;
     public static final ModConfigSpec.BooleanValue HEALING_TOUCH_HOSTILES;
 
+    public static final ModConfigSpec.BooleanValue SPELLS_IGNORE_TEAMS;
+    public static final ModConfigSpec.BooleanValue SPHAERA_BREAKS_BLOCKS;
+    public static final ModConfigSpec.DoubleValue IUSTITIA_THRESHOLD;
+    public static final ModConfigSpec.DoubleValue MORS_THRESHOLD;
+    public static final ModConfigSpec.IntValue PYROBOLUS_RANGE;
+
     public static final ModConfigSpec SPEC;
 
     static {
@@ -49,6 +55,19 @@ public final class MagiaConfig {
                         "Ids completos, ex.: [\"irons_spellbooks:black_hole\"]")
                 .defineListAllowEmpty("forbiddenSpells", List.of(), () -> "irons_spellbooks:black_hole",
                         value -> value instanceof String id && ResourceLocation.tryParse(id) != null);
+
+        BUILDER.pop();
+        BUILDER.comment("Magia entre aliados.").push("aliados");
+
+        SPELLS_IGNORE_TEAMS = BUILDER
+                .comment(
+                        "true (padrao): magia acerta qualquer pessoa, de qualquer time. Nenhuma magia poupa aliado",
+                        "(nem do Aurorion nem do Iron's), e o dano entre aliados passa mesmo com o fogo amigo do",
+                        "time desligado. Area sem PvP (servidor ou aurorion-areas) continua protegendo. Matar um",
+                        "aliado com magia nao conta abate para quem conjurou.",
+                        "false: magia poupa o proprio time, como o Iron's faz sozinho.",
+                        "A Presenca Aterradora tem chave propria (dreadSparesAllies).")
+                .define("magiasIgnoramTime", true);
 
         BUILDER.pop();
         BUILDER.comment("Imperium Mentis.").push("imperium");
@@ -102,6 +121,37 @@ public final class MagiaConfig {
                         "  personagem fica incapaz de se defender de qualquer bicho.",
                         "true: a mao cura tudo o que toca, e quem a tem simplesmente nao luta corpo a corpo.")
                 .define("healingTouchHealsHostiles", false);
+
+        BUILDER.pop();
+        BUILDER.comment("Magias de destruicao e execucao.").push("destruicao");
+
+        SPHAERA_BREAKS_BLOCKS = BUILDER
+                .comment(
+                        "Esfera Espiritual (Genki Dama): se a explosao abre cratera no terreno.",
+                        "Mesmo ligada, ela nao quebra bloco onde quem conjurou nao poderia construir (protecao",
+                        "de spawn), em area do aurorion-areas que proiba magia, nem bloco lacrado; e mods de",
+                        "protecao que tratam explosao (ExplosionEvent) continuam valendo.",
+                        "false: so dano e empurrao, o terreno fica intacto.")
+                .define("esferaQuebraBlocos", true);
+
+        IUSTITIA_THRESHOLD = BUILDER
+                .comment(
+                        "Justica Demaciana: fracao da vida maxima abaixo da qual o alvo e executado no nivel 1.",
+                        "Cada nivel acima soma 0.05 (padrao: 25%, 30%, 35%).")
+                .defineInRange("limiarJustica", 0.25, 0.0, 0.9);
+
+        MORS_THRESHOLD = BUILDER
+                .comment(
+                        "Morte Vinda das Profundezas: fracao da vida maxima abaixo da qual quem estiver no X e",
+                        "executado no nivel 1. Cada nivel acima soma 0.05 (padrao: 20%, 25%, 30%).")
+                .defineInRange("limiarProfundezas", 0.20, 0.0, 0.9);
+
+        PYROBOLUS_RANGE = BUILDER
+                .comment(
+                        "Bomba Megainfernal: alcance maximo da mira, em blocos. A mira le blocos ate essa",
+                        "distancia uma vez por conjuracao; acima da distancia de visao do servidor, ela pode",
+                        "carregar chunks ao procurar o chao.")
+                .defineInRange("alcanceBomba", 128, 32, 256);
 
         BUILDER.pop();
         SPEC = BUILDER.build();

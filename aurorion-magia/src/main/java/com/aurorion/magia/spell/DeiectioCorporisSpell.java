@@ -130,7 +130,7 @@ public final class DeiectioCorporisSpell extends AurorionSpell {
             launch(target, new Vec3(motion.x * 0.2, -(2.2 + 0.3 * spellLevel), motion.z * 0.2));
             sound(target, SoundEvents.PHANTOM_SWOOP, 1.2f, 0.6f);
         } else {
-            DamageSources.applyDamage(target, getSpellPower(spellLevel, caster), getDamageSource(caster));
+            FriendlyFire.applyDamage(target, getSpellPower(spellLevel, caster), getDamageSource(caster));
             target.addEffect(new MobEffectInstance(MagiaEffects.GROUNDED, groundedTicks(spellLevel), 0,
                     false, false, true), caster);
             launch(target, new Vec3(0, -0.6, 0));

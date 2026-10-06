@@ -118,7 +118,69 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         /** Impeto do Vento: o rastro de vento atras de quem avanca. Preso a quem conjurou. */
         IMPETUS_DASH,
         /** Impeto do Vento: o chao rachando na chegada e a coluna de vento. pos = centro, extra = raio. */
-        IMPETUS_IMPACT;
+        IMPETUS_IMPACT,
+        /** Centelha Final: o feixe de luz da mao ate o fim do alcance. pos = ponta do feixe, extra = largura. */
+        LUX_FINALIS,
+        /** Tempera do Destino: a redoma dourada em volta de quem ficou em estase. */
+        TEMPERIES_FATI,
+        /** Campo Estatico ativado: a descarga em anel em volta de quem conjurou. pos = centro, extra = raio. */
+        CAMPUS_STATICUS,
+        /** Marca estatica no alvo; com ttl curto, o estalo do choque. */
+        STATIC_MARK,
+        /** Puxao Bionico: a corrente da mao ate quem foi agarrado. */
+        MANUS_RAPAX,
+        /** Justica Demaciana: a espada dourada descendo do ceu sobre o alvo. */
+        IUSTITIA_DEMACIAE,
+        /** Tempestade de Corvos: a revoada girando em volta de quem conjurou. extra = raio. */
+        PROCELLA_CORVORUM,
+        /** Colheita Farta: o fio de vida saindo do alvo ate quem drena. */
+        MESSIS_UBERRIMA,
+        /** Esfera Espiritual carregando sobre a cabeca de quem conjura. extra = raio atual. */
+        SPHAERA_CHARGE,
+        /** Esfera Espiritual explodindo. pos = centro, extra = raio. */
+        SPHAERA_BLAST,
+        /** Barril Explosivo estourando: fogo, fumaca e anel de choque. pos = centro, extra = raio. */
+        DOLIUM_BLAST,
+        /** Bigorna Celeste: o circulo de aviso no chao. pos = onde ela vai cair. */
+        INCUS_SHADOW,
+        /** Capricho: a nuvem da transformacao. */
+        MUTATIO_FERAE,
+        /** Morte Vinda das Profundezas: o X de agua no chao, e o estouro. pos = centro, extra = raio. */
+        MORS_EX_PROFUNDIS,
+        /** Transfusao: o sangue correndo do alvo ate quem conjurou. extra > 0 = potencializada. */
+        TRANSFUSIO,
+        /** Poca de Sangue em volta de quem mergulhou. extra = raio. */
+        LACUS_SANGUINIS,
+        /** Mare de Sangue carregando em volta de quem conjura. extra = carga (0..1). */
+        AESTUS_CHARGE,
+        /** Mare de Sangue estourando. pos = centro, extra = raio. */
+        AESTUS_BURST,
+        /** Hemopraga: a nevoa da praga no chao. pos = centro, extra = raio. */
+        PESTIS_AREA,
+        /** Hemopraga em quem foi infectado. */
+        PESTIS_MARK,
+        /** Sombra Viva: troca de lugar com a sombra. pos = de onde quem conjurou saiu. */
+        UMBRA_SWAP,
+        /** Corte Sombrio: o anel de laminas. pos = centro, extra = raio. */
+        SECTIO_UMBRAE,
+        /** Marca Fatal no alvo; com ttl curto, o estouro. */
+        SIGNUM_MORTIS,
+        /** Bomba Megainfernal: o alvo no chao enquanto ela cai. pos = centro, extra = raio. */
+        PYROBOLUS_TARGET,
+        /** Bomba Megainfernal explodindo. pos = centro, extra = raio. */
+        PYROBOLUS_BLAST,
+        /** Flecha de Reconhecimento: o pulso que varre o raio. pos = flecha, extra = raio. */
+        SAGITTA_PULSE,
+        /** Flecha de Choque: a descarga. pos = centro, extra = raio. */
+        SAGITTA_SHOCK,
+        /** Furia do Cacador: o feixe atravessando tudo. pos = ponta do feixe. */
+        FUROR_VENATORIS,
+        /** Possessao: a sombra que entrou no corpo do alvo. */
+        POSSESSIO_CORPORIS,
+        /** Iluminacao detonada: o clarao no corpo de quem estava marcado. */
+        LUX_DETONATE,
+        /** Marca Fatal estourando: o corte de sombra no alvo. */
+        SIGNUM_POP;
 
         private static final Kind[] VALUES = values();
 
@@ -131,7 +193,12 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
             return this == SIGILLUM || this == SIGILLUM_DENY || this == SIGILLUM_BREAK || this == LUX_VORATA
                     || this == TEMPUS_SISTERE || this == MORTEM_DICO
                     || this == DEIECTIO_AREA || this == ASPECTUS_AREA || this == MORTEM_AREA
-                    || this == UNDA_MAGNA || this == IMPETUS_IMPACT;
+                    || this == UNDA_MAGNA || this == IMPETUS_IMPACT
+                    || this == LUX_FINALIS || this == CAMPUS_STATICUS || this == SPHAERA_BLAST
+                    || this == DOLIUM_BLAST || this == INCUS_SHADOW || this == MORS_EX_PROFUNDIS
+                    || this == AESTUS_BURST || this == PESTIS_AREA || this == UMBRA_SWAP || this == SECTIO_UMBRAE
+                    || this == PYROBOLUS_TARGET || this == PYROBOLUS_BLAST || this == SAGITTA_PULSE
+                    || this == SAGITTA_SHOCK || this == FUROR_VENATORIS;
         }
     }
 }

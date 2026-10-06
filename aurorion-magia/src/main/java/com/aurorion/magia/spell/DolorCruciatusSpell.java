@@ -126,7 +126,7 @@ public final class DolorCruciatusSpell extends AurorionSpell {
 
     private void pulse(LivingEntity caster, LivingEntity target, int spellLevel) {
         DamageSources.ignoreNextKnockback(target);
-        DamageSources.applyDamage(target, pulseDamage(spellLevel, caster), getDamageSource(caster));
+        FriendlyFire.applyDamage(target, pulseDamage(spellLevel, caster), getDamageSource(caster));
 
         // visible=false: sem as bolhas de pocao do vanilla, que viajam como dado de entidade para
         // todo mundo por perto. O visual e o nosso feixe; o icone continua no HUD do alvo.

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = AurorionMagia.MOD_ID)
 public final class MagiaNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload ou a ordem dos Kind. */
-    private static final String PROTOCOL_VERSION = "7";
+    private static final String PROTOCOL_VERSION = "8";
 
     private MagiaNetwork() {
     }
@@ -57,6 +57,13 @@ public final class MagiaNetwork {
     /** Um jogador so: reenvio de lacres ao entrar na dimensao, clarao de recusa. */
     public static void sendVisualTo(ServerPlayer player, SpellVisualPayload.Kind kind, int ttl, Vec3 pos, float extra) {
         PacketDistributor.sendToPlayer(player, new SpellVisualPayload(kind, -1, -1, ttl, pos, extra));
+    }
+
+    /** Visual preso a entidades, para um jogador so: quem acabou de comecar a ver o alvo. */
+    public static void sendVisualTo(ServerPlayer player, @Nullable Entity caster, Entity target, SpellVisualPayload.Kind kind,
+                                    int ttl) {
+        PacketDistributor.sendToPlayer(player, new SpellVisualPayload(kind, caster == null ? -1 : caster.getId(),
+                target.getId(), ttl, target.position(), 0));
     }
 
     private static void handleVisual(SpellVisualPayload payload, IPayloadContext context) {

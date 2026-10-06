@@ -95,6 +95,40 @@ public final class PossessionLayer implements LayeredDraw.Layer {
         if (ClientSpellVisuals.targets(Kind.MANUS_GRIP, player.getId())) {
             vignette(graphics, width, height, 0x2A0E4A, .55F, .22F);
         }
+
+        float possessed = weight(player, MagiaEffects.POSSESSED);
+        if (possessed > 0) possessed(graphics, minecraft.font, width, height, time, possessed);
+
+        float possessing = weight(player, MagiaEffects.POSSESSING);
+        if (possessing > 0) vignette(graphics, width, height, 0x1A0526, .4F * possessing, .16F);
+
+        float stasis = weight(player, MagiaEffects.STASIS);
+        if (stasis > 0) stasis(graphics, width, height, time, stasis);
+
+        float beast = weight(player, MagiaEffects.POLYMORPH);
+        if (beast > 0) vignette(graphics, width, height, 0x3A5A10, .35F * beast, .2F);
+    }
+
+    /**
+     * Possessao, do lado de quem perdeu o corpo: o mundo continua visivel (a pessoa assiste ao que
+     * fazem com ela), mas ha uma moldura negra fechando por todos os lados e a frase em latim que
+     * repete quem manda agora.
+     */
+    private static void possessed(GuiGraphics g, Font font, int w, int h, float time, float weight) {
+        float breath = .8F + .2F * Mth.sin(time * .1F);
+        vignette(g, w, h, 0x12001C, .75F * weight * breath, .3F);
+        int band = (int) (h * .08F);
+        g.fill(0, 0, w, band, argb(0x000000, .7F * weight));
+        g.fill(0, h - band, w, h, argb(0x000000, .7F * weight));
+        String text = "NON ES TUUS";
+        float flicker = .45F + .35F * Mth.sin(time * .23F);
+        g.drawCenteredString(font, text, w / 2, band / 2 - 4, argb(0xB070D0, flicker * weight));
+    }
+
+    /** Estase: dourado parado, sem pulso nenhum — o tempo nao anda la dentro. */
+    private static void stasis(GuiGraphics g, int w, int h, float time, float weight) {
+        g.fill(0, 0, w, h, argb(0xFFD36A, .14F * weight));
+        vignette(g, w, h, 0xC08A20, .5F * weight, .25F);
     }
 
     /** 0 sem o efeito; 1 com ele; some nos ultimos segundos em vez de cortar. */

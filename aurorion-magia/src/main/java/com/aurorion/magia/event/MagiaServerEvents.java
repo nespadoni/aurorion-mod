@@ -5,6 +5,8 @@ import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.compat.EmotecraftCompat;
 import com.aurorion.magia.compat.FrozenLink;
 import com.aurorion.magia.compat.VoiceMute;
+import com.aurorion.magia.network.MagiaNetwork;
+import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.effect.EffectCleanup;
 import com.aurorion.magia.passive.DreadAura;
 import com.aurorion.magia.passive.HealingTouch;
@@ -12,13 +14,21 @@ import com.aurorion.magia.passive.Passive;
 import com.aurorion.magia.passive.PassiveData;
 import com.aurorion.magia.passive.Passives;
 import com.aurorion.magia.registry.MagiaEffects;
+import com.aurorion.magia.registry.MagiaSpells;
 import com.aurorion.magia.spell.Binding;
+import com.aurorion.magia.spell.CampusStaticusSpell;
 import com.aurorion.magia.spell.Domination;
+import com.aurorion.magia.spell.FriendlyFire;
 import com.aurorion.magia.spell.Drowning;
 import com.aurorion.magia.spell.Gaze;
 import com.aurorion.magia.spell.Impetus;
 import com.aurorion.magia.spell.IronBinding;
+import com.aurorion.magia.spell.LuxFinalisSpell;
+import com.aurorion.magia.spell.PestisSanguineaSpell;
+import com.aurorion.magia.spell.Possession;
 import com.aurorion.magia.spell.Seals;
+import com.aurorion.magia.spell.SignumMortisSpell;
+import com.aurorion.magia.spell.SovaArrows;
 import com.aurorion.magia.spell.TimeStop;
 import com.aurorion.magia.spell.ToggleCooldown;
 import com.aurorion.magia.spell.WaterCage;
@@ -26,6 +36,7 @@ import com.aurorion.magia.unlock.SpellAccess;
 import com.aurorion.magia.unlock.SpellUnlockData;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
 import io.redspace.ironsspellbooks.api.events.SpellCooldownAddedEvent;
+import io.redspace.ironsspellbooks.api.events.SpellDamageEvent;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
@@ -35,6 +46,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.TickTask;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -42,21 +56,26 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -116,8 +135,26 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.no_ar").withStyle(ChatFormatting.AQUA));
             return;
         }
+        // Em estase o tempo nao corre, e virado bicho nao ha mao nem voz que conjure.
+        if (player.hasEffect(MagiaEffects.STASIS)) {
+            deny(event, player, Component.translatable("aurorion_magia.em_estase").withStyle(ChatFormatting.GOLD));
+            return;
+        }
+        if (player.hasEffect(MagiaEffects.POLYMORPH)) {
+            deny(event, player, Component.translatable("aurorion_magia.sou_bicho").withStyle(ChatFormatting.GREEN));
+            return;
+        }
+        if (player.hasEffect(MagiaEffects.POSSESSED)) {
+            deny(event, player, Component.translatable("aurorion_magia.corpo_tomado").withStyle(ChatFormatting.DARK_PURPLE));
+            return;
+        }
 
         AbstractSpell spell = SpellRegistry.getSpell(event.getSpellId());
+        // Dentro do corpo de outro, a unica magia que responde e a que devolve o corpo.
+        if (Possession.isPossessing(player) && spell != MagiaSpells.POSSESSIO_CORPORIS.get()) {
+            deny(event, player, Component.translatable("aurorion_magia.dentro_de_outro").withStyle(ChatFormatting.DARK_PURPLE));
+            return;
+        }
         if (!SpellAccess.canCast(player, spell)) {
             deny(event, player, Component.translatable("aurorion_magia.nao_liberada",
                     spell.getDisplayName(player)).withStyle(ChatFormatting.RED));
@@ -192,6 +229,18 @@ public final class MagiaServerEvents {
         IronBinding.release(event.getEntity().getUUID());
         // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
         TimeStop.stop(event.getEntity());
+        // Possessao: quem sai devolve o corpo, e quem tem o corpo tomado e solto.
+        Possession.end(event.getEntity());
+        if (event.getEntity() instanceof ServerPlayer player) Possession.release(player);
+    }
+
+    /** Morrer tambem devolve o corpo, dos dois lados. Morto nao tica efeito, entao e aqui. */
+    @SubscribeEvent
+    public static void onDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity.level().isClientSide) return;
+        Possession.end(entity);
+        if (entity instanceof ServerPlayer player) Possession.release(player);
     }
 
     /**
@@ -223,10 +272,16 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onChat(ServerChatEvent event) {
-        if (!event.getPlayer().hasEffect(MagiaEffects.SILENCED)) return;
-        event.setCanceled(true);
-        event.getPlayer().displayClientMessage(Component.translatable("aurorion_magia.sem_voz")
-                .withStyle(ChatFormatting.DARK_PURPLE), true);
+        if (event.getPlayer().hasEffect(MagiaEffects.SILENCED)) {
+            event.setCanceled(true);
+            event.getPlayer().displayClientMessage(Component.translatable("aurorion_magia.sem_voz")
+                    .withStyle(ChatFormatting.DARK_PURPLE), true);
+            return;
+        }
+        // Possessao: quem esta dentro de outro corpo fala pela boca dele.
+        if (Possession.isPossessing(event.getPlayer()) && Possession.speak(event.getPlayer(), event.getMessage())) {
+            event.setCanceled(true);
+        }
     }
 
     // --- Vinculum Carnificis ------------------------------------------------------------------
@@ -275,6 +330,12 @@ public final class MagiaServerEvents {
                 return;
             }
         }
+        // Corpo travado (estase, bicho, possessao): nada de porta, botao nem item.
+        if (bodyLocked(event.getEntity())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
+            return;
+        }
         // Maos atadas: porta e botao continuam funcionando; so o item na mao nao e usado no bloco.
         if (handsBound(event.getEntity())) event.setUseItem(TriState.FALSE);
     }
@@ -282,6 +343,10 @@ public final class MagiaServerEvents {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onBreak(BlockEvent.BreakEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
+        if (bodyLocked(event.getPlayer())) {
+            event.setCanceled(true);
+            return;
+        }
         Seals.Seal seal = Seals.get(level, event.getPos());
         if (seal == null) return;
         if (event.getPlayer() instanceof ServerPlayer player && !Seals.mayOpen(player, seal)) {
@@ -343,7 +408,27 @@ public final class MagiaServerEvents {
         return entity instanceof Player player
                 && (player.hasEffect(MagiaEffects.DISORIENTED)
                 || player.hasEffect(MagiaEffects.CRUCIATUS)
-                || player.hasEffect(MagiaEffects.KNEELING));
+                || player.hasEffect(MagiaEffects.KNEELING)
+                || bodyLocked(player));
+    }
+
+    /**
+     * O corpo que nao e de quem esta nele, ou nao esta no tempo: estase (Tempera do Destino), bicho
+     * (Capricho), possuido e possuindo. Sem item, sem golpe, sem bloco; o possuido continua falando.
+     */
+    private static boolean bodyLocked(@Nullable Entity entity) {
+        return entity instanceof LivingEntity living
+                && (living.hasEffect(MagiaEffects.STASIS)
+                || living.hasEffect(MagiaEffects.POLYMORPH)
+                || living.hasEffect(MagiaEffects.POSSESSED)
+                || living.hasEffect(MagiaEffects.POSSESSING));
+    }
+
+    /** Golpe corpo a corpo de jogador: o corpo travado nao bate, e quem esta na Poca de Sangue tambem nao. */
+    @SubscribeEvent
+    public static void onAttack(AttackEntityEvent event) {
+        Player player = event.getEntity();
+        if (bodyLocked(player) || player.hasEffect(MagiaEffects.UNTARGETABLE)) event.setCanceled(true);
     }
 
     // --- Dominio -----------------------------------------------------------------------------
@@ -353,6 +438,12 @@ public final class MagiaServerEvents {
     public static void onChangeTarget(LivingChangeTargetEvent event) {
         if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof Mob mob)) return;
         if (!Domination.allowsTargetChange(mob, event.getNewAboutToBeSetTarget())) {
+            event.setCanceled(true);
+            return;
+        }
+        // Inalvejavel: nenhuma criatura o escolhe como alvo.
+        if (event.getNewAboutToBeSetTarget() != null
+                && event.getNewAboutToBeSetTarget().hasEffect(MagiaEffects.UNTARGETABLE)) {
             event.setCanceled(true);
             return;
         }
@@ -389,6 +480,99 @@ public final class MagiaServerEvents {
             event.setCanceled(true);
             return;
         }
+        // Estase e inalvejavel: nada entra. So o /kill da staff e o vazio do mundo passam — e nao
+        // "tudo o que ignora invulnerabilidade", senao as execucoes (Justica, Profundezas) e a Sentenca
+        // Final atravessariam a estase que existe justamente para salvar alguem delas.
+        DamageSource incoming = event.getSource();
+        if ((victim.hasEffect(MagiaEffects.STASIS) || victim.hasEffect(MagiaEffects.UNTARGETABLE))
+                && !incoming.is(DamageTypes.GENERIC_KILL) && !incoming.is(DamageTypes.FELL_OUT_OF_WORLD)) {
+            event.setCanceled(true);
+            return;
+        }
+        // Corpo travado nao fere ninguem com golpe nem flecha. Magia e efeito ja lancados continuam: a
+        // revoada que ja gira, a poca em que ja se esta, a bigorna que ja cai.
+        if (attacker instanceof LivingEntity living
+                && (incoming.is(DamageTypes.PLAYER_ATTACK) || incoming.is(DamageTypes.MOB_ATTACK)
+                || incoming.is(DamageTypeTags.IS_PROJECTILE))
+                && (bodyLocked(living) || living.hasEffect(MagiaEffects.UNTARGETABLE))) {
+            event.setCanceled(true);
+            return;
+        }
+        if (victim.hasEffect(MagiaEffects.HEMOPLAGUE)) event.setAmount(event.getAmount() * PestisSanguineaSpell.AMPLIFY);
+    }
+
+    /**
+     * Depois que o dano entrou: a Iluminacao da Centelha Final detona, o Campo Estatico marca quem levou
+     * um golpe corpo a corpo e a Marca Fatal soma o dano de quem a pos.
+     */
+    @SubscribeEvent
+    public static void onDamagePost(LivingDamageEvent.Post event) {
+        LivingEntity victim = event.getEntity();
+        if (victim.level().isClientSide || !(event.getSource().getEntity() instanceof LivingEntity attacker)
+                || attacker == victim) return;
+        LuxFinalisSpell.detonate(victim, attacker);
+        DamageSource source = event.getSource();
+        if (source.getDirectEntity() == attacker
+                && (source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MOB_ATTACK))) {
+            CampusStaticusSpell.onMelee(attacker, victim);
+        }
+        SignumMortisSpell.record(victim, attacker, event.getNewDamage());
+    }
+
+    // --- Visual para quem chega depois ---------------------------------------------------------
+
+    /**
+     * O guaxinim do Capricho e o corpo escondido da Possessao sao desenhados a partir de um visual que
+     * so vai, na conjuracao, para quem ja via o alvo. Quem chega perto depois (ou reloga) recebe aqui o
+     * mesmo visual, com o tempo que falta. Para todo o resto, duas consultas de efeito por entidade que
+     * entra no alcance de alguem.
+     */
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (!(event.getEntity() instanceof ServerPlayer viewer) || !(event.getTarget() instanceof LivingEntity target)) return;
+        MobEffectInstance beast = target.getEffect(MagiaEffects.POLYMORPH);
+        if (beast != null) MagiaNetwork.sendVisualTo(viewer, null, target, SpellVisualPayload.Kind.MUTATIO_FERAE, beast.getDuration());
+        if (!(target instanceof ServerPlayer player)) return;
+        MobEffectInstance possessed = player.getEffect(MagiaEffects.POSSESSED);
+        if (possessed != null) {
+            ServerPlayer caster = Possession.casterOf(player);
+            if (caster != null) {
+                MagiaNetwork.sendVisualTo(viewer, caster, player, SpellVisualPayload.Kind.POSSESSIO_CORPORIS, possessed.getDuration());
+            }
+        }
+        MobEffectInstance possessing = player.getEffect(MagiaEffects.POSSESSING);
+        if (possessing != null) {
+            ServerPlayer body = Possession.possessedBy(player);
+            if (body != null) {
+                MagiaNetwork.sendVisualTo(viewer, player, body, SpellVisualPayload.Kind.POSSESSIO_CORPORIS, possessing.getDuration());
+            }
+        }
+    }
+
+    // --- Flechas do Sova ----------------------------------------------------------------------
+
+    @SubscribeEvent
+    public static void onEntityJoin(EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide && !event.loadedFromDisk() && event.getEntity() instanceof AbstractArrow arrow) {
+            SovaArrows.onArrowSpawn(arrow);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (!event.getProjectile().level().isClientSide && event.getProjectile() instanceof AbstractArrow arrow) {
+            SovaArrows.onImpact(arrow, event.getRayTraceResult());
+        }
+    }
+
+    /**
+     * Magia do Iron's (ou de outro addon) em aliado: com {@code magiasIgnoramTime}, o dano entra mesmo
+     * entre gente do mesmo time. {@code LOWEST}: quem quiser cancelar o dano por outro motivo cancela
+     * antes, e a gente nao reaplica dano cancelado.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onSpellDamage(SpellDamageEvent event) {
+        FriendlyFire.onSpellDamage(event);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -409,7 +593,16 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onEffectExpired(MobEffectEvent.Expired event) {
         MobEffectInstance instance = event.getEffectInstance();
-        if (instance != null) onEffectEnded(event.getEntity(), instance.getEffect().value());
+        if (instance == null) return;
+        MobEffect effect = instance.getEffect().value();
+        LivingEntity entity = event.getEntity();
+        // As marcas que estouram quando vencem, e so quando vencem: leite as desfaz sem estouro.
+        if (!entity.level().isClientSide) {
+            if (effect == MagiaEffects.STATIC_MARK.get()) CampusStaticusSpell.pop(entity);
+            else if (effect == MagiaEffects.DEATH_MARK.get()) SignumMortisSpell.pop(entity);
+            else if (effect == MagiaEffects.HEMOPLAGUE.get()) PestisSanguineaSpell.burst(entity);
+        }
+        onEffectEnded(entity, effect);
     }
 
     /** Leite, {@code /effect clear}, totem: o estado ligado ao efeito acaba junto. */
@@ -448,6 +641,21 @@ public final class MagiaServerEvents {
             entity.setAirSupply(entity.getMaxAirSupply());
         } else if (effect == MagiaEffects.CAGED.get()) {
             WaterCage.release(entity);
+        } else if (effect == MagiaEffects.POSSESSING.get()) {
+            Possession.end(entity);
+        } else if (effect == MagiaEffects.POSSESSED.get() && entity instanceof ServerPlayer player) {
+            Possession.release(player);
+        } else if (effect == MagiaEffects.ILLUMINATED.get()) {
+            LuxFinalisSpell.clearMark(entity);
+        } else if (effect == MagiaEffects.HEMOPLAGUE.get()) {
+            PestisSanguineaSpell.clear(entity);
+        } else if (effect == MagiaEffects.IMBUED_ARROW.get()) {
+            SovaArrows.clear(entity);
+        } else if (effect == MagiaEffects.STATIC_MARK.get()) {
+            // Venceu: o estouro ja tirou a marca. Leite: sai sem estouro.
+            CampusStaticusSpell.clearMark(entity);
+        } else if (effect == MagiaEffects.DEATH_MARK.get()) {
+            SignumMortisSpell.clearMark(entity);
         } else if (effect == MagiaEffects.GENUFLECTED.get() && entity instanceof ServerPlayer player) {
             EmotecraftCompat.stop(player);
         } else if (effect == MagiaEffects.DREAD_AURA.get() && entity instanceof ServerPlayer player) {

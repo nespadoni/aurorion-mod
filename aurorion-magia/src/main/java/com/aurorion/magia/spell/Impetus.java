@@ -131,7 +131,7 @@ public final class Impetus {
         for (LivingEntity victim : AreaCast.victims(level, caster, center, RADIUS, MAX_TARGETS, target -> true)) {
             // O dano primeiro: o recuo do golpe mexe na velocidade, e o lancamento logo depois a substitui.
             if (damage > 0) {
-                DamageSources.applyDamage(victim, damage, MagiaSpells.IMPETUS_VENTI.get().getDamageSource(caster));
+                FriendlyFire.applyDamage(victim, damage, MagiaSpells.IMPETUS_VENTI.get().getDamageSource(caster));
             }
             if (!victim.isAlive()) continue;
             victim.addEffect(new MobEffectInstance(MagiaEffects.AIRBORNE, AIRBORNE_TICKS, 0, false, false, true), caster);

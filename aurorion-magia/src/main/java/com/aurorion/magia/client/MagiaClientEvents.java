@@ -58,6 +58,8 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(MagiaEntities.SPELL_ZONE.get(), SpellZoneRenderer::new);
+            event.registerEntityRenderer(MagiaEntities.PROJECTILE.get(), MagiaProjectileRenderer::new);
+            event.registerEntityRenderer(MagiaEntities.SHADOW.get(), ShadowRenderer::new);
         }
     }
 
@@ -151,13 +153,18 @@ public final class MagiaClientEvents {
          */
         @SubscribeEvent
         public static void onRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
-            if (alone(event.getEntity())) event.setCanceled(true);
+            if (alone(event.getEntity()) || KitVisuals.hidden(event.getEntity())) {
+                event.setCanceled(true);
+                return;
+            }
+            // Capricho: o bicho e desenhado no lugar do corpo.
+            if (PolymorphRender.render(event)) event.setCanceled(true);
         }
 
         /** O nome flutuante sai junto: um nome pairando sozinho entregaria quem esta ali. */
         @SubscribeEvent
         public static void onRenderNameTag(RenderNameTagEvent event) {
-            if (alone(event.getEntity())) event.setCanRender(TriState.FALSE);
+            if (alone(event.getEntity()) || KitVisuals.hidden(event.getEntity())) event.setCanRender(TriState.FALSE);
         }
 
         /** {@code true} se este cliente esta sob o Mundo Vazio e {@code entity} nao e ele mesmo. */
@@ -293,6 +300,7 @@ public final class MagiaClientEvents {
             MagiaSoundscape.clear();
             ClientSpellVisuals.clear();
             FogLayer.clear();
+            PolymorphRender.clear();
         }
     }
 }
