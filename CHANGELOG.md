@@ -1,3 +1,30 @@
+# Comunicado da UF - 05/10/2026
+
+## Novas magias
+
+Vinte e cinco magias novas chegaram à Aurorion. Como todas as outras, nenhuma vem liberada: é preciso aprender com a staff.
+
+- **Ultimates:** Centelha Final (*Lux Finalis*), Têmpera do Destino (*Temperies Fati*), Puxão Biônico (*Manus Rapax*), Campo Estático (*Campus Staticus*), Barril Explosivo (*Dolium Ardens*), Bomba Megainfernal (*Pyrobolus Infernalis*), Tempestade de Corvos (*Procella Corvorum*) e Colheita Farta (*Messis Uberrima*).
+- **Bigorna Celeste** (*Incus Caelestis*): uma bigorna cai do céu onde o alvo está. Quem ficar parado morre; quem andar escapa.
+- **Capricho** (*Mutatio Ferae*): transforma o alvo num guaxinim por alguns segundos.
+- **Kit de sangue:** Transfusão (*Transfusio Sanguinis*), Poça de Sangue (*Lacus Sanguinis*), Maré de Sangue (*Aestus Sanguinis*) e Hemopraga (*Pestis Sanguinea*).
+- **Kit de sombra:** Shuriken Laminado (*Stellae Laminatae*), Sombra Viva (*Umbra Viva*), Corte Sombrio (*Sectio Umbrae*) e Marca Fatal (*Signum Mortis*). As sombras também lançam e cortam junto com você.
+- **Kit de arco** (só com arco ou besta na mão): Flecha de Reconhecimento (*Sagitta Exploratrix*), Flecha de Choque (*Sagitta Fulminis*) e Fúria do Caçador (*Furor Venatoris*).
+- **Proibidas**, concedidas só pela staff:
+  - Esfera Espiritual (*Sphaera Spiritus*): carregue uma esfera de energia e arremesse; a explosão abre cratera.
+  - Possessão (*Possessio Corporis*): entre no corpo de outra pessoa, ande e fale por ela.
+  - Justiça Demaciana (*Iustitia Demaciae*): só com espada na mão; executa quem está com pouca vida.
+  - Morte Vinda das Profundezas (*Mors ex Profundis*): executa quem está com pouca vida e devolve a magia na hora.
+
+## Mudanças nas magias
+
+- As magias agora acertam qualquer pessoa, de qualquer time, mesmo com o fogo amigo do time desligado. Vale para as magias da Aurorion e do Iron's. Áreas sem PvP continuam protegendo.
+- Devorar Luz e Voz Interdita (agachado) não poupam mais o seu time.
+
+## Atualize o modpack
+
+A versão nova da magia é obrigatória também no cliente: sem ela, não dá para entrar no servidor.
+
 # Comunicado da UF - 03/10 e 04/10/2026
 
 ## NPCs de ofício (03/10)
