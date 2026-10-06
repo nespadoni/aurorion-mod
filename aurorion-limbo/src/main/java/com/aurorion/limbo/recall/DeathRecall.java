@@ -6,6 +6,7 @@ import com.aurorion.core.death.DeathId;
 import com.aurorion.core.level.ProtectedDrops;
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.limbo.AurorionLimbo;
+import com.aurorion.limbo.compat.TwilightTeleportCompat;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.exile.LimboManager;
 import com.aurorion.limbo.narrate.LimboText;
@@ -205,14 +206,17 @@ public final class DeathRecall {
         Vec3 departure = player.position();
         player.stopRiding();
 
+        // Imediato: com o Twilight Teleport adiando a viagem, o Fio seria gasto aqui e a tranca do
+        // aurorion_portais so seria consultada depois, sem ninguem para devolver o item.
         if (target.level() == from) {
-            player.teleportTo(landing.x, landing.y, landing.z);
+            TwilightTeleportCompat.immediateRun(() -> player.teleportTo(landing.x, landing.y, landing.z));
         } else {
             // changeDimension devolve null quando alguem cancela a viagem — o aurorion_portais tranca
             // dimensoes fora do horario. O Fio nao fura tranca: recusa e continua no bolso.
-            Entity moved = player.changeDimension(new DimensionTransition(target.level(), landing, Vec3.ZERO,
-                    player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
-            if (moved == null) {
+            Entity moved = TwilightTeleportCompat.immediate(() -> player.changeDimension(new DimensionTransition(
+                    target.level(), landing, Vec3.ZERO, player.getYRot(), player.getXRot(),
+                    DimensionTransition.DO_NOTHING)));
+            if (moved == null || moved.level() != target.level()) {
                 refuse(player, "aurorion_limbo.fio.barrado");
                 return false;
             }

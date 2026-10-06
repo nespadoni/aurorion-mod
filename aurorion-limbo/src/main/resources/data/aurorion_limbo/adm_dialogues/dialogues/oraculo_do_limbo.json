@@ -40,6 +40,10 @@
           "next": "lore"
         },
         {
+          "text": "Você vende alguma coisa?",
+          "next": "loja"
+        },
+        {
           "text": "Não preciso de nada.",
           "close": true
         }
@@ -62,6 +66,30 @@
           "text": "Mostre-me os nomes.",
           "next": "sem_preco",
           "condition": { "type": "aurorion_limbo_pode_pagar", "expected": false }
+        },
+        {
+          "text": "Voltar",
+          "next": "saudacao"
+        }
+      ]
+    },
+
+    "loja": {
+      "text": [
+        "Vendo o que a morte deixa para trás. Não a vida — essa só se paga com vida.",
+        "O Fio leva você de volta ao lugar onde caiu. O Relicário chama o que você deixou no chão, se ainda existir.",
+        "Nenhum dos dois cai quando você morre. Os dois se gastam no uso."
+      ],
+      "choices": [
+        {
+          "text": "Comprar o Fio da Volta (10 óbolos)",
+          "commands": ["oraculo comprar fio"],
+          "close": true
+        },
+        {
+          "text": "Comprar o Relicário (40 óbolos)",
+          "commands": ["oraculo comprar relicario"],
+          "close": true
         },
         {
           "text": "Voltar",

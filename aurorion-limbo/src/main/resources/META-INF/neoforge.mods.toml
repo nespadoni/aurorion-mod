@@ -48,6 +48,15 @@ versionRange = "[0.1.0,)"
 ordering = "AFTER"
 side = "BOTH"
 
+# Opcional: a carteira que paga a banca do Oraculo (Fio da Volta e Relicario). Sem ela o Oraculo
+# continua abrindo passagens, so nao vende.
+[[dependencies.${mod_id}]]
+modId = "aurorion_economia"
+type = "optional"
+versionRange = "[0.3.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
 [[mixins]]
 config = "aurorion_limbo.finale.mixins.json"
 

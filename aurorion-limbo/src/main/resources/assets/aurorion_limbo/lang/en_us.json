@@ -79,5 +79,9 @@
   "aurorion_limbo.relicario.vazio": "Nothing from that death remains in the world. The Reliquary returned to you.",
   "aurorion_limbo.espolio.no_limbo": "From the Limbo, nothing answers.",
   "aurorion_limbo.espolio.sem_morte": "There is no death of yours to return to.",
-  "aurorion_limbo.espolio.sem_mundo": "The world where you died no longer exists."
+  "aurorion_limbo.espolio.sem_mundo": "The world where you died no longer exists.",
+  "aurorion_limbo.loja.comprou": "The Oracle hands you %s. You paid %s.",
+  "aurorion_limbo.loja.sem_saldo": "%s costs %s. You have %s.",
+  "aurorion_limbo.loja.fora_de_venda": "The Oracle is not selling %s right now.",
+  "aurorion_limbo.loja.sem_economia": "The Oracle accepts no payment in this world."
 }

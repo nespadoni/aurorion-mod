@@ -34,6 +34,8 @@ public final class LimboConfig {
 
     public static final ModConfigSpec.IntValue RELIC_CHUNK_RADIUS;
     public static final ModConfigSpec.IntValue DROP_PROTECTION_MINUTES;
+    public static final ModConfigSpec.IntValue FIO_PRICE;
+    public static final ModConfigSpec.IntValue RELIC_PRICE;
 
     public static final ModConfigSpec.BooleanValue ANNOUNCE_FALL;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_NAMES;
@@ -176,9 +178,12 @@ public final class LimboConfig {
                 )
                 .defineInRange("minutosDaPassagem", 15, 1, 120);
 
+        // Chave nova ("vinculosAoAtravessar", padrao 1) no lugar de "vinculosPorResgate" (padrao 2):
+        // um resgate e um Vinculo. O de sobra virava um segundo uso no mesmo exilado. Trocar a chave
+        // faz o arquivo ja gravado assumir o padrao novo sozinho, como em anunciarQuedaNoChat.
         BOND_COUNT = BUILDER
-                .comment("Quantos Vinculos de Alma o resgatador leva ao atravessar. Um sobrando cobre perder um.")
-                .defineInRange("vinculosPorResgate", 2, 1, 16);
+                .comment("Quantos Vinculos de Alma o resgatador leva ao atravessar. Um resgate, um Vinculo.")
+                .defineInRange("vinculosAoAtravessar", 1, 1, 16);
 
         ORACLE_TAG = BUILDER
                 .comment(
@@ -253,6 +258,22 @@ public final class LimboConfig {
                         "passa a depender de sorte."
                 )
                 .defineInRange("minutosDeProtecaoDosDrops", 120, 0, 24 * 60);
+
+        // Os padroes sao os da tabela de precos da ECONOMIA.md (§5.4). Em obolos inteiros: os dois
+        // itens sao caros de proposito, e fracao de obolo aqui so complicaria a config.
+        FIO_PRICE = BUILDER
+                .comment(
+                        "Preco do Fio da Volta no Oraculo, em obolos (carteira do aurorion_economia).",
+                        "Zero tira o item da venda."
+                )
+                .defineInRange("precoDoFioDaVoltaEmObolos", 10, 0, 100_000);
+
+        RELIC_PRICE = BUILDER
+                .comment(
+                        "Preco do Relicario no Oraculo, em obolos. E o ralo principal da economia.",
+                        "Zero tira o item da venda."
+                )
+                .defineInRange("precoDoRelicarioEmObolos", 40, 0, 100_000);
 
         BUILDER.pop();
         BUILDER.comment("O que o servidor conta, e para quem.").push("avisos");

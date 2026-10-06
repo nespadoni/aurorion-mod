@@ -62,7 +62,9 @@ public record AuditEvent(
         /** O Fio da Volta levou alguem ao lugar da ultima morte. O detalhe diz onde. */
         FIO_USADO,
         /** O Relicario chamou de volta o espolio da ultima morte. O detalhe diz quanto voltou. */
-        RELICARIO_USADO
+        RELICARIO_USADO,
+        /** Alguem comprou um item do Oraculo. O detalhe diz qual e por quanto. */
+        COMPRA_ORACULO
     }
 
     public JsonObject toJson() {
@@ -99,6 +101,7 @@ public record AuditEvent(
             case RETORNO_ADMIN -> name + " foi retirado do Limbo pela staff.";
             case FIO_USADO -> name + " usou o Fio da Volta.";
             case RELICARIO_USADO -> name + " usou o Relicario.";
+            case COMPRA_ORACULO -> name + " comprou do Oraculo.";
         };
         return detail.isEmpty() ? base : base + " (" + detail + ")";
     }

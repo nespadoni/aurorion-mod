@@ -93,7 +93,7 @@ public final class LimboNetwork {
     }
 
     /** Um Oraculo a menos de 8 blocos. O mesmo alcance que o vanilla usa para interagir com bau. */
-    private static boolean nearOracle(ServerPlayer player) {
+    public static boolean nearOracle(ServerPlayer player) {
         return !player.level()
                 .getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
                         player.getBoundingBox().inflate(8.0D),

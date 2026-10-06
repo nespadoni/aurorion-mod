@@ -140,8 +140,8 @@ e no webhook, mesmo se a entrega atrasar.
 
 ## O espólio da morte — Fio da Volta e Relicário
 
-Dois itens de uso único que o Oráculo vai vender (a loja ainda não existe; por enquanto só se
-obtêm por `/give`). Os dois valem para a **última morte fora do Limbo do personagem atual** — a
+Dois itens de uso único vendidos pelo Oráculo, pagos com a carteira do `aurorion_economia`
+(padrão: Fio 10 óbolos, Relicário 40 — ver Config). Os dois valem para a **última morte fora do Limbo do personagem atual** — a
 chave é o personagem, não a conta, então cada personagem de uma mesma conta tem a sua — e **não
 caem quando você morre**: estão na tag `aurorion_core:kept_on_death`, cuja regra mora no core.
 
@@ -166,6 +166,18 @@ caem quando você morre**: estão na tag `aurorion_core:kept_on_death`, cuja reg
 - Quando o Relicário devolve algo, o core registra (`DeathClaims`) e o `/deathhistory restore`
   daquela morte passa a exigir `confirm duplicar`.
 
+### A banca do Oráculo
+
+No diálogo, "Você vende alguma coisa?" leva às duas compras, que rodam `/oraculo comprar fio` e
+`/oraculo comprar relicario`. Como a lista do resgate, o comando não pede permissão: a trava é estar
+a 8 blocos de um Oráculo. A compra confere o saldo, debita e entrega no mesmo tick (o que não cabe no
+inventário cai aos pés), avisa no chat quanto foi pago e grava `COMPRA_ORACULO` na auditoria. Staff
+em criativo não paga, como nos NPCs do `aurorion_profissoes`.
+
+A economia é **opcional** para o Limbo: sem ela o Oráculo recusa a venda com uma frase e continua
+abrindo passagens. O preço mostrado no texto da escolha está no JSON do diálogo; quem mudar
+`precoDoFioDaVoltaEmObolos` ou `precoDoRelicarioEmObolos` atualiza também esse texto.
+
 ## Comandos
 
 Todos são staff (nível 2).
@@ -178,6 +190,7 @@ Todos são staff (nível 2).
 | `/limbo tentativa <jogador>` | Marca que alguém tentou resgatar — desliga a Porta para essa pessoa |
 | `/limbo prazo <jogador> <horas>` | Ajusta o prazo antes do vencimento. **Zero mata o personagem imediatamente** |
 | `/limbo retornar <jogador>` | Retira com segurança quem ficou no Limbo sem estar exilado; não altera vidas |
+| `/oraculo comprar <fio\|relicario>` | **Jogador comum**, perto do Oráculo: compra pela carteira. É o que o diálogo roda |
 | `/limbo finale previa` | Prévia local com música junto ao fechamento dos olhos; não mata nem desconecta; Esc fecha durante a cena |
 
 ## Config
@@ -197,6 +210,9 @@ Todos são staff (nível 2).
 | `tambemNoLog` | `true` | Repete a auditoria no log do servidor |
 | `raioDoRelicarioEmChunks` | `1` | Raio, em chunks, onde o Relicário procura os drops (1 = 3x3) |
 | `minutosDeProtecaoDosDrops` | `120` | Drops de morte não somem nem são limpos por esse tempo. Zero desliga |
+| `precoDoFioDaVoltaEmObolos` | `10` | Preço do Fio no Oráculo. Zero tira da venda |
+| `precoDoRelicarioEmObolos` | `40` | Preço do Relicário no Oráculo. Zero tira da venda |
+| `vinculosAoAtravessar` | `1` | Vínculos que o resgatador recebe ao atravessar. Substitui `vinculosPorResgate` (padrão antigo `2`) |
 
 O webhook da auditoria fica à parte, em `config/aurorion/limbo-auditoria-startup.toml`
 (`webhookUrl`, vazio desliga o push; mudar exige reiniciar). A URL de webhook do Discord carrega o
@@ -381,6 +397,18 @@ Immersive Messages continua nos avisos e cenas do Limbo; colocá-lo sobre o diá
 escolhas que o jogador precisa ler. Depois da escolha, abertura da passagem, travessia e conclusão
 do Vínculo passam pelo Immersive Messages com a fonte do Limbo; sem ele, usam o painel nativo e,
 como último recurso, o chat.
+
+### Twilight Teleport
+
+O Twilight Teleport intercepta `changeDimension` e `teleportTo` de jogador para tocar a animação
+dele: devolve o jogador no lugar e agenda a viagem para alguns segundos depois. Para o Limbo isso
+quebrava o resgate — a saída parecia ter falhado, e a viagem adiada rodava depois de a autorização
+da Porta ter sido limpa, então o `aurorion_portais` trancava a saída do Limbo ("Deferred teleport was
+rejected"). O Vínculo era usado e o exilado nunca saía.
+
+Todo teleporte do Limbo (saída por resgate ou pela Porta, entrada pela passagem, coleira e Fio da
+Volta) passa por `TwilightTeleportCompat`, que marca a causa como uma das que o próprio Twilight
+deixa passar sem interceptar, pela API pública dele e por reflexão. Sem o mod, a chamada é direta.
 
 ### Cinematic Respawn
 

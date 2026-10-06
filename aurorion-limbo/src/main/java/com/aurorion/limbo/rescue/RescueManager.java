@@ -3,6 +3,7 @@ package com.aurorion.limbo.rescue;
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.core.character.CharacterData;
 import com.aurorion.limbo.AurorionLimbo;
+import com.aurorion.limbo.compat.TwilightTeleportCompat;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
@@ -182,8 +183,11 @@ public final class RescueManager {
 
         ForgottenDoor.authorize(player, limbo.dimension());
         try {
-            var moved = player.changeDimension(new DimensionTransition(limbo, arrival.getBottomCenter(),
-                    Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+            // Imediato pelo mesmo motivo do LimboManager#returnToOverworld: a autorizacao da Porta so
+            // vale dentro desta chamada, e um teleporte adiado pelo Twilight Teleport a perderia.
+            var moved = TwilightTeleportCompat.immediate(() -> player.changeDimension(new DimensionTransition(
+                    limbo, arrival.getBottomCenter(), Vec3.ZERO, player.getYRot(), player.getXRot(),
+                    DimensionTransition.DO_NOTHING)));
             // changeDimension devolve null quando alguem cancela EntityTravelToDimensionEvent. O
             // suspeito numero um e o aurorion_portais: ele trata como controlada toda dimensao fora
             // de freeDimensions e, com lockUnscheduledDimensions=true, uma dimensao sem linha de

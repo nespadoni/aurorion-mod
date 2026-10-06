@@ -10,6 +10,9 @@ apply from: "$rootDir/gradle/aurorion-mod.gradle"
 // A direcao e unica e permanece assim: limbo -> vidas, nunca o contrario. O aurorion-vidas continua
 // compilando, rodando e sendo util sem o Limbo existir.
 evaluationDependsOn(':aurorion-vidas')
+// A economia e opcional: so a banca do Oraculo (OracleShop) a usa, por uma classe isolada
+// (EconomiaCompat) que nao e carregada sem o mod. Compila contra ela, mas nao a exige em runtime.
+evaluationDependsOn(':aurorion-economia')
 
 neoForge {
     mods {
@@ -21,6 +24,7 @@ neoForge {
 
 dependencies {
     implementation project(':aurorion-vidas').sourceSets.main.output
+    compileOnly project(':aurorion-economia').sourceSets.main.output
 
     // O ADM e opcional e a ponte de producao continua reflexiva. Esta propriedade existe para o
     // run local poder carregar o jar real e validar dialogos/condicoes sem versionar o binario.

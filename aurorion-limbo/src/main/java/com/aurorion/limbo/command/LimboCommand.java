@@ -4,6 +4,7 @@ import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.oracle.OracleData;
 import com.aurorion.limbo.oracle.OracleRotation;
+import com.aurorion.limbo.oracle.OracleShop;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -89,6 +90,14 @@ public final class LimboCommand {
                     LimboNetwork.openOracle(player);
                     return 1;
                 })
+                // A compra tambem e rodada pelo dialogo do ADM, na mao de jogador comum. Como a
+                // raiz, a trava e de posicao: OracleShop so vende perto de um Oraculo.
+                .then(Commands.literal("comprar")
+                        .then(Commands.argument("item", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.stream(OracleShop.Ware.values()).map(OracleShop.Ware::id),
+                                        builder))
+                                .executes(LimboCommand::buy)))
                 // Os ramos abaixo sao de staff. A raiz continua sem exigencia de permissao de
                 // proposito (o dialogo do ADM a executa), entao a trava vai em cada ramo.
                 .then(Commands.literal("local")
@@ -334,6 +343,18 @@ public final class LimboCommand {
         return SharedSuggestionProvider.suggest(
                 OracleData.get(context.getSource().getServer()).all().stream().map(OracleData.Spot::name),
                 builder);
+    }
+
+    private static int buy(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) return 0;
+
+        OracleShop.Ware ware = OracleShop.Ware.byId(StringArgumentType.getString(context, "item"));
+        if (ware == null) {
+            context.getSource().sendFailure(literal("item desconhecido; use fio ou relicario"));
+            return 0;
+        }
+        return OracleShop.buy(player, ware) ? 1 : 0;
     }
 
     /** Grava exatamente onde a staff esta, inclusive para que lado olha. */

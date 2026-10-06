@@ -2,6 +2,7 @@ package com.aurorion.limbo.exile;
 
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.core.character.CharacterData;
+import com.aurorion.limbo.compat.TwilightTeleportCompat;
 import com.aurorion.limbo.finale.FinaleManager;
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.config.LimboConfig;
@@ -321,7 +322,8 @@ public final class LimboManager {
         BlockPos ground = LimboSpawn.surface(level, x, z);
         BlockPos target = ground != null ? ground : center;
 
-        player.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
+        TwilightTeleportCompat.immediateRun(
+                () -> player.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D));
         narrator().leash(player);
     }
 
@@ -428,9 +430,11 @@ public final class LimboManager {
         if (landing == null) return false;
         ForgottenDoor.authorize(player, overworld.dimension());
         try {
-            var moved = player.changeDimension(new DimensionTransition(overworld,
-                    landing.getBottomCenter(), Vec3.ZERO, player.getYRot(), player.getXRot(),
-                    DimensionTransition.DO_NOTHING));
+            // Imediato: a autorizacao acima so vale dentro desta chamada. Um teleporte adiado pelo
+            // Twilight Teleport rodaria depois do finally e o aurorion_portais trancaria a saida.
+            var moved = TwilightTeleportCompat.immediate(() -> player.changeDimension(new DimensionTransition(
+                    overworld, landing.getBottomCenter(), Vec3.ZERO, player.getYRot(), player.getXRot(),
+                    DimensionTransition.DO_NOTHING)));
             return moved != null && moved.level() == overworld;
         } finally {
             ForgottenDoor.clear();

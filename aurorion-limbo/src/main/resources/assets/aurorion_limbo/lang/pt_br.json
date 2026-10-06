@@ -79,5 +79,9 @@
   "aurorion_limbo.relicario.vazio": "Nada daquela morte restou no mundo. O Relicário voltou para você.",
   "aurorion_limbo.espolio.no_limbo": "Daqui do Limbo, nada responde.",
   "aurorion_limbo.espolio.sem_morte": "Não há nenhuma morte sua para onde voltar.",
-  "aurorion_limbo.espolio.sem_mundo": "O mundo onde você morreu não existe mais."
+  "aurorion_limbo.espolio.sem_mundo": "O mundo onde você morreu não existe mais.",
+  "aurorion_limbo.loja.comprou": "O Oráculo entrega %s. Você pagou %s.",
+  "aurorion_limbo.loja.sem_saldo": "%s custa %s. Você tem %s.",
+  "aurorion_limbo.loja.fora_de_venda": "O Oráculo não está vendendo %s agora.",
+  "aurorion_limbo.loja.sem_economia": "O Oráculo não aceita pagamento neste mundo."
 }
