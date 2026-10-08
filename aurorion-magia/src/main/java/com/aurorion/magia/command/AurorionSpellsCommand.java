@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
  * <pre>
  * /aurorion spells unlock spell  &lt;magia&gt;  &lt;alvos&gt;
  * /aurorion spells unlock school &lt;escola&gt; &lt;alvos&gt;
+ * /aurorion spells unlock todos  &lt;alvos&gt;
  * /aurorion spells lock   spell  &lt;magia&gt;  &lt;alvos&gt;
  * /aurorion spells lock   school &lt;escola&gt; &lt;alvos&gt;
  * /aurorion spells list &lt;jogador&gt;
@@ -79,7 +80,10 @@ public final class AurorionSpellsCommand {
                         .requires(source -> source.hasPermission(STAFF_LEVEL))
                         .then(Commands.literal("unlock")
                                 .then(kindBranch("spell", GrantKind.SPELL, SPELL_IDS, true))
-                                .then(kindBranch("school", GrantKind.SCHOOL, SCHOOL_IDS, true)))
+                                .then(kindBranch("school", GrantKind.SCHOOL, SCHOOL_IDS, true))
+                                .then(Commands.literal("todos")
+                                        .then(Commands.argument(ARG_TARGETS, EntityArgument.players())
+                                                .executes(AurorionSpellsCommand::unlockAllSchools))))
                         .then(Commands.literal("lock")
                                 .then(kindBranch("spell", GrantKind.SPELL, SPELL_IDS, false))
                                 .then(kindBranch("school", GrantKind.SCHOOL, SCHOOL_IDS, false)))
@@ -131,6 +135,36 @@ public final class AurorionSpellsCommand {
         int result = changed;
         source.sendSuccess(() -> Component.translatable(
                 grant ? "commands.aurorion_magia.liberado" : "commands.aurorion_magia.bloqueado",
+                name, result, total), true);
+        return changed;
+    }
+
+    /** Equivale a liberar cada escola atual: nao concede magias proibidas nem muda o formato do save. */
+    private static int unlockAllSchools(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        CommandSourceStack source = context.getSource();
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, ARG_TARGETS);
+        Collection<ResourceLocation> schools = SchoolRegistry.REGISTRY.keySet();
+        SpellUnlockData data = SpellUnlockData.get(source.getServer());
+        Component name = Component.translatable("commands.aurorion_magia.todas_escolas");
+
+        int changed = 0;
+        for (ServerPlayer player : players) {
+            boolean didChange = false;
+            for (ResourceLocation school : schools) {
+                // |= avalia cada grant mesmo depois de encontrar a primeira escola nova.
+                didChange |= data.grant(player.getUUID(), GrantKind.SCHOOL, school);
+            }
+            if (!didChange) continue;
+
+            changed++;
+            SpellAccess.reconcile(player);
+            player.sendSystemMessage(Component.translatable("aurorion_magia.aprendeu", name)
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
+
+        int result = changed;
+        int total = players.size();
+        source.sendSuccess(() -> Component.translatable("commands.aurorion_magia.liberado",
                 name, result, total), true);
         return changed;
     }

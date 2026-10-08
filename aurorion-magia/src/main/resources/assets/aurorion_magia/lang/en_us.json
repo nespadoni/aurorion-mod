@@ -70,6 +70,7 @@
   "aurorion_magia.lacre.full": "There are too many seals in this world.",
   "commands.aurorion_magia.magia_desconhecida": "Unknown spell: %s",
   "commands.aurorion_magia.escola_desconhecida": "Unknown school: %s",
+  "commands.aurorion_magia.todas_escolas": "All magic schools",
   "commands.aurorion_magia.liberado": "%s unlocked for %s of %s player(s).",
   "commands.aurorion_magia.bloqueado": "%s locked for %s of %s player(s).",
   "commands.aurorion_magia.lista": "%s — schools: %s | spells: %s",

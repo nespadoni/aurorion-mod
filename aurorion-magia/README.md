@@ -23,6 +23,7 @@ Restrictions `1.21.1-5.2.0`, Emotecraft `2.4.12`, Simple Voice Chat `1.21.1-2.6.
 ```
 /aurorion spells unlock spell  <magia>  <alvos>
 /aurorion spells unlock school <escola> <alvos>
+/aurorion spells unlock todos  <alvos>
 /aurorion spells lock   spell  <magia>  <alvos>
 /aurorion spells lock   school <escola> <alvos>
 /aurorion spells list <jogador>
@@ -31,6 +32,9 @@ Restrictions `1.21.1-5.2.0`, Emotecraft `2.4.12`, Simple Voice Chat `1.21.1-2.6.
 - `<alvos>` é seletor vanilla: `@a`, `@a[team=sonserina]`, `@p`, nome. Só pega quem está online:
   libera quem estava na aula.
 - O Tab sugere as magias e escolas registradas no Iron's, incluindo as de outros addons.
+- `unlock todos` libera todas as escolas registradas naquele momento, incluindo as de outros addons,
+  com o mesmo save e a mesma sincronização de `unlock school`. Magias proibidas continuam exigindo
+  `unlock spell <id> <alvos>`; escolas adicionadas depois precisam de uma nova liberação.
 - Regra: pode conjurar se a **magia** estiver liberada **ou** a **escola dela** estiver liberada.
 - Os ids das magias deste mod são `aurorion_magia:dolor_cruciatus` e `aurorion_magia:imperium_mentis`.
   O namespace segue o `mod_id`, como em todo mod do ecossistema.
@@ -43,6 +47,8 @@ Exemplos:
 ```
 /aurorion spells unlock spell aurorion_magia:dolor_cruciatus @a[team=sonserina]
 /aurorion spells unlock school irons_spellbooks:blood @a
+/aurorion spells unlock todos Fulano
+/aurorion spells unlock todos @a
 ```
 
 ### Onde a liberação é conferida
@@ -1146,6 +1152,13 @@ com as magias. `:aurorion-magia:runClient` sobe só ele (com o core e a árvore 
 O mod é obrigatório no cliente: as magias e os efeitos entram em registros sincronizados.
 
 ## Validar no pack
+
+- [ ] Na máquina de build, compilar e executar os testes existentes. No servidor, testar
+  `unlock todos` com um nome e com `@a`, confirmar todas as escolas em `list`, sincronização com
+  Iron's Restrictions e persistência após relogar/reiniciar. Repetir o comando sem duplicar grants;
+  testar um jogador com só parte das escolas liberada. Com `staffBypass = false`, confirmar que uma
+  magia proibida sem liberação individual continua bloqueada e que jogadores sem permissão 2 não
+  executam o comando.
 
 **Build e liberação**
 - [ ] `./gradlew :aurorion-magia:build` compila (inclui `SpellGrantsTest`, com a regra de proibidas,

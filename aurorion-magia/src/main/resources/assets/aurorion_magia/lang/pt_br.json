@@ -70,6 +70,7 @@
   "aurorion_magia.lacre.full": "Há lacres demais neste mundo.",
   "commands.aurorion_magia.magia_desconhecida": "Magia desconhecida: %s",
   "commands.aurorion_magia.escola_desconhecida": "Escola desconhecida: %s",
+  "commands.aurorion_magia.todas_escolas": "Todas as escolas de magia",
   "commands.aurorion_magia.liberado": "%s liberado para %s de %s jogador(es).",
   "commands.aurorion_magia.bloqueado": "%s bloqueado para %s de %s jogador(es).",
   "commands.aurorion_magia.lista": "%s — escolas: %s | magias: %s",
