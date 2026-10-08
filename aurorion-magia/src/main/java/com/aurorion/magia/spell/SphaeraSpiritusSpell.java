@@ -79,7 +79,7 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
         this.baseManaCost = 15;
         this.manaCostPerLevel = 5;
         // Em magia continua, castTime e a carga maxima: 8 segundos.
-        this.castTime = 160;
+        this.castTime = 320;
     }
 
     @Override
@@ -107,7 +107,7 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano_maximo", Utils.stringTruncation(getSpellPower(spellLevel, caster) * 2, 1)),
+                Component.translatable("ui.aurorion_magia.dano_maximo", Utils.stringTruncation(damagePower(spellLevel, caster) * 2, 1)),
                 Component.translatable("ui.aurorion_magia.raio_maximo", maxRadius(spellLevel)),
                 Component.translatable("ui.aurorion_magia.carga_maxima", Utils.timeFromTicks(castTime, 1)),
                 Component.translatable(MagiaConfig.SPHAERA_BREAKS_BLOCKS.get()
@@ -151,7 +151,7 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
             return;
         }
         float radius = 3 + (maxRadius(spellLevel) - 3) * charge;
-        float damage = getSpellPower(spellLevel, entity) * (0.5f + 1.5f * charge);
+        float damage = damagePower(spellLevel, entity) * (0.5f + 1.5f * charge);
         float size = visualRadius(charge);
         Vec3 from = entity.getEyePosition().add(0, 1.2 + size, 0);
         MagiaProjectileEntity.launch(serverLevel, entity, MagiaProjectileEntity.Shape.SPHAERA, from,

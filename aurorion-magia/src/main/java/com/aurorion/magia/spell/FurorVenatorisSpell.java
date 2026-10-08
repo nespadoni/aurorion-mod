@@ -40,10 +40,10 @@ import java.util.Optional;
 public final class FurorVenatorisSpell extends AurorionSpell {
     private static final int RANGE = 60;
     private static final int SHOTS = 3;
-    private static final int WINDOW_TICKS = 120;
+    private static final int WINDOW_TICKS = 240;
     private static final double WIDTH = 0.7;
     private static final int MAX_TARGETS = 16;
-    private static final int REVEAL_TICKS = 80;
+    private static final int REVEAL_TICKS = 160;
 
     public FurorVenatorisSpell() {
         super("furor_venatoris", SchoolRegistry.LIGHTNING_RESOURCE, SpellRarity.LEGENDARY, 3, 80, CastType.INSTANT);
@@ -77,7 +77,7 @@ public final class FurorVenatorisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.disparos", SHOTS),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.atravessa_paredes"),
@@ -97,7 +97,7 @@ public final class FurorVenatorisSpell extends AurorionSpell {
                 playerMagicData.getPlayerRecasts().addRecast(new RecastInstance(getSpellId(), spellLevel, SHOTS,
                         WINDOW_TICKS, castSource, null), playerMagicData);
             }
-            shoot(serverLevel, entity, getSpellPower(spellLevel, entity));
+            shoot(serverLevel, entity, damagePower(spellLevel, entity));
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }

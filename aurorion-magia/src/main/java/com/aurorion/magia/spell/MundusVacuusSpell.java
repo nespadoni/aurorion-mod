@@ -65,7 +65,7 @@ public final class MundusVacuusSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        return List.of(Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
+        return List.of(ControlSpells.timeInfo("mundus_vacuus", "ui.aurorion_magia.duracao", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.alternar"),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE));
     }
@@ -83,7 +83,8 @@ public final class MundusVacuusSpell extends AurorionSpell {
             if (target.hasEffect(MagiaEffects.SOLITARY)) {
                 restore(target);
             } else {
-                empty(entity, target, duration(spellLevel));
+                empty(entity, target, ControlSpells.duration("mundus_vacuus", duration(spellLevel)));
+                ToggleCooldown.skipNext(entity);
             }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
@@ -104,8 +105,8 @@ public final class MundusVacuusSpell extends AurorionSpell {
         sound(target, SoundEvents.BEACON_ACTIVATE, 0.6f, 1.4f);
     }
 
-    /** 10 s no nivel 1, +5 s por nivel (30 s no 5). */
+    /** Base: 10 s no nivel 1, +5 s por nivel (30 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 200 + 100 * (spellLevel - 1);
+        return SpellBalance.duration(200 + 100 * (spellLevel - 1));
     }
 }

@@ -78,7 +78,7 @@ public final class PyrobolusInfernalisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano_centro", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano_centro", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", Utils.stringTruncation(radius(spellLevel), 1)),
                 Component.translatable("ui.aurorion_magia.alcance", MagiaConfig.PYROBOLUS_RANGE.get()));
     }
@@ -92,7 +92,7 @@ public final class PyrobolusInfernalisSpell extends AurorionSpell {
             float radius = radius(spellLevel);
             MagiaProjectileEntity.launch(serverLevel, entity, MagiaProjectileEntity.Shape.PYROBOLUS, from,
                     MagiaProjectileEntity.arc(from, at, ticks, MagiaProjectileEntity.Shape.PYROBOLUS),
-                    1.3f, getSpellPower(spellLevel, entity), radius, ticks + 40);
+                    1.3f, damagePower(spellLevel, entity), radius, ticks + 40);
             MagiaNetwork.sendVisualAt(serverLevel, entity, SpellVisualPayload.Kind.PYROBOLUS_TARGET, ticks + 4, at, radius);
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);

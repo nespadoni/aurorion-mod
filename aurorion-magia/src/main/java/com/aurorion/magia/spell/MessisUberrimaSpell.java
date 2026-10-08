@@ -47,7 +47,7 @@ public final class MessisUberrimaSpell extends AurorionSpell {
         this.spellPowerPerLevel = 1;
         this.baseManaCost = 8;
         this.manaCostPerLevel = 2;
-        this.castTime = 40;
+        this.castTime = 80;
     }
 
     @Override
@@ -79,7 +79,7 @@ public final class MessisUberrimaSpell extends AurorionSpell {
                         Utils.stringTruncation(pulse(spellLevel, caster) * PULSES_PER_SECOND, 1)),
                 Component.translatable("ui.aurorion_magia.raio", RADIUS),
                 Component.translatable("ui.aurorion_magia.colheita",
-                        Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)));
+                        Utils.stringTruncation(damagePower(spellLevel, caster), 1)));
     }
 
     @Override
@@ -93,7 +93,7 @@ public final class MessisUberrimaSpell extends AurorionSpell {
                                      boolean cancelled) {
         super.onServerCastComplete(level, spellLevel, entity, playerMagicData, cancelled);
         if (!cancelled && level instanceof ServerLevel serverLevel) {
-            drain(serverLevel, entity, getSpellPower(spellLevel, entity), true);
+            drain(serverLevel, entity, damagePower(spellLevel, entity), true);
             sound(entity, SoundEvents.SOUL_ESCAPE.value(), 2.0f, 0.5f);
             sound(entity, SoundEvents.PHANTOM_DEATH, 1.0f, 0.6f);
         }
@@ -116,6 +116,6 @@ public final class MessisUberrimaSpell extends AurorionSpell {
     }
 
     private float pulse(int spellLevel, @Nullable LivingEntity caster) {
-        return getSpellPower(spellLevel, caster) * 0.5f;
+        return damagePower(spellLevel, caster) * 0.5f;
     }
 }

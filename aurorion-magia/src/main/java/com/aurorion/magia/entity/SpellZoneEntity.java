@@ -89,7 +89,7 @@ public class SpellZoneEntity extends Entity {
     /** Teto de quem uma zona mexe por tick. Uma praça cheia nao pode virar 80 vetores por tick. */
     private static final int MAX_AFFECTED = 20;
     /** Dano do furacao por segundo em quem fica dentro dele. */
-    private static final float STORM_DAMAGE = 2;
+    private static final float STORM_DAMAGE = 4;
     private static final int STORM_HURT_INTERVAL = 20;
     /** A Poca de Sangue drena a cada meio segundo. */
     private static final int POOL_INTERVAL = 10;

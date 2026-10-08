@@ -43,7 +43,7 @@ import java.util.Optional;
  * que o vanilla tica sozinho.
  */
 public final class TemperiesFatiSpell extends AurorionSpell {
-    public static final int STASIS_TICKS = 50;
+    public static final int STASIS_TICKS = SpellBalance.duration(50);
     private static final int RANGE = 40;
     private static final int MAX_TARGETS = 24;
 

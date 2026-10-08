@@ -69,7 +69,7 @@ public final class LuxVorataSpell extends AurorionSpell {
     public static final TagKey<Block> PROTECTED =
             TagKey.create(Registries.BLOCK, AurorionMagia.id("inapagavel"));
 
-    private static final int BLINDNESS_TICKS = 30;
+    private static final int BLINDNESS_TICKS = 60;
     private static final int MAX_TARGETS = 32;
 
     public LuxVorataSpell() {
@@ -156,8 +156,8 @@ public final class LuxVorataSpell extends AurorionSpell {
         return 5 + spellLevel;
     }
 
-    /** Escuridao de 8 s no nivel 1, +2 s por nivel. */
+    /** Base: Escuridao de 8 s no nivel 1, +2 s por nivel. SpellBalance dobra este tempo. */
     private static int darkness(int spellLevel) {
-        return 160 + 40 * (spellLevel - 1);
+        return SpellBalance.duration(160 + 40 * (spellLevel - 1));
     }
 }

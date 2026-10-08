@@ -110,9 +110,9 @@ public final class ColumnaVentiSpell extends AurorionSpell {
         return new Vec3(at.x, pos.getY(), at.z);
     }
 
-    /** 5 s no nivel 1, +1 s por nivel (9 s no 5). */
+    /** Base: 5 s no nivel 1, +1 s por nivel (9 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 100 + 20 * (spellLevel - 1);
+        return SpellBalance.duration(100 + 20 * (spellLevel - 1));
     }
 
     /** O impulso cresce de leve com o dominio: 6 blocos no 1, um pouco mais no 5. */

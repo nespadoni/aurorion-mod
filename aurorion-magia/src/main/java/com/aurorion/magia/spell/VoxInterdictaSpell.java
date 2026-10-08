@@ -1,6 +1,5 @@
 package com.aurorion.magia.spell;
 
-import com.aurorion.magia.compat.VoiceMute;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
@@ -37,8 +36,8 @@ import java.util.List;
  * <p><b>Agachado, em area</b> ({@link AreaCast}): "silencio, todos." A voz some de ate
  * {@value #MAX_TARGETS} pessoas num raio de {@code 5} a {@code 9} blocos — o salao do conselho, a
  * roda que comecou a gritar. Quem esta do lado de quem conjura ({@code isAlliedTo}) fica de fora, como
- * no Devorar Luz. Em area a magia so tira a voz: quem ja estava calado tem o silencio renovado, e
- * devolver a palavra continua sendo coisa de um alvo so.
+ * no Devorar Luz. Em area, reconjurar alterna a voz de cada alvo no raio; em um alvo so, tambem
+ * devolve a palavra sem esperar o prazo correr.
  *
  * <p>So em jogador: mob nao tem voz para tomar.
  */
@@ -62,7 +61,7 @@ public final class VoxInterdictaSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        return List.of(Component.translatable("ui.aurorion_magia.silencio", Utils.timeFromTicks(duration(spellLevel), 1)),
+        return List.of(ControlSpells.timeInfo("vox_interdicta", "ui.aurorion_magia.silencio", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.alternar"),
                 Component.translatable("ui.aurorion_magia.agachado_area", radius(spellLevel)));
     }
@@ -86,16 +85,25 @@ public final class VoxInterdictaSpell extends AurorionSpell {
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
             if (AreaCast.wide(entity)) {
-                int duration = duration(spellLevel);
+                int duration = ControlSpells.duration("vox_interdicta", duration(spellLevel));
+                boolean applied = false;
                 for (LivingEntity victim : area(serverLevel, entity, spellLevel)) {
-                    if (victim instanceof ServerPlayer target) silence(entity, target, duration);
+                    if (victim instanceof ServerPlayer target) {
+                        if (target.hasEffect(MagiaEffects.SILENCED)) restore(target);
+                        else {
+                            silence(entity, target, duration);
+                            applied = true;
+                        }
+                    }
                 }
                 sound(serverLevel, entity.position(), SoundEvents.WARDEN_SONIC_BOOM, 0.9f, 0.6f);
+                if (applied) ToggleCooldown.skipNext(entity);
             } else if (target(serverLevel, entity, playerMagicData) instanceof ServerPlayer target) {
                 if (target.hasEffect(MagiaEffects.SILENCED)) {
                     restore(target);
                 } else {
-                    silence(entity, target, duration(spellLevel));
+                    silence(entity, target, ControlSpells.duration("vox_interdicta", duration(spellLevel)));
+                    ToggleCooldown.skipNext(entity);
                 }
             }
         }
@@ -111,13 +119,14 @@ public final class VoxInterdictaSpell extends AurorionSpell {
     /** Segunda conjuracao no mesmo alvo: pode falar. O microfone volta pelo fim do efeito. */
     private static void restore(ServerPlayer target) {
         target.removeEffect(MagiaEffects.SILENCED);
-        target.displayClientMessage(Component.translatable("aurorion_magia.voz_devolvida"), true);
+        target.displayClientMessage(Component.translatable(ControlSpells.isSilenced(target)
+                ? "aurorion_magia.sem_voz" : "aurorion_magia.voz_devolvida"), true);
         sound(target, SoundEvents.AMETHYST_BLOCK_CHIME, 1.0f, 1.2f);
     }
 
     private static void silence(LivingEntity caster, ServerPlayer target, int duration) {
         target.addEffect(new MobEffectInstance(MagiaEffects.SILENCED, duration, 0, false, false, true), caster);
-        VoiceMute.mute(target.getUUID(), duration * 50L);
+        ControlSpells.syncVoice(target, null);
         if (MagicData.getPlayerMagicData(target).isCasting()) Utils.serverSideCancelCast(target);
         target.displayClientMessage(Component.translatable("aurorion_magia.sem_voz"), true);
         sound(target, SoundEvents.SCULK_CLICKING, 1.0f, 0.5f);
@@ -125,9 +134,9 @@ public final class VoxInterdictaSpell extends AurorionSpell {
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.VOX_INTERDICTA, duration);
     }
 
-    /** 5 s no nivel 1, +1,25 s por nivel (10 s no 5). */
+    /** Base: 5 s no nivel 1, +1,25 s por nivel (10 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 100 + 25 * (spellLevel - 1);
+        return SpellBalance.duration(100 + 25 * (spellLevel - 1));
     }
 
     /** Raio do silencio coletivo: 5 blocos no nivel 1, +1 por nivel (9 no 5). */

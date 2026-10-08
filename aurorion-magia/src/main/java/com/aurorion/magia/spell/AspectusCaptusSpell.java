@@ -63,14 +63,15 @@ public final class AspectusCaptusSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        return List.of(Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
+        return List.of(ControlSpells.timeInfo("aspectus_captus", "ui.aurorion_magia.duracao", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.agachado_area", radius(spellLevel)));
     }
 
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        if (!AreaCast.wide(entity)) return aim(level, entity, playerMagicData, RANGE, false, target -> true);
+        if (!AreaCast.wide(entity)) return aim(level, entity, playerMagicData, RANGE, true, target -> target.hasEffect(MagiaEffects.CAPTIVE)
+                || Hits.hittable(entity, target) && Hits.enemy(entity, target));
         if (!(level instanceof ServerLevel serverLevel)) return true;
         if (!area(serverLevel, entity, spellLevel).isEmpty()) return true;
         if (entity instanceof ServerPlayer player) {
@@ -82,18 +83,28 @@ public final class AspectusCaptusSpell extends AurorionSpell {
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            int duration = duration(spellLevel);
+            int duration = ControlSpells.duration("aspectus_captus", duration(spellLevel));
             if (AreaCast.wide(entity)) {
                 for (LivingEntity victim : area(serverLevel, entity, spellLevel)) {
-                    capture(entity, victim, duration);
+                    if (victim.hasEffect(MagiaEffects.CAPTIVE)) victim.removeEffect(MagiaEffects.CAPTIVE);
+                    else {
+                        capture(entity, victim, duration);
+                        ToggleCooldown.skipNext(entity);
+                    }
                 }
                 Vec3 at = entity.position();
                 sound(serverLevel, at, SoundEvents.WARDEN_SONIC_BOOM, 1.4f, 1.2f);
                 MagiaNetwork.sendVisualAt(serverLevel, entity, SpellVisualPayload.Kind.ASPECTUS_AREA,
-                        duration, at, radius(spellLevel));
+                        duration < 0 ? 40 : duration, at, radius(spellLevel));
             } else {
                 LivingEntity target = target(serverLevel, entity, playerMagicData);
-                if (target != null) capture(entity, target, duration);
+                if (target != null) {
+                    if (target.hasEffect(MagiaEffects.CAPTIVE)) target.removeEffect(MagiaEffects.CAPTIVE);
+                    else {
+                        capture(entity, target, duration);
+                        ToggleCooldown.skipNext(entity);
+                    }
+                }
             }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
@@ -109,9 +120,9 @@ public final class AspectusCaptusSpell extends AurorionSpell {
         return AreaCast.victims(level, caster, caster.position(), radius(spellLevel), MAX_TARGETS, target -> true);
     }
 
-    /** 2 s no nivel 1, +0,5 s por nivel (4 s no 5). */
+    /** Base: 2 s no nivel 1, +0,5 s por nivel (4 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 40 + 10 * (spellLevel - 1);
+        return SpellBalance.duration(40 + 10 * (spellLevel - 1));
     }
 
     /** Raio do olhar coletivo: 14 blocos no nivel 1, +4 por nivel (30 no 5). */

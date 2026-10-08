@@ -76,7 +76,7 @@ public final class MorsExProfundisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.execucao", (int) Math.round(threshold(spellLevel) * 100)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.abate_devolve"),
@@ -88,7 +88,7 @@ public final class MorsExProfundisSpell extends AurorionSpell {
         if (level instanceof ServerLevel serverLevel) {
             Vec3 at = Hits.aimGround(serverLevel, entity, RANGE);
             MagiaProjectileEntity clock = MagiaProjectileEntity.launch(serverLevel, entity, MagiaProjectileEntity.Shape.ABYSSUS,
-                    at, Vec3.ZERO, 0, getSpellPower(spellLevel, entity), RADIUS, DELAY);
+                    at, Vec3.ZERO, 0, damagePower(spellLevel, entity), RADIUS, DELAY);
             clock.aux((float) threshold(spellLevel));
             // O X segue a direcao para onde quem conjurou olhava: os bracos cruzam a frente dele.
             clock.setYRot(entity.getYRot());

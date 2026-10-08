@@ -85,7 +85,7 @@ public final class IustitiaDemaciaeSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.vida_que_falta", (int) (MISSING_RATIO * 100)),
                 Component.translatable("ui.aurorion_magia.execucao", (int) Math.round(threshold(spellLevel) * 100)),
                 Component.translatable("ui.aurorion_magia.exige_espada"),
@@ -123,7 +123,7 @@ public final class IustitiaDemaciaeSpell extends AurorionSpell {
             return;
         }
         // Fora da execucao, o golpe e dano de magia comum: so a execucao ignora totem e invulnerabilidade.
-        float damage = getSpellPower(spellLevel, caster) + Execution.missing(target) * target.getMaxHealth() * MISSING_RATIO;
+        float damage = damagePower(spellLevel, caster) + Execution.missing(target) * target.getMaxHealth() * MISSING_RATIO;
         FriendlyFire.applyDamage(target, damage, getDamageSource(caster));
     }
 

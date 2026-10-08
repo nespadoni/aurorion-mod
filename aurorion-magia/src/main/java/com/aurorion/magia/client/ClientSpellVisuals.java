@@ -4,6 +4,7 @@ import com.aurorion.magia.config.MagiaClientConfig;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.network.SpellVisualPayload.Kind;
 import com.aurorion.magia.registry.MagiaSounds;
+import com.aurorion.magia.spell.ControlSpells;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -49,7 +50,7 @@ public final class ClientSpellVisuals {
     private static final int MAX_ACTIVE = 64;
     private static final int MAX_BEAM_POINTS = 36;
     private static final float MAX_EXTRA = 64;
-    private static final int MAX_TTL = 12_000;
+    private static final int MAX_TTL = 24_000;
     /**
      * O tamanho da sombra da Presenca Aterradora no chao, por mais largo que seja o raio do medo. Ela
      * e um disco chapado na altura dos pes: com dez blocos ela ja toma a praça, e maior que isso
@@ -172,6 +173,12 @@ public final class ClientSpellVisuals {
             active.age++;
             active.flash = Math.max(0, active.flash - 0.12f);
             LivingEntity target = active.target(level);
+            var control = target == null ? null : ControlSpells.visualEffect(active.kind, target);
+            if (target != null && control != null && !active.ended) {
+                var effect = target.getEffect(control);
+                if (effect != null && effect.isInfiniteDuration()) active.ticksLeft = Math.max(active.ticksLeft, 20);
+                else if (effect == null) active.ticksLeft = Math.min(active.ticksLeft, END_FADE_TICKS);
+            }
             if (--active.ticksLeft < 0 || !active.kind.anchoredToPoint() && target == null) {
                 it.remove();
                 continue;
@@ -930,7 +937,8 @@ public final class ClientSpellVisuals {
             this.targetId = payload.targetId();
             this.pos = payload.pos();
             // Tetos defensivos: raio/intensidade ate 64 (o maior raio real e o Tempus, 40) e vida ate
-            // 10 min (o lacre mais longo e 9; corrente e zona sem prazo se renovam antes disso). Um valor absurdo no pacote nao vira um laco de particulas sem fim.
+            // 20 min (o lacre mais longo agora e 18). Efeitos infinitos mantem o visual enquanto
+            // estiverem ativos; um valor absurdo no pacote nao vira particulas sem fim.
             float extra = payload.extra();
             this.extra = Float.isFinite(extra) ? Mth.clamp(extra, -MAX_EXTRA, MAX_EXTRA) : 0;
             this.ttl = Mth.clamp(payload.ttl(), 0, MAX_TTL);

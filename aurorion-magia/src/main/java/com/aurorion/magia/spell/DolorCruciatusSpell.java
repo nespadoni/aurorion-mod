@@ -65,8 +65,8 @@ public final class DolorCruciatusSpell extends AurorionSpell {
         this.spellPowerPerLevel = 1;
         this.baseManaCost = 6;
         this.manaCostPerLevel = 2;
-        // Em magia continua, castTime e a duracao maxima da canalizacao: 4 segundos.
-        this.castTime = 80;
+        // Em magia continua, castTime e a duracao maxima da canalizacao: 8 segundos.
+        this.castTime = 160;
     }
 
     @Override
@@ -136,7 +136,7 @@ public final class DolorCruciatusSpell extends AurorionSpell {
     }
 
     private float pulseDamage(int spellLevel, @Nullable LivingEntity caster) {
-        return getSpellPower(spellLevel, caster) * 0.5f;
+        return damagePower(spellLevel, caster) * 0.5f;
     }
 
     private static boolean inReach(LivingEntity caster, LivingEntity target) {

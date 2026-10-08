@@ -33,7 +33,7 @@ import java.util.Optional;
  * <p>O alvo e virado de frente para quem conjurou e cai de joelhos. Enquanto durar: quase sem andar,
  * sem pular, sem correr — e, agora, <b>sem usar nada</b>: nenhuma magia sai da boca dele, e nem item,
  * nem arco, nem escudo, nem totem responde na mao. De joelhos, o corpo e da cerimonia, nao dele. So a
- * voz continua livre, de proposito: a magia serve para ouvir um pedido de desculpa, nao para calar.
+ * voz pode ser bloqueada junto com o controle, conforme controlesSilenciam no config do servidor.
  *
  * <p><b>Duas conjuracoes</b>: a primeira poe de joelhos, a segunda no mesmo alvo manda levantar. E o
  * professor que libera o aluno, o carrasco que muda de ideia — sem esperar o tempo correr.
@@ -65,7 +65,7 @@ public final class GenuaFlecteSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        return List.of(Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
+        return List.of(ControlSpells.timeInfo("genua_flecte", "ui.aurorion_magia.duracao", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.maos_atadas"),
                 Component.translatable("ui.aurorion_magia.alternar"),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE));
@@ -85,7 +85,8 @@ public final class GenuaFlecteSpell extends AurorionSpell {
                 if (target.hasEffect(MagiaEffects.KNEELING)) {
                     rise(target);
                 } else {
-                    kneel(entity, target, duration(spellLevel));
+                    kneel(entity, target, ControlSpells.duration("genua_flecte", duration(spellLevel)));
+                    ToggleCooldown.skipNext(entity);
                 }
             }
         }
@@ -135,8 +136,8 @@ public final class GenuaFlecteSpell extends AurorionSpell {
         }
     }
 
-    /** 5 s no nivel 1, +1,5 s por nivel. */
+    /** Base: 5 s no nivel 1, +1,5 s por nivel. SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 100 + 30 * (spellLevel - 1);
+        return SpellBalance.duration(100 + 30 * (spellLevel - 1));
     }
 }

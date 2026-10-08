@@ -21,7 +21,7 @@ public final class VoiceMute {
     }
 
     public static void mute(UUID player, long millis) {
-        MUTED_UNTIL.put(player, System.currentTimeMillis() + millis);
+        MUTED_UNTIL.put(player, millis < 0 ? Long.MAX_VALUE : System.currentTimeMillis() + millis);
     }
 
     public static void unmute(UUID player) {

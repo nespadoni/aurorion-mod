@@ -94,9 +94,9 @@ public final class SigillumClausumSpell extends AurorionSpell {
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 
-    /** 1, 3 e 9 minutos. */
+    /** Base: 1, 3 e 9 minutos. SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 1200 * (int) Math.pow(3, spellLevel - 1);
+        return SpellBalance.duration(1200 * (int) Math.pow(3, spellLevel - 1));
     }
 
     /** O bloco mirado, guardado entre a mira e o efeito. */

@@ -49,7 +49,7 @@ import java.util.Optional;
  * conjuracao. A detonacao e reacao ao dano ({@code MagiaServerEvents}), sem tick.
  */
 public final class LuxFinalisSpell extends AurorionSpell {
-    public static final int MARK_TICKS = 120;
+    public static final int MARK_TICKS = 240;
     private static final int RANGE = 48;
     private static final double WIDTH = 0.6;
     private static final int MAX_TARGETS = 24;
@@ -92,7 +92,7 @@ public final class LuxFinalisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.iluminacao",
                         Utils.stringTruncation(burst(spellLevel, caster), 1)));
@@ -107,7 +107,7 @@ public final class LuxFinalisSpell extends AurorionSpell {
     private void fire(ServerLevel level, LivingEntity caster, int spellLevel) {
         Vec3 from = caster.getEyePosition().subtract(0, 0.25, 0);
         Vec3 end = Hits.beamEnd(level, caster, from, caster.getLookAngle(), RANGE, false);
-        float damage = getSpellPower(spellLevel, caster);
+        float damage = damagePower(spellLevel, caster);
         float burst = burst(spellLevel, caster);
 
         for (LivingEntity victim : Hits.along(level, caster, from, end, WIDTH, MAX_TARGETS, t -> Hits.enemy(caster, t))) {
@@ -157,6 +157,6 @@ public final class LuxFinalisSpell extends AurorionSpell {
 
     /** Metade do dano do feixe. */
     private float burst(int spellLevel, @Nullable LivingEntity caster) {
-        return getSpellPower(spellLevel, caster) * 0.5f;
+        return damagePower(spellLevel, caster) * 0.5f;
     }
 }

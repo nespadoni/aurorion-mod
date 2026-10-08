@@ -49,8 +49,9 @@ public final class DoliumArdensSpell extends AurorionSpell {
     }
 
     @Override
-    public AnimationHolder getCastStartAnimation() {
-        return SpellAnimations.ANIMATION_CHARGED_CAST;
+    public AnimationHolder getCastFinishAnimation() {
+        // INSTANT nao tem fase de carga para encerrar a pose CHARGED_CAST.
+        return SpellAnimations.ANIMATION_INSTANT_CAST;
     }
 
     @Override
@@ -66,7 +67,7 @@ public final class DoliumArdensSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", Utils.stringTruncation(radius(spellLevel), 1)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.afasta_do_centro"));
@@ -80,7 +81,7 @@ public final class DoliumArdensSpell extends AurorionSpell {
             int ticks = Math.clamp((int) (from.distanceTo(at) * 0.9), 8, 26);
             MagiaProjectileEntity.launch(serverLevel, entity, MagiaProjectileEntity.Shape.DOLIUM, from,
                     MagiaProjectileEntity.arc(from, at, ticks, MagiaProjectileEntity.Shape.DOLIUM),
-                    0.9f, getSpellPower(spellLevel, entity), radius(spellLevel), ticks + 30);
+                    0.9f, damagePower(spellLevel, entity), radius(spellLevel), ticks + 30);
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }

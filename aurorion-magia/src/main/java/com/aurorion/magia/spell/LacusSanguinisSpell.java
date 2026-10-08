@@ -38,7 +38,7 @@ import java.util.Optional;
  */
 public final class LacusSanguinisSpell extends AurorionSpell {
     private static final int COST_PERCENT = 20;
-    private static final int DURATION = 40;
+    private static final int DURATION = 80;
     private static final float RADIUS = 3;
 
     public LacusSanguinisSpell() {
@@ -66,7 +66,7 @@ public final class LacusSanguinisSpell extends AurorionSpell {
                 Component.translatable("ui.aurorion_magia.custo_vida", COST_PERCENT),
                 Component.translatable("ui.aurorion_magia.inalvejavel", Utils.timeFromTicks(DURATION, 1)),
                 Component.translatable("ui.aurorion_magia.dano_por_segundo",
-                        Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                        Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", Utils.stringTruncation(RADIUS, 1)));
     }
 
@@ -84,7 +84,7 @@ public final class LacusSanguinisSpell extends AurorionSpell {
         caster.stopUsingItem();
         // Dois pulsos por segundo: metade do poder em cada um.
         SpellZoneEntity.create(level, caster, SpellZoneEntity.Shape.POCA, caster.position(), RADIUS, 1.5f, DURATION,
-                getSpellPower(spellLevel, caster) * 0.5f, Vec3.ZERO);
+                damagePower(spellLevel, caster) * 0.5f, Vec3.ZERO);
         sound(caster, SoundEvents.WARDEN_HEARTBEAT, 1.6f, 0.7f);
         MagiaNetwork.sendVisual(caster, caster, SpellVisualPayload.Kind.LACUS_SANGUINIS, DURATION, caster.position(), RADIUS);
     }

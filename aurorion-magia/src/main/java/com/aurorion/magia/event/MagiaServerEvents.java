@@ -31,6 +31,7 @@ import com.aurorion.magia.spell.SignumMortisSpell;
 import com.aurorion.magia.spell.SovaArrows;
 import com.aurorion.magia.spell.TimeStop;
 import com.aurorion.magia.spell.ToggleCooldown;
+import com.aurorion.magia.spell.ControlSpells;
 import com.aurorion.magia.spell.WaterCage;
 import com.aurorion.magia.unlock.SpellAccess;
 import com.aurorion.magia.unlock.SpellUnlockData;
@@ -81,6 +82,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -110,7 +112,7 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.congelado").withStyle(ChatFormatting.AQUA));
             return;
         }
-        if (player.hasEffect(MagiaEffects.SILENCED)) {
+        if (ControlSpells.isSilenced(player)) {
             deny(event, player, Component.translatable("aurorion_magia.sem_voz").withStyle(ChatFormatting.DARK_PURPLE));
             return;
         }
@@ -200,6 +202,9 @@ public final class MagiaServerEvents {
         SpellAccess.reconcile(player);
         Seals.sendAll(player);
         EffectCleanup.sweep(player);
+        ControlSpells.syncVoice(player, null);
+        ControlSpells.sendVisualsTo(player, player);
+        if (player.hasEffect(MagiaEffects.KNEELING)) EmotecraftCompat.kneel(player);
         Passives.onLogin(player);
         // Uma zona de tempo parado que sobrou de um crash (o efeito e salvo com o jogador) nao volta
         // a congelar o salao sozinha quando o dono loga.
@@ -208,7 +213,10 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent
     public static void onChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) Seals.sendAll(player);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            Seals.sendAll(player);
+            ControlSpells.sendVisualsTo(player, player);
+        }
     }
 
     /**
@@ -226,6 +234,7 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        VoiceMute.unmute(event.getEntity().getUUID());
         IronBinding.release(event.getEntity().getUUID());
         // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
         TimeStop.stop(event.getEntity());
@@ -239,6 +248,7 @@ public final class MagiaServerEvents {
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) return;
+        VoiceMute.unmute(entity.getUUID());
         Possession.end(entity);
         if (entity instanceof ServerPlayer player) Possession.release(player);
     }
@@ -272,7 +282,7 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onChat(ServerChatEvent event) {
-        if (event.getPlayer().hasEffect(MagiaEffects.SILENCED)) {
+        if (ControlSpells.isSilenced(event.getPlayer())) {
             event.setCanceled(true);
             event.getPlayer().displayClientMessage(Component.translatable("aurorion_magia.sem_voz")
                     .withStyle(ChatFormatting.DARK_PURPLE), true);
@@ -530,8 +540,7 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (!(event.getEntity() instanceof ServerPlayer viewer) || !(event.getTarget() instanceof LivingEntity target)) return;
-        MobEffectInstance beast = target.getEffect(MagiaEffects.POLYMORPH);
-        if (beast != null) MagiaNetwork.sendVisualTo(viewer, null, target, SpellVisualPayload.Kind.MUTATIO_FERAE, beast.getDuration());
+        ControlSpells.sendVisualsTo(viewer, target);
         if (!(target instanceof ServerPlayer player)) return;
         MobEffectInstance possessed = player.getEffect(MagiaEffects.POSSESSED);
         if (possessed != null) {
@@ -618,6 +627,8 @@ public final class MagiaServerEvents {
      */
     private static void onEffectEnded(LivingEntity entity, @Nullable MobEffect effect) {
         if (effect == null || entity.level().isClientSide) return;
+        // Remove e Expired chegam antes de o efeito sair do mapa da entidade.
+        ControlSpells.syncVoice(entity, effect);
         if (effect == MagiaEffects.DOMINATED.get() && entity instanceof Mob mob) {
             Domination.release(mob);
         } else if (effect == MagiaEffects.BOUND.get()) {
@@ -630,7 +641,7 @@ public final class MagiaServerEvents {
         } else if (effect == MagiaEffects.KNEELING.get() && entity instanceof ServerPlayer player) {
             EmotecraftCompat.stop(player);
         } else if (effect == MagiaEffects.SILENCED.get()) {
-            VoiceMute.unmute(entity.getUUID());
+            ControlSpells.syncVoice(entity, effect);
         } else if (effect == MagiaEffects.IRON_BOUND.get()) {
             IronBinding.release(entity.getUUID());
         } else if (effect == MagiaEffects.CAPTIVE.get()) {
@@ -668,6 +679,15 @@ public final class MagiaServerEvents {
                             && !player.hasEffect(MagiaEffects.DREAD_AURA)) DreadAura.enable(player);
                 }));
             }
+        }
+    }
+
+    /** Reconstroi o espelho da thread de audio apos login e mudancas de config/efeitos. */
+    @SubscribeEvent
+    public static void onVoiceTick(PlayerTickEvent.Post event) {
+        if (event.getEntity() instanceof ServerPlayer player && player.tickCount % 20 == 0) {
+            if (player.isAlive()) ControlSpells.syncVoice(player, null);
+            else VoiceMute.unmute(player.getUUID());
         }
     }
 }

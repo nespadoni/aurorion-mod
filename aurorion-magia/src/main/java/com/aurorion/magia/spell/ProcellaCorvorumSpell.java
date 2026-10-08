@@ -77,7 +77,7 @@ public final class ProcellaCorvorumSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano_por_segundo", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano_por_segundo", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", RADIUS),
                 Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
                 Component.translatable("ui.aurorion_magia.salto", BLINK));
@@ -90,7 +90,7 @@ public final class ProcellaCorvorumSpell extends AurorionSpell {
             if (destination.distanceToSqr(entity.position()) > 2.25) Utils.handleSpellTeleport(this, entity, destination);
             int duration = duration(spellLevel);
             // Dois pulsos por segundo: metade do poder em cada um.
-            entity.getPersistentData().putFloat(DAMAGE_KEY, getSpellPower(spellLevel, entity) * 0.5f);
+            entity.getPersistentData().putFloat(DAMAGE_KEY, damagePower(spellLevel, entity) * 0.5f);
             entity.addEffect(new MobEffectInstance(MagiaEffects.CROW_STORM, duration, spellLevel - 1, false, false, true));
             MagiaNetwork.sendVisual(entity, entity, SpellVisualPayload.Kind.PROCELLA_CORVORUM, duration, entity.position(), RADIUS);
         }
@@ -108,8 +108,8 @@ public final class ProcellaCorvorumSpell extends AurorionSpell {
         if (caster.tickCount % (PULSE_TICKS * 2) == 0) sound(caster, SoundEvents.PHANTOM_FLAP, 1.2f, 0.7f);
     }
 
-    /** 5 s no nivel 1, +1 s por nivel. */
+    /** Base: 5 s no nivel 1, +1 s por nivel. SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 100 + 20 * (spellLevel - 1);
+        return SpellBalance.duration(100 + 20 * (spellLevel - 1));
     }
 }

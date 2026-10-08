@@ -73,15 +73,14 @@ public final class ImperiumMentisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dominio",
-                        Utils.timeFromTicks(dominationTicks(spellLevel), 1)),
-                Component.translatable("ui.aurorion_magia.desorientacao",
-                        Utils.timeFromTicks(disorientationTicks(spellLevel), 1)));
+                ControlSpells.timeInfo("imperium_mentis", "ui.aurorion_magia.dominio", dominationTicks(spellLevel)),
+                ControlSpells.timeInfo("imperium_mentis", "ui.aurorion_magia.desorientacao", disorientationTicks(spellLevel)));
     }
 
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return aim(level, entity, playerMagicData, RANGE, false, target -> true);
+        return aim(level, entity, playerMagicData, RANGE, true, target -> target.hasEffect(MagiaEffects.DISORIENTED)
+                || target.hasEffect(MagiaEffects.DOMINATED) || Hits.hittable(entity, target) && Hits.enemy(entity, target));
     }
 
     @Override
@@ -89,7 +88,9 @@ public final class ImperiumMentisSpell extends AurorionSpell {
         if (level instanceof ServerLevel serverLevel) {
             LivingEntity target = target(serverLevel, entity, playerMagicData);
             if (target != null && target.isAlive()) {
-                imperium(entity, target, spellLevel);
+                if (target.hasEffect(MagiaEffects.DISORIENTED)) target.removeEffect(MagiaEffects.DISORIENTED);
+                else if (target.hasEffect(MagiaEffects.DOMINATED)) target.removeEffect(MagiaEffects.DOMINATED);
+                else imperium(entity, target, spellLevel);
             }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
@@ -98,13 +99,15 @@ public final class ImperiumMentisSpell extends AurorionSpell {
     private void imperium(LivingEntity caster, LivingEntity target, int spellLevel) {
         int duration;
         if (target instanceof ServerPlayer player) {
-            duration = disorientationTicks(spellLevel);
+            duration = ControlSpells.duration("imperium_mentis", disorientationTicks(spellLevel));
+            ToggleCooldown.skipNext(caster);
             player.addEffect(new MobEffectInstance(MagiaEffects.DISORIENTED, duration, 0, false, false, true), caster);
             // O bloqueio vale ja: conjuracao em andamento e item em uso (arco, escudo, comida) caem.
             if (MagicData.getPlayerMagicData(player).isCasting()) Utils.serverSideCancelCast(player);
             player.stopUsingItem();
         } else if (target instanceof Mob mob && Domination.canDominate(mob)) {
-            duration = dominationTicks(spellLevel);
+            duration = ControlSpells.duration("imperium_mentis", dominationTicks(spellLevel));
+            ToggleCooldown.skipNext(caster);
             Domination.dominate(mob, caster, duration);
         } else {
             // Imune: so o lampejo do impacto, para quem conjurou entender que a mente resistiu.
@@ -113,9 +116,9 @@ public final class ImperiumMentisSpell extends AurorionSpell {
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.IMPERIUM_AURA, duration);
     }
 
-    /** 8 s no nivel 1, +4 s por nivel. */
+    /** Base: 8 s no nivel 1, +4 s por nivel. SpellBalance dobra este tempo. */
     private static int dominationTicks(int spellLevel) {
-        return 160 + 80 * (spellLevel - 1);
+        return SpellBalance.duration(160 + 80 * (spellLevel - 1));
     }
 
     /**
@@ -126,6 +129,6 @@ public final class ImperiumMentisSpell extends AurorionSpell {
      * obedecida — e continua curto o bastante para nao virar so frustracao para quem apanha.</p>
      */
     private static int disorientationTicks(int spellLevel) {
-        return 120 + 40 * (spellLevel - 1);
+        return SpellBalance.duration(120 + 40 * (spellLevel - 1));
     }
 }

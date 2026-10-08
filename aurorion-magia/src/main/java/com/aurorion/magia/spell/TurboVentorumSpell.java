@@ -99,9 +99,9 @@ public final class TurboVentorumSpell extends AurorionSpell {
         return 4 + 0.5f * (spellLevel - 1);
     }
 
-    /** 4 s no nivel 1, +1 s por nivel (8 s no 5). */
+    /** Base: 4 s no nivel 1, +1 s por nivel (8 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 80 + 20 * (spellLevel - 1);
+        return SpellBalance.duration(80 + 20 * (spellLevel - 1));
     }
 
     /** Quanto ele percorre, para a descricao do pergaminho: velocidade x duracao. */

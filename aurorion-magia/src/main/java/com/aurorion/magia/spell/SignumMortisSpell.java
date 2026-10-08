@@ -43,8 +43,8 @@ import java.util.Optional;
  */
 public final class SignumMortisSpell extends AurorionSpell {
     private static final int RANGE = 12;
-    private static final int MARK_TICKS = 60;
-    private static final int UNTARGETABLE_TICKS = 15;
+    private static final int MARK_TICKS = 120;
+    private static final int UNTARGETABLE_TICKS = 30;
     private static final String MARK_KEY = AurorionMagia.MOD_ID + ":marca_fatal";
 
     public SignumMortisSpell() {
@@ -69,7 +69,7 @@ public final class SignumMortisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.repete_dano", (int) (ratio(spellLevel) * 100)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.deixa_sombra"));
@@ -110,7 +110,7 @@ public final class SignumMortisSpell extends AurorionSpell {
 
         CompoundTag mark = new CompoundTag();
         mark.putUUID("By", caster.getUUID());
-        mark.putFloat("Base", getSpellPower(spellLevel, caster));
+        mark.putFloat("Base", damagePower(spellLevel, caster));
         mark.putFloat("Ratio", ratio(spellLevel));
         mark.putFloat("Stored", 0);
         target.getPersistentData().put(MARK_KEY, mark);

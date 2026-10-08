@@ -25,7 +25,7 @@ public final class Telekinesis {
     private static final double MAX_HOLD_SPEED = 1.4;
     private static final double MAX_THROW_SPEED = 3.0;
     private static final double THROWN_MIN_SPEED = 0.8;
-    private static final int THROWN_TICKS = 30;
+    private static final int THROWN_TICKS = 60;
 
     private Telekinesis() {
     }
@@ -67,7 +67,7 @@ public final class Telekinesis {
 
         if (hitWall && previous > 0.5) {
             float damage = (float) (previous * (4 + amplifier));
-            entity.hurt(entity.damageSources().flyIntoWall(), damage);
+            entity.hurt(entity.damageSources().flyIntoWall(), SpellBalance.damage(damage));
             AurorionSpell.sound(entity, SoundEvents.PLAYER_BIG_FALL, 1.0f, 0.8f);
             AurorionSpell.sound(entity, SoundEvents.ANVIL_LAND, 0.3f, 0.6f);
             data.remove(KEY_SPEED);

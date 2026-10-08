@@ -1,7 +1,6 @@
 package com.aurorion.magia.spell;
 
 import com.aurorion.magia.AurorionMagia;
-import com.aurorion.magia.compat.VoiceMute;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
@@ -48,9 +47,9 @@ import java.util.Optional;
 public final class CampusStaticusSpell extends AurorionSpell {
     private static final int RADIUS = 6;
     private static final int MAX_TARGETS = 16;
-    private static final int SILENCE_TICKS = 30;
+    private static final int SILENCE_TICKS = 60;
     private static final int FIELD_SECONDS = 20;
-    private static final int MARK_TICKS = 20;
+    private static final int MARK_TICKS = 40;
     private static final String ZAP_KEY = AurorionMagia.MOD_ID + ":campo_estatico";
     private static final String MARK_KEY = AurorionMagia.MOD_ID + ":marca_estatica";
 
@@ -76,7 +75,7 @@ public final class CampusStaticusSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", RADIUS),
                 Component.translatable("ui.aurorion_magia.silencio", Utils.timeFromTicks(SILENCE_TICKS, 1)),
                 Component.translatable("ui.aurorion_magia.campo_golpes", FIELD_SECONDS,
@@ -93,7 +92,7 @@ public final class CampusStaticusSpell extends AurorionSpell {
         caster.addEffect(new MobEffectInstance(MagiaEffects.STATIC_FIELD, FIELD_SECONDS * 20, spellLevel - 1, false, false, true));
         caster.getPersistentData().putFloat(ZAP_KEY, zap(spellLevel, caster));
 
-        float damage = getSpellPower(spellLevel, caster);
+        float damage = damagePower(spellLevel, caster);
         for (LivingEntity victim : Hits.around(level, caster, caster.position(), RADIUS, MAX_TARGETS, t -> Hits.enemy(caster, t))) {
             // Escudo e silencio so em quem a descarga de fato alcancou.
             if (!FriendlyFire.applyDamage(victim, damage, getDamageSource(caster)) || !victim.isAlive()) continue;
@@ -110,7 +109,7 @@ public final class CampusStaticusSpell extends AurorionSpell {
 
     private static void silence(LivingEntity victim, LivingEntity caster) {
         victim.addEffect(new MobEffectInstance(MagiaEffects.SILENCED, SILENCE_TICKS, 0, false, false, true), caster);
-        VoiceMute.mute(victim.getUUID(), SILENCE_TICKS * 50L);
+        ControlSpells.syncVoice(victim, null);
         if (victim instanceof ServerPlayer player && MagicData.getPlayerMagicData(player).isCasting()) {
             Utils.serverSideCancelCast(player);
         }
@@ -150,6 +149,6 @@ public final class CampusStaticusSpell extends AurorionSpell {
 
     /** O choque da marca: 60% do dano da descarga. */
     private float zap(int spellLevel, @Nullable LivingEntity caster) {
-        return getSpellPower(spellLevel, caster) * 0.6f;
+        return damagePower(spellLevel, caster) * 0.6f;
     }
 }

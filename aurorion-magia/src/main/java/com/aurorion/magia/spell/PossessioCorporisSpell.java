@@ -132,8 +132,8 @@ public final class PossessioCorporisSpell extends AurorionSpell {
         Possession.end(player);
     }
 
-    /** 15 s no nivel 1, +5 s por nivel. */
+    /** Base: 15 s no nivel 1, +5 s por nivel. SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 300 + 100 * (spellLevel - 1);
+        return SpellBalance.duration(300 + 100 * (spellLevel - 1));
     }
 }

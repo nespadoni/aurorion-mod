@@ -38,7 +38,7 @@ import java.util.Optional;
 public final class SectioUmbraeSpell extends AurorionSpell {
     private static final double RADIUS = 3.5;
     private static final int MAX_TARGETS = 12;
-    private static final int SLOW_TICKS = 40;
+    private static final int SLOW_TICKS = 80;
 
     public SectioUmbraeSpell() {
         super("sectio_umbrae", SchoolRegistry.ENDER_RESOURCE, SpellRarity.RARE, 5, 5, CastType.INSTANT);
@@ -67,7 +67,7 @@ public final class SectioUmbraeSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", Utils.stringTruncation(RADIUS, 1)),
                 Component.translatable("ui.aurorion_magia.sai_das_sombras"),
                 Component.translatable("ui.aurorion_magia.sombra_lentidao"));
@@ -77,7 +77,7 @@ public final class SectioUmbraeSpell extends AurorionSpell {
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
             long stamp = serverLevel.getGameTime();
-            float damage = getSpellPower(spellLevel, entity);
+            float damage = damagePower(spellLevel, entity);
             IntSet struck = new IntOpenHashSet();
             slash(serverLevel, entity, entity.position(), damage, false, stamp, struck);
             for (ShadowEntity shadow : ShadowEntity.of(serverLevel, entity)) {

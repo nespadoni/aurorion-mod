@@ -45,7 +45,7 @@ public final class PestisSanguineaSpell extends AurorionSpell {
     private static final int AMPLIFY_PERCENT = 10;
     private static final int RANGE = 24;
     private static final float RADIUS = 4.5f;
-    private static final int DURATION = 80;
+    private static final int DURATION = 160;
     private static final int MAX_TARGETS = 16;
     private static final String PLAGUE_KEY = AurorionMagia.MOD_ID + ":hemopraga";
 
@@ -71,7 +71,7 @@ public final class PestisSanguineaSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.dano_recebido", AMPLIFY_PERCENT),
                 Component.translatable("ui.aurorion_magia.raio", Utils.stringTruncation(RADIUS, 1)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE));
@@ -81,7 +81,7 @@ public final class PestisSanguineaSpell extends AurorionSpell {
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
             Vec3 at = Hits.aimGround(serverLevel, entity, RANGE);
-            float damage = getSpellPower(spellLevel, entity);
+            float damage = damagePower(spellLevel, entity);
             for (LivingEntity victim : Hits.around(serverLevel, entity, at, RADIUS, MAX_TARGETS, t -> Hits.enemy(entity, t))) {
                 infect(victim, entity, damage);
             }

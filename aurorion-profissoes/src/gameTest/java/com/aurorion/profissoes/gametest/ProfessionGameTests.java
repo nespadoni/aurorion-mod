@@ -171,6 +171,35 @@ public final class ProfessionGameTests {
         helper.succeed();
     }
 
+    @GameTest(template="empty") public static void realLsoHealedLimbDoesNotRelapse(GameTestHelper helper) throws Exception {
+        if (!ModList.get().isLoaded("legendarysurvivaloverhaul")) { helper.succeed(); return; }
+        try (var patient = player(helper, "SemRecaida", Profession.NONE)) {
+            WoundPart part = LsoCompat.part(patient.player, "LEFT_ARM");
+            var type = part.getClass();
+            type.getMethod("setMaxHealth", float.class).invoke(part, 10f);
+            type.getMethod("hurt", float.class).invoke(part, 9f);
+            type.getMethod("setHealing", int.class, float.class).invoke(part, 200, Float.NaN);
+            type.getMethod("setDamage", float.class).invoke(part, 0f);
+            helper.assertTrue(!part.aurorionCritical(), "Cura completa por comando/API deve remover lesao antiga");
+            var save = (CompoundTag) type.getMethod("writeNbt", CompoundTag.class).invoke(part, new CompoundTag());
+            save.putBoolean("AurorionCritical_LEFT_ARM", true);
+            type.getMethod("readNBT", CompoundTag.class).invoke(part, save);
+            type.getMethod("hurt", float.class).invoke(part, 1f);
+            helper.assertTrue(part.aurorionHealth() == 9f && !part.aurorionCritical(), "Dano pequeno apos cura/relogin nao pode reabrir lesao grave");
+            save.putFloat("LEFT_ARM_damage", Float.NaN);
+            save.putFloat("LEFT_ARM_maxHealth", Float.POSITIVE_INFINITY);
+            save.putFloat("LEFT_ARM_healingPerTicks", Float.NaN);
+            save.putInt("LEFT_ARM_remainingHealingTicks", -1);
+            type.getMethod("readNBT", CompoundTag.class).invoke(part, save);
+            helper.assertTrue(Float.isFinite(part.aurorionHealth()) && Float.isFinite(part.aurorionMaxHealth())
+                    && !part.aurorionCritical(), "NBT corrompido precisa recuperar valores finitos sem lesao fantasma");
+            type.getMethod("hurt", float.class).invoke(part, 1f);
+            helper.assertTrue(part.aurorionHealth() == part.aurorionMaxHealth() - 1f,
+                    "Primeiro golpe apos recuperar NBT deve aplicar apenas seu proprio dano");
+        }
+        helper.succeed();
+    }
+
     @GameTest(template="empty") public static void completeLsoHealingRequiresDoctor(GameTestHelper helper) throws Exception {
         if (!ModList.get().isLoaded("legendarysurvivaloverhaul")) { helper.succeed(); return; }
         try (var doctor = player(helper, "MedicoItens", Profession.DOCTOR); var novice = player(helper, "Leigo", Profession.NONE)) {

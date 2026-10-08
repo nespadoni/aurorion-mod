@@ -43,6 +43,8 @@ config = "${mod_id}.mixins.json"
 # Rede de seguranca do LivingDeathEvent, separada e nao obrigatoria: ela mexe numa linha do
 # NeoForge (CommonHooks.onLivingDeath), e se uma versao futura mudar essa linha o jogo tem de
 # subir do mesmo jeito, so sem a rede. Ver DeathListenerGuardMixin.
+# HealthNaNGuardMixin mora aqui pelo mesmo motivo: impede vida/absorcao NaN (o jogador com 0 de vida
+# que nunca morre) e conserta no tick quem ja estava assim.
 [[mixins]]
 config = "${mod_id}.deathguard.mixins.json"
 

@@ -186,7 +186,7 @@ public final class Binding {
         Entity owner = tag.hasUUID(KEY_OWNER) ? level.getEntity(tag.getUUID(KEY_OWNER)) : null;
         DamageSource source = new DamageSource(
                 level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), owner);
-        entity.hurt(FriendlyFire.source(source, entity), HURT_BASE + HURT_PER_STRAIN * strain);
+        entity.hurt(FriendlyFire.source(source, entity), SpellBalance.damage(HURT_BASE + HURT_PER_STRAIN * strain));
         AurorionSpell.sound(entity, SoundEvents.PLAYER_HURT, 1.0f, 0.6f);
     }
 

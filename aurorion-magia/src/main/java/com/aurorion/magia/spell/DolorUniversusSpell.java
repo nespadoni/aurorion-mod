@@ -72,7 +72,7 @@ public final class DolorUniversusSpell extends AurorionSpell {
         this.spellPowerPerLevel = 1;
         this.baseManaCost = 15;
         this.manaCostPerLevel = 5;
-        this.castTime = 60;
+        this.castTime = 120;
     }
 
     /** Canalizacao cresce com o nivel: 3 s, +1 s por nivel. */
@@ -208,7 +208,7 @@ public final class DolorUniversusSpell extends AurorionSpell {
     }
 
     private float pulseDamage(int spellLevel, @Nullable LivingEntity caster) {
-        return getSpellPower(spellLevel, caster) * 0.5f;
+        return damagePower(spellLevel, caster) * 0.5f;
     }
 
     /** 5 blocos no nivel 1, +2 por nivel (13 no 5). */

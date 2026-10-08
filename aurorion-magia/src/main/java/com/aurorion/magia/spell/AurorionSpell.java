@@ -35,6 +35,11 @@ import java.util.function.Predicate;
 public abstract class AurorionSpell extends AbstractSpell {
     protected static final float AIM_ASSIST = 0.35f;
 
+    /** Poder de dano independente da arma na mao; usado tambem nas descricoes. */
+    protected float damagePower(int spellLevel, @Nullable LivingEntity caster) {
+        return SpellBalance.damage(getSpellPower(spellLevel, caster));
+    }
+
     private final ResourceLocation spellId;
     private final DefaultConfig defaultConfig;
     private final CastType castType;
@@ -135,7 +140,7 @@ public abstract class AurorionSpell extends AbstractSpell {
      */
     public static boolean castBlocked(LivingEntity caster) {
         return !caster.isAlive()
-                || caster.hasEffect(MagiaEffects.SILENCED) || caster.hasEffect(MagiaEffects.DISORIENTED)
+                || ControlSpells.isSilenced(caster) || caster.hasEffect(MagiaEffects.DISORIENTED)
                 || caster.hasEffect(MagiaEffects.CRUCIATUS) || caster.hasEffect(MagiaEffects.KNEELING)
                 || caster.hasEffect(MagiaEffects.AIRBORNE) || caster.hasEffect(MagiaEffects.STASIS)
                 || caster.hasEffect(MagiaEffects.POLYMORPH) || caster.hasEffect(MagiaEffects.POSSESSED)

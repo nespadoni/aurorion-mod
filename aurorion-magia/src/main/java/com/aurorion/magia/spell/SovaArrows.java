@@ -33,7 +33,7 @@ import net.minecraft.world.phys.Vec3;
  * entrando no mundo e o impacto — e nada roda por tick.
  */
 public final class SovaArrows {
-    public static final int WINDOW_TICKS = 600;
+    public static final int WINDOW_TICKS = 1200;
     public static final int RECON = 0;
     public static final int SHOCK = 1;
     private static final String CHARGE_KEY = AurorionMagia.MOD_ID + ":sova_carga";

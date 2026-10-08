@@ -4,6 +4,9 @@ import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.spell.AestusSanguinisSpell;
 import com.aurorion.magia.spell.AspectusCaptusSpell;
 import com.aurorion.magia.spell.CampusStaticusSpell;
+import com.aurorion.magia.spell.CeifarVidaSpell;
+import com.aurorion.magia.spell.EntregarVidaSpell;
+import com.aurorion.magia.spell.EsconjurarSpell;
 import com.aurorion.magia.spell.CarcerAquaeSpell;
 import com.aurorion.magia.spell.ColumnaVentiSpell;
 import com.aurorion.magia.spell.DeiectioCorporisSpell;
@@ -69,6 +72,12 @@ public final class MagiaSpells {
 
     public static final DeferredHolder<AbstractSpell, DolorCruciatusSpell> DOLOR_CRUCIATUS =
             SPELLS.register("dolor_cruciatus", DolorCruciatusSpell::new);
+    public static final DeferredHolder<AbstractSpell, CeifarVidaSpell> CEIFAR_VIDA =
+            SPELLS.register("ceifar_vida", CeifarVidaSpell::new);
+    public static final DeferredHolder<AbstractSpell, EntregarVidaSpell> ENTREGAR_VIDA =
+            SPELLS.register("entregar_vida", EntregarVidaSpell::new);
+    public static final DeferredHolder<AbstractSpell, EsconjurarSpell> ESCONJURAR =
+            SPELLS.register("esconjurar", EsconjurarSpell::new);
     public static final DeferredHolder<AbstractSpell, ImperiumMentisSpell> IMPERIUM_MENTIS =
             SPELLS.register("imperium_mentis", ImperiumMentisSpell::new);
 

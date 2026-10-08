@@ -99,8 +99,8 @@ public final class SagittaExploratrixSpell extends AurorionSpell {
         MagiaNetwork.sendVisualAt(level, caster, SpellVisualPayload.Kind.SAGITTA_PULSE, 20, at, (float) radius);
     }
 
-    /** 4 s no nivel 1, +1 s por nivel. */
+    /** Base: 4 s no nivel 1, +1 s por nivel. SpellBalance dobra este tempo. */
     private static int revealTicks(int spellLevel) {
-        return 60 + 20 * spellLevel;
+        return SpellBalance.duration(60 + 20 * spellLevel);
     }
 }

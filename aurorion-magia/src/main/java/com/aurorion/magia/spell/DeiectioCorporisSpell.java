@@ -65,7 +65,7 @@ public final class DeiectioCorporisSpell extends AurorionSpell {
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
                 Component.translatable("ui.aurorion_magia.dano_impacto",
-                        Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                        Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.sem_pulo", Utils.timeFromTicks(groundedTicks(spellLevel), 1)),
                 Component.translatable("ui.aurorion_magia.agachado_area", radius(spellLevel)));
     }
@@ -130,7 +130,7 @@ public final class DeiectioCorporisSpell extends AurorionSpell {
             launch(target, new Vec3(motion.x * 0.2, -(2.2 + 0.3 * spellLevel), motion.z * 0.2));
             sound(target, SoundEvents.PHANTOM_SWOOP, 1.2f, 0.6f);
         } else {
-            FriendlyFire.applyDamage(target, getSpellPower(spellLevel, caster), getDamageSource(caster));
+            FriendlyFire.applyDamage(target, damagePower(spellLevel, caster), getDamageSource(caster));
             target.addEffect(new MobEffectInstance(MagiaEffects.GROUNDED, groundedTicks(spellLevel), 0,
                     false, false, true), caster);
             launch(target, new Vec3(0, -0.6, 0));
@@ -144,9 +144,9 @@ public final class DeiectioCorporisSpell extends AurorionSpell {
                 || target instanceof Player player && player.getAbilities().flying;
     }
 
-    /** 1,5 s no nivel 1, +0,5 s por nivel. */
+    /** Base: 1,5 s no nivel 1, +0,5 s por nivel. SpellBalance dobra este tempo. */
     private static int groundedTicks(int spellLevel) {
-        return 30 + 10 * (spellLevel - 1);
+        return SpellBalance.duration(30 + 10 * (spellLevel - 1));
     }
 
     /** Raio da onda: 6 blocos no nivel 1, +2 por nivel (14 no 5). */

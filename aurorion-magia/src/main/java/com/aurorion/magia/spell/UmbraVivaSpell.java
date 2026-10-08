@@ -77,6 +77,12 @@ public final class UmbraVivaSpell extends AurorionSpell {
     }
 
     @Override
+    public ICastDataSerializable getEmptyCastData() {
+        // RecastInstance usa esta fabrica para ler tanto o pacote do cliente quanto o NBT.
+        return new MultiTargetEntityCastData();
+    }
+
+    @Override
     public int getRecastCount(int spellLevel, @Nullable LivingEntity entity) {
         return 2;
     }
@@ -111,7 +117,8 @@ public final class UmbraVivaSpell extends AurorionSpell {
         if (recastResult != RecastResult.USED_ALL_RECASTS || !(castData instanceof MultiTargetEntityCastData targets)
                 || targets.getTargets().isEmpty()) return;
         UUID id = targets.getTargets().getFirst();
-        if (player.serverLevel().getEntity(id) instanceof ShadowEntity shadow && shadow.isAlive()) swap(player, shadow);
+        if (player.serverLevel().getEntity(id) instanceof ShadowEntity shadow && shadow.isAlive()
+                && shadow.isOwnedBy(player)) swap(player, shadow);
     }
 
     private ShadowEntity cast(ServerLevel level, LivingEntity caster, int life) {
@@ -159,8 +166,8 @@ public final class UmbraVivaSpell extends AurorionSpell {
         }
     }
 
-    /** 5 s no nivel 1, +1 s por nivel. */
+    /** Base: 5 s no nivel 1, +1 s por nivel. SpellBalance dobra este tempo. */
     private static int life(int spellLevel) {
-        return 100 + 20 * (spellLevel - 1);
+        return SpellBalance.duration(100 + 20 * (spellLevel - 1));
     }
 }

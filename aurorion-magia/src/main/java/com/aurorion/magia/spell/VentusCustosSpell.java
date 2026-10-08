@@ -87,8 +87,8 @@ public final class VentusCustosSpell extends AurorionSpell {
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 
-    /** 6 s no nivel 1, +1,5 s por nivel (12 s no 5). */
+    /** Base: 6 s no nivel 1, +1,5 s por nivel (12 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 120 + 30 * (spellLevel - 1);
+        return SpellBalance.duration(120 + 30 * (spellLevel - 1));
     }
 }

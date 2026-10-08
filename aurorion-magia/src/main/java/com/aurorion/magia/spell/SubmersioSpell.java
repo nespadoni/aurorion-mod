@@ -105,8 +105,8 @@ public final class SubmersioSpell extends AurorionSpell {
         sound(target, SoundEvents.PLAYER_BREATH, 1.0f, 1.0f);
     }
 
-    /** 6 s no nivel 1, +2 s por nivel (14 s no 5). */
+    /** Base: 6 s no nivel 1, +2 s por nivel (14 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 120 + 40 * (spellLevel - 1);
+        return SpellBalance.duration(120 + 40 * (spellLevel - 1));
     }
 }

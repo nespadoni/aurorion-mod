@@ -62,7 +62,7 @@ public final class StellaeLaminataeSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.atravessa"),
                 Component.translatable("ui.aurorion_magia.sai_das_sombras"));
@@ -71,7 +71,7 @@ public final class StellaeLaminataeSpell extends AurorionSpell {
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            float damage = getSpellPower(spellLevel, entity);
+            float damage = damagePower(spellLevel, entity);
             Vec3 aim = Hits.aimPoint(serverLevel, entity, RANGE);
             Vec3 from = entity.getEyePosition().subtract(0, 0.2, 0);
             throwStar(serverLevel, entity, from, aim.subtract(from), damage);

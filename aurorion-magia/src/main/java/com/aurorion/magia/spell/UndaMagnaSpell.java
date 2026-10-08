@@ -70,7 +70,7 @@ public final class UndaMagnaSpell extends AurorionSpell {
         return List.of(
                 Component.translatable("ui.aurorion_magia.raio", radius(spellLevel)),
                 Component.translatable("ui.aurorion_magia.dano_impacto",
-                        Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                        Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.arco_frontal"),
                 Component.translatable("ui.aurorion_magia.agachado_circulo"));
     }
@@ -119,7 +119,7 @@ public final class UndaMagnaSpell extends AurorionSpell {
         launch(victim, new Vec3(away.x * force, 0.42 + 0.03 * spellLevel, away.z * force));
         victim.resetFallDistance();
         victim.clearFire();
-        FriendlyFire.applyDamage(victim, getSpellPower(spellLevel, caster), getDamageSource(caster));
+        FriendlyFire.applyDamage(victim, damagePower(spellLevel, caster), getDamageSource(caster));
         sound(victim, SoundEvents.PLAYER_SPLASH, 0.9f, 0.9f);
     }
 

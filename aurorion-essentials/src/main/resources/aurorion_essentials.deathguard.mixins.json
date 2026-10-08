@@ -4,7 +4,8 @@
   "package": "com.aurorion.essentials.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "DeathListenerGuardMixin"
+    "DeathListenerGuardMixin",
+    "HealthNaNGuardMixin"
   ],
   "injectors": {
     "defaultRequire": 0

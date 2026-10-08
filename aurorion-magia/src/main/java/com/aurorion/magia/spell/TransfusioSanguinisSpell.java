@@ -60,7 +60,7 @@ public final class TransfusioSanguinisSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        float damage = getSpellPower(spellLevel, caster);
+        float damage = damagePower(spellLevel, caster);
         return List.of(
                 Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damage, 1)),
                 Component.translatable("ui.aurorion_magia.cura", Utils.stringTruncation(damage * 0.3f, 1)),
@@ -88,12 +88,12 @@ public final class TransfusioSanguinisSpell extends AurorionSpell {
         boolean empowered = stacks >= 3;
         data.putInt(STACKS_KEY, empowered ? 0 : stacks);
 
-        float damage = getSpellPower(spellLevel, caster) * (empowered ? 1.8f : 1f);
+        float damage = damagePower(spellLevel, caster) * (empowered ? 1.8f : 1f);
         float heal = damage * (empowered ? 0.6f : 0.3f);
         if (FriendlyFire.applyDamage(target, damage, getDamageSource(caster))) caster.heal(heal);
 
         if (empowered) {
-            caster.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, 1, false, false, true));
+            caster.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 80, 1, false, false, true));
             sound(caster, SoundEvents.WARDEN_HEARTBEAT, 2.0f, 0.6f);
         } else if (stacks == 2 && caster instanceof ServerPlayer player) {
             player.displayClientMessage(Component.translatable("aurorion_magia.reserva_cheia")

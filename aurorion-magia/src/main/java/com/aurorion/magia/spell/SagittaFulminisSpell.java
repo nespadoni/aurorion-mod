@@ -62,7 +62,7 @@ public final class SagittaFulminisSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.raio", (int) RADIUS),
                 Component.translatable("ui.aurorion_magia.proxima_flecha"),
                 Component.translatable("ui.aurorion_magia.exige_arco"));
@@ -75,7 +75,7 @@ public final class SagittaFulminisSpell extends AurorionSpell {
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
-        if (level instanceof ServerLevel) SovaArrows.imbue(entity, SovaArrows.SHOCK, getSpellPower(spellLevel, entity), RADIUS);
+        if (level instanceof ServerLevel) SovaArrows.imbue(entity, SovaArrows.SHOCK, damagePower(spellLevel, entity), RADIUS);
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 

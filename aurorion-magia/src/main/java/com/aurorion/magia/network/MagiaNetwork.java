@@ -2,6 +2,8 @@ package com.aurorion.magia.network;
 
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.client.ClientSpellVisuals;
+import com.aurorion.magia.spell.ControlSpells;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,8 +45,9 @@ public final class MagiaNetwork {
 
     public static void sendVisual(@Nullable Entity caster, Entity target, SpellVisualPayload.Kind kind, int ttl,
                                   Vec3 pos, float extra) {
+        if (target instanceof LivingEntity living) ControlSpells.syncVoice(living, null);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,
-                new SpellVisualPayload(kind, caster == null ? -1 : caster.getId(), target.getId(), ttl, pos, extra));
+                new SpellVisualPayload(kind, caster == null ? -1 : caster.getId(), target.getId(), visualTicks(ttl), pos, extra));
     }
 
     /** Visual preso a um ponto: vai para quem tem o chunk carregado. */
@@ -63,7 +66,11 @@ public final class MagiaNetwork {
     public static void sendVisualTo(ServerPlayer player, @Nullable Entity caster, Entity target, SpellVisualPayload.Kind kind,
                                     int ttl) {
         PacketDistributor.sendToPlayer(player, new SpellVisualPayload(kind, caster == null ? -1 : caster.getId(),
-                target.getId(), ttl, target.position(), 0));
+                target.getId(), visualTicks(ttl), target.position(), 0));
+    }
+
+    private static int visualTicks(int ticks) {
+        return ticks == -1 ? 12_000 : ticks;
     }
 
     private static void handleVisual(SpellVisualPayload payload, IPayloadContext context) {

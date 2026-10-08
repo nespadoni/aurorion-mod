@@ -43,7 +43,7 @@ public final class ManusCarnificisSpell extends AurorionSpell {
         this.spellPowerPerLevel = 1;
         this.baseManaCost = 5;
         this.manaCostPerLevel = 1;
-        this.castTime = 100;
+        this.castTime = 200;
     }
 
     @Override

@@ -38,7 +38,7 @@ import java.util.Optional;
 public final class ManusRapaxSpell extends AurorionSpell {
     private static final int RANGE = 20;
     private static final double SPEED = 2.0;
-    private static final int STUN_TICKS = 12;
+    private static final int STUN_TICKS = 24;
 
     public ManusRapaxSpell() {
         super("manus_rapax", SchoolRegistry.LIGHTNING_RESOURCE, SpellRarity.RARE, 5, 18, CastType.INSTANT);
@@ -62,7 +62,7 @@ public final class ManusRapaxSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(getSpellPower(spellLevel, caster), 1)),
+                Component.translatable("ui.aurorion_magia.dano", Utils.stringTruncation(damagePower(spellLevel, caster), 1)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.puxa_ate_voce"));
     }
@@ -73,7 +73,7 @@ public final class ManusRapaxSpell extends AurorionSpell {
             Vec3 look = entity.getLookAngle();
             Vec3 from = entity.getEyePosition().subtract(0, 0.3, 0).add(look.scale(0.5));
             MagiaProjectileEntity.launch(serverLevel, entity, MagiaProjectileEntity.Shape.RAPAX, from, look.scale(SPEED),
-                    0.3f, getSpellPower(spellLevel, entity), 0, (int) Math.ceil(RANGE / SPEED));
+                    0.3f, damagePower(spellLevel, entity), 0, (int) Math.ceil(RANGE / SPEED));
             sound(entity, SoundEvents.PISTON_EXTEND, 1.0f, 1.4f);
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);

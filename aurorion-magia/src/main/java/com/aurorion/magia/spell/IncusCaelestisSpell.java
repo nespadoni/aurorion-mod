@@ -114,7 +114,7 @@ public final class IncusCaelestisSpell extends AurorionSpell {
         if (caster != null && !Hits.enemy(caster, victim)) return;
         float dealt = Displacement.isImmune(victim) ? Math.min(damage, BOSS_CRUSH) : damage;
         victim.hurt(caster != null ? FriendlyFire.source(Execution.source(level, caster, DAMAGE_TYPE), victim)
-                : level.damageSources().anvil(null), dealt);
+                : level.damageSources().anvil(null), SpellBalance.damage(dealt));
         sound(victim, SoundEvents.ANVIL_LAND, 1.8f, 0.6f);
     }
 

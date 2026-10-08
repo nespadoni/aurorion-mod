@@ -41,7 +41,7 @@ public final class Impetus {
     public static final double RADIUS = 5;
     public static final int MAX_TICKS = 16;
     /** Duracao maxima do "no ar"; o efeito sai antes, ao tocar o chao. */
-    public static final int AIRBORNE_TICKS = 60;
+    public static final int AIRBORNE_TICKS = 120;
 
     private static final double DASH_SPEED = 1.4;
     /** Impulso vertical do lancamento: sobe uns seis blocos e fica ~1,5 s no ar. */

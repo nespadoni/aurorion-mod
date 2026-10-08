@@ -48,20 +48,27 @@ public final class FerrumLigatumSpell extends AurorionSpell {
 
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
-        return List.of(Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
+        return List.of(ControlSpells.timeInfo("ferrum_ligatum", "ui.aurorion_magia.duracao", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE));
     }
 
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return aim(level, entity, playerMagicData, RANGE, false, target -> target instanceof Player);
+        return aim(level, entity, playerMagicData, RANGE, true, target -> target instanceof Player
+                && (target.hasEffect(MagiaEffects.IRON_BOUND) || Hits.hittable(entity, target) && Hits.enemy(entity, target)));
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel
                 && target(serverLevel, entity, playerMagicData) instanceof ServerPlayer target) {
-            int duration = duration(spellLevel);
+            if (target.hasEffect(MagiaEffects.IRON_BOUND)) {
+                target.removeEffect(MagiaEffects.IRON_BOUND);
+                super.onCast(level, spellLevel, entity, castSource, playerMagicData);
+                return;
+            }
+            int duration = ControlSpells.duration("ferrum_ligatum", duration(spellLevel));
+            ToggleCooldown.skipNext(entity);
             IronBinding.bind(target);
             target.addEffect(new MobEffectInstance(MagiaEffects.IRON_BOUND, duration, 0, false, false, true), entity);
             target.displayClientMessage(Component.translatable("aurorion_magia.ferro_vinculado"), true);
@@ -72,8 +79,8 @@ public final class FerrumLigatumSpell extends AurorionSpell {
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 
-    /** 10 s no nivel 1, +5 s por nivel. */
+    /** Base: 10 s no nivel 1, +5 s por nivel. SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 200 + 100 * (spellLevel - 1);
+        return SpellBalance.duration(200 + 100 * (spellLevel - 1));
     }
 }

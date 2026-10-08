@@ -47,7 +47,7 @@ public final class AestusSanguinisSpell extends AurorionSpell {
         this.spellPowerPerLevel = 2;
         this.baseManaCost = 5;
         this.manaCostPerLevel = 1;
-        this.castTime = 30;
+        this.castTime = 60;
     }
 
     @Override
@@ -76,7 +76,7 @@ public final class AestusSanguinisSpell extends AurorionSpell {
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
                 Component.translatable("ui.aurorion_magia.dano_maximo",
-                        Utils.stringTruncation(getSpellPower(spellLevel, caster) * 1.5f, 1)),
+                        Utils.stringTruncation(damagePower(spellLevel, caster) * 1.5f, 1)),
                 Component.translatable("ui.aurorion_magia.raio", RADIUS),
                 Component.translatable("ui.aurorion_magia.custo_vida_carga", (int) (HEALTH_PER_PULSE * 100)),
                 Component.translatable("ui.aurorion_magia.bloqueada_paredes"));
@@ -104,12 +104,12 @@ public final class AestusSanguinisSpell extends AurorionSpell {
         // Interrompida (estase, silencio, morte): o sangue se perde, nao estoura.
         if (charge < 0.05f || castBlocked(entity)) return;
 
-        float damage = getSpellPower(spellLevel, entity) * (0.5f + charge);
+        float damage = damagePower(spellLevel, entity) * (0.5f + charge);
         for (LivingEntity victim : Hits.around(serverLevel, entity, entity.position(), RADIUS, MAX_TARGETS,
                 t -> Hits.enemy(entity, t) && entity.hasLineOfSight(t))) {
             FriendlyFire.applyDamage(victim, damage, getDamageSource(entity));
             if (charge >= 0.95f && victim.isAlive()) {
-                victim.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 3, false, false, true), entity);
+                victim.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 3, false, false, true), entity);
             }
         }
         sound(entity, SoundEvents.WARDEN_SONIC_BOOM, 1.0f, 1.4f);

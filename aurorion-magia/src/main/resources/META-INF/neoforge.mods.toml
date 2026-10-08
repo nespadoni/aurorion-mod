@@ -50,6 +50,13 @@ versionRange = "1.21.1-5.2.0"
 ordering = "AFTER"
 side = "BOTH"
 
+[[dependencies.${mod_id}]]
+modId = "aurorion_vidas"
+type = "optional"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "SERVER"
+
 # Opcional. Com ele, Genua Flecte forca a pose de joelhos (emote embutido no nosso jar); sem ele, o
 # ajoelhado fica agachado.
 [[dependencies.${mod_id}]]

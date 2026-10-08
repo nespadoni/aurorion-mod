@@ -59,7 +59,7 @@ public final class CarcerAquaeSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.duracao", Utils.timeFromTicks(duration(spellLevel), 1)),
+                ControlSpells.timeInfo("carcer_aquae", "ui.aurorion_magia.duracao", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.carcer_resgate"),
                 Component.translatable("ui.aurorion_magia.alternar"),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE));
@@ -79,15 +79,16 @@ public final class CarcerAquaeSpell extends AurorionSpell {
                 if (target.hasEffect(MagiaEffects.CAGED)) {
                     WaterCage.burst(target);
                 } else {
-                    WaterCage.cage(target, entity, duration(spellLevel));
+                    WaterCage.cage(target, entity, ControlSpells.duration("carcer_aquae", duration(spellLevel)));
+                    ToggleCooldown.skipNext(entity);
                 }
             }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 
-    /** 8 s no nivel 1, +3 s por nivel (20 s no 5). */
+    /** Base: 8 s no nivel 1, +3 s por nivel (20 s no 5). SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 160 + 60 * (spellLevel - 1);
+        return SpellBalance.duration(160 + 60 * (spellLevel - 1));
     }
 }

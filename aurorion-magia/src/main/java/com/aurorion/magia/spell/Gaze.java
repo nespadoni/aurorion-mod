@@ -33,4 +33,10 @@ public final class Gaze {
     public static void release(LivingEntity entity) {
         entity.getPersistentData().remove(KEY_CAPTOR);
     }
+
+    @org.jetbrains.annotations.Nullable
+    public static Entity captorOf(LivingEntity entity) {
+        return entity.level() instanceof ServerLevel level && entity.getPersistentData().hasUUID(KEY_CAPTOR)
+                ? level.getEntity(entity.getPersistentData().getUUID(KEY_CAPTOR)) : null;
+    }
 }

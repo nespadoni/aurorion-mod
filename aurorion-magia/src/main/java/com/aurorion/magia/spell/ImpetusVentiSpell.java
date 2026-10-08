@@ -84,6 +84,6 @@ public final class ImpetusVentiSpell extends AurorionSpell {
 
     /** Nivel 1 so lanca; do 2 em diante fere, com o poder de magia de quem conjura. */
     private float damage(int spellLevel, @Nullable LivingEntity caster) {
-        return spellLevel <= 1 ? 0 : getSpellPower(spellLevel - 1, caster);
+        return spellLevel <= 1 ? 0 : damagePower(spellLevel - 1, caster);
     }
 }

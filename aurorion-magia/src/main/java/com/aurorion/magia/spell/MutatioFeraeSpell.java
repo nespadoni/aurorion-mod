@@ -59,21 +59,28 @@ public final class MutatioFeraeSpell extends AurorionSpell {
     @Override
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
-                Component.translatable("ui.aurorion_magia.vira_guaxinim", Utils.timeFromTicks(duration(spellLevel), 1)),
+                ControlSpells.timeInfo("mutatio_ferae", "ui.aurorion_magia.vira_guaxinim", duration(spellLevel)),
                 Component.translatable("ui.aurorion_magia.alcance", RANGE),
                 Component.translatable("ui.aurorion_magia.maos_atadas"));
     }
 
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData) {
-        return aim(level, entity, playerMagicData, RANGE, false, target -> Hits.pvpAllowed(entity, target));
+        return aim(level, entity, playerMagicData, RANGE, true, target -> target.hasEffect(MagiaEffects.POLYMORPH)
+                || Hits.hittable(entity, target) && Hits.enemy(entity, target));
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel) {
             LivingEntity target = target((ServerLevel) level, entity, playerMagicData);
-            if (target != null) transform(entity, target, duration(spellLevel));
+            if (target != null) {
+                if (target.hasEffect(MagiaEffects.POLYMORPH)) target.removeEffect(MagiaEffects.POLYMORPH);
+                else {
+                    transform(entity, target, ControlSpells.duration("mutatio_ferae", duration(spellLevel)));
+                    ToggleCooldown.skipNext(entity);
+                }
+            }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
@@ -91,8 +98,8 @@ public final class MutatioFeraeSpell extends AurorionSpell {
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.MUTATIO_FERAE, ticks);
     }
 
-    /** 2,5 s no nivel 1, +0,75 s por nivel. */
+    /** Base: 2,5 s no nivel 1, +0,75 s por nivel. SpellBalance dobra este tempo. */
     private static int duration(int spellLevel) {
-        return 50 + 15 * (spellLevel - 1);
+        return SpellBalance.duration(50 + 15 * (spellLevel - 1));
     }
 }

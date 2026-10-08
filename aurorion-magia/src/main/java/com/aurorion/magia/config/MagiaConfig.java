@@ -25,6 +25,9 @@ public final class MagiaConfig {
     public static final ModConfigSpec.DoubleValue IUSTITIA_THRESHOLD;
     public static final ModConfigSpec.DoubleValue MORS_THRESHOLD;
     public static final ModConfigSpec.IntValue PYROBOLUS_RANGE;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> PERSISTENT_CONTROLS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> SILENT_CONTROLS;
+    public static final ModConfigSpec.IntValue DISPEL_RADIUS;
 
     public static final ModConfigSpec SPEC;
 
@@ -153,6 +156,18 @@ public final class MagiaConfig {
                         "carregar chunks ao procurar o chao.")
                 .defineInRange("alcanceBomba", 128, 32, 256);
 
+        BUILDER.pop();
+        BUILDER.comment("Controle de cenas RP. Use os ids curtos das magias do Aurorion.").push("roleplay");
+        List<String> controls = List.of("vox_interdicta", "mutatio_ferae", "genua_flecte",
+                "imperium_mentis", "aspectus_captus", "mundus_vacuus", "ferrum_ligatum", "carcer_aquae");
+        PERSISTENT_CONTROLS = BUILDER.comment("Magias cujo controle dura ate reconjurar no alvo ou remover o efeito.",
+                        "Remova um id para usar a duracao normal (agora dobrada). Lista vazia desliga a persistencia.")
+                .defineListAllowEmpty("controlesAteReconjurar", controls, () -> "mutatio_ferae", controls::contains);
+        SILENT_CONTROLS = BUILDER.comment("Magias de controle que tambem bloqueiam voz, chat e conjuracao enquanto duram.",
+                        "Vox Interdicta sempre silencia. Remova ids para permitir fala nos demais controles.")
+                .defineListAllowEmpty("controlesSilenciam", controls, () -> "mutatio_ferae", controls::contains);
+        DISPEL_RADIUS = BUILDER.comment("Esconjurar: raio em blocos, incluindo quem conjurou e aliados.")
+                .defineInRange("raioEsconjurar", 8, 1, 32);
         BUILDER.pop();
         SPEC = BUILDER.build();
     }
