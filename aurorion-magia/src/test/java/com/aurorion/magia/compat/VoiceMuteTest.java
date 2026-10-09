@@ -29,9 +29,17 @@ class VoiceMuteTest {
 
     @Test
     void prazoVencidoDevolveAVozSemNinguemLimpar() {
-        VoiceMute.mute(player, -1);
+        VoiceMute.mute(player, 0);
         assertFalse(VoiceMute.isMuted(player));
         // A consulta vencida tambem remove a entrada: a proxima nem acha nada.
+        assertFalse(VoiceMute.isMuted(player));
+    }
+
+    @Test
+    void silencioSemPrazoSoTerminaAoLiberar() {
+        VoiceMute.mute(player, -1);
+        assertTrue(VoiceMute.isMuted(player));
+        VoiceMute.unmute(player);
         assertFalse(VoiceMute.isMuted(player));
     }
 

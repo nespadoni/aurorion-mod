@@ -1,6 +1,8 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.effect.InfiniteVoidEffect;
+import com.aurorion.magia.effect.SoulRealmEffect;
 import com.aurorion.magia.effect.AirborneEffect;
 import com.aurorion.magia.effect.BoundEffect;
 import com.aurorion.magia.effect.CagedEffect;
@@ -193,6 +195,13 @@ public final class MagiaEffects {
     /** Sova: a proxima flecha do arco sai encantada. Amplificador 0 = reconhecimento, 1 = choque. */
     public static final DeferredHolder<MobEffect, MobEffect> IMBUED_ARROW = EFFECTS.register("flecha_imbuida",
             () -> new MagiaEffect(MobEffectCategory.BENEFICIAL, 0x8FD3FF));
+
+    public static final DeferredHolder<MobEffect, MobEffect> DOMAIN_EXPANSION = EFFECTS.register("expansao_dominio",
+            () -> new MagiaEffect(MobEffectCategory.BENEFICIAL, 0x865AA5));
+    public static final DeferredHolder<MobEffect, InfiniteVoidEffect> INFINITE_VOID =
+            EFFECTS.register("vazio_infinito", InfiniteVoidEffect::new);
+    public static final DeferredHolder<MobEffect, SoulRealmEffect> SOUL_REALM =
+            EFFECTS.register("reino_almas", SoulRealmEffect::new);
 
     private MagiaEffects() {
     }

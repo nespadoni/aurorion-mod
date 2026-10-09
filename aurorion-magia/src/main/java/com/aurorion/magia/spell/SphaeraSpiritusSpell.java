@@ -44,7 +44,7 @@ import java.util.Optional;
  * Sphaera Spiritus — Esfera Espiritual (a Genki Dama). <b>Magia proibida.</b>
  *
  * <p>Segurando a conjuracao com os bracos erguidos, a esfera cresce sobre a cabeca de quem conjura —
- * todos em volta a veem crescer — por ate oito segundos, e quem conjura anda devagar enquanto isso. Ao
+ * todos em volta a veem crescer — por ate trinta segundos, e quem conjura anda devagar enquanto isso. Ao
  * soltar, ela e arremessada devagar na direcao da mira e explode no primeiro toque.
  *
  * <p>A explosao e <b>totalmente destrutiva</b>: fere e arremessa todos no raio menos quem conjurou —
@@ -76,10 +76,10 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
         super("sphaera_spiritus", SchoolRegistry.HOLY_RESOURCE, SpellRarity.LEGENDARY, 3, 180, CastType.CONTINUOUS, true);
         this.baseSpellPower = 20;
         this.spellPowerPerLevel = 10;
-        this.baseManaCost = 15;
-        this.manaCostPerLevel = 5;
-        // Em magia continua, castTime e a carga maxima: 8 segundos.
-        this.castTime = 320;
+        this.baseManaCost = 2;
+        this.manaCostPerLevel = 1;
+        // Em magia continua, castTime e a carga maxima: 30 segundos.
+        this.castTime = 600;
     }
 
     @Override
@@ -123,7 +123,9 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
             entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 15, 3, false, false, false));
             MagiaNetwork.sendVisual(entity, entity, SpellVisualPayload.Kind.SPHAERA_CHARGE, 15, entity.position(),
                     visualRadius(charge));
-            sound(entity, SoundEvents.BEACON_AMBIENT, 1.4f, 0.6f + charge);
+            int elapsed = playerMagicData.getCastDuration() - playerMagicData.getCastDurationRemaining();
+            // O sample dura mais que o pulso visual: nao empilha o mesmo som a cada meio segundo.
+            if (elapsed % 40 < 10) sound(entity, SoundEvents.BEACON_AMBIENT, 1.4f, 0.45f + charge * 1.2f);
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
@@ -153,9 +155,11 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
         float radius = 3 + (maxRadius(spellLevel) - 3) * charge;
         float damage = damagePower(spellLevel, entity) * (0.5f + 1.5f * charge);
         float size = visualRadius(charge);
-        Vec3 from = entity.getEyePosition().add(0, 1.2 + size, 0);
+        Vec3 from = entity.position().add(0, entity.getBbHeight() + .5 + size, 0);
+        Vec3 aim = Hits.aimPoint(serverLevel, entity, 64);
+        Vec3 direction = aim.subtract(from).normalize();
         MagiaProjectileEntity.launch(serverLevel, entity, MagiaProjectileEntity.Shape.SPHAERA, from,
-                entity.getLookAngle().scale(SPEED), size, damage, radius, 200);
+                direction.scale(SPEED), size, damage, radius, 200);
         sound(entity, SoundEvents.WITHER_SHOOT, 2.0f, 0.5f);
         sound(entity, SoundEvents.BEACON_DEACTIVATE, 1.5f, 0.7f);
     }
@@ -192,7 +196,7 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
         }
         sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 6.0f, 0.5f);
         sound(level, at, SoundEvents.LIGHTNING_BOLT_THUNDER, 4.0f, 0.7f);
-        MagiaNetwork.sendVisualAt(level, caster, SpellVisualPayload.Kind.SPHAERA_BLAST, 50, at, (float) radius);
+        MagiaNetwork.sendVisualAt(level, caster, SpellVisualPayload.Kind.SPHAERA_BLAST, 70, at, (float) radius);
     }
 
     /**
@@ -228,13 +232,13 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
         return Mth.clamp((duration - data.getCastDurationRemaining()) / (float) duration, 0, 1);
     }
 
-    /** O raio que a esfera mostra: meio bloco no comeco, tres com a carga cheia. */
+    /** O raio que a esfera mostra: 0,75 bloco no comeco, oito com a carga cheia. */
     private static float visualRadius(float charge) {
-        return 0.5f + 2.5f * charge;
+        return 0.75f + 7.25f * (float) Math.pow(charge, .8);
     }
 
-    /** 10 blocos no nivel 1, +2 por nivel. */
+    /** 18 blocos no nivel 1, +6 por nivel. */
     private static int maxRadius(int spellLevel) {
-        return 8 + 2 * spellLevel;
+        return 12 + 6 * spellLevel;
     }
 }

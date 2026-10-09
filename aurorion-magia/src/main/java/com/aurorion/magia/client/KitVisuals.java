@@ -98,8 +98,9 @@ final class KitVisuals {
         RandomSource random = level.random;
         switch (a.kind) {
             case LUX_FINALIS, FUROR_VENATORIS -> {
-                if (a.age > 4 || !(a.caster(level) instanceof LivingEntity caster)) return;
+                if (a.age > (a.kind == Kind.LUX_FINALIS ? 10 : 4) || !(a.caster(level) instanceof LivingEntity caster)) return;
                 boolean lux = a.kind == Kind.LUX_FINALIS;
+                if (lux && a.age == 1) level.addParticle(ParticleTypes.FLASH, a.pos.x, a.pos.y, a.pos.z, 0, 0, 0);
                 Vec3 from = castingHand(caster);
                 int points = (int) Math.min(64, from.distanceTo(a.pos) * 1.2) / stride;
                 for (int i = 0; i < points; i++) {
@@ -191,9 +192,9 @@ final class KitVisuals {
                 if (target == null || time % stride != 0) return;
                 // A energia vindo de longe e entrando na esfera.
                 Vec3 center = sphereCenter(target, a.extra, 1);
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < Math.max(2, 7 / stride); i++) {
                     Vec3 dir = new Vec3(random.nextGaussian(), random.nextGaussian() * 0.6, random.nextGaussian()).normalize();
-                    Vec3 p = center.add(dir.scale(4 + random.nextDouble() * 4));
+                    Vec3 p = center.add(dir.scale(a.extra + 4 + random.nextDouble() * 6));
                     Vec3 v = center.subtract(p).scale(0.09);
                     level.addParticle(i == 0 ? ParticleTypes.ELECTRIC_SPARK : SPIRIT, p.x, p.y, p.z, v.x, v.y, v.z);
                 }
@@ -294,8 +295,7 @@ final class KitVisuals {
                 Vec3 p = target.position().add(offset(random, target.getBbWidth() + 0.3)).add(0, target.getBbHeight() * 0.6, 0);
                 level.addParticle(random.nextBoolean() ? ParticleTypes.SOUL : ClientSpellVisuals.VOID, p.x, p.y, p.z, 0, 0.02, 0);
             }
-            default -> {
-            }
+            default -> UltimateVisuals.particles(level, a, target, stride, time);
         }
     }
 
@@ -349,6 +349,7 @@ final class KitVisuals {
             case LUX_FINALIS, FUROR_VENATORIS -> {
                 if (!(a.caster(level) instanceof LivingEntity caster)) return;
                 Vec3 from = castingHand(caster, partial);
+                if (a.kind == Kind.LUX_FINALIS) { UltimateVisuals.luxBeam(pose, out, camera, from, a, partial); return; }
                 // O feixe e grosso no disparo e afina ate sumir.
                 float t = Mth.clamp(life / a.ttl, 0, 1);
                 float width = a.extra * (1 - t) * (a.kind == Kind.LUX_FINALIS ? 1.2F : 0.6F);
@@ -418,11 +419,8 @@ final class KitVisuals {
             }
             case SPHAERA_CHARGE -> {
                 if (target == null) return;
-                SigilRenderer.at(pose, camera, sphereCenter(target, a.extra, partial));
-                Matrix4f m = pose.last().pose();
-                float breath = 1 + .04F * Mth.sin(life * .4F);
-                sphere(out, m, a.extra * breath, SPIRIT_RGB, .28F * fade, 12, 24);
-                sphere(out, m, a.extra * .7F * breath, 0xE8FBFF, .55F * fade, 10, 20);
+                SigilRenderer.at(pose, camera, sphereCenter(target, a.shownExtra(partial), partial));
+                UltimateVisuals.spiritBall(out, pose, a.shownExtra(partial), life, fade);
                 pose.popPose();
             }
             case INCUS_SHADOW -> {
@@ -476,8 +474,7 @@ final class KitVisuals {
                 sphere(out, pose.last().pose(), .4F + 1.2F * t, LIGHT_RGB, .5F * (1 - t), 8, 16);
                 pose.popPose();
             }
-            default -> {
-            }
+            default -> UltimateVisuals.glow(pose, out, camera, level, a, partial);
         }
     }
 
@@ -500,6 +497,20 @@ final class KitVisuals {
         float alpha = (1 - t * .7F) * fade;
         SigilRenderer.at(pose, camera, a.pos.add(0, .05, 0));
         SigilGeometry.band(out, pose.last().pose(), radius * .75F, radius, 0, color, alpha, 64);
+        if (a.kind == Kind.SPHAERA_BLAST) {
+            for (int i = 1; i <= 2; i++) {
+                float wave = Mth.clamp((life - i * 6) / 24, 0, 1);
+                float reach = a.extra * 1.15F * wave;
+                if (wave > 0 && wave < 1) SigilGeometry.band(out, pose.last().pose(), reach * .9F, reach,
+                        .12F + i * .1F, 0xA9EEFF, (1 - wave) * fade, 96);
+            }
+            if (life < 24) for (int i = 0; i < 12; i++) {
+                float angle = i * Mth.TWO_PI / 12;
+                Vec3 end = new Vec3(Mth.cos(angle) * radius, 2 + i % 3, Mth.sin(angle) * radius);
+                UltimateVisuals.lightning(out, pose.last().pose(), new Vec3(0, 1, 0), end, .65F,
+                        life, i, SPIRIT_RGB, fade * (1 - life / 24));
+            }
+        }
         if (a.kind == Kind.SPHAERA_BLAST && life < 20) {
             pose.translate(0, 1, 0);
             float flash = 1 - life / 20f;

@@ -139,7 +139,11 @@ public final class ClientSpellVisuals {
             // Pulso seguinte da mesma canalizacao: estica a vida, nao duplica o visual. A renovacao sem
             // conjurador (-1) e a da propria magia — a corrente renovando a ancora — e vale para o
             // visual que ja existe, seja de quem for.
-            existing.ticksLeft = Math.max(existing.ticksLeft, payload.ttl());
+            existing.ticksLeft = Math.max(existing.ticksLeft, Mth.clamp(payload.ttl(), 0, MAX_TTL));
+            existing.pos = payload.pos();
+            existing.previousExtra = existing.shownExtra(0);
+            existing.extraUpdateAge = existing.age;
+            existing.extra = Float.isFinite(payload.extra()) ? Mth.clamp(payload.extra(), -MAX_EXTRA, MAX_EXTRA) : 0;
             return;
         }
         if (ACTIVE.size() < MAX_ACTIVE) ACTIVE.add(new Active(payload));
@@ -919,8 +923,10 @@ public final class ClientSpellVisuals {
         final Kind kind;
         final int casterId;
         final int targetId;
-        final Vec3 pos;
-        final float extra;
+        Vec3 pos;
+        float extra;
+        float previousExtra;
+        int extraUpdateAge;
         final int ttl;
         int ticksLeft;
         int age;
@@ -941,6 +947,7 @@ public final class ClientSpellVisuals {
             // estiverem ativos; um valor absurdo no pacote nao vira particulas sem fim.
             float extra = payload.extra();
             this.extra = Float.isFinite(extra) ? Mth.clamp(extra, -MAX_EXTRA, MAX_EXTRA) : 0;
+            this.previousExtra = this.extra;
             this.ttl = Mth.clamp(payload.ttl(), 0, MAX_TTL);
             this.ticksLeft = this.ttl;
         }
@@ -953,6 +960,11 @@ public final class ClientSpellVisuals {
         @Nullable
         Entity caster(ClientLevel level) {
             return casterId >= 0 ? level.getEntity(casterId) : null;
+        }
+
+        float shownExtra(float partial) {
+            return kind == Kind.SPHAERA_CHARGE
+                    ? Mth.lerp(Mth.clamp((age + partial - extraUpdateAge) / 10F, 0, 1), previousExtra, extra) : extra;
         }
 
         /** Some nos ultimos 10 ticks em vez de desaparecer de uma vez. */

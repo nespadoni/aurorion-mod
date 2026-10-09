@@ -54,8 +54,11 @@ public final class ControlSpells {
 
     private static int silenceTicks(LivingEntity entity, @Nullable MobEffect removed) {
         int ticks = 0;
+        MobEffectInstance overload = entity.getEffect(MagiaEffects.INFINITE_VOID);
+        if (overload != null && overload.getEffect().value() != removed) ticks = overload.getDuration();
         MobEffectInstance voice = entity.getEffect(MagiaEffects.SILENCED);
-        if (voice != null && voice.getEffect().value() != removed) ticks = voice.getDuration();
+        if (voice != null && voice.getEffect().value() != removed)
+            ticks = voice.isInfiniteDuration() ? MobEffectInstance.INFINITE_DURATION : Math.max(ticks, voice.getDuration());
         for (Control control : controls()) {
             if (!MagiaConfig.SILENT_CONTROLS.get().contains(control.spell()) || control.effect().value() == removed) continue;
             MobEffectInstance effect = entity.getEffect(control.effect());

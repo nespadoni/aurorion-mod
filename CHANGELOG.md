@@ -1,3 +1,18 @@
+# Release local - 08/10/2026
+
+- Magia 0.6.0: Reino das Almas, Vazio Infinito e Santuário Malevolente (cortes somente
+  em entidades), Colheita de Almas e Domínio Refinado; efeitos ampliados de Lux e
+  Genki Dama, com esfera crescendo durante a carga de até 30 segundos.
+- Inclui as correções de Umbra Viva e Barril Explosivo, dano/duração dobrados,
+  controles até reconjurar, Ceifar Vida, Entregar Vida, Esconjurar e desbloqueio de
+  todas as escolas pelo comando de staff.
+- Profissões 0.5.1: correção dos marcadores de Body Damage e NBT após cura.
+- Os 19 módulos foram buildados e reunidos em `build/jars-servidor`.
+  Magia 0.6.0 precisa ser atualizada também nos clientes (protocolo 9).
+
+Manifesto, hashes, validações e ensaios pendentes em [releases/2026-10-08](releases/2026-10-08/README.md).
+Esta é uma entrega local; ainda não foi instalada no servidor ou no modpack.
+
 # Comunicado da UF - 05/10/2026
 
 ## Novas magias

@@ -1,5 +1,7 @@
 package com.aurorion.magia.spell;
 
+import com.aurorion.magia.registry.MagiaEffects;
+
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import io.redspace.ironsspellbooks.api.magic.MagicData;

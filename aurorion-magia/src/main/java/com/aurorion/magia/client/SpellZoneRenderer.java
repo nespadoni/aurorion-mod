@@ -77,6 +77,7 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
             switch (zone.shape()) {
                 case WARD -> wardInk(ink, matrix, radius, height, life, fade);
                 case STORM -> stormInk(ink, matrix, radius, height, life, fade);
+                case INFINITE_VOID, MALEVOLENT_SHRINE, SOUL_ARENA -> DomainVisuals.ink(zone, ink, pose, life, fade);
                 default -> {
                 }
             }
@@ -87,6 +88,7 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
             case COLUMN -> column(glow, pose, matrix, radius, height, life, fade);
             case STORM -> storm(glow, pose, matrix, radius, height, life, fade);
             case POCA -> pool(glow, matrix, radius, life, fade);
+            case INFINITE_VOID, MALEVOLENT_SHRINE, SOUL_ARENA -> DomainVisuals.glow(zone, glow, pose, life, fade);
         }
         pose.popPose();
 
@@ -178,7 +180,9 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
         double maxDistance = MagiaClientConfig.VISUAL_DISTANCE.get();
         Vec3 eye = minecraft.gameRenderer.getMainCamera().getPosition();
         Vec3 center = zone.position();
-        if (center.distanceToSqr(eye) > maxDistance * maxDistance) return;
+        double reach = maxDistance + (zone.isDomain() ? zone.radius() : 0);
+        if (center.distanceToSqr(eye) > reach * reach) return;
+        if (zone.isDomain()) { DomainVisuals.particles(zone, stride); return; }
 
         RandomSource random = minecraft.level.random;
         float radius = zone.radius();
@@ -208,6 +212,7 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
                 case COLUMN -> 0.35;
                 case STORM -> 0.12;
                 case POCA -> 0.05;
+                default -> 0;
             };
             minecraft.level.addParticle(BREEZE, x, center.y + y, z, swirl.x, rise, swirl.z);
             if (random.nextInt(4) == 0) {

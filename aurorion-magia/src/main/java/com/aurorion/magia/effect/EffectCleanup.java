@@ -48,6 +48,7 @@ public final class EffectCleanup {
 
     /** Solta todo modificador nosso que ficou preso sem o efeito correspondente. */
     public static void sweep(LivingEntity entity) {
+        if (!entity.hasEffect(MagiaEffects.INFINITE_VOID)) InfiniteVoidEffect.release(entity);
         for (Bond bond : bonds()) {
             if (bond.effect() != null && entity.hasEffect(bond.effect())) continue;
             AttributeInstance instance = entity.getAttribute(bond.attribute());
@@ -79,6 +80,9 @@ public final class EffectCleanup {
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("polimorfo_speed"), MagiaEffects.POLYMORPH),
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("possuido_speed"), MagiaEffects.POSSESSED),
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("possuido_jump"), MagiaEffects.POSSESSED),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("vazio_infinito_speed"), MagiaEffects.INFINITE_VOID),
+                    new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("vazio_infinito_jump"), MagiaEffects.INFINITE_VOID),
+                    new Bond(Attributes.GRAVITY, AurorionMagia.id("vazio_infinito_gravity"), MagiaEffects.INFINITE_VOID),
                     // Sequestro de Impulso, removido do mod: quem ficou preso nele sai aqui.
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("estase_speed"), null),
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("estase_jump"), null));

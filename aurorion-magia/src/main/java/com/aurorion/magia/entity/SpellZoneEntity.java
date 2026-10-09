@@ -3,6 +3,7 @@ package com.aurorion.magia.entity;
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.registry.MagiaEntities;
 import com.aurorion.magia.registry.MagiaSpells;
+import com.aurorion.magia.spell.Domains;
 import com.aurorion.magia.spell.AurorionSpell;
 import com.aurorion.magia.spell.FriendlyFire;
 import com.aurorion.magia.spell.Displacement;
@@ -128,7 +129,10 @@ public class SpellZoneEntity extends Entity {
         /** Furacao: anda em linha reta puxando quem esta no caminho. */
         STORM,
         /** Poca de Sangue: acompanha quem mergulhou nela, prende e drena quem pisar dentro. */
-        POCA;
+        POCA,
+        INFINITE_VOID,
+        MALEVOLENT_SHRINE,
+        SOUL_ARENA;
 
         private static final Shape[] VALUES = values();
 
@@ -143,6 +147,7 @@ public class SpellZoneEntity extends Entity {
                                          float radius, float height, int duration, float power, Vec3 drift) {
         SpellZoneEntity zone = new SpellZoneEntity(MagiaEntities.SPELL_ZONE.get(), level);
         zone.setPos(at.x, at.y, at.z);
+        zone.setYRot(owner.getYRot());
         zone.entityData.set(DATA_SHAPE, (byte) shape.ordinal());
         zone.entityData.set(DATA_RADIUS, radius);
         zone.entityData.set(DATA_HEIGHT, height);
@@ -209,7 +214,8 @@ public class SpellZoneEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 64 * 64;
+        double reach = isDomain() ? radius() + 64 : 64;
+        return distance < reach * reach;
     }
 
     /** A barreira protege quem a ergueu: o dono passa pelo proprio vento. */
@@ -240,10 +246,34 @@ public class SpellZoneEntity extends Entity {
             case COLUMN -> column();
             case STORM -> storm();
             case POCA -> pool();
+            case INFINITE_VOID, MALEVOLENT_SHRINE -> domain();
+            case SOUL_ARENA -> {
+                LivingEntity caster = owner();
+                if (caster == null || !caster.hasEffect(com.aurorion.magia.registry.MagiaEffects.SOUL_REALM)) discard();
+            }
         }
     }
 
+    public boolean isDomain() {
+        return shape() == Shape.INFINITE_VOID || shape() == Shape.MALEVOLENT_SHRINE || shape() == Shape.SOUL_ARENA;
+    }
+
+    private void domain() {
+        LivingEntity caster = owner();
+        if (caster == null || !caster.isAlive() || AurorionSpell.castBlocked(caster)
+                || Domains.zone(caster) != this || caster.distanceToSqr(position()) > radius() * radius()) {
+            if (caster != null && Domains.zone(caster) == this) Domains.stop(caster);
+            else discard();
+            return;
+        }
+        if (tickCount % (shape() == Shape.INFINITE_VOID ? 4 : 10) == 0) Domains.pulse(this, caster, power);
+    }
+
     private void expire() {
+        if (shape() == Shape.INFINITE_VOID || shape() == Shape.MALEVOLENT_SHRINE) {
+            LivingEntity caster = owner();
+            if (caster != null && Domains.zone(caster) == this) { Domains.stop(caster); return; }
+        }
         if (shape() == Shape.WARD) {
             level().playSound(null, getX(), getY(), getZ(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.9F, 1.4F);
         }

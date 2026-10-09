@@ -43,7 +43,7 @@ Esconjurar remove os status presentes; fontes ainda ativas (passivas, zonas, bea
 ## Validacao na maquina de build/servidor
 
 1. Compilar aurorion-magia e aurorion-profissoes com as versoes de referencia dos mods; executar a suite existente e o novo GameTest.
-2. Instalar o mesmo aurorion-magia 0.5.1 no servidor e em todos os clientes. Atualizar aurorion-profissoes onde instalado.
+2. Instalar o mesmo aurorion-magia 0.6.0 no servidor e em todos os clientes. Atualizar aurorion-profissoes para 0.5.1 onde instalado. A release de 08/10 inclui estas correções e os domínios posteriores.
 3. Ferir gravemente um membro; tratar via medico, comando e cura magica; relogar; causar 1 ponto de dano. Confirmar que nao volta ao dano maximo. Repetir com save contendo NaN/infinito e marcador critico com dano zero.
 4. Umbra: primeira conjuracao, troca, expiracao, duas sombras, relogin com recast salvo e troca de dimensao. Verificar logs de cliente e servidor e ausencia de erro de decodificacao.
 5. Dolium: testar com mao, pergaminho e grimorio; conferir pose normal apos o arremesso e apos interrupcao.

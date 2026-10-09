@@ -1,11 +1,13 @@
 # Aurorion Magia
 
+Novidades da **0.6.0**: Reino das Almas, Vazio Infinito, Santuário Malevolente, duas novas passivas e efeitos ampliados da Lux/Genki Dama. [Detalhes, comandos e validação](../docs/dominios-almas-ultimates-2026-10-08.md).
+
 Addon do [Iron's Spells 'n Spellbooks](https://github.com/iron431/irons-spells-n-spellbooks) para o
 Aurorion. **Nenhuma magia vem liberada**: a staff ensina magias soltas ou escolas inteiras por
 personagem, em aula, com `/aurorion spells`. O estado é espelhado no Iron's Restrictions.
 
-Vinte e três magias autorais (três delas **proibidas**), cada uma com um **nome conhecido** e uma
-**invocação** (o id), mais duas **passivas**: marcas que ficam no personagem em vez de serem
+Cinquenta e cinco magias autorais (doze delas **proibidas**), cada uma com um **nome conhecido** e uma
+**invocação** (o id), mais quatro **passivas**: marcas que ficam no personagem em vez de serem
 conjuradas. As magias servem para duelo, captura, interrogatório, perseguição, fuga, invasão
 e RP do dia a dia. Cinco delas mudam de forma quando conjuradas **agachado** (ver "Agachado, em
 área"), e três se desfazem conjurando de novo no mesmo alvo (Prostração, Voz Interdita, Mundo Vazio).
@@ -141,7 +143,7 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Flecha de Reconhecimento | `sagitta_exploratrix` | Raio | instantânea (arco) | encanta a próxima flecha: revela inimigos |
 | Flecha de Choque | `sagitta_fulminis` | Raio | instantânea (arco) | encanta a próxima flecha: descarga em área |
 | Fúria do Caçador | `furor_venatoris` | Raio | instantânea ×3 (arco) | três rajadas que atravessam paredes |
-| Esfera Espiritual ⛔ | `sphaera_spiritus` | Sagrado | contínua até 8 s | a Genki Dama: explosão com cratera |
+| Esfera Espiritual ⛔ | `sphaera_spiritus` | Sagrado | contínua até 30 s | a Genki Dama: explosão com cratera |
 | Possessão ⛔ | `possessio_corporis` | Eldritch | longa 2 s, reconjurável | assumir o corpo de outro jogador e falar por ele |
 | Justiça Demaciana ⛔ | `iustitia_demaciae` | Sagrado | longa 0,75 s (espada) | espada do céu; executa abaixo do limiar |
 | Morte Vinda das Profundezas ⛔ | `mors_ex_profundis` | Gelo | instantânea | X que executa abaixo do limiar e devolve a magia |
@@ -784,11 +786,11 @@ chão, feixes vermelho-negros da mão até cada suspenso e os raios caindo em vo
 
 ### Esfera Espiritual — *Sphaera Spiritus* ⛔
 A Genki Dama. Segurando a conjuração com os braços erguidos, a esfera cresce sobre a cabeça de quem
-conjura por até 8 s — todo mundo em volta a vê crescer —, e quem conjura anda devagar. Ao soltar, ela
+conjura por até 30 s — todo mundo em volta a vê crescer —, e quem conjura anda devagar. Ao soltar, ela
 é arremessada devagar para onde se mira e explode no primeiro toque.
 
 A explosão é **totalmente destrutiva**: fere (até 2× o poder com a carga cheia, metade disso na borda)
-e arremessa todos no raio — aliado também —, menos quem conjurou; o raio vai de 3 a 10/12/14 blocos
+e arremessa todos no raio — aliado também —, menos quem conjurou; o raio vai de 3 a 18/24/30 blocos
 com a carga. E abre cratera (`esferaQuebraBlocos`, ligada por padrão), com uma explosão do vanilla de
 força até 6 que segue o `blockExplosionDropDecay` (nem todo bloco quebrado vira item). Se a carga for
 interrompida — estase, possessão, silêncio —, a esfera se desfaz em vez de sair. A cratera **não** se abre onde quem conjurou não poderia construir (proteção de spawn),

@@ -103,6 +103,7 @@ public final class PossessioCorporisSpell extends AurorionSpell {
         return Hits.hittable(caster, target)
                 && !target.hasEffect(MagiaEffects.POSSESSED) && !Possession.isPossessing(target)
                 && !target.hasEffect(MagiaEffects.STASIS)
+                && !target.hasEffect(MagiaEffects.SOUL_REALM) && !caster.hasEffect(MagiaEffects.SOUL_REALM)
                 && !caster.hasEffect(MagiaEffects.POSSESSED);
     }
 

@@ -70,8 +70,7 @@ public class MagiaProjectileRenderer extends EntityRenderer<MagiaProjectileEntit
                 pose.translate(0, .3, 0);
                 VertexConsumer glow = buffers.getBuffer(SigilRenderer.glowType());
                 float radius = entity.size() * (1 + .03F * Mth.sin(life * .5F));
-                KitVisuals.sphere(glow, pose.last().pose(), radius, 0x8CD8FF, .3F, 12, 24);
-                KitVisuals.sphere(glow, pose.last().pose(), radius * .7F, 0xE8FBFF, .6F, 10, 20);
+                UltimateVisuals.spiritBall(glow, pose, radius, life, 1);
                 pose.popPose();
             }
             case TEMPERIES -> glowBall(pose, buffers, entity.size(), 0xFFCC4D);

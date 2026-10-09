@@ -29,6 +29,11 @@ public final class MagiaConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> SILENT_CONTROLS;
     public static final ModConfigSpec.IntValue DISPEL_RADIUS;
 
+    public static final ModConfigSpec.IntValue SOUL_DURATION;
+    public static final ModConfigSpec.IntValue VOID_RADIUS;
+    public static final ModConfigSpec.IntValue VOID_DURATION;
+    public static final ModConfigSpec.IntValue SHRINE_RADIUS;
+    public static final ModConfigSpec.IntValue SHRINE_DURATION;
     public static final ModConfigSpec SPEC;
 
     static {
@@ -168,6 +173,18 @@ public final class MagiaConfig {
                 .defineListAllowEmpty("controlesSilenciam", controls, () -> "mutatio_ferae", controls::contains);
         DISPEL_RADIUS = BUILDER.comment("Esconjurar: raio em blocos, incluindo quem conjurou e aliados.")
                 .defineInRange("raioEsconjurar", 8, 1, 32);
+        BUILDER.pop();
+        BUILDER.comment("Ultimates de alma e expansoes; tempos em ticks (20 = 1 segundo).").push("dominios");
+        SOUL_DURATION = BUILDER.comment("Reino das Almas: duracao do duelo em outra dimensao.")
+                .defineInRange("duracaoReinoAlmas", 600, 100, 2400);
+        VOID_RADIUS = BUILDER.comment("Vazio Infinito: raio da esfera fechada.")
+                .defineInRange("raioVazioInfinito", 24, 4, 40);
+        VOID_DURATION = BUILDER.comment("Vazio Infinito: duracao da incapacitacao dentro da expansao.")
+                .defineInRange("duracaoVazioInfinito", 400, 40, 1200);
+        SHRINE_RADIUS = BUILDER.comment("Santuario Malevolente: esfera aberta, sem destruir blocos. Maximo 200.")
+                .defineInRange("raioSantuarioMalevolente", 200, 8, 200);
+        SHRINE_DURATION = BUILDER.comment("Santuario Malevolente: duracao; cortes a cada 10 ticks.")
+                .defineInRange("duracaoSantuarioMalevolente", 600, 100, 2400);
         BUILDER.pop();
         SPEC = BUILDER.build();
     }

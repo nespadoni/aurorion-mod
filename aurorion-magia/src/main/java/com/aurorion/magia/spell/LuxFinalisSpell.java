@@ -104,6 +104,12 @@ public final class LuxFinalisSpell extends AurorionSpell {
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 
+    @Override
+    public void onServerCastComplete(Level level, int spellLevel, LivingEntity entity, MagicData data, boolean cancelled) {
+        super.onServerCastComplete(level, spellLevel, entity, data, cancelled);
+        if (level instanceof ServerLevel) MagiaNetwork.sendVisual(entity, entity, SpellVisualPayload.Kind.LUX_CHARGE, 0);
+    }
+
     private void fire(ServerLevel level, LivingEntity caster, int spellLevel) {
         Vec3 from = caster.getEyePosition().subtract(0, 0.25, 0);
         Vec3 end = Hits.beamEnd(level, caster, from, caster.getLookAngle(), RANGE, false);
@@ -117,10 +123,12 @@ public final class LuxFinalisSpell extends AurorionSpell {
         }
 
         sound(level, end, SoundEvents.BEACON_DEACTIVATE, 1.4f, 1.8f);
-        sound(caster, SoundEvents.GUARDIAN_ATTACK, 1.2f, 1.6f);
+        sound(caster, SoundEvents.GUARDIAN_ATTACK, 2.2f, .6f);
+        sound(caster, SoundEvents.LIGHTNING_BOLT_THUNDER, 2.5f, 1.4f);
+        sound(level, end, SoundEvents.GENERIC_EXPLODE.value(), 2.0f, 1.2f);
         // Preso a quem conjurou (e nao ao chunk da ponta): o feixe tem quase cinquenta blocos, e quem esta
         // perto de quem atirou precisa ve-lo inteiro.
-        MagiaNetwork.sendVisual(caster, caster, SpellVisualPayload.Kind.LUX_FINALIS, 16, end, (float) WIDTH);
+        MagiaNetwork.sendVisual(caster, caster, SpellVisualPayload.Kind.LUX_FINALIS, 30, end, (float) WIDTH);
     }
 
     private static void illuminate(LivingEntity victim, LivingEntity caster, float burst) {

@@ -29,7 +29,7 @@ public final class MagiaEntities {
                     .fireImmune()
                     .noSummon()
                     .noSave()
-                    .clientTrackingRange(6)
+                    .clientTrackingRange(16)
                     .updateInterval(1)
                     .build("zona_de_magia"));
 

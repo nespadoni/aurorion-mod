@@ -1,0 +1,141 @@
+{
+  "minecraft": "1.21.1",
+  "neoforge": "21.1.248",
+  "java": 21,
+  "versions": {
+    "aurorion_aeonita": "0.3.2",
+    "aurorion_areas": "0.6.3",
+    "aurorion_core": "0.6.4",
+    "aurorion_diario": "0.1.3",
+    "aurorion_economia": "0.3.2",
+    "aurorion_essentials": "0.7.6",
+    "aurorion_ethereal": "0.3.4",
+    "aurorion_integracao": "0.2.2",
+    "aurorion_limbo": "0.4.6",
+    "aurorion_magia": "0.6.0",
+    "aurorion_mundos": "0.1.2",
+    "aurorion_personagem": "0.3.1",
+    "aurorion_portais": "0.1.3",
+    "aurorion_profissoes": "0.5.1",
+    "aurorion_servicos": "0.1.2",
+    "aurorion_talk": "0.1.2",
+    "aurorion_trama": "0.1.1",
+    "aurorion_utils": "0.2.3",
+    "aurorion_vidas": "0.2.4"
+  },
+  "artifacts": [
+    {
+      "file": "aurorion_aeonita-neoforge-1.21.1-0.3.2.jar",
+      "bytes": 237790,
+      "sha256": "49e5e2734306754275de119808124df72fcd1baf64c9d47403f89e0424da0caa"
+    },
+    {
+      "file": "aurorion_areas-neoforge-1.21.1-0.6.3.jar",
+      "bytes": 156091,
+      "sha256": "6f1f8589aa88f32571867650b2b1fdc5c259907eb34e26705f006da6ad3e1725"
+    },
+    {
+      "file": "aurorion_core-neoforge-1.21.1-0.6.4.jar",
+      "bytes": 81029,
+      "sha256": "ddc32f7fe7e4aa4fc4b995c9a20fdbaa3004b089f95ff1fc67bf4aaabdde29e5"
+    },
+    {
+      "file": "aurorion_diario-neoforge-1.21.1-0.1.3.jar",
+      "bytes": 86269,
+      "sha256": "824e430e4dc4d2df43afb5471e551e21afb2e2be275346e5332e5925663de13c"
+    },
+    {
+      "file": "aurorion_economia-neoforge-1.21.1-0.3.2.jar",
+      "bytes": 147217,
+      "sha256": "9c62d611cdf231446ec928326f9017a038f79fc1f75eaea7867b0deb139819f9"
+    },
+    {
+      "file": "aurorion_essentials-neoforge-1.21.1-0.7.6.jar",
+      "bytes": 312493,
+      "sha256": "14cc11629b24ff253535ed51d6ba4df35960a1ecc8a90172a9f8cbb957f18582"
+    },
+    {
+      "file": "aurorion_ethereal-neoforge-1.21.1-0.3.4.jar",
+      "bytes": 833344,
+      "sha256": "ffd5b563cb1031f8c82aad50a1dbd683c91040f8cdbc59c0d403fac3edfcccdf"
+    },
+    {
+      "file": "aurorion_integracao-neoforge-1.21.1-0.2.2.jar",
+      "bytes": 46905,
+      "sha256": "c106bb1374d5431b74919a3a99e6012d02ce5dab68cde06f513ea6933a3ba20e"
+    },
+    {
+      "file": "aurorion_limbo-neoforge-1.21.1-0.4.6.jar",
+      "bytes": 2056181,
+      "sha256": "6de6f8032cf419500ed6d2e1e7232b849794ef3bff348f3f615ec3f82ee0da8a"
+    },
+    {
+      "file": "aurorion_magia-neoforge-1.21.1-0.6.0.jar",
+      "bytes": 773251,
+      "sha256": "19deca03cb51e709a7f7eb5ea69bb530f4f289e746371e2b7dca801f8ff82e91"
+    },
+    {
+      "file": "aurorion_mundos-neoforge-1.21.1-0.1.2.jar",
+      "bytes": 51462,
+      "sha256": "cb700f110681bbcbbfe4debcddc390d8cc1ddf5ab04ef78c948468b3bb9c5842"
+    },
+    {
+      "file": "aurorion_personagem-neoforge-1.21.1-0.3.1.jar",
+      "bytes": 58502,
+      "sha256": "de4735f4c66def17bbab744dd4b9db4f0d4499f856be8494614ddffaca8bda9b"
+    },
+    {
+      "file": "aurorion_portais-neoforge-1.21.1-0.1.3.jar",
+      "bytes": 65923,
+      "sha256": "23f16901946fc2342f67b3e4d7e80f1dcd36ca93d3fc6bf349e493798fa32616"
+    },
+    {
+      "file": "aurorion_profissoes-neoforge-1.21.1-0.5.1.jar",
+      "bytes": 286481,
+      "sha256": "bf404d512d1b2efcfe1169c9b3879246eb87df7d99129f4775ab8f950b343441"
+    },
+    {
+      "file": "aurorion_servicos-neoforge-1.21.1-0.1.2.jar",
+      "bytes": 91802,
+      "sha256": "d8e96e1e80d4edec20d4e35f349f08000713e6bd95fed31b7e70b7643a6d935a"
+    },
+    {
+      "file": "aurorion_talk-neoforge-1.21.1-0.1.2.jar",
+      "bytes": 81948,
+      "sha256": "f09facf16b73a6aa1a8713aa47e7ac65109f41102fbde818634d50ac88c4f7fa"
+    },
+    {
+      "file": "aurorion_trama-neoforge-1.21.1-0.1.1.jar",
+      "bytes": 78999,
+      "sha256": "cc017ae1378e578c3ee2645b75baed552fe3313a63034efcb34dde565d5c4924"
+    },
+    {
+      "file": "aurorion_utils-neoforge-1.21.1-0.2.3.jar",
+      "bytes": 66637,
+      "sha256": "2f0cc2b2bfb8228649d0a50698707f0a51f76dedd3c83418c936dea298ee2f40"
+    },
+    {
+      "file": "aurorion_vidas-neoforge-1.21.1-0.2.4.jar",
+      "bytes": 34054,
+      "sha256": "a672409065041db7edb51195645c9e2da6c098417fce3ad40fb64774d3f0b0dc"
+    },
+    {
+      "file": "c2me-neoforge-mc1.21.1-0.4.0-alpha.0.120.jar",
+      "bytes": 3701419,
+      "sha256": "991c97ce268cfdd449fac3449c606ecce0245f1b87d5b23eb229abf9152ce4f2"
+    }
+  ],
+  "unitTestReports": {
+    "tests": 462,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 35
+  },
+  "profissoesGameTests": {
+    "tests": 12,
+    "failures": 0,
+    "lso": "2.4.7.2"
+  },
+  "magiaDedicatedServerSmoke": "passed",
+  "interactiveClientValidation": "pending"
+}

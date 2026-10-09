@@ -1,6 +1,9 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.spell.ReinoAlmasSpell;
+import com.aurorion.magia.spell.VazioInfinitoSpell;
+import com.aurorion.magia.spell.SantuarioMalevolenteSpell;
 import com.aurorion.magia.spell.AestusSanguinisSpell;
 import com.aurorion.magia.spell.AspectusCaptusSpell;
 import com.aurorion.magia.spell.CampusStaticusSpell;
@@ -196,6 +199,13 @@ public final class MagiaSpells {
             SPELLS.register("sagitta_fulminis", SagittaFulminisSpell::new);
     public static final DeferredHolder<AbstractSpell, FurorVenatorisSpell> FUROR_VENATORIS =
             SPELLS.register("furor_venatoris", FurorVenatorisSpell::new);
+
+    public static final DeferredHolder<AbstractSpell, ReinoAlmasSpell> REINO_ALMAS =
+            SPELLS.register("reino_almas", ReinoAlmasSpell::new);
+    public static final DeferredHolder<AbstractSpell, VazioInfinitoSpell> VAZIO_INFINITO =
+            SPELLS.register("vazio_infinito", VazioInfinitoSpell::new);
+    public static final DeferredHolder<AbstractSpell, SantuarioMalevolenteSpell> SANTUARIO_MALEVOLENTE =
+            SPELLS.register("santuario_malevolente", SantuarioMalevolenteSpell::new);
 
     private MagiaSpells() {
     }

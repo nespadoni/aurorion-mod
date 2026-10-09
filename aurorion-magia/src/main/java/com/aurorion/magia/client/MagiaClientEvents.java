@@ -67,6 +67,8 @@ public final class MagiaClientEvents {
     public static final class GameBus {
         /** Alcance da neblina no centro da zona do Lux Vorata, em blocos. */
         private static final float DARK_FOG_DISTANCE = 5F;
+        private static boolean voidLocked;
+        private static float voidYaw, voidPitch;
         private static final boolean EMOTECRAFT = ModList.get().isLoaded("emotecraft");
 
         private GameBus() {
@@ -78,6 +80,10 @@ public final class MagiaClientEvents {
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
             if (player == null || minecraft.level == null || minecraft.isPaused()) return;
+            if (player.hasEffect(MagiaEffects.INFINITE_VOID)) {
+                if (!voidLocked) { voidYaw = player.getYRot(); voidPitch = player.getXRot(); voidLocked = true; }
+                player.setYRot(voidYaw); player.setXRot(voidPitch);
+            } else voidLocked = false;
             forceGaze(player);
             MagiaSoundscape.tick(player);
         }
@@ -123,6 +129,7 @@ public final class MagiaClientEvents {
             double scale = minecraft.options.screenEffectScale().get();
             double t = player.tickCount + event.getPartialTick();
             double factor = 1;
+            if (player.hasEffect(MagiaEffects.INFINITE_VOID)) factor *= 1 - .15 * scale;
             if (player.hasEffect(MagiaEffects.CAPTIVE)) factor *= 1 - .25 * scale;
             if (player.hasEffect(MagiaEffects.DISORIENTED)) factor *= 1 + Math.sin(t * .12) * .07 * scale;
             if (player.hasEffect(MagiaEffects.CRUCIATUS)) {
@@ -240,6 +247,15 @@ public final class MagiaClientEvents {
             double t = player.tickCount + event.getPartialTick();
             double distortion = minecraft.options.screenEffectScale().get();
 
+            if (player.hasEffect(MagiaEffects.INFINITE_VOID) && voidLocked) {
+                event.setYaw(voidYaw); event.setPitch(voidPitch);
+            }
+            float impact = UltimateVisuals.impact(event.getCamera().getPosition());
+            if (impact > 0 && distortion > 0) {
+                double strength = impact * MagiaClientConfig.CAMERA_SHAKE.get() * distortion;
+                event.setRoll((float) (event.getRoll() + Math.sin(t * 2.1) * 1.8 * strength));
+                event.setPitch((float) (event.getPitch() + Math.cos(t * 2.7) * strength));
+            }
             // Olhar preso: a camera encara o captor quadro a quadro, sem o tranco do tick.
             float[] look = gazeAngles(player, (float) event.getPartialTick());
             if (look != null) {
@@ -281,6 +297,12 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onMovementInput(MovementInputUpdateEvent event) {
             Input input = event.getInput();
+            if (event.getEntity().hasEffect(MagiaEffects.INFINITE_VOID)) {
+                input.forwardImpulse = 0; input.leftImpulse = 0;
+                input.up = false; input.down = false; input.left = false; input.right = false;
+                input.jumping = false; input.shiftKeyDown = false;
+                return;
+            }
             // Genua Flecte sem Emotecraft: o ajoelhado fica agachado, e todos veem.
             if (!EMOTECRAFT && event.getEntity().hasEffect(MagiaEffects.KNEELING)) input.shiftKeyDown = true;
             if (!event.getEntity().hasEffect(MagiaEffects.DISORIENTED)) return;
@@ -297,6 +319,7 @@ public final class MagiaClientEvents {
 
         @SubscribeEvent
         public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+            voidLocked = false;
             MagiaSoundscape.clear();
             ClientSpellVisuals.clear();
             FogLayer.clear();

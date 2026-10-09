@@ -180,7 +180,11 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         /** Iluminacao detonada: o clarao no corpo de quem estava marcado. */
         LUX_DETONATE,
         /** Marca Fatal estourando: o corte de sombra no alvo. */
-        SIGNUM_POP;
+        SIGNUM_POP,
+        LUX_CHARGE,
+        DOMAIN_SLASH,
+        SOUL_REALM_AURA,
+        SOUL_REAP;
 
         private static final Kind[] VALUES = values();
 

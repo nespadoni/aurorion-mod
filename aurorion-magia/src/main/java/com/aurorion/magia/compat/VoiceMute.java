@@ -20,6 +20,7 @@ public final class VoiceMute {
     private VoiceMute() {
     }
 
+    /** Prazo negativo acompanha os controles persistentes: so a liberacao explicita devolve a voz. */
     public static void mute(UUID player, long millis) {
         MUTED_UNTIL.put(player, millis < 0 ? Long.MAX_VALUE : System.currentTimeMillis() + millis);
     }

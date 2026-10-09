@@ -40,7 +40,9 @@ public enum Passive {
      * <p>Com interruptor porque ela vale para <i>todo mundo</i> em volta, o tempo todo, sem ninguem
      * ter escolhido nada. Um vilao entra numa taverna e liga a aura; sai de cena e desliga.
      */
-    DREAD("presenca_terrivel", true);
+    DREAD("presenca_terrivel", true),
+    SOUL_REAPER("colheita_almas", false),
+    REFINED_DOMAIN("dominio_refinado", false);
 
     private final ResourceLocation id;
     private final String key;

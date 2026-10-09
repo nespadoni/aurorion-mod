@@ -15,6 +15,10 @@ import com.aurorion.magia.passive.PassiveData;
 import com.aurorion.magia.passive.Passives;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.registry.MagiaSpells;
+import com.aurorion.magia.spell.SoulRealm;
+import com.aurorion.magia.spell.Domains;
+import com.aurorion.magia.passive.DomainPassives;
+import com.aurorion.magia.effect.InfiniteVoidEffect;
 import com.aurorion.magia.spell.Binding;
 import com.aurorion.magia.spell.CampusStaticusSpell;
 import com.aurorion.magia.spell.Domination;
@@ -138,7 +142,7 @@ public final class MagiaServerEvents {
             return;
         }
         // Em estase o tempo nao corre, e virado bicho nao ha mao nem voz que conjure.
-        if (player.hasEffect(MagiaEffects.STASIS)) {
+        if (player.hasEffect(MagiaEffects.STASIS) || player.hasEffect(MagiaEffects.INFINITE_VOID)) {
             deny(event, player, Component.translatable("aurorion_magia.em_estase").withStyle(ChatFormatting.GOLD));
             return;
         }
@@ -199,6 +203,11 @@ public final class MagiaServerEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        SoulRealm.recover(player);
+        Domains.stop(player);
+        player.removeEffect(MagiaEffects.DOMAIN_EXPANSION);
+        player.removeEffect(MagiaEffects.INFINITE_VOID);
+        InfiniteVoidEffect.release(player);
         SpellAccess.reconcile(player);
         Seals.sendAll(player);
         EffectCleanup.sweep(player);
@@ -214,6 +223,8 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            Domains.stop(player);
+            if (!player.level().dimension().equals(SoulRealm.DIMENSION)) SoulRealm.end(player);
             Seals.sendAll(player);
             ControlSpells.sendVisualsTo(player, player);
         }
@@ -226,6 +237,8 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            SoulRealm.recover(player);
+            Domains.stop(player);
             Seals.sendAll(player);
             EffectCleanup.sweep(player);
             Passives.onLogin(player);
@@ -238,19 +251,39 @@ public final class MagiaServerEvents {
         IronBinding.release(event.getEntity().getUUID());
         // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
         TimeStop.stop(event.getEntity());
+        SoulRealm.end(event.getEntity());
+        Domains.stop(event.getEntity());
         // Possessao: quem sai devolve o corpo, e quem tem o corpo tomado e solto.
         Possession.end(event.getEntity());
         if (event.getEntity() instanceof ServerPlayer player) Possession.release(player);
     }
 
     /** Morrer tambem devolve o corpo, dos dois lados. Morto nao tica efeito, entao e aqui. */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) return;
         VoiceMute.unmute(entity.getUUID());
+        SoulRealm.onDeath(entity);
+        Domains.stop(entity);
         Possession.end(entity);
         if (entity instanceof ServerPlayer player) Possession.release(player);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onSoulReap(LivingDeathEvent event) {
+        if (!event.getEntity().level().isClientSide && event.getSource().getEntity() instanceof ServerPlayer killer)
+            DomainPassives.reap(killer, event.getEntity());
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLuxCharge(SpellPreCastEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && event.getSpellId().equals(MagiaSpells.LUX_FINALIS.get().getSpellId())
+                && !com.aurorion.magia.spell.AurorionSpell.castBlocked(player)) {
+            int ticks = MagiaSpells.LUX_FINALIS.get().getEffectiveCastTime(1, player);
+            MagiaNetwork.sendVisual(player, player, SpellVisualPayload.Kind.LUX_CHARGE, Math.max(1, ticks));
+        }
     }
 
     /**
@@ -264,6 +297,9 @@ public final class MagiaServerEvents {
         PassiveData.get(event.server()).clear(event.account());
         ServerPlayer player = event.player();
         if (player != null) {
+            SoulRealm.end(player);
+            Domains.stop(player);
+            player.getPersistentData().remove("aurorion_magia:ultima_colheita");
             SpellAccess.reconcile(player);
             Passives.onLogin(player);
         }
@@ -305,13 +341,20 @@ public final class MagiaServerEvents {
         if (event instanceof EntityTeleportEvent.TeleportCommand
                 || event instanceof EntityTeleportEvent.SpreadPlayersCommand) return;
         Entity entity = event.getEntity();
-        if (entity.level().isClientSide || !Binding.isBound(entity)) return;
+        if (entity.level().isClientSide) return;
+        if (entity instanceof LivingEntity living && (SoulRealm.active(living)
+                || living.hasEffect(MagiaEffects.INFINITE_VOID))) { event.setCanceled(true); return; }
+        if (!Binding.isBound(entity)) return;
         event.setCanceled(true);
         Binding.refuseTeleport((LivingEntity) entity);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onTravelDimension(EntityTravelToDimensionEvent event) {
+        if (event.getEntity() instanceof LivingEntity living && !living.level().isClientSide
+                && living.isAlive() && (living.hasEffect(MagiaEffects.SOUL_REALM) || living.hasEffect(MagiaEffects.INFINITE_VOID))) {
+            event.setCanceled(true); return;
+        }
         if (!event.getEntity().level().isClientSide && Binding.isBound(event.getEntity())) {
             event.setCanceled(true);
             Binding.refuseTeleport((LivingEntity) event.getEntity());
@@ -428,7 +471,7 @@ public final class MagiaServerEvents {
      */
     private static boolean bodyLocked(@Nullable Entity entity) {
         return entity instanceof LivingEntity living
-                && (living.hasEffect(MagiaEffects.STASIS)
+                && (living.hasEffect(MagiaEffects.INFINITE_VOID) || living.hasEffect(MagiaEffects.STASIS)
                 || living.hasEffect(MagiaEffects.POLYMORPH)
                 || living.hasEffect(MagiaEffects.POSSESSED)
                 || living.hasEffect(MagiaEffects.POSSESSING));
@@ -450,6 +493,9 @@ public final class MagiaServerEvents {
         if (!Domination.allowsTargetChange(mob, event.getNewAboutToBeSetTarget())) {
             event.setCanceled(true);
             return;
+        }
+        if (mob.hasEffect(MagiaEffects.INFINITE_VOID) && event.getNewAboutToBeSetTarget() != null) {
+            event.setCanceled(true); return;
         }
         // Inalvejavel: nenhuma criatura o escolhe como alvo.
         if (event.getNewAboutToBeSetTarget() != null
@@ -508,6 +554,8 @@ public final class MagiaServerEvents {
             event.setCanceled(true);
             return;
         }
+        if (attacker instanceof LivingEntity living && SoulRealm.empowered(living)) event.setAmount(event.getAmount() * 1.3F);
+        if (SoulRealm.empowered(victim)) event.setAmount(event.getAmount() * .8F);
         if (victim.hasEffect(MagiaEffects.HEMOPLAGUE)) event.setAmount(event.getAmount() * PestisSanguineaSpell.AMPLIFY);
     }
 
@@ -594,7 +642,7 @@ public final class MagiaServerEvents {
     /** A investida e imparavel: golpe, flecha e explosao nao empurram quem esta avancando. */
     @SubscribeEvent
     public static void onKnockBack(LivingKnockBackEvent event) {
-        if (Impetus.isDashing(event.getEntity())) event.setCanceled(true);
+        if (event.getEntity().hasEffect(MagiaEffects.INFINITE_VOID) || Impetus.isDashing(event.getEntity())) event.setCanceled(true);
     }
 
     // --- Fim de efeito ------------------------------------------------------------------------
@@ -629,7 +677,13 @@ public final class MagiaServerEvents {
         if (effect == null || entity.level().isClientSide) return;
         // Remove e Expired chegam antes de o efeito sair do mapa da entidade.
         ControlSpells.syncVoice(entity, effect);
-        if (effect == MagiaEffects.DOMINATED.get() && entity instanceof Mob mob) {
+        if (effect == MagiaEffects.DOMAIN_EXPANSION.get()) {
+            Domains.onEffectEnded(entity);
+        } else if (effect == MagiaEffects.SOUL_REALM.get()) {
+            SoulRealm.onEffectEnded(entity);
+        } else if (effect == MagiaEffects.INFINITE_VOID.get()) {
+            InfiniteVoidEffect.release(entity);
+        } else if (effect == MagiaEffects.DOMINATED.get() && entity instanceof Mob mob) {
             Domination.release(mob);
         } else if (effect == MagiaEffects.BOUND.get()) {
             Binding.release(entity);
@@ -686,7 +740,11 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onVoiceTick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer player && player.tickCount % 20 == 0) {
-            if (player.isAlive()) ControlSpells.syncVoice(player, null);
+            if (player.isAlive()) {
+                if (player.level().dimension().equals(SoulRealm.DIMENSION) && !player.hasEffect(MagiaEffects.SOUL_REALM))
+                    SoulRealm.recover(player);
+                ControlSpells.syncVoice(player, null);
+            }
             else VoiceMute.unmute(player.getUUID());
         }
     }
