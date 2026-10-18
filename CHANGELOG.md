@@ -1,3 +1,10 @@
+# Áreas 0.6.5 - 18/10/2026
+
+- `/area aviso <id> true|false`: avisa no Discord (via `aurorion-bot`, por RCON) quando alguém entra
+  na área. O bot puxa a fila com `/area avisos puxar`; `/area avisos teste` confere a ponte.
+  Nova opção `entryAlertCooldownSeconds` (padrão 60). Detalhes no README do `aurorion-areas`.
+- Código preparado sem compilação ou teste nesta máquina, conforme AGENTS.md.
+
 # Correções preparadas - 17 e 18/10/2026
 
 - Magia 0.6.1: proteção da recarga do Barril Explosivo, exceções de cooldown

@@ -436,6 +436,39 @@ floresta e não saiu.
 sem esperar pelo relógio. Não letal limita o golpe ambiental; não torna o jogador imune a outros
 perigos.
 
+### Aviso de entrada no Discord
+
+Qualquer área pode avisar no Discord quando alguém entra, independentemente de ambiente:
+
+```
+/area aviso cofre_guilda true      liga (false desliga)
+/area avisos                       lista as áreas marcadas e o tamanho da fila
+/area avisos teste                 coloca um evento falso na fila, para conferir o bot
+```
+
+O servidor não tem como chamar o bot por RCON, então cada entrada vai para uma **fila em memória**
+e o `aurorion-bot` a esvazia com `/area avisos puxar` a cada poucos segundos, postando no canal
+`AREA_ALERTS_CHANNEL_ID`. A resposta é texto estável, uma linha por entrada, com valores codificados
+como query string (nome com espaço ou acento não quebra o parse):
+
+```
+avisos=1 restantes=0 descartados=0
+evento t=1760000000000&area=cofre_guilda&nome=Cofre+da+Guilda&jogador=Fulano&uuid=...&rotulo=Fulano&dim=minecraft%3Aoverworld&x=10&y=64&z=-300
+```
+
+- A marca vale para a **área**, não para a regra resolvida: uma sala vigiada dentro de uma área de
+  prioridade maior continua avisando. Áreas sobrepostas marcadas avisam cada uma.
+- Staff em criativo ou espectador (o mesmo bypass das regras) não dispara o aviso.
+- `entryAlertCooldownSeconds` (padrão 60) é o silêncio entre dois avisos do mesmo jogador na mesma
+  área — quem anda na borda não vira uma mensagem por passo. Relogar lá dentro respeita o mesmo
+  silêncio.
+- A fila tem teto de 200 entradas (as mais antigas caem primeiro, contadas em `descartados`) e não
+  sobrevive a um restart. Cada resposta fica abaixo de 3,5 KB para caber num pacote RCON; havendo
+  mais, `restantes` diz quanto falta e o bot puxa de novo.
+- Puxar à mão consome a fila: o que a staff puxar no console não chega ao Discord.
+- `/area perfil` preserva a marca; ela fica guardada como a regra `aviso_discord` da área.
+- Toda entrada também vai para o log do servidor (`Aviso de entrada (Discord): ...`).
+
 ### Conteúdo por datapack
 
 Presets: `data/<namespace>/aurorion/area_rules/<id>.json`.

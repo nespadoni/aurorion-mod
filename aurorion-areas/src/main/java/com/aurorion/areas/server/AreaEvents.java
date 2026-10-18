@@ -41,7 +41,7 @@ public final class AreaEvents {
         event.addListener(AreaProfiles.AMBIENCE.listener());
     }
     @SubscribeEvent public static void commands(RegisterCommandsEvent event) { AreaCommands.register(event.getDispatcher()); }
-    @SubscribeEvent public static void stop(ServerStoppedEvent event) { AreaRuntime.clear(); AreaCommands.clear(); }
+    @SubscribeEvent public static void stop(ServerStoppedEvent event) { AreaRuntime.clear(); AreaCommands.clear(); AreaWatch.clear(); }
     @SubscribeEvent public static void reset(CharacterResetEvent event) {
         AreaData.get(event.server()).clearCharacter(event.account());
         AreaRuntime.forget(event.account());
@@ -49,6 +49,7 @@ public final class AreaEvents {
     @SubscribeEvent public static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) AreaRuntime.logout(player);
         else AreaRuntime.forget(event.getEntity().getUUID());
+        AreaWatch.forget(event.getEntity().getUUID());
         AreaCommands.forget(event.getEntity().getUUID());
         LsoThirstCompat.forget(event.getEntity());
     }
@@ -60,7 +61,7 @@ public final class AreaEvents {
     // Pre ensures an in-progress cast is interrupted before its next player tick.
     @SubscribeEvent public static void tick(PlayerTickEvent.Pre event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            AreaRuntime.tick(player); AreaCommands.tickPreview(player);
+            AreaRuntime.tick(player); AreaWatch.tick(player); AreaCommands.tickPreview(player);
         }
     }
     public static boolean hostile(Entity entity) {

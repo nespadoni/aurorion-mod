@@ -183,6 +183,7 @@ Fluxo básico, com nível 2:
 | Monstros | `/area monstros <id> vida\|dano <0.1-20 ou -1 para herdar>` |
 | Exceção por personagem | `/area excecao <id> <jogador> <regra> true\|false` |
 | Padrão da dimensão | `/area mundo <perfil>\|herdar` |
+| Aviso no Discord | `/area aviso <id> true\|false` (avisa quando alguém entra; staff em criativo/espectador não dispara) · `/area avisos` (lista e fila) · `/area avisos teste` |
 | Listar / remover | `/area listar` · `/area remover <id>` |
 
 Staff em criativo com nível 2 ignora regras e ambientes (`creativeStaffBypass`). A barreira de casa

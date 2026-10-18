@@ -11,6 +11,7 @@ import com.aurorion.areas.profile.*;
 import com.aurorion.areas.region.AreaRegion;
 import com.aurorion.areas.rules.*;
 import com.aurorion.areas.server.AreaRuntime;
+import com.aurorion.areas.server.AreaWatch;
 import com.aurorion.areas.server.HouseBarrier;
 import com.aurorion.core.house.HouseGate;
 import com.mojang.brigadier.*;
@@ -62,7 +63,7 @@ public final class AreaCommands {
                         /area prioridade <id> <n> | ambiente <id> <perfil>|nenhum|herdar
                         /area monstros <id> vida|dano <fator> | excecao <id> <jogador> <regra> true|false
                         /area nome <id> <nome> | ativar <id> true|false | mundo <perfil>|herdar
-                        /area casa <id> <casa>|nenhum
+                        /area casa <id> <casa>|nenhum | aviso <id> true|false | avisos [puxar|teste]
                         /area aqui [jogador] | ver <id> | listar | visualizar [id] | remover <id>
                         """));
         root.then(literal("selecao").executes(run(c -> start(c.getSource().getPlayerOrException()))));
@@ -113,7 +114,11 @@ public final class AreaCommands {
                         .executes(run(c -> house(c, ResourceLocationArgument.getId(c, "casa")))))));
         root.then(literal("perfil").then(area().then(presetArgument().executes(run(c -> {
             var region = region(c);
-            return update(c, region.withRules(preset(c).rules()), "Regras substituídas pelo perfil selecionado.");
+            var rules = preset(c).rules();
+            // O aviso e escolha da staff para aquela area, nao conteudo de perfil: trocar o perfil
+            // nao pode desligar o Discord em silencio.
+            if (AreaWatch.watches(region)) rules = rules.withFlag(AreaWatch.RULE, Decision.ALLOW);
+            return update(c, region.withRules(rules), "Regras substituídas pelo perfil selecionado.");
         })))));
         root.then(literal("regra").then(area().then(ruleArgument().then(argument("decisao", StringArgumentType.word())
                 .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("permitir", "negar", "herdar"), b))
@@ -123,6 +128,31 @@ public final class AreaCommands {
                             Decision.parse(StringArgumentType.getString(c, "decisao")));
                     return update(c, region.withRules(rules), "Regra atualizada.");
                 }))))));
+        root.then(literal("aviso").then(area().then(argument("ligado", BoolArgumentType.bool()).executes(run(c -> {
+            var region = region(c);
+            boolean on = BoolArgumentType.getBool(c, "ligado");
+            var rules = region.rules().withFlag(AreaWatch.RULE, on ? Decision.ALLOW : Decision.INHERIT);
+            return update(c, region.withRules(rules), on
+                    ? "Aviso de entrada no Discord LIGADO. Staff em criativo/espectador não dispara o aviso."
+                    : "Aviso de entrada no Discord desligado.");
+        })))));
+        // Sem audit no puxar: o bot chama a cada poucos segundos e afogaria o log de administracao.
+        root.then(literal("avisos").executes(run(c -> {
+            var areas = AreaWatch.watchedAreas(c.getSource().getServer());
+            StringBuilder out = new StringBuilder("Áreas com aviso no Discord (").append(areas.size()).append("):");
+            for (var a : areas) out.append("\n").append(a.id()).append(" — ").append(a.name()).append(" | ").append(a.dimension());
+            if (areas.isEmpty()) out.append(" nenhuma. Use /area aviso <id> true.");
+            return out.append("\nNa fila para o bot: ").append(AreaWatch.pending()).toString();
+        })).then(literal("puxar").executes(run(c -> AreaWatch.pull())))
+                .then(literal("teste").executes(run(c -> {
+                    var source = c.getSource();
+                    var player = source.getPlayer();
+                    AreaWatch.test(source.getServer(), source.getTextName(),
+                            player == null ? new UUID(0, 0) : player.getUUID(),
+                            source.getLevel().dimension().location(), net.minecraft.core.BlockPos.containing(source.getPosition()));
+                    audit(c);
+                    return "Evento de teste colocado na fila; o bot deve postá-lo em alguns segundos.";
+                }))));
         var ambience = area()
                 .then(literal("nenhum").executes(run(c -> ambience(c, AreaRules.NO_AMBIENCE))))
                 .then(literal("herdar").executes(run(c -> ambience(c, null))))
