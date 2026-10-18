@@ -1111,14 +1111,15 @@ A seção `[aliados]` tem `magiasIgnoramTime`; a `[destruicao]` tem `esferaQuebr
 
 Ligada (padrão), **magia acerta qualquer pessoa, de qualquer time**: nenhuma magia poupa aliado — nem
 as do Aurorion, nem as do Iron's — e o dano entra mesmo com o fogo amigo do time desligado. Por baixo,
-o Iron's e o vanilla recusam dano cujo *causador* é do mesmo time; entre aliados, o dano sai com quem
-conjurou só como entidade direta, sem causador (`FriendlyFire`). A mensagem de morte continua com o
-nome de quem conjurou, mas matar um aliado com magia não conta abate. Área sem PvP (servidor ou
-`aurorion-areas`) continua protegendo. Desligada, toda magia volta a poupar o próprio time.
+os mixins de `FriendlyFire` liberam a checagem de aliados do Iron's e a checagem de time em
+`ServerPlayer.hurt` apenas para dano mágico. A fonte original mantém a autoria, os efeitos de acerto
+e os abates; o evento de dano roda uma única vez. Área sem PvP (servidor ou `aurorion-areas`)
+continua protegendo. Desligada, toda magia volta a poupar o próprio time.
 
 Fica de fora o que não é dano de magia: a Presença Aterradora tem chave própria
 (`dreadSparesAllies`), e mob dominado pelo Imperium continua não atacando o mestre nem os aliados dele.
-Projéteis do próprio Iron's que atravessam aliados sem colidir (decisão interna do projétil) não mudam.
+Projéteis do Iron's que usam `DamageSources.isFriendlyFireBetween` também passam a colidir com
+aliados. Addons que tenham seu próprio filtro de time precisam ser validados separadamente.
 
 `config/aurorion/magia-client.toml`: `visualDistance` (até 32, o limite do vanilla para partículas),
 `cameraShake` (0 desliga).

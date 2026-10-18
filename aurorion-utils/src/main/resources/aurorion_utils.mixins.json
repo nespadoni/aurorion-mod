@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "com.aurorion.utils.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": ["MimicryClientUseMixin"],
+  "mixins": ["MimicryClientUseMixin", "SimplyMoreCooldownSideMixin"],
   "client": ["DisposedDynamicTextureMixin"],
   "injectors": {"defaultRequire": 1}
 }

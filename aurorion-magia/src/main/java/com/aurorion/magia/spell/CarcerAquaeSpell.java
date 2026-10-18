@@ -80,7 +80,7 @@ public final class CarcerAquaeSpell extends AurorionSpell {
                     WaterCage.burst(target);
                 } else {
                     WaterCage.cage(target, entity, ControlSpells.duration("carcer_aquae", duration(spellLevel)));
-                    ToggleCooldown.skipNext(entity);
+                    ToggleCooldown.skipNext(entity, this);
                 }
             }
         }

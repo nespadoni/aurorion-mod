@@ -91,7 +91,7 @@ public final class AspectusCaptusSpell extends AurorionSpell {
                     if (victim.hasEffect(MagiaEffects.CAPTIVE)) victim.removeEffect(MagiaEffects.CAPTIVE);
                     else {
                         capture(entity, victim, duration);
-                        ToggleCooldown.skipNext(entity);
+                        ToggleCooldown.skipNext(entity, this);
                     }
                 }
                 Vec3 at = entity.position();
@@ -104,7 +104,7 @@ public final class AspectusCaptusSpell extends AurorionSpell {
                     if (target.hasEffect(MagiaEffects.CAPTIVE)) target.removeEffect(MagiaEffects.CAPTIVE);
                     else {
                         capture(entity, target, duration);
-                        ToggleCooldown.skipNext(entity);
+                        ToggleCooldown.skipNext(entity, this);
                     }
                 }
             }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/** Um ritual aplica uma unica mudanca de vida no fim da conjuracao. */
+/** Um ritual transfere uma vida entre alvo e conjurador no fim da conjuracao. */
 public abstract class LifeSpell extends AurorionSpell {
     private static final int RANGE = 16;
     private final int delta;
@@ -44,21 +44,25 @@ public abstract class LifeSpell extends AurorionSpell {
     @Override
     public boolean checkPreCastConditions(Level level, int spellLevel, LivingEntity caster, MagicData data) {
         if (level.isClientSide) return true;
+        if (!(caster instanceof ServerPlayer playerCaster)) return false;
         if (!LivesMagic.available()) {
-            if (caster instanceof ServerPlayer player)
-                player.displayClientMessage(Component.translatable("aurorion_magia.vidas_indisponiveis"), true);
+            playerCaster.displayClientMessage(Component.translatable("aurorion_magia.vidas_indisponiveis"), true);
             return false;
         }
         return aim(level, caster, data, RANGE, delta > 0, target -> target instanceof ServerPlayer player
-                && (delta > 0 || Hits.hittable(caster, target)) && LivesMagic.canChange(player, delta));
+                && (delta > 0 || Hits.hittable(caster, target))
+                && (delta < 0 ? LivesMagic.canTransfer(player, playerCaster)
+                              : LivesMagic.canTransfer(playerCaster, player)));
     }
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity caster, CastSource source, MagicData data) {
-        if (level instanceof ServerLevel serverLevel && target(serverLevel, caster, data) instanceof ServerPlayer target
+        if (level instanceof ServerLevel serverLevel && caster instanceof ServerPlayer playerCaster
+                && caster.isAlive() && target(serverLevel, caster, data) instanceof ServerPlayer target
                 && target.isAlive() && caster.distanceToSqr(target) <= RANGE * RANGE && caster.hasLineOfSight(target)
                 && (delta > 0 || Hits.hittable(caster, target) && Hits.enemy(caster, target))
-                && LivesMagic.change(target, delta)) {
+                && (delta < 0 ? LivesMagic.transfer(target, playerCaster)
+                              : LivesMagic.transfer(playerCaster, target))) {
             target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 100, 0), caster);
             if (delta < 0) {
                 target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 400, 0), caster);
@@ -68,8 +72,11 @@ public abstract class LifeSpell extends AurorionSpell {
             sound(target, delta < 0 ? SoundEvents.WITHER_SPAWN : SoundEvents.TOTEM_USE, 0.8f, 1.0f);
             target.sendSystemMessage(Component.translatable(delta < 0
                     ? "aurorion_magia.vida_ceifada" : "aurorion_magia.vida_entregue", caster.getDisplayName()));
-            AurorionMagia.LOGGER.info("Magia {}: {} ajustou uma vida de {} (delta {}).",
-                    getSpellId(), caster.getUUID(), target.getUUID(), delta);
+            playerCaster.sendSystemMessage(Component.translatable(delta < 0
+                    ? "aurorion_magia.vida_recebida_ceifar" : "aurorion_magia.vida_doada", target.getDisplayName()));
+            AurorionMagia.LOGGER.info("Magia {}: uma vida transferida de {} para {}.", getSpellId(),
+                    delta < 0 ? target.getUUID() : caster.getUUID(),
+                    delta < 0 ? caster.getUUID() : target.getUUID());
         }
         super.onCast(level, spellLevel, caster, source, data);
     }

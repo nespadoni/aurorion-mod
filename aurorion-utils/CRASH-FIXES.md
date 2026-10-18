@@ -1,4 +1,18 @@
-# Proteções para crashes de cliente — 01/10/2026
+# Proteções para crashes de cliente
+
+## Atualização preparada em 17/10/2026 — Utils 0.2.4
+
+`SimplyMoreCooldownSideMixin` impede `EntityUtils.putAllItemsOnCooldown` de executar
+no cliente. O Simply More 1.3.0_alpha converte o mundo de entidades que não são
+jogadores em `ServerLevel`, inclusive quando `StunEffect` é aplicado em um dummy
+no cliente. A rotina original continua funcionando no servidor. A proteção anterior
+da Mimi-Cry permanece ativa.
+
+A versão deve chegar a todos os clientes pelo pack/AutoModpack. Compilação e ensaios
+em jogo desta atualização estão pendentes em outra máquina; ver
+[roteiro completo](../docs/CORRECOES-MAGIAS-SIMPLYMORE-2026-10-17.md).
+
+## Histórico — 01/10/2026
 
 Os dois relatórios fornecidos são crashes do cliente conectado ao servidor.
 

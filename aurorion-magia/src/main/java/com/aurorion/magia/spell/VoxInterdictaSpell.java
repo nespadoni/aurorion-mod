@@ -97,13 +97,13 @@ public final class VoxInterdictaSpell extends AurorionSpell {
                     }
                 }
                 sound(serverLevel, entity.position(), SoundEvents.WARDEN_SONIC_BOOM, 0.9f, 0.6f);
-                if (applied) ToggleCooldown.skipNext(entity);
+                if (applied) ToggleCooldown.skipNext(entity, this);
             } else if (target(serverLevel, entity, playerMagicData) instanceof ServerPlayer target) {
                 if (target.hasEffect(MagiaEffects.SILENCED)) {
                     restore(target);
                 } else {
                     silence(entity, target, ControlSpells.duration("vox_interdicta", duration(spellLevel)));
-                    ToggleCooldown.skipNext(entity);
+                    ToggleCooldown.skipNext(entity, this);
                 }
             }
         }

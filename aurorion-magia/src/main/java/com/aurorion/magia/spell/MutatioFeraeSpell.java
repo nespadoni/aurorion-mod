@@ -78,7 +78,7 @@ public final class MutatioFeraeSpell extends AurorionSpell {
                 if (target.hasEffect(MagiaEffects.POLYMORPH)) target.removeEffect(MagiaEffects.POLYMORPH);
                 else {
                     transform(entity, target, ControlSpells.duration("mutatio_ferae", duration(spellLevel)));
-                    ToggleCooldown.skipNext(entity);
+                    ToggleCooldown.skipNext(entity, this);
                 }
             }
         }

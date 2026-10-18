@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AnvilMenuMixin",
+    "SmithingMenuMixin",
     "RepairRecipeMixin",
     "GrindstoneMenuMixin",
     "EnchantmentMenuMixin",

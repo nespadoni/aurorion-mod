@@ -78,7 +78,7 @@ public final class VinculumCarnificisSpell extends AurorionSpell {
                     Binding.unbind(target);
                 } else {
                     Binding.bind(target, entity, radius(spellLevel));
-                    ToggleCooldown.skipNext(entity);
+                    ToggleCooldown.skipNext(entity, this);
                 }
             }
         }

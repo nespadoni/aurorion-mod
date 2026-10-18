@@ -84,7 +84,7 @@ public final class MundusVacuusSpell extends AurorionSpell {
                 restore(target);
             } else {
                 empty(entity, target, ControlSpells.duration("mundus_vacuus", duration(spellLevel)));
-                ToggleCooldown.skipNext(entity);
+                ToggleCooldown.skipNext(entity, this);
             }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);

@@ -1,3 +1,17 @@
+# Correções preparadas - 17/10/2026
+
+- Magia 0.6.1: proteção da recarga do Barril Explosivo, exceções de cooldown
+  limitadas à magia correta, transferência de vidas em Ceifar/Entregar e checagens
+  de time que preservam autoria e efeitos de acerto.
+- Vidas 0.2.5: transferência de uma vida com validação dos dois saldos antes da escrita.
+- Utils 0.2.4: proteção do cooldown de stun do Simply More no cliente, incluindo
+  dummies; mantém a proteção de uso da Mimi-Cry.
+- Profissões 0.5.2: mesa de ferraria somente para ferreiros (staff criativa liberada) e
+  revalidação da receita a cada retirada por shift-click, contra a duplicação ao aprimorar.
+- Magia: chamadas restantes de `ToggleCooldown.skipNext` atualizadas para a nova assinatura.
+- Código preparado sem compilação ou teste em jogo nesta máquina, conforme AGENTS.md.
+  Roteiro de validação e instalação em [docs/CORRECOES-MAGIAS-SIMPLYMORE-2026-10-17.md](docs/CORRECOES-MAGIAS-SIMPLYMORE-2026-10-17.md).
+
 # Release local - 08/10/2026
 
 - Magia 0.6.0: Reino das Almas, Vazio Infinito e Santuário Malevolente (cortes somente

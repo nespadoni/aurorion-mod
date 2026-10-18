@@ -8,10 +8,10 @@ import net.neoforged.fml.ModList;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
-/** Ponte opcional para o mesmo caminho de /vidas dar e /vidas tirar, sem executar comandos. */
+/** Ponte opcional para a transferencia atomica do aurorion-vidas, sem executar comandos. */
 public final class LivesMagic {
     private static boolean initialized;
-    private static Method livesOf, addLives, maxLives;
+    private static Method canTransferLife, transferLife;
 
     private LivesMagic() { }
 
@@ -21,35 +21,29 @@ public final class LivesMagic {
             if (!ModList.get().isLoaded("aurorion_vidas")) return false;
             try {
                 Class<?> manager = Class.forName("com.aurorion.vidas.lives.LivesManager");
-                livesOf = manager.getMethod("livesOf", MinecraftServer.class, UUID.class);
-                addLives = manager.getMethod("addLives", MinecraftServer.class, UUID.class, int.class);
-                maxLives = manager.getMethod("maxLives");
+                canTransferLife = manager.getMethod("canTransferLife", MinecraftServer.class, UUID.class, UUID.class);
+                transferLife = manager.getMethod("transferLife", MinecraftServer.class, UUID.class, UUID.class);
             } catch (ReflectiveOperationException | LinkageError error) {
-                addLives = null;
+                transferLife = null;
                 AurorionMagia.LOGGER.error("Magias de vida: API de aurorion-vidas indisponivel.", error);
             }
         }
-        return addLives != null;
+        return transferLife != null;
     }
 
-    public static boolean canChange(ServerPlayer target, int delta) {
-        if (!available()) return false;
+    public static boolean canTransfer(ServerPlayer donor, ServerPlayer recipient) {
+        if (!available() || donor.server != recipient.server) return false;
         try {
-            int current = (int) livesOf.invoke(null, target.server, target.getUUID());
-            // Morto definitivo nao volta por magia: LivesManager tambem garante essa regra na escrita.
-            if (com.aurorion.core.character.CharacterData.get(target.server).isDead(target.getUUID())) return false;
-            return delta < 0 ? current > 0 : current < (int) maxLives.invoke(null);
+            return (boolean) canTransferLife.invoke(null, donor.server, donor.getUUID(), recipient.getUUID());
         } catch (ReflectiveOperationException error) {
             throw new IllegalStateException("Falha ao consultar vidas para magia", error);
         }
     }
 
-    public static boolean change(ServerPlayer target, int delta) {
-        if (!canChange(target, delta)) return false;
+    public static boolean transfer(ServerPlayer donor, ServerPlayer recipient) {
+        if (!available() || donor.server != recipient.server) return false;
         try {
-            int before = (int) livesOf.invoke(null, target.server, target.getUUID());
-            int after = (int) addLives.invoke(null, target.server, target.getUUID(), delta);
-            return after != before;
+            return (boolean) transferLife.invoke(null, donor.server, donor.getUUID(), recipient.getUUID());
         } catch (ReflectiveOperationException error) {
             throw new IllegalStateException("Falha ao ajustar vidas por magia", error);
         }

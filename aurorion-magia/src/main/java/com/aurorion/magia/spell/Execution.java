@@ -38,7 +38,7 @@ public final class Execution {
      */
     public static void execute(ServerLevel level, LivingEntity caster, LivingEntity target, ResourceKey<DamageType> type) {
         if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return;
-        if (target.hurt(FriendlyFire.source(source(level, caster, type), target), Float.MAX_VALUE) && target.isAlive()) {
+        if (target.hurt(source(level, caster, type), Float.MAX_VALUE) && target.isAlive()) {
             target.kill();
         }
     }

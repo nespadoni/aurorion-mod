@@ -69,6 +69,9 @@ Sem o LSO, o módulo inicia normalmente e o atendimento médico mostra a integra
 ## Ferreiro e Mending
 
 - A bigorna só funciona para ferreiros. O servidor confere também a retirada do resultado.
+- A mesa de ferraria (smithing table) também só funciona para ferreiros, inclusive o upgrade de
+  ferraria das mochilas do Sophisticated Backpacks. Cada retirada com shift-click revalida a receita
+  com os insumos atuais, o que impede retirar de novo um resultado antigo depois de os insumos acabarem.
 - Combinar dois equipamentos para reparar na grade de criação ou na pedra de amolar fica bloqueado.
   Desencantar **um** item na pedra de amolar continua permitido.
 - Atendimento pela UI exige bigorna a até 3 blocos do ferreiro. Cada material adequado recupera

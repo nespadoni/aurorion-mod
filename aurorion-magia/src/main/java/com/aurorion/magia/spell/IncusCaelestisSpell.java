@@ -113,7 +113,7 @@ public final class IncusCaelestisSpell extends AurorionSpell {
     public static void crush(ServerLevel level, @Nullable LivingEntity caster, LivingEntity victim, float damage) {
         if (caster != null && !Hits.enemy(caster, victim)) return;
         float dealt = Displacement.isImmune(victim) ? Math.min(damage, BOSS_CRUSH) : damage;
-        victim.hurt(caster != null ? FriendlyFire.source(Execution.source(level, caster, DAMAGE_TYPE), victim)
+        victim.hurt(caster != null ? Execution.source(level, caster, DAMAGE_TYPE)
                 : level.damageSources().anvil(null), SpellBalance.damage(dealt));
         sound(victim, SoundEvents.ANVIL_LAND, 1.8f, 0.6f);
     }

@@ -100,14 +100,14 @@ public final class ImperiumMentisSpell extends AurorionSpell {
         int duration;
         if (target instanceof ServerPlayer player) {
             duration = ControlSpells.duration("imperium_mentis", disorientationTicks(spellLevel));
-            ToggleCooldown.skipNext(caster);
+            ToggleCooldown.skipNext(caster, this);
             player.addEffect(new MobEffectInstance(MagiaEffects.DISORIENTED, duration, 0, false, false, true), caster);
             // O bloqueio vale ja: conjuracao em andamento e item em uso (arco, escudo, comida) caem.
             if (MagicData.getPlayerMagicData(player).isCasting()) Utils.serverSideCancelCast(player);
             player.stopUsingItem();
         } else if (target instanceof Mob mob && Domination.canDominate(mob)) {
             duration = ControlSpells.duration("imperium_mentis", dominationTicks(spellLevel));
-            ToggleCooldown.skipNext(caster);
+            ToggleCooldown.skipNext(caster, this);
             Domination.dominate(mob, caster, duration);
         } else {
             // Imune: so o lampejo do impacto, para quem conjurou entender que a mente resistiu.

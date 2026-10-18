@@ -32,20 +32,29 @@ import java.util.Optional;
  * explode, ferindo os inimigos no raio e jogando todos para <b>longe do centro</b> — quanto mais perto
  * do estouro, mais longe vao.
  *
- * <p>Nao quebra bloco nem poe fogo: a explosao e de magia, nao de polvora. Aliados nao sao feridos nem
- * empurrados. Chefes levam o dano e ficam no lugar.
+ * <p>Nao quebra bloco nem poe fogo: a explosao e de magia, nao de polvora. A regra magiasIgnoramTime
+ * decide se aliados sao feridos e empurrados. Chefes levam o dano e ficam no lugar.
  */
 public final class DoliumArdensSpell extends AurorionSpell {
     private static final int RANGE = 30;
     private static final int MAX_TARGETS = 24;
+    private static final int DEFAULT_COOLDOWN_SECONDS = 35;
 
     public DoliumArdensSpell() {
-        super("dolium_ardens", SchoolRegistry.FIRE_RESOURCE, SpellRarity.EPIC, 3, 35, CastType.INSTANT);
+        super("dolium_ardens", SchoolRegistry.FIRE_RESOURCE, SpellRarity.EPIC, 3, DEFAULT_COOLDOWN_SECONDS, CastType.INSTANT);
         this.baseSpellPower = 8;
         this.spellPowerPerLevel = 3;
         this.baseManaCost = 60;
         this.manaCostPerLevel = 15;
         this.castTime = 0;
+    }
+
+    @Override
+    public int getSpellCooldown() {
+        int configured = super.getSpellCooldown();
+        // O default nao substitui o JSON ja existente do Iron's. Uma recarga zerada no arquivo
+        // antigo nao pode tornar o barril ilimitado; valores positivos e reducoes continuam valendo.
+        return configured > 0 ? configured : DEFAULT_COOLDOWN_SECONDS * 20;
     }
 
     @Override

@@ -22,7 +22,6 @@ import com.aurorion.magia.effect.InfiniteVoidEffect;
 import com.aurorion.magia.spell.Binding;
 import com.aurorion.magia.spell.CampusStaticusSpell;
 import com.aurorion.magia.spell.Domination;
-import com.aurorion.magia.spell.FriendlyFire;
 import com.aurorion.magia.spell.Drowning;
 import com.aurorion.magia.spell.Gaze;
 import com.aurorion.magia.spell.Impetus;
@@ -41,7 +40,6 @@ import com.aurorion.magia.unlock.SpellAccess;
 import com.aurorion.magia.unlock.SpellUnlockData;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
 import io.redspace.ironsspellbooks.api.events.SpellCooldownAddedEvent;
-import io.redspace.ironsspellbooks.api.events.SpellDamageEvent;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
@@ -171,9 +169,14 @@ public final class MagiaServerEvents {
      * Magia de ligar e desligar que acabou de <b>ligar</b> nao abre cooldown: senao o conjurador nao
      * conseguiria desliga-la antes do cooldown inteiro passar. Ver {@link ToggleCooldown}.
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onCooldown(SpellCooldownAddedEvent.Pre event) {
-        if (ToggleCooldown.consume(event.getEntity())) event.setCanceled(true);
+        if (ToggleCooldown.consume(event.getEntity(), event.getSpell())) {
+            event.setCanceled(true);
+        } else if (event.getSpell() == MagiaSpells.DOLIUM_ARDENS.get() && event.getEffectiveCooldown() <= 0) {
+            // Multiplicadores de arma/atributos tambem podem zerar a recarga depois do config.
+            event.setEffectiveCooldown(event.getSpell().getSpellCooldown());
+        }
     }
 
     private static void deny(SpellPreCastEvent event, ServerPlayer player, Component message) {
@@ -247,6 +250,7 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        ToggleCooldown.forget(event.getEntity().getUUID());
         VoiceMute.unmute(event.getEntity().getUUID());
         IronBinding.release(event.getEntity().getUUID());
         // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
@@ -620,16 +624,6 @@ public final class MagiaServerEvents {
         if (!event.getProjectile().level().isClientSide && event.getProjectile() instanceof AbstractArrow arrow) {
             SovaArrows.onImpact(arrow, event.getRayTraceResult());
         }
-    }
-
-    /**
-     * Magia do Iron's (ou de outro addon) em aliado: com {@code magiasIgnoramTime}, o dano entra mesmo
-     * entre gente do mesmo time. {@code LOWEST}: quem quiser cancelar o dano por outro motivo cancela
-     * antes, e a gente nao reaplica dano cancelado.
-     */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onSpellDamage(SpellDamageEvent event) {
-        FriendlyFire.onSpellDamage(event);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

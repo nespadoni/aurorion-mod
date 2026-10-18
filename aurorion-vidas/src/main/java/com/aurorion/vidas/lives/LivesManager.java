@@ -144,6 +144,34 @@ public final class LivesManager {
 
     // --- Administracao -------------------------------------------------------------------------
 
+    /** Consulta sem efeitos colaterais; o teto do recebedor nao pode destruir a vida do doador. */
+    public static boolean canTransferLife(MinecraftServer server, UUID donor, UUID recipient) {
+        if (donor.equals(recipient)) return false;
+        CharacterData characters = CharacterData.get(server);
+        if (characters.isDead(donor) || characters.isDead(recipient)) return false;
+        LivesData data = LivesData.get(server);
+        return data.livesOf(donor) > 0 && data.livesOf(recipient) < maxLives();
+    }
+
+    /**
+     * Transfere exatamente uma vida na thread do servidor. Os dois saldos sao gravados antes de
+     * qualquer pacote ou atualizacao de placar: nao ha uma concessao isolada nem uma perda isolada.
+     * Doar a ultima vida e permitido; zero passa a ser reconhecido pelo sistema normal de exilio.
+     */
+    public static boolean transferLife(MinecraftServer server, UUID donor, UUID recipient) {
+        if (!server.isSameThread()) throw new IllegalStateException("Transferencia de vida fora da thread do servidor");
+        if (!canTransferLife(server, donor, recipient)) return false;
+        LivesData data = LivesData.get(server);
+        int donorAfter = data.livesOf(donor) - 1;
+        int recipientAfter = data.livesOf(recipient) + 1;
+        data.setLives(donor, donorAfter);
+        data.setLives(recipient, recipientAfter);
+        syncIfOnline(server, donor, donorAfter);
+        syncIfOnline(server, recipient, recipientAfter);
+        EtherealProjectorNotifier.refreshLives(server);
+        return true;
+    }
+
     /** @return o valor gravado depois do ajuste. */
     public static int setLives(MinecraftServer server, UUID player, int value) {
         if (CharacterData.get(server).isDead(player)) value = 0;

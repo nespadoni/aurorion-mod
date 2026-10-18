@@ -68,7 +68,7 @@ public final class FerrumLigatumSpell extends AurorionSpell {
                 return;
             }
             int duration = ControlSpells.duration("ferrum_ligatum", duration(spellLevel));
-            ToggleCooldown.skipNext(entity);
+            ToggleCooldown.skipNext(entity, this);
             IronBinding.bind(target);
             target.addEffect(new MobEffectInstance(MagiaEffects.IRON_BOUND, duration, 0, false, false, true), entity);
             target.displayClientMessage(Component.translatable("aurorion_magia.ferro_vinculado"), true);

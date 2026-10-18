@@ -86,7 +86,7 @@ public final class GenuaFlecteSpell extends AurorionSpell {
                     rise(target);
                 } else {
                     kneel(entity, target, ControlSpells.duration("genua_flecte", duration(spellLevel)));
-                    ToggleCooldown.skipNext(entity);
+                    ToggleCooldown.skipNext(entity, this);
                 }
             }
         }

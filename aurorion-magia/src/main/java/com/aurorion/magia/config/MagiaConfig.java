@@ -71,8 +71,8 @@ public final class MagiaConfig {
                 .comment(
                         "true (padrao): magia acerta qualquer pessoa, de qualquer time. Nenhuma magia poupa aliado",
                         "(nem do Aurorion nem do Iron's), e o dano entre aliados passa mesmo com o fogo amigo do",
-                        "time desligado. Area sem PvP (servidor ou aurorion-areas) continua protegendo. Matar um",
-                        "aliado com magia nao conta abate para quem conjurou.",
+                        "time desligado. Area sem PvP (servidor ou aurorion-areas) continua protegendo.",
+                        "A autoria do dano e os efeitos de acerto da magia sao preservados.",
                         "false: magia poupa o proprio time, como o Iron's faz sozinho.",
                         "A Presenca Aterradora tem chave propria (dreadSparesAllies).")
                 .define("magiasIgnoramTime", true);

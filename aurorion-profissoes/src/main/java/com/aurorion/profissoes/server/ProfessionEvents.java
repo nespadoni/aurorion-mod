@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.*;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.bus.api.*;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -42,11 +43,15 @@ public final class ProfessionEvents {
         if (event.player() != null) ProfessionsNetwork.sync(event.player());
     }
     @SubscribeEvent public static void anvil(PlayerInteractEvent.RightClickBlock event) {
-        if (!ProfessionsConfig.enabled() || !event.getLevel().getBlockState(event.getPos()).is(BlockTags.ANVIL)
-                || SpecialtyRules.smith(event.getEntity())) return;
+        if (!ProfessionsConfig.enabled()) return;
+        var state = event.getLevel().getBlockState(event.getPos());
+        boolean anvil = state.is(BlockTags.ANVIL);
+        if (!anvil && !state.is(Blocks.SMITHING_TABLE) || SpecialtyRules.smith(event.getEntity())) return;
         event.setCanceled(true); event.setCancellationResult(InteractionResult.FAIL);
         if (event.getEntity() instanceof ServerPlayer player)
-            ServiceManager.status(player, "Conhecimento de ferraria", "O uso da bigorna exige um ferreiro. Segure o equipamento e interaja com ele enquanto estiver agachado.");
+            ServiceManager.status(player, "Conhecimento de ferraria", anvil
+                    ? "O uso da bigorna exige um ferreiro. Segure o equipamento e interaja com ele enquanto estiver agachado."
+                    : "O uso da mesa de ferraria exige um ferreiro.");
     }
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void mending(GetEnchantmentLevelEvent event) {
         if (!ProfessionsConfig.enabled() || SpecialtyRules.adminMending(event.getStack()) || !event.isTargetting(Enchantments.MENDING)) return;

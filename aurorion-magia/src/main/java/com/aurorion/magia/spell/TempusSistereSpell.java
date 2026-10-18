@@ -82,7 +82,7 @@ public final class TempusSistereSpell extends AurorionSpell {
                 TimeStop.stop(entity);
             } else {
                 TimeStop.start(serverLevel, entity, radius(spellLevel));
-                ToggleCooldown.skipNext(entity);
+                ToggleCooldown.skipNext(entity, this);
             }
         }
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
