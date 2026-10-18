@@ -3,6 +3,8 @@ package com.aurorion.essentials.network;
 import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.fakename.FakeName;
 import com.aurorion.essentials.fakename.FakeNameRegistry;
+import com.aurorion.essentials.server.PhoneGroupService;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -29,6 +31,33 @@ public final class EssentialsNetwork {
                 EssentialsNetwork::handleRetiredPhoneContacts);
         registrar.playToClient(PhoneNameDirectoryPayload.TYPE, PhoneNameDirectoryPayload.STREAM_CODEC,
                 EssentialsNetwork::handlePhoneNameDirectory);
+
+        // Grupos do app Mensagens. Pacotes novos, nao formato novo: a versao do protocolo fica.
+        registrar.playToServer(PhoneGroupPayloads.Action.TYPE, PhoneGroupPayloads.Action.STREAM_CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) {
+                context.enqueueWork(() -> PhoneGroupService.handleAction(player, payload));
+            }
+        });
+        registrar.playToServer(PhoneGroupPayloads.Send.TYPE, PhoneGroupPayloads.Send.STREAM_CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) {
+                context.enqueueWork(() -> PhoneGroupService.handleSend(player, payload));
+            }
+        });
+        registrar.playToClient(PhoneGroupPayloads.Sync.TYPE, PhoneGroupPayloads.Sync.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                context.enqueueWork(() -> com.aurorion.essentials.client.PhoneGroupsClient.applySync(payload));
+            }
+        });
+        registrar.playToClient(PhoneGroupPayloads.Messages.TYPE, PhoneGroupPayloads.Messages.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                context.enqueueWork(() -> com.aurorion.essentials.client.PhoneGroupsClient.receive(payload));
+            }
+        });
+        registrar.playToClient(PhoneGroupPayloads.Notice.TYPE, PhoneGroupPayloads.Notice.STREAM_CODEC, (payload, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                context.enqueueWork(() -> com.aurorion.essentials.client.PhoneGroupsClient.notice(payload));
+            }
+        });
     }
 
     private static void handlePhoneNameDirectory(PhoneNameDirectoryPayload payload, IPayloadContext context) {

@@ -34,8 +34,8 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-# 0.6.3: cadastro, selecao e persistencia de multiplos personagens alternativos.
-versionRange = "[0.6.3,)"
+# 0.6.5: flush dos dados da transacao (SavedDataAccess#flush) na criacao e troca de alt.
+versionRange = "[0.6.5,)"
 ordering = "AFTER"
 side = "BOTH"
 

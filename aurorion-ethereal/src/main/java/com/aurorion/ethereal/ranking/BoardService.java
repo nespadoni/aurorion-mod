@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +24,10 @@ import java.util.Set;
  * custava tick igual, e o custo crescia com a quantidade de projetores construidos no mundo. Aqui o
  * gatilho e o evento que mudou o dado — morte, duelo, missao, ajuste de ponto, vinculacao a uma casa
  * — e o custo e O(projetores carregados daquele modo).
+ *
+ * <p>O evento so marca o modo como sujo; {@link #tick} recalcula no maximo uma vez por segundo, cada
+ * modo uma vez so, e entrega as mesmas linhas a todos os projetores daquele modo. Uma rajada de
+ * mudancas de saldo (compra em lote, salario de todo mundo) vira um recalculo, e nao um por saldo.
  */
 public final class BoardService {
     /**
@@ -30,6 +36,14 @@ public final class BoardService {
      */
     private static final Set<AeonicProjectorBlockEntity> LOADED =
             Collections.newSetFromMap(new IdentityHashMap<>());
+
+    /** Intervalo minimo entre dois recalculos dos modos sujos: 1 s. */
+    private static final int FLUSH_INTERVAL_TICKS = 20;
+
+    /** Modos com dado novo esperando o proximo {@link #tick}. Thread do servidor apenas. */
+    private static final EnumSet<BoardMode> DIRTY = EnumSet.noneOf(BoardMode.class);
+
+    private static int lastFlushTick = -FLUSH_INTERVAL_TICKS;
 
     private BoardService() {
     }
@@ -45,25 +59,26 @@ public final class BoardService {
 
     public static void clear() {
         LOADED.clear();
+        DIRTY.clear();
+        lastFlushTick = -FLUSH_INTERVAL_TICKS;
     }
 
-    /** Recalcula um projetor so. */
+    /** Recalcula um projetor so, na hora (acabou de carregar ou de ser configurado). */
     public static void refresh(AeonicProjectorBlockEntity projector) {
         if (projector.isRemoved() || !(projector.getLevel() instanceof ServerLevel level)) {
             return;
         }
-        MinecraftServer server = level.getServer();
-        BoardMode mode = projector.mode();
+        projector.setRenderedLines(lines(level.getServer(), projector.mode()));
+    }
 
+    /** As linhas de um modo. Dependem so do servidor e do modo, nunca do projetor. */
+    private static List<BoardLine> lines(MinecraftServer server, BoardMode mode) {
         if (mode == BoardMode.RICHEST_HOUSES || mode == BoardMode.RICHEST_PLAYERS) {
-            projector.setRenderedLines(EconomyBoardBridge.lines(
-                    server, mode, AeonicProjectorBlockEntity.MAX_LINES));
-            return;
+            return EconomyBoardBridge.lines(server, mode, AeonicProjectorBlockEntity.MAX_LINES);
         }
 
         if (mode == BoardMode.LIVES) {
-            projector.setRenderedLines(lifeLines(server, AeonicProjectorBlockEntity.MAX_LINES));
-            return;
+            return lifeLines(server, AeonicProjectorBlockEntity.MAX_LINES);
         }
 
         List<RankedEntry> ranking = RankingData.get(server).top(
@@ -75,22 +90,46 @@ public final class BoardService {
             RankedEntry entry = ranking.get(i);
             lines.add(new BoardLine(mode.line(i + 1, entry.label(), entry.value()), entry.color()));
         }
-        projector.setRenderedLines(lines);
+        return lines;
     }
 
-    /** Recalcula os projetores carregados que mostram algum dos modos dados. */
+    /**
+     * Marca os modos dados para recalculo. Os projetores carregados que mostram algum deles recebem
+     * as linhas novas no proximo {@link #tick} permitido (no maximo 1 s depois).
+     */
     public static void refresh(MinecraftServer server, BoardMode... modes) {
+        Collections.addAll(DIRTY, modes);
+    }
+
+    /**
+     * Fim de cada tick do servidor. Sem modo sujo sai na primeira linha; com, recalcula no maximo uma
+     * vez a cada {@value #FLUSH_INTERVAL_TICKS} ticks, cada modo uma vez so.
+     */
+    public static void tick(MinecraftServer server) {
+        if (DIRTY.isEmpty()) {
+            return;
+        }
+        int now = server.getTickCount();
+        if (now >= lastFlushTick && now - lastFlushTick < FLUSH_INTERVAL_TICKS) {
+            return;
+        }
+        lastFlushTick = now;
+
+        EnumMap<BoardMode, List<BoardLine>> computed = new EnumMap<>(BoardMode.class);
         for (AeonicProjectorBlockEntity projector : LOADED) {
-            if (!(projector.getLevel() instanceof ServerLevel level) || level.getServer() != server) {
+            BoardMode mode = projector.mode();
+            if (projector.isRemoved() || !(projector.getLevel() instanceof ServerLevel level)
+                    || level.getServer() != server || !DIRTY.contains(mode)) {
                 continue;
             }
-            for (BoardMode mode : modes) {
-                if (projector.mode() == mode) {
-                    refresh(projector);
-                    break;
-                }
+            List<BoardLine> lines = computed.get(mode);
+            if (lines == null) {
+                lines = lines(server, mode);
+                computed.put(mode, lines);
             }
+            projector.setRenderedLines(lines);
         }
+        DIRTY.clear();
     }
 
     /**

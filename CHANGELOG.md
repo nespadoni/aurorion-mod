@@ -1,4 +1,4 @@
-# Correções preparadas - 17/10/2026
+# Correções preparadas - 17 e 18/10/2026
 
 - Magia 0.6.1: proteção da recarga do Barril Explosivo, exceções de cooldown
   limitadas à magia correta, transferência de vidas em Ceifar/Entregar e checagens
@@ -9,6 +9,13 @@
 - Profissões 0.5.2: mesa de ferraria somente para ferreiros (staff criativa liberada) e
   revalidação da receita a cada retirada por shift-click, contra a duplicação ao aprimorar.
 - Magia: chamadas restantes de `ToggleCooldown.skipNext` atualizadas para a nova assinatura.
+- Essentials 0.8.0: grupos de conversa no app Mensagens do celular (servidor como fonte da
+  verdade, entrega offline) e Gram com posts, perfil e avatar persistidos no servidor, fotos em
+  disco deduplicadas e enviadas sob demanda; reflexão do histórico do celular em cache.
+- Otimizações sem mudança de jogabilidade (Core 0.6.5, Personagem 0.3.2, Aeonita 0.3.3, Áreas 0.6.4,
+  Ethereal 0.3.5, Limbo 0.4.7, Mundos 0.1.3, Serviços 0.1.3, Talk 0.1.3, Trama 0.1.2, Magia, Profissões).
+  Detalhes em [docs/AUDITORIA-OTIMIZACAO-2026-10-18.md](docs/AUDITORIA-OTIMIZACAO-2026-10-18.md).
+- Guias: [docs/GUIA-DESENVOLVIMENTO.md](docs/GUIA-DESENVOLVIMENTO.md) e [docs/GUIA-STAFF.md](docs/GUIA-STAFF.md).
 - Código preparado sem compilação ou teste em jogo nesta máquina, conforme AGENTS.md.
   Roteiro de validação e instalação em [docs/CORRECOES-MAGIAS-SIMPLYMORE-2026-10-17.md](docs/CORRECOES-MAGIAS-SIMPLYMORE-2026-10-17.md).
 

@@ -16,6 +16,20 @@ public abstract class BodyPartMixin implements WoundPart {
     @Shadow private float healingPerTicks;
     @Shadow @Final private float healthMultiplier;
     @Unique private boolean aurorion$critical;
+    /** Nome do membro (o enum e final no LSO): lido por reflexao uma vez, e nao a cada save/load. */
+    @Unique private String aurorion$name;
+    /** Chaves de NBT deste membro, montadas junto com o nome. */
+    @Unique private String[] aurorion$valueKeys;
+    @Unique private String aurorion$criticalKey;
+    @Unique private String aurorion$name() {
+        if (aurorion$name == null) {
+            String part = LsoCompat.name(this);
+            aurorion$valueKeys = new String[]{part + "_damage", part + "_maxHealth", part + "_healingPerTicks"};
+            aurorion$criticalKey = "AurorionCritical_" + part;
+            aurorion$name = part;
+        }
+        return aurorion$name;
+    }
     @Unique private float aurorion$defaultMaxHealth() {
         float base = 20 * healthMultiplier;
         return Float.isFinite(base) && base > 0 ? base : 20;
@@ -68,12 +82,16 @@ public abstract class BodyPartMixin implements WoundPart {
     }
     @ModifyVariable(method = "readNBT", at = @At("HEAD"), argsOnly = true)
     private CompoundTag aurorion$cleanSave(CompoundTag original) {
-        String part = LsoCompat.name(this);
-        CompoundTag clean = original.copy();
-        for (String suffix : new String[]{"_damage", "_maxHealth", "_healingPerTicks"}) {
-            String key = part + suffix;
-            if (clean.contains(key) && (!Float.isFinite(clean.getFloat(key)) || clean.getFloat(key) < 0))
-                clean.putFloat(key, suffix.equals("_maxHealth") ? aurorion$defaultMaxHealth() : 0);
+        aurorion$name();
+        // Copia so quando ha valor a corrigir: o caso comum (save saudavel) le o proprio tag, sem
+        // duplicar o NBT de cada membro. O original nunca e alterado.
+        CompoundTag clean = original;
+        for (int i = 0; i < aurorion$valueKeys.length; i++) {
+            String key = aurorion$valueKeys[i];
+            if (clean.contains(key) && (!Float.isFinite(clean.getFloat(key)) || clean.getFloat(key) < 0)) {
+                if (clean == original) clean = original.copy();
+                clean.putFloat(key, i == 1 ? aurorion$defaultMaxHealth() : 0);
+            }
         }
         return clean;
     }
@@ -87,12 +105,14 @@ public abstract class BodyPartMixin implements WoundPart {
     }
     @Inject(method = "writeNbt", at = @At("RETURN"))
     private void aurorion$save(CompoundTag tag, CallbackInfoReturnable<CompoundTag> cir) {
-        cir.getReturnValue().putBoolean("AurorionCritical_" + LsoCompat.name(this), aurorion$critical);
+        aurorion$name();
+        cir.getReturnValue().putBoolean(aurorion$criticalKey, aurorion$critical);
     }
     @Inject(method = "readNBT", at = @At("RETURN"))
     private void aurorion$load(CompoundTag tag, CallbackInfo ci) {
         aurorion$repair();
-        String key = "AurorionCritical_" + LsoCompat.name(this);
+        aurorion$name();
+        String key = aurorion$criticalKey;
         aurorion$critical = damage > 0 && (tag.contains(key) ? tag.getBoolean(key)
                 : InjuryPolicy.severe(damage, maxHealth, ProfessionsConfig.severeThreshold()));
     }

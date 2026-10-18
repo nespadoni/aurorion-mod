@@ -54,7 +54,8 @@ public final class ProfessionEvents {
                     : "O uso da mesa de ferraria exige um ferreiro.");
     }
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void mending(GetEnchantmentLevelEvent event) {
-        if (!ProfessionsConfig.enabled() || SpecialtyRules.adminMending(event.getStack()) || !event.isTargetting(Enchantments.MENDING)) return;
+        // Evento muito quente (toda leitura de encantamento): o teste barato vem antes da leitura do NBT.
+        if (!ProfessionsConfig.enabled() || !event.isTargetting(Enchantments.MENDING) || SpecialtyRules.adminMending(event.getStack())) return;
         event.getEnchantments().removeIf(enchantment -> enchantment.is(Enchantments.MENDING));
     }
     @SubscribeEvent public static void brewing(PotionBrewEvent.Pre event) {

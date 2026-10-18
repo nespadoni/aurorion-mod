@@ -7,6 +7,7 @@ import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.util.Utils;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -28,6 +29,13 @@ public final class Domains {
     private static final ResourceKey<DamageType> SHRINE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE,
             AurorionMagia.id("santuario_malevolente"));
     private static final String KEY = "aurorion_magia:dominio";
+    /** Pulso do Vazio Infinito (ticks), o mesmo de {@code SpellZoneEntity.domain}. */
+    private static final int VOID_PULSE = 4;
+    /**
+     * Duracao do Vazio Infinito no alvo: tres pulsos. Renovado so quando sobra um pulso ou menos
+     * (padrao {@code DreadAura.renew}), o efeito segue continuo sem um pacote de efeito a cada pulso.
+     */
+    private static final int VOID_TICKS = VOID_PULSE * 3;
     private Domains() { }
 
     public static void start(ServerLevel level, LivingEntity caster, SpellZoneEntity.Shape shape,
@@ -54,6 +62,16 @@ public final class Domains {
         ResourceLocation dim = ResourceLocation.tryParse(tag.getString("Dim"));
         ServerLevel origin = dim == null ? null : level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dim));
         return origin != null && origin.getEntity(tag.getUUID("Zone")) instanceof SpellZoneEntity zone ? zone : null;
+    }
+
+    /**
+     * O mesmo que {@code zone(caster) == zone}, sem resolver dimensao nem buscar entidade: a zona que
+     * pergunta esta viva no proprio nivel, entao basta o UUID gravado no conjurador ser o dela.
+     */
+    public static boolean owns(LivingEntity caster, SpellZoneEntity zone) {
+        if (!(caster.level() instanceof ServerLevel)) return false;
+        CompoundTag tag = caster.getPersistentData().getCompound(KEY);
+        return tag.hasUUID("Zone") && zone.getUUID().equals(tag.getUUID("Zone"));
     }
 
     public static void stop(LivingEntity caster) {
@@ -83,6 +101,9 @@ public final class Domains {
         boolean infinite = zone.shape() == SpellZoneEntity.Shape.INFINITE_VOID;
         Vec3 center = zone.position();
         float radius = zone.radius();
+        // Resolvido uma vez por pulso, e nao por alvo: o tipo de dano nao muda entre um corte e outro.
+        Holder<DamageType> shrineDamage = infinite ? null
+                : level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SHRINE_DAMAGE);
         // Entidades em chunks ja carregados, sem ler blocos ou forcar chunks num raio de 200.
         // Sem teto de alvos: todo alvo elegivel dentro da esfera recebe o corte.
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
@@ -97,15 +118,14 @@ public final class Domains {
                 if (target instanceof ServerPlayer player && MagicData.getPlayerMagicData(player).isCasting()) {
                     Utils.serverSideCancelCast(player);
                 }
-                target.addEffect(new MobEffectInstance(MagiaEffects.INFINITE_VOID, 8, 0, false, false, true), caster);
+                renewVoid(target, caster);
                 target.stopUsingItem();
                 ControlSpells.syncVoice(target, null);
             } else {
                 boolean cleave = (zone.tickCount / 10) % 2 == 0;
                 // Destrinchar se adapta ao vigor do alvo, mas tem teto para chefes de muita vida.
                 float cut = cleave ? Math.min(damage * 1.75F, damage + target.getMaxHealth() * .035F) : damage;
-                FriendlyFire.applyDamage(target, cut, new DamageSource(
-                        level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SHRINE_DAMAGE), zone, caster));
+                FriendlyFire.applyDamage(target, cut, new DamageSource(shrineDamage, zone, caster));
                 MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.DOMAIN_SLASH, 9,
                         target.position(), cleave ? 1 : 0);
                 if (target instanceof ServerPlayer) AurorionSpell.sound(target, SoundEvents.PLAYER_ATTACK_SWEEP, .9F,
@@ -114,5 +134,15 @@ public final class Domains {
         }
         if (zone.tickCount % 40 == 0) AurorionSpell.sound(level, center,
                 infinite ? SoundEvents.BEACON_AMBIENT : SoundEvents.SOUL_ESCAPE.value(), 2, .5F);
+    }
+
+    /**
+     * Mantem o Vazio Infinito no alvo. Com mais de um pulso de sobra nao reaplica: o efeito ainda cobre
+     * o proximo pulso, e reaplicar so mandaria outro pacote de efeito igual.
+     */
+    private static void renewVoid(LivingEntity target, LivingEntity caster) {
+        MobEffectInstance current = target.getEffect(MagiaEffects.INFINITE_VOID);
+        if (current != null && (current.isInfiniteDuration() || current.getDuration() > VOID_PULSE)) return;
+        target.addEffect(new MobEffectInstance(MagiaEffects.INFINITE_VOID, VOID_TICKS, 0, false, false, true), caster);
     }
 }

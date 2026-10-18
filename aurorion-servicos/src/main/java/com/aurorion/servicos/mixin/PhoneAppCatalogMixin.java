@@ -18,7 +18,8 @@ import java.util.List;
  * lugar. Entrar aqui basta para o icone aparecer.
  *
  * <p>O catalogo e pedido varias vezes por quadro; o registro do app so e recriado quando o numero de
- * pedidos pendentes (o selo no icone) muda.
+ * pedidos pendentes (o selo no icone) muda. O {@code contains} protege contra uma versao do telefone
+ * que passe a devolver a lista guardada: sem ele, o app entraria de novo a cada chamada.
  */
 @Pseudo
 @Mixin(targets = "com.mattupolis.phone.client.gui.PhoneHomeAppCatalog", remap = false)
@@ -37,6 +38,6 @@ public abstract class PhoneAppCatalogMixin {
             aurorion_servicos$badge = badge;
         }
         List<Object> apps = cir.getReturnValue();
-        if (aurorion_servicos$app != null && apps != null) apps.add(aurorion_servicos$app);
+        if (aurorion_servicos$app != null && apps != null && !apps.contains(aurorion_servicos$app)) apps.add(aurorion_servicos$app);
     }
 }

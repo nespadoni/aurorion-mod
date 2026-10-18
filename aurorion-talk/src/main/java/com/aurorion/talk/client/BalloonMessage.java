@@ -12,10 +12,12 @@ import java.util.List;
  * jogadores falando vira alocacao pesada no render thread.</p>
  *
  * @param lines          texto ja quebrado respeitando a largura maxima
+ * @param lineWidths     largura, em pixels, de cada linha (mesma ordem de {@code lines}); medida
+ *                       uma vez aqui para o texto ser centralizado sem {@code font.width} por frame
  * @param widestLine     largura, em pixels, da maior linha
  * @param expiresAtTick  {@code level.getGameTime()} em que a mensagem some
  */
-public record BalloonMessage(List<FormattedCharSequence> lines, int widestLine, long expiresAtTick) {
+public record BalloonMessage(List<FormattedCharSequence> lines, int[] lineWidths, int widestLine, long expiresAtTick) {
     public int lineCount() {
         return lines.size();
     }

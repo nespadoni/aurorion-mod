@@ -261,8 +261,8 @@ public class SpellZoneEntity extends Entity {
     private void domain() {
         LivingEntity caster = owner();
         if (caster == null || !caster.isAlive() || AurorionSpell.castBlocked(caster)
-                || Domains.zone(caster) != this || caster.distanceToSqr(position()) > radius() * radius()) {
-            if (caster != null && Domains.zone(caster) == this) Domains.stop(caster);
+                || !Domains.owns(caster, this) || caster.distanceToSqr(position()) > radius() * radius()) {
+            if (caster != null && Domains.owns(caster, this)) Domains.stop(caster);
             else discard();
             return;
         }
@@ -272,7 +272,7 @@ public class SpellZoneEntity extends Entity {
     private void expire() {
         if (shape() == Shape.INFINITE_VOID || shape() == Shape.MALEVOLENT_SHRINE) {
             LivingEntity caster = owner();
-            if (caster != null && Domains.zone(caster) == this) { Domains.stop(caster); return; }
+            if (caster != null && Domains.owns(caster, this)) { Domains.stop(caster); return; }
         }
         if (shape() == Shape.WARD) {
             level().playSound(null, getX(), getY(), getZ(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.9F, 1.4F);

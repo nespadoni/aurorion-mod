@@ -2,7 +2,6 @@ package com.aurorion.personagem.alt;
 
 import com.aurorion.core.character.AltData;
 import com.aurorion.core.character.CharacterData;
-import com.aurorion.core.data.SavedDataAccess;
 import com.aurorion.personagem.AurorionPersonagem;
 import com.aurorion.personagem.config.CreationConfig;
 import com.aurorion.personagem.network.SwitchingCharacterPayload;
@@ -168,7 +167,8 @@ public final class AltLogin {
         UUID previous = alt.active() ? alt.altId() : null;
         alts.select(owner, target.equals(owner) ? null : target);
         try {
-            SavedDataAccess.flushAll(server);
+            // So a escolha do alt mudou nesta transacao: grava o arquivo dela, e nao o mundo inteiro.
+            AltData.flush(server);
         } catch (IOException failure) {
             alts.select(owner, previous);
             AurorionPersonagem.LOGGER.error("Nao consegui gravar a troca de personagem.", failure);

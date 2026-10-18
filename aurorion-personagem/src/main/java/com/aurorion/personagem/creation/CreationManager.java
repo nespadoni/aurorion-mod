@@ -237,7 +237,7 @@ public final class CreationManager {
         if (!data.isDead(account)) {
             // Primeiro nome de um personagem vivo: nada foi vivido por outra pessoa, nada a apagar.
             CharacterData.Character named = data.nameLiving(account, name);
-            if (!journal(player.server)) {
+            if (!journalCharacters(player.server)) {
                 refuse(player, "O servidor não conseguiu gravar seu nome. Tente de novo.");
                 return;
             }
@@ -259,7 +259,7 @@ public final class CreationManager {
             return;
         }
 
-        if (!journal(player.server)) {
+        if (!journalCharacters(player.server)) {
             data.abandonReplacement(account);
             refuse(player, "O servidor não conseguiu gravar a reserva do nome. Tente de novo.");
             return;
@@ -398,7 +398,28 @@ public final class CreationManager {
 
     // --- Disco -------------------------------------------------------------------------------
 
-    /** @return false quando o diario nao chegou ao disco; nesse caso nada pode ser dado por feito. */
+    /**
+     * Grava so o cadastro de personagens: nomear um vivo e reservar a identidade nova so mexem nele.
+     *
+     * @return false quando o diario nao chegou ao disco; nesse caso nada pode ser dado por feito.
+     */
+    private static boolean journalCharacters(MinecraftServer server) {
+        try {
+            CharacterData.flush(server);
+            return true;
+        } catch (IOException failure) {
+            AurorionPersonagem.LOGGER.error("Nao consegui gravar o diario de personagens.", failure);
+            return false;
+        }
+    }
+
+    /**
+     * Grava todo dado sujo, e nao so o cadastro. Usado na publicacao: ali cada mod acabou de zerar o
+     * que guardava no {@code CharacterResetEvent}, e a identidade nova so pode estar no disco junto
+     * com esses zeros — senao uma queda traria a pessoa de volta com metade da vida anterior.
+     *
+     * @return false quando o diario nao chegou ao disco; nesse caso nada pode ser dado por feito.
+     */
     private static boolean journal(MinecraftServer server) {
         try {
             SavedDataAccess.flushAll(server);

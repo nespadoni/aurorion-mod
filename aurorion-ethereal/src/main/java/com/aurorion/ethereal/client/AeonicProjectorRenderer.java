@@ -29,6 +29,8 @@ import org.joml.Matrix4f;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * O holograma do Projetor Aeonico.
@@ -101,6 +103,18 @@ public final class AeonicProjectorRenderer implements BlockEntityRenderer<Aeonic
     /** Em que idioma {@link #headers} foi montado. Trocar o idioma no jogo invalida o cache. */
     @Nullable
     private Language headerLanguage;
+
+    /**
+     * As linhas de cada projetor ja recortadas e medidas. O texto so muda quando chega pacote novo
+     * (a lista e trocada inteira), quando o painel muda de largura ou quando o idioma/recurso recarrega
+     * — nunca por frame. Chave fraca: projetor descarregado sai sozinho.
+     */
+    private final Map<AeonicProjectorBlockEntity, FittedLines> fitted = new WeakHashMap<>();
+
+    /** Linhas recortadas para uma largura, com o x ja centralizado de cada uma. */
+    private record FittedLines(List<BoardLine> source, int maxWidth, Language language,
+                               FormattedCharSequence[] texts, float[] xs) {
+    }
 
     public AeonicProjectorRenderer(BlockEntityRendererProvider.Context context) {
         font = context.getFont();
@@ -310,6 +324,7 @@ public final class AeonicProjectorRenderer implements BlockEntityRenderer<Aeonic
             Component empty = Component.translatable("gui.aurorion_ethereal.projector.empty");
             drawCentered(empty.getVisualOrderText(), 28.0F, COLOR_EMPTY, matrix, buffers, false);
         } else {
+            FittedLines fitLines = fitted(projector, lines, maxWidth);
             float y = 28.0F;
             for (int i = 0; i < lines.size(); i++) {
                 BoardLine line = lines.get(i);
@@ -317,7 +332,7 @@ public final class AeonicProjectorRenderer implements BlockEntityRenderer<Aeonic
                 // cada casa e o de jogadores continua com o degrade de ouro para azul.
                 int color = line.color() == 0 ? RANK_COLORS[Math.min(i, RANK_COLORS.length - 1)] : line.color();
 
-                drawCentered(fit(line.text(), maxWidth), y, color, matrix, buffers, true);
+                drawAt(fitLines.texts()[i], fitLines.xs()[i], y, color, matrix, buffers, true);
                 y += LINE_HEIGHT;
             }
         }
@@ -326,7 +341,11 @@ public final class AeonicProjectorRenderer implements BlockEntityRenderer<Aeonic
 
     private void drawCentered(FormattedCharSequence text, float y, int color,
                               Matrix4f matrix, MultiBufferSource buffers, boolean shadow) {
-        float x = -font.width(text) / 2.0F;
+        drawAt(text, -font.width(text) / 2.0F, y, color, matrix, buffers, shadow);
+    }
+
+    private void drawAt(FormattedCharSequence text, float x, float y, int color,
+                        Matrix4f matrix, MultiBufferSource buffers, boolean shadow) {
         if (shadow) {
             font.drawInBatch(text, x + 0.4F, y + 0.4F, COLOR_LINE_SHADOW, false,
                     matrix, buffers, Font.DisplayMode.NORMAL, 0, LIGHT);
@@ -349,6 +368,25 @@ public final class AeonicProjectorRenderer implements BlockEntityRenderer<Aeonic
             cached = mode.icon() + " " + mode.displayName().getString().toUpperCase(Locale.ROOT);
             headers[mode.ordinal()] = cached;
         }
+        return cached;
+    }
+
+    /** As linhas do projetor recortadas e centralizadas, do cache quando nada mudou. */
+    private FittedLines fitted(AeonicProjectorBlockEntity projector, List<BoardLine> lines, int maxWidth) {
+        Language language = Language.getInstance();
+        FittedLines cached = fitted.get(projector);
+        if (cached != null && cached.source() == lines && cached.maxWidth() == maxWidth
+                && cached.language() == language) {
+            return cached;
+        }
+        FormattedCharSequence[] texts = new FormattedCharSequence[lines.size()];
+        float[] xs = new float[lines.size()];
+        for (int i = 0; i < texts.length; i++) {
+            texts[i] = fit(lines.get(i).text(), maxWidth);
+            xs[i] = -font.width(texts[i]) / 2.0F;
+        }
+        cached = new FittedLines(lines, maxWidth, language, texts, xs);
+        fitted.put(projector, cached);
         return cached;
     }
 

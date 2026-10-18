@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * O sorteio diario: um lugar diferente a cada dia, entre os pontos que a staff cadastrou.
@@ -31,6 +32,16 @@ import java.util.Set;
  * desligado volta, percebe que o dia mudou e sorteia na hora, em vez de esperar a proxima virada.
  */
 public final class OracleRotation {
+    /** Teto do intervalo entre tentativas de concluir um movimento pendente, em varreduras de 1 s. */
+    private static final int MAX_PENDING_WAIT = 60;
+    /** A partir de quantas falhas seguidas o log avisa a staff (uma vez). */
+    private static final int WARN_AFTER_FAILURES = 10;
+
+    /** Tentativas seguidas de concluir o movimento pendente sem achar o Oraculo. Thread do servidor. */
+    private static int pendingFailures;
+    /** Varreduras de 1 s que ainda faltam ate a proxima tentativa. */
+    private static int pendingWait;
+
     private OracleRotation() {}
 
     /** Chamado pela varredura de 1 s do {@code LimboServerEvents}; ler o relogio uma vez por segundo
@@ -39,7 +50,19 @@ public final class OracleRotation {
         OracleData data = OracleData.get(server);
         // Ler entidades de um chunk e assincrono. Um movimento aceito fica persistido e e concluido
         // aqui assim que o NPC entra no indice, inclusive depois de reiniciar o servidor.
-        if (data.pendingSpot() != null && !finishPending(server, data)) return;
+        if (data.pendingSpot() != null) {
+            // Oraculo sumido de vez nao pode custar varredura de entidades e ticket de chunk a cada
+            // segundo para sempre: entre uma falha e outra o intervalo dobra, ate um minuto.
+            if (pendingWait > 0) {
+                pendingWait--;
+                return;
+            }
+            if (!finishPending(server, data)) {
+                backOff(data);
+                return;
+            }
+            reset();
+        }
         long today = currentDay();
         if (data.rotatedDay() == today) return;
         // Primeira partida com pontos cadastrados: marca o dia sem teleportar ninguem de surpresa.
@@ -89,6 +112,8 @@ public final class OracleRotation {
                 return null;
             }
             data.setPending(target.name());
+            // Movimento novo: a primeira tentativa volta a ser no proximo segundo.
+            reset();
             AurorionLimbo.LOGGER.info("Oraculo: movimento para '{}' aguardando o carregamento do chunk antigo.",
                     target.name());
             return target;
@@ -105,6 +130,24 @@ public final class OracleRotation {
         data.setPending(null);
         AurorionLimbo.LOGGER.info("Oraculo: agora em '{}' ({} {} {} em {}).", target.name(),
                 pos.getX(), pos.getY(), pos.getZ(), target.dimension());
+    }
+
+    /** 2, 4, 8... varreduras ate a proxima tentativa, com teto de {@value #MAX_PENDING_WAIT}. */
+    private static void backOff(OracleData data) {
+        pendingFailures++;
+        pendingWait = Math.min(MAX_PENDING_WAIT, 1 << Math.min(pendingFailures, 6)) - 1;
+        if (pendingFailures == WARN_AFTER_FAILURES) {
+            OracleData.Spot target = data.pendingSpot();
+            AurorionLimbo.LOGGER.warn("Oraculo: movimento para '{}' segue sem achar o Oraculo apos {} tentativas;"
+                    + " tentando a cada {} s. Se ele morreu, invoque um com /summon aurorion_limbo:oraculo.",
+                    target == null ? "?" : target.name(), pendingFailures, MAX_PENDING_WAIT);
+        }
+    }
+
+    /** Zera a espera entre tentativas. Tambem chamado quando o servidor para. */
+    public static void reset() {
+        pendingFailures = 0;
+        pendingWait = 0;
     }
 
     /** Tenta concluir um movimento que esperava a leitura das entidades do chunk. */
@@ -147,6 +190,14 @@ public final class OracleRotation {
      */
     @Nullable
     private static OracleEntity findForRotation(MinecraftServer server, OracleData data) {
+        // Caminho barato primeiro: o UUID conhecido, busca em hash na dimensao gravada. A varredura
+        // por tipo em todas as dimensoes fica para quando ele nao esta carregado ali.
+        UUID knownId = data.oracleUuid();
+        ResourceLocation knownDimension = data.oracleDimension();
+        if (knownId != null && knownDimension != null) {
+            ServerLevel knownLevel = levelOf(server, knownDimension);
+            if (knownLevel != null && knownLevel.getEntity(knownId) instanceof OracleEntity oracle) return oracle;
+        }
         OracleEntity loaded = find(server);
         if (loaded != null) return loaded;
         // Compatibilidade: saves anteriores a esta correção não têm UUID, mas já guardam o ponto

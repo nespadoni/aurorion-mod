@@ -29,6 +29,12 @@ public class FakeNameData extends SavedData {
 
     private final Map<UUID, String> names = new HashMap<>();
 
+    /**
+     * Sobe a cada mudanca real em {@link #setRaw}. Quem guarda algo derivado dos nomes (o indice do
+     * {@code CharacterTarget}) compara isto para saber que precisa refazer. So em memoria.
+     */
+    private int version;
+
     public static FakeNameData get(MinecraftServer server) {
         return ACCESS.get(server);
     }
@@ -62,12 +68,20 @@ public class FakeNameData extends SavedData {
         return Map.copyOf(names);
     }
 
+    /** Versao dos nomes em memoria; muda a cada {@link #setRaw} que altera algo. */
+    public int version() {
+        return version;
+    }
+
     /** @return true se algo mudou de fato. */
     public boolean setRaw(UUID player, @Nullable String raw) {
         String previous = raw == null ? names.remove(player) : names.put(player, raw);
         boolean changed = !Objects.equals(previous, raw);
 
-        if (changed) setDirty();
+        if (changed) {
+            version++;
+            setDirty();
+        }
         return changed;
     }
 }

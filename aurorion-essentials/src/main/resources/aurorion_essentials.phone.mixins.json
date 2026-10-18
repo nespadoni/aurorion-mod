@@ -6,7 +6,8 @@
   "mixins": [
     "PhoneNumberStoreMixin",
     "PhoneCallGroupMixin",
-    "PhoneCallChatNameMixin"
+    "PhoneCallChatNameMixin",
+    "PhoneGramServerStoreMixin"
   ],
   "client": [
     "PhoneSocialIdentityAccessor",
@@ -26,7 +27,12 @@
     "PhonePhotoPickerMixin",
     "PhoneGramPostChoiceMixin",
     "PhoneGalleryImportMixin",
-    "PhonePhotoFormatMixin"
+    "PhonePhotoFormatMixin",
+    "PhoneGroupChatMixin",
+    "PhoneGroupListMixin",
+    "PhoneScreenScaleMixin",
+    "PhoneGramPostAccessor",
+    "PhoneGramStoreMixin"
   ],
   "injectors": {
     "defaultRequire": 0

@@ -29,7 +29,7 @@ final class TramaCombat {
         var family = family(source);
         if (family != null && source.getEntity() instanceof ServerPlayer attacker && TramaRuntime.eligible(attacker)) {
             var s = TramaRuntime.state(attacker); var b = s.build;
-            var effects = b.effects(TramaRuntime.context(attacker,s));
+            var effects = s.effects(TramaRuntime.context(attacker,s));
             double extra = 0; long time = TramaRuntime.now(attacker);
             var target = event.getEntity();
             if (family == MEL && b.has("ID7") && target.getHealth() >= target.getMaxHealth()) extra += .04;
@@ -45,7 +45,7 @@ final class TramaCombat {
         }
         if (event.getEntity() instanceof ServerPlayer target && TramaRuntime.eligible(target)) {
             var s = TramaRuntime.state(target); var b = s.build;
-            var effects = b.effects(TramaRuntime.context(target,s));
+            var effects = s.effects(TramaRuntime.context(target,s));
             long time = TramaRuntime.now(target);
             String group = group(source);
             double reduction = 0;
@@ -90,6 +90,6 @@ final class TramaCombat {
         if (!group.isEmpty() && (b.has("SA7") || b.has("SA9")) && time >= s.adaptationReady) {
             s.adaptation = group; s.adaptationUntil = time+(b.has("SA9") ? 120 : 100); s.adaptationReady = time+240;
         }
-        TramaAttributes.apply(target,b.effects(TramaRuntime.context(target,s)));
+        TramaAttributes.apply(target,s.effects(TramaRuntime.context(target,s)));
     }
 }

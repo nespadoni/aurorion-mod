@@ -59,6 +59,13 @@ dependência é real, e declará-la é mais honesto que simulá-la com eventos.
 Mods de terceiros continuam sem nenhuma dependência dura: o Limbo fala com o Immersive Messages por
 uma ponte que some sozinha quando ele não está no pack.
 
+## Guias
+
+- [Guia de desenvolvimento](docs/GUIA-DESENVOLVIMENTO.md): arquitetura, dependências e lado de cada
+  módulo, ambiente, build, testes, padrões do código e fluxo de release.
+- [Guia da staff](docs/GUIA-STAFF.md): o que o jogador vê, comandos com permissão, configs
+  importantes, procedimentos comuns e instalação de atualizações no servidor.
+
 ## Requisitos
 
 - **JDK 21** (`java -version` deve mostrar 21.x)

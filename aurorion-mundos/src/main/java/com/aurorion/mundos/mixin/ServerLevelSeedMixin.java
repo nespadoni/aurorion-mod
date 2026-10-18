@@ -1,13 +1,13 @@
 package com.aurorion.mundos.mixin;
 
 import com.aurorion.mundos.world.WorldCatalog;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.BiomeManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Da a cada mundo declarado um seed proprio.
@@ -38,18 +38,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <h2>Custo</h2>
  *
  * <p>Frio. Uma consulta por nivel criado, uma por chunk gerado, uma por troca de dimensao. Nada por
- * tick. Dimensao sem seed declarado sai pelo caminho de cima sem tocar em nada (SDD §2).
+ * tick. Dimensao sem seed declarado sai pelo caminho de cima sem tocar em nada (SDD §2). O seed entra
+ * por {@code @ModifyReturnValue} (MixinExtras, que vem com o NeoForge), e nao por {@code @Inject}
+ * cancelavel: este nao aloca um {@code CallbackInfoReturnable} a cada chamada. O corpo do vanilla
+ * (ler o seed do mundo) roda antes e e descartado — sem efeito colateral, mesmo resultado.
  */
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelSeedMixin {
 
-    @Inject(method = "getSeed", at = @At("HEAD"), cancellable = true)
-    private void aurorion_mundos$dimensionSeed(CallbackInfoReturnable<Long> cir) {
+    @ModifyReturnValue(method = "getSeed", at = @At("RETURN"))
+    private long aurorion_mundos$dimensionSeed(long original) {
         ServerLevel self = (ServerLevel) (Object) this;
         Long seed = WorldCatalog.seedFor(self.dimension());
-        if (seed != null) {
-            cir.setReturnValue(seed);
-        }
+        return seed != null ? seed : original;
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))

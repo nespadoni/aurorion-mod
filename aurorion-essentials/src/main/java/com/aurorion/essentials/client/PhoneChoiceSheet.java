@@ -9,9 +9,11 @@ import java.util.List;
 
 /**
  * Menu de opcoes que sobe do rodape do celular, por cima da tela atual (que continua desenhada ao
- * fundo). Usado no "+" do Gram para escolher entre camera e galeria. A ultima linha e "Cancelar".
+ * fundo). Usado no "+" do Gram para escolher entre camera e galeria, e no "+" do Mensagens para
+ * escolher entre conversa e grupo. A ultima linha e "Cancelar". Conta como tela do celular para a
+ * escala de interface ({@link EssentialsPhoneScreen}): o celular ao fundo nao muda de tamanho.
  */
-public class PhoneChoiceSheet extends Screen {
+public class PhoneChoiceSheet extends Screen implements EssentialsPhoneScreen {
     private static final int ROW = 22;
     private static final int MARGIN = 12;
 

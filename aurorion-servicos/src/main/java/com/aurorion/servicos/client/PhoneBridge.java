@@ -23,10 +23,67 @@ import java.util.Map;
  */
 public final class PhoneBridge {
     private static final String GUI = "com.mattupolis.phone.client.gui.";
+    private static final String SETTINGS = GUI + "PhoneSettingsStore";
+    private static final String THEME = GUI + "PhoneTheme";
 
     private static final Map<String, Method> METHODS = new HashMap<>();
     private static final Map<String, Constructor<?>> CONSTRUCTORS = new HashMap<>();
+    /** Acessores de registro do telefone por classe e nome; os mixins perguntam isto por quadro. */
+    private static final Map<Class<?>, Map<String, Method>> ACCESSORS = new HashMap<>();
     private static boolean reportedFailure;
+
+    /**
+     * Um alvo usado por quadro, resolvido uma vez e guardado no proprio campo: a chamada nao monta
+     * chave de texto nem consulta mapa. O {@link #method} continua sendo quem resolve (e avisa no log).
+     */
+    private static final class Target {
+        private final String owner;
+        private final String name;
+        private final Class<?>[] parameters;
+        private boolean resolved;
+        @Nullable
+        private Method method;
+
+        Target(String owner, String name, Class<?>... parameters) {
+            this.owner = owner;
+            this.name = name;
+            this.parameters = parameters;
+        }
+
+        @Nullable
+        Method get() {
+            if (!resolved) {
+                method = PhoneBridge.method(owner, name, parameters);
+                resolved = true;
+            }
+            return method;
+        }
+
+        String label() {
+            return owner + "." + name;
+        }
+    }
+
+    private static final Target DARK_MODE = new Target(SETTINGS, "isDarkModeEnabled");
+    private static final Target BRIGHTNESS = new Target(SETTINGS, "getBrightnessOverlayColor");
+    private static final Target AIRPLANE = new Target(SETTINGS, "isAirplaneModeEnabled");
+    private static final Target HAS_PHONE = new Target("com.mattupolis.phone.client.PhoneClientInventoryState",
+            "hasPhoneInInventory");
+    private static final Target SHELL = new Target(GUI + "PhoneCaseStore", "drawPhoneShell",
+            GuiGraphics.class, int.class, int.class, int.class, int.class, int.class);
+    private static final Target APP_BACKGROUND = new Target(THEME, "getAppBackgroundColor");
+    private static final Target CARD = new Target(THEME, "getCardColor");
+    private static final Target SECONDARY_CARD = new Target(THEME, "getSecondaryCardColor");
+    private static final Target TEXT = new Target(THEME, "getTextColor");
+    private static final Target SUB_TEXT = new Target(THEME, "getSubTextColor");
+    private static final Target MUTED_TEXT = new Target(THEME, "getMutedTextColor");
+    private static final Target ACCENT = new Target(THEME, "getAccentColor");
+    private static final Target BORDER = new Target(THEME, "getBorderColor");
+    private static final Target SEPARATOR = new Target(THEME, "getSeparatorColor");
+    private static final Target HOME_INDICATOR = new Target(THEME, "getHomeIndicatorColor");
+    private static final Target SEARCH_BOX = new Target(THEME, "getSearchBoxColor");
+    private static final Target SWITCH_OFF = new Target(THEME, "getSwitchOffColor");
+    private static final Target SWITCH_KNOB = new Target(THEME, "getSwitchKnobColor");
 
     private PhoneBridge() {
     }
@@ -43,28 +100,27 @@ public final class PhoneBridge {
     }
 
     public static Theme theme() {
-        boolean dark = bool(GUI + "PhoneSettingsStore", "isDarkModeEnabled", false);
+        boolean dark = bool(DARK_MODE, false);
         return new Theme(
-                color("getAppBackgroundColor", dark ? 0xFF101216 : 0xFFF2F2F7),
-                color("getCardColor", dark ? 0xFF1C1F26 : 0xFFFFFFFF),
-                color("getSecondaryCardColor", dark ? 0xFF262A33 : 0xFFE9E9EF),
-                color("getTextColor", dark ? 0xFFFFFFFF : 0xFF111111),
-                color("getSubTextColor", dark ? 0xFFB8BCC6 : 0xFF555A64),
-                color("getMutedTextColor", dark ? 0xFF7D8290 : 0xFF8A8F99),
-                color("getAccentColor", 0xFF2F80ED),
-                color("getBorderColor", dark ? 0xFF2C313B : 0xFFD8D8DE),
-                color("getSeparatorColor", dark ? 0xFF2C313B : 0xFFE3E3E8),
-                color("getHomeIndicatorColor", dark ? 0xFFFFFFFF : 0xFF111111),
-                color("getSearchBoxColor", dark ? 0xFF262A33 : 0xFFE9E9EF),
-                color("getSwitchOffColor", dark ? 0xFF3A3F4A : 0xFFC7C7CC),
-                color("getSwitchKnobColor", 0xFFFFFFFF),
+                integer(APP_BACKGROUND, dark ? 0xFF101216 : 0xFFF2F2F7),
+                integer(CARD, dark ? 0xFF1C1F26 : 0xFFFFFFFF),
+                integer(SECONDARY_CARD, dark ? 0xFF262A33 : 0xFFE9E9EF),
+                integer(TEXT, dark ? 0xFFFFFFFF : 0xFF111111),
+                integer(SUB_TEXT, dark ? 0xFFB8BCC6 : 0xFF555A64),
+                integer(MUTED_TEXT, dark ? 0xFF7D8290 : 0xFF8A8F99),
+                integer(ACCENT, 0xFF2F80ED),
+                integer(BORDER, dark ? 0xFF2C313B : 0xFFD8D8DE),
+                integer(SEPARATOR, dark ? 0xFF2C313B : 0xFFE3E3E8),
+                integer(HOME_INDICATOR, dark ? 0xFFFFFFFF : 0xFF111111),
+                integer(SEARCH_BOX, dark ? 0xFF262A33 : 0xFFE9E9EF),
+                integer(SWITCH_OFF, dark ? 0xFF3A3F4A : 0xFFC7C7CC),
+                integer(SWITCH_KNOB, 0xFFFFFFFF),
                 dark);
     }
 
     /** A moldura com a capinha que o jogador escolheu. Sem o telefone, uma moldura neutra. */
     public static void drawShell(GuiGraphics graphics, int x, int y, int width, int height, int screenColor) {
-        Method method = method(GUI + "PhoneCaseStore", "drawPhoneShell",
-                GuiGraphics.class, int.class, int.class, int.class, int.class, int.class);
+        Method method = SHELL.get();
         if (method != null) {
             try {
                 method.invoke(null, graphics, x, y, width, height, screenColor);
@@ -80,15 +136,15 @@ public final class PhoneBridge {
     }
 
     public static int brightnessOverlay() {
-        return integer(GUI + "PhoneSettingsStore", "getBrightnessOverlayColor", 0);
+        return integer(BRIGHTNESS, 0);
     }
 
     public static boolean airplaneMode() {
-        return bool(GUI + "PhoneSettingsStore", "isAirplaneModeEnabled", false);
+        return bool(AIRPLANE, false);
     }
 
     public static boolean hasPhone() {
-        return bool("com.mattupolis.phone.client.PhoneClientInventoryState", "hasPhoneInInventory", false);
+        return bool(HAS_PHONE, false);
     }
 
     // ---- sons ----------------------------------------------------------------------------------
@@ -175,8 +231,13 @@ public final class PhoneBridge {
     public static String accessor(Object record, String name) {
         if (record == null) return "";
         try {
-            Method method = record.getClass().getDeclaredMethod(name);
-            method.setAccessible(true);
+            Map<String, Method> byName = ACCESSORS.computeIfAbsent(record.getClass(), type -> new HashMap<>());
+            Method method = byName.get(name);
+            if (method == null) {
+                method = record.getClass().getDeclaredMethod(name);
+                method.setAccessible(true);
+                byName.put(name, method);
+            }
             Object value = method.invoke(record);
             return value instanceof String text ? text : "";
         } catch (ReflectiveOperationException | RuntimeException e) {
@@ -187,28 +248,24 @@ public final class PhoneBridge {
 
     // ---- reflexao ------------------------------------------------------------------------------
 
-    private static int color(String getter, int fallback) {
-        return integer(GUI + "PhoneTheme", getter, fallback);
-    }
-
-    private static int integer(String owner, String name, int fallback) {
-        Method method = method(owner, name);
+    private static int integer(Target target, int fallback) {
+        Method method = target.get();
         if (method == null) return fallback;
         try {
             return (int) method.invoke(null);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            report(owner + "." + name, e);
+            report(target.label(), e);
             return fallback;
         }
     }
 
-    private static boolean bool(String owner, String name, boolean fallback) {
-        Method method = method(owner, name);
+    private static boolean bool(Target target, boolean fallback) {
+        Method method = target.get();
         if (method == null) return fallback;
         try {
             return (boolean) method.invoke(null);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            report(owner + "." + name, e);
+            report(target.label(), e);
             return fallback;
         }
     }

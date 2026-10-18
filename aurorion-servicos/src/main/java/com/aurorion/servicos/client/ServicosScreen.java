@@ -101,7 +101,18 @@ public final class ServicosScreen extends Screen implements AurorionPhoneScreen 
     private MultiLineEditBox textBox;
 
     private final List<Hit> hits = new ArrayList<>();
+
+    /**
+     * Estado do celular lido a cada {@value #PHONE_REFRESH_TICKS} ticks, e nao por quadro: o tema sao
+     * catorze chamadas por reflexao, e nada disso (tema, brilho, modo aviao, minuto do relogio) muda
+     * dentro de meio segundo.
+     */
+    private static final int PHONE_REFRESH_TICKS = 10;
     private PhoneBridge.Theme theme = PhoneBridge.theme();
+    private int brightnessOverlay = PhoneBridge.brightnessOverlay();
+    private boolean airplaneMode = PhoneBridge.airplaneMode();
+    private String clock = LocalTime.now().format(CLOCK);
+    private int phoneRefreshIn = PHONE_REFRESH_TICKS;
     private int px;
     private int py;
 
@@ -136,6 +147,17 @@ public final class ServicosScreen extends Screen implements AurorionPhoneScreen 
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (--phoneRefreshIn > 0) return;
+        phoneRefreshIn = PHONE_REFRESH_TICKS;
+        theme = PhoneBridge.theme();
+        brightnessOverlay = PhoneBridge.brightnessOverlay();
+        airplaneMode = PhoneBridge.airplaneMode();
+        clock = LocalTime.now().format(CLOCK);
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
     }
@@ -143,7 +165,6 @@ public final class ServicosScreen extends Screen implements AurorionPhoneScreen 
     @Override
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, width, height, 0x33000000);
-        theme = PhoneBridge.theme();
         hits.clear();
         PhoneBridge.drawShell(graphics, px, py, W, H, theme.app());
         drawStatusBar(graphics);
@@ -160,8 +181,7 @@ public final class ServicosScreen extends Screen implements AurorionPhoneScreen 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
         drawToast(graphics);
-        int overlay = PhoneBridge.brightnessOverlay();
-        if (overlay != 0) graphics.fill(px, py, px + W, py + H, overlay);
+        if (brightnessOverlay != 0) graphics.fill(px, py, px + W, py + H, brightnessOverlay);
         graphics.fill(px + 55, py + H - 12, px + W - 55, py + H - 9, theme.homeIndicator());
     }
 
@@ -296,10 +316,10 @@ public final class ServicosScreen extends Screen implements AurorionPhoneScreen 
 
     private void drawStatusBar(GuiGraphics graphics) {
         graphics.fill(px, py, px + W, py + 22, theme.card());
-        graphics.drawString(font, LocalTime.now().format(CLOCK), px + 8, py + 7, theme.text(), false);
+        graphics.drawString(font, clock, px + 8, py + 7, theme.text(), false);
         int notch = px + W / 2 - 18;
         graphics.fill(notch, py + 4, notch + 36, py + 14, theme.dark() ? 0xFF000000 : 0x22000000);
-        String network = PhoneBridge.airplaneMode() ? "Avião" : "5G";
+        String network = airplaneMode ? "Avião" : "5G";
         graphics.drawString(font, network, px + W - 8 - font.width(network), py + 7, theme.text(), false);
     }
 

@@ -1,5 +1,6 @@
 package com.aurorion.essentials.mixin;
 
+import com.aurorion.essentials.client.PhoneGroupsClient;
 import com.aurorion.essentials.client.PhoneIcons;
 import com.aurorion.essentials.client.PhonePhotoPicker;
 import com.aurorion.essentials.client.PhoneUi;
@@ -94,6 +95,8 @@ public abstract class PhoneMessageAttachMixin {
         }
         String threadId = PhoneUi.stringField(chat, "threadId");
         if (threadId == null) return;
+        // Grupo e so texto; camera e localizacao sao barradas no PhoneGroupChatMixin.
+        if (PhoneGroupsClient.blockAttachment(threadId)) return;
         PhoneUi.playClick();
         PhonePhotoPicker.open(new PhonePhotoPicker.Messages(threadId));
     }

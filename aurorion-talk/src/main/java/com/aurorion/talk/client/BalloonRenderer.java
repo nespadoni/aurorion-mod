@@ -177,7 +177,7 @@ public final class BalloonRenderer {
                     BalloonNineSlice.emit(FRAME_BOXES, width, message.lineCount(), stackOffset, isNewest);
                 }
                 case DECORATION -> drawDecoration(vertices, pose, message.lineCount(), stackOffset);
-                case TEXT -> drawText(font, buffer, pose, message.lines(), textColor, stackOffset);
+                case TEXT -> drawText(font, buffer, pose, message.lines(), message.lineWidths(), textColor, stackOffset);
             }
             isNewest = false;
         }
@@ -191,7 +191,7 @@ public final class BalloonRenderer {
     }
 
     private static void drawText(Font font, MultiBufferSource buffer, Matrix4f pose,
-                                 List<FormattedCharSequence> lines, int color, int stackOffset) {
+                                 List<FormattedCharSequence> lines, int[] widths, int color, int stackOffset) {
         int y = -(LINE_HEIGHT * lines.size() - 10) - stackOffset;
 
         // Indice, e nao for-each: o iterador seria uma alocacao por balao por quadro, justamente o
@@ -199,7 +199,8 @@ public final class BalloonRenderer {
         for (int i = 0; i < lines.size(); i++) {
             FormattedCharSequence line = lines.get(i);
             // POLYGON_OFFSET puxa o texto para frente do balao sem depender da orientacao da camera.
-            font.drawInBatch(line, -font.width(line) / 2.0F + 1.0F, y, color, false, pose, buffer,
+            // Largura medida quando a fala chegou (BalloonMessage), e nao a cada quadro.
+            font.drawInBatch(line, -widths[i] / 2.0F + 1.0F, y, color, false, pose, buffer,
                     Font.DisplayMode.POLYGON_OFFSET, 0, LIGHT);
             y += LINE_HEIGHT;
         }

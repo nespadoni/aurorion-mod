@@ -29,6 +29,12 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class AreaEvents {
     private static final ResourceLocation HEALTH = ResourceLocation.parse("aurorion_areas:spawn_health");
     private static final String STRENGTH = "aurorion_areas:spawn_damage";
+    /**
+     * Destino reaproveitado da consulta de spawn. O {@code join} so passa daqui na thread do servidor
+     * ({@code isSameThread}), e o {@code AreaData#resolve} sempre comeca com {@code reset}, entao uma
+     * instancia basta para todo mob hostil admitido.
+     */
+    private static final ResolvedRules SPAWN_RULES = new ResolvedRules();
     private AreaEvents() {}
     @SubscribeEvent public static void reload(AddReloadListenerEvent event) {
         event.addListener(AreaProfiles.RULES.listener());
@@ -79,17 +85,19 @@ public final class AreaEvents {
         if (!AreaApi.allowsAt(level, mob.getX(), mob.getY(), mob.getZ(), null, AreaRule.HOSTILE_SPAWN.key())) {
             event.setCanceled(true); return;
         }
-        // Spawn-only allocation. Persistent marker avoids stacking on transfer/reload.
-        var rules = new ResolvedRules();
-        AreaData.get(level.getServer()).resolve(level.dimension().location(), mob.getX(), mob.getY(), mob.getZ(), null, rules);
+        // Persistent marker avoids stacking on transfer/reload. Os dois valores saem do destino
+        // compartilhado antes de qualquer outra chamada que pudesse reaproveita-lo.
+        AreaData.get(level.getServer()).resolve(level.dimension().location(), mob.getX(), mob.getY(), mob.getZ(), null, SPAWN_RULES);
+        double mobHealth = SPAWN_RULES.mobHealth();
+        double mobDamage = SPAWN_RULES.mobDamage();
         var health = mob.getAttribute(Attributes.MAX_HEALTH);
-        if (health != null && rules.mobHealth() != 1) {
+        if (health != null && mobHealth != 1) {
             float fraction = mob.getHealth() / mob.getMaxHealth();
             health.removeModifier(HEALTH);
-            health.addPermanentModifier(new AttributeModifier(HEALTH, rules.mobHealth() - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            health.addPermanentModifier(new AttributeModifier(HEALTH, mobHealth - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             mob.setHealth(mob.getMaxHealth() * fraction);
         }
-        mob.getPersistentData().putDouble(STRENGTH, rules.mobDamage());
+        mob.getPersistentData().putDouble(STRENGTH, mobDamage);
     }
     @SubscribeEvent public static void travel(EntityTravelToDimensionEvent event) {
         // Saved mobs from before this module may have no marker. A transfer is not a spawn.

@@ -60,16 +60,13 @@ public final class PhoneConversations {
         WRITES.reset(dir, () -> PhoneCharacterStorage.wipe(dir, keep));
     }
 
-    @SuppressWarnings("unchecked")
     static void forgetGramContacts(RetiredContacts plan) throws ReflectiveOperationException {
         if (gram == null || !gram.loaded) return;
-        Class<?> owner = Class.forName(GUI + GRAM);
-        List<Object> threads = (List<Object>) field(owner, "THREADS");
-        Map<String, ?> allMessages = (Map<String, ?>) field(owner, "MESSAGES");
-        for (Object thread : new ArrayList<>(threads)) {
-            if (!plan.forgets((String) call(thread, "title"))) continue;
-            threads.remove(thread);
-            allMessages.remove((String) call(thread, "id"));
+        gram.resolve();
+        for (Object thread : new ArrayList<>(gram.threads)) {
+            if (!plan.forgets((String) gram.threadTitle.invoke(thread))) continue;
+            gram.threads.remove(thread);
+            gram.allMessages.remove((String) gram.threadId.invoke(thread));
         }
         gramChanged();
     }
@@ -92,14 +89,9 @@ public final class PhoneConversations {
      */
     public static void threadReadRequested(String threadId) {
         if (messages == null || messages.loading || threadId == null) return;
-        try {
-            Object counts = field(Class.forName(GUI + MESSAGES), "UNREAD_COUNTS");
-            if (counts instanceof Map<?, ?> map && map.get(threadId) instanceof Integer unread && unread > 0) {
-                messages.dirty = true;
-            }
-        } catch (ReflectiveOperationException | RuntimeException e) {
-            messages.dirty = true;
-        }
+        // O mapa e static final no telefone: a referencia guardada na carga vale pela vida do jogo.
+        Map<String, Integer> counts = messages.unread;
+        if (counts == null || (counts.get(threadId) instanceof Integer unread && unread > 0)) messages.dirty = true;
     }
 
     public static void gramChanged() {
@@ -165,6 +157,14 @@ public final class PhoneConversations {
         return dir.resolve("aurorion_gram_photos").resolve(name + ".image");
     }
 
+    /**
+     * Um store do telefone (Mensagens ou DM do Gram). Classes, colecoes e acessores sao resolvidos
+     * uma vez ({@link #resolve()}): a gravacao roda a cada segundo com o historico sujo, e antes
+     * fazia {@code Class.forName}/{@code getDeclaredField}/{@code getMethod} a cada conversa.
+     *
+     * <p>No Mensagens entram as conversas de jogador e as de grupo ({@link PhoneGroupsClient}); as de
+     * sistema do proprio telefone ficam de fora.
+     */
     @SuppressWarnings("unchecked")
     private static final class Store {
         private final String name;
@@ -177,6 +177,19 @@ public final class PhoneConversations {
         private boolean dirty;
         private PhoneConversationFile.Snapshot lastSaved;
 
+        private Class<?> threadClass;
+        private Class<?> messageClass;
+        private List<Object> threads;
+        private Map<String, List<Object>> allMessages;
+        /** So no Mensagens; {@code null} ate a carga. */
+        private Map<String, Integer> unread;
+        /** So no Gram. */
+        private Set<String> processed;
+        private Method threadId;
+        private Method threadTitle;
+        private Method playerThread;
+        private Method threadUnread;
+
         private Store(String name, Path file, String threadType, String messageType) {
             this.name = name;
             this.file = file;
@@ -184,39 +197,57 @@ public final class PhoneConversations {
             this.messageType = messageType;
         }
 
+        private void resolve() throws ReflectiveOperationException {
+            if (threads != null) return;
+            Class<?> owner = Class.forName(GUI + name);
+            threadClass = Class.forName(GUI + name + "$" + threadType);
+            messageClass = Class.forName(GUI + name + "$" + messageType);
+            threadId = threadClass.getMethod("id");
+            threadTitle = threadClass.getMethod("title");
+            if (name.equals(MESSAGES)) {
+                playerThread = threadClass.getMethod("playerThread");
+                unread = (Map<String, Integer>) field(owner, "UNREAD_COUNTS");
+            } else {
+                threadUnread = threadClass.getMethod("unread");
+                processed = (Set<String>) field(owner, "PROCESSED_NETWORK_IDS");
+            }
+            allMessages = (Map<String, List<Object>>) field(owner, "MESSAGES");
+            threads = (List<Object>) field(owner, "THREADS");
+        }
+
+        /** Conversa que vai para o arquivo: de jogador ou de grupo no Mensagens; todas no Gram. */
+        private boolean kept(Object thread, String id) throws ReflectiveOperationException {
+            return !name.equals(MESSAGES) || (boolean) playerThread.invoke(thread) || PhoneGroupsClient.isGroupThread(id);
+        }
+
         private void load() {
             if (loaded || loading) return;
             loading = true;
             try {
-                Class<?> owner = Class.forName(GUI + name);
+                resolve();
                 PhoneConversationFile.Snapshot pending = WRITES.pendingSnapshot(file);
                 if (pending != null || Files.exists(file)) {
                     // Reconectar antes de o disco terminar usa a versao mais recente que saiu da memoria.
                     PhoneConversationFile.Snapshot snapshot = pending != null ? pending : PhoneConversationFile.read(file);
-                    Class<?> threadClass = Class.forName(GUI + name + "$" + threadType);
-                    Class<?> messageClass = Class.forName(GUI + name + "$" + messageType);
                     List<Object> restoredThreads = new ArrayList<>();
                     Map<String, List<Object>> restoredMessages = new LinkedHashMap<>();
                     Map<String, Integer> restoredUnread = new HashMap<>();
                     // Prepara tudo antes de tocar na memoria: um arquivo invalido fica preservado.
                     for (var state : snapshot.threads()) {
                         Object thread = PhoneConversationFile.restore(threadClass, state.thread());
-                        String id = (String) call(thread, "id");
+                        String id = (String) threadId.invoke(thread);
                         if (id == null || id.isBlank() || restoredMessages.containsKey(id)) throw new IOException("Conversa invalida ou duplicada");
-                        if (name.equals(MESSAGES) && !(boolean) call(thread, "playerThread")) throw new IOException("Conversa de sistema no historico de jogadores");
+                        if (!kept(thread, id)) throw new IOException("Conversa de sistema no historico de jogadores");
                         List<Object> threadMessages = new ArrayList<>();
                         for (var value : state.messages()) threadMessages.add(PhoneConversationFile.restore(messageClass, value));
                         restoredThreads.add(thread);
                         restoredMessages.put(id, threadMessages);
                         restoredUnread.put(id, state.unread());
                     }
-                    List<Object> threads = (List<Object>) field(owner, "THREADS");
-                    Map<String, List<Object>> allMessages = (Map<String, List<Object>>) field(owner, "MESSAGES");
                     if (name.equals(MESSAGES)) {
-                        Map<String, Integer> unread = (Map<String, Integer>) field(owner, "UNREAD_COUNTS");
                         for (Object thread : new ArrayList<>(threads)) {
-                            if (!(boolean) call(thread, "playerThread")) continue;
-                            String id = (String) call(thread, "id");
+                            String id = (String) threadId.invoke(thread);
+                            if (!kept(thread, id)) continue;
                             threads.remove(thread);
                             allMessages.remove(id);
                             unread.remove(id);
@@ -225,7 +256,7 @@ public final class PhoneConversations {
                     } else {
                         threads.clear();
                         allMessages.clear();
-                        ((Set<String>) field(owner, "PROCESSED_NETWORK_IDS")).addAll(snapshot.processedIds());
+                        processed.addAll(snapshot.processedIds());
                     }
                     threads.addAll(0, restoredThreads);
                     allMessages.putAll(restoredMessages);
@@ -248,21 +279,18 @@ public final class PhoneConversations {
         private void save() {
             if (!loaded || loading || !dirty || !writable) return;
             try {
-                Class<?> owner = Class.forName(GUI + name);
-                List<Object> threads = (List<Object>) field(owner, "THREADS");
-                Map<String, List<Object>> allMessages = (Map<String, List<Object>>) field(owner, "MESSAGES");
-                Map<String, Integer> unread = name.equals(MESSAGES) ? (Map<String, Integer>) field(owner, "UNREAD_COUNTS") : Map.of();
+                resolve();
                 List<PhoneConversationFile.ThreadState> states = new ArrayList<>();
                 for (Object thread : threads) {
-                    if (name.equals(MESSAGES) && !(boolean) call(thread, "playerThread")) continue;
-                    String id = (String) call(thread, "id");
+                    String id = (String) threadId.invoke(thread);
+                    if (!kept(thread, id)) continue;
                     List<Map<String, String>> savedMessages = new ArrayList<>();
                     for (Object message : allMessages.getOrDefault(id, List.of())) savedMessages.add(PhoneConversationFile.capture(message));
-                    int threadUnread = name.equals(MESSAGES) ? unread.getOrDefault(id, 0) : (int) call(thread, "unread");
+                    int threadUnread = name.equals(MESSAGES) ? unread.getOrDefault(id, 0) : (int) this.threadUnread.invoke(thread);
                     states.add(new PhoneConversationFile.ThreadState(PhoneConversationFile.capture(thread), savedMessages, threadUnread));
                 }
-                Set<String> processed = name.equals(GRAM) ? (Set<String>) field(owner, "PROCESSED_NETWORK_IDS") : Set.of();
-                PhoneConversationFile.Snapshot snapshot = new PhoneConversationFile.Snapshot(states, processed);
+                PhoneConversationFile.Snapshot snapshot = new PhoneConversationFile.Snapshot(states,
+                        name.equals(GRAM) ? processed : Set.of());
                 // Abrir uma conversa ja lida nao deve regravar um arquivo a cada frame.
                 if (!snapshot.equals(lastSaved)) {
                     WRITES.snapshot(file.getParent(), file, snapshot,
@@ -280,10 +308,6 @@ public final class PhoneConversations {
         Field field = owner.getDeclaredField(name);
         field.setAccessible(true);
         return field.get(null);
-    }
-
-    private static Object call(Object target, String name) throws ReflectiveOperationException {
-        return target.getClass().getMethod(name).invoke(target);
     }
 
     private static void invoke(Class<?> owner, String name) throws ReflectiveOperationException {

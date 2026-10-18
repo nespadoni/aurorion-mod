@@ -43,6 +43,8 @@ public final class CharacterData extends SavedData {
     private final Set<UUID> renamed = new HashSet<>();
 
     public static CharacterData get(MinecraftServer server) { return ACCESS.get(server); }
+    /** Grava so este arquivo, com {@code fsync}. Ver {@link SavedDataAccess#flush}. */
+    public static void flush(MinecraftServer server) throws java.io.IOException { ACCESS.flush(server); }
     @Nullable public Character find(UUID account) { return current.get(account); }
     public Character current(UUID account) {
         Character character = current.get(account);

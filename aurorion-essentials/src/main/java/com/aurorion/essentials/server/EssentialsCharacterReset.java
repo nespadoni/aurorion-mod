@@ -45,6 +45,10 @@ public final class EssentialsCharacterReset {
         // herda. Melhor esforco: se o telefone mudar e a limpeza falhar, o reset segue e o log avisa.
         PhoneSocialReset.forget(event.server(), event.transaction().accountName());
 
+        // Grupos do Mensagens sao do personagem: a conta sai de todos. Antes de apagar o nome falso,
+        // para o aviso "saiu do grupo" sair com o nome de quem morreu. Melhor esforco, idempotente.
+        PhoneGroupService.forgetAccount(event.server(), event.account());
+
         // O /gritar e da cena do personagem anterior, nao da conta: o novo comeca com a voz normal.
         ShoutRegistry.clear(event.account());
 

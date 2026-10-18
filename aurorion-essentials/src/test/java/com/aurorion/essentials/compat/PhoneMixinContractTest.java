@@ -330,6 +330,48 @@ class PhoneMixinContractTest {
         }
     }
 
+    /**
+     * Grupos do Mensagens: os ganchos da conversa e da lista ({@code require = 0}) e o que o
+     * {@code PhoneGroupsClient} usa por reflexao. Sem isto, uma versao nova do telefone desligaria os
+     * grupos em silencio (o envio voltaria a cair na resposta automatica do telefone).
+     */
+    @Test
+    void groupHooksExistInTheInstalledPhoneVersion() throws IOException {
+        String gui = "com.mattupolis.phone.client.gui.";
+        try (ZipFile phone = phoneJar()) {
+            ClassNode chat = readPhoneClass(phone, gui + "PhoneMessageChatScreen");
+            for (String method : List.of("sendMessage()V", "sendLocation()V", "openCamera()V", "mouseClicked(DDI)Z")) {
+                assertTrue(chat.methods.stream().anyMatch(m -> (m.name + m.desc).equals(method)), "PhoneMessageChatScreen." + method);
+            }
+            assertTrue(chat.fields.stream().anyMatch(f -> f.name.equals("threadId") && f.desc.equals("Ljava/lang/String;")),
+                    "PhoneMessageChatScreen.threadId");
+            assertTrue(chat.fields.stream().anyMatch(f -> f.name.equals("messageInput")
+                    && f.desc.equals("Lnet/minecraft/client/gui/components/EditBox;")), "PhoneMessageChatScreen.messageInput");
+            assertTrue(readPhoneClass(phone, gui + "PhoneMessagesScreen").methods.stream()
+                    .anyMatch(m -> (m.name + m.desc).equals("mouseClicked(DDI)Z")), "PhoneMessagesScreen.mouseClicked");
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneGuiScaleManager"), "isPhoneScreen",
+                    "(Lnet/minecraft/client/gui/screens/Screen;)Z");
+
+            ClassNode store = readPhoneClass(phone, gui + "PhoneMessagesStore");
+            assertHasStaticMethod(store, "addPlayerMessage", "(Ljava/lang/String;Ljava/lang/String;)V");
+            assertHasStaticMethod(store, "getPlayerThreads", "()Ljava/util/List;");
+            assertHasStaticMethod(store, "toggleMuted", "(Ljava/lang/String;)V");
+            assertHasStaticMethod(store, "playIncomingSoundForThread", "(Ljava/lang/String;)V");
+            assertHasStaticMethod(store, "loadPlayerContactsIfNeeded", "()V");
+            ClassNode thread = readPhoneClass(phone, gui + "PhoneMessagesStore$PhoneThread");
+            for (String accessor : List.of("id", "title", "subtitle", "color", "playerThread", "pinned", "archived", "muted")) {
+                assertTrue(thread.methods.stream().anyMatch(m -> m.name.equals(accessor) && m.desc.startsWith("()")),
+                        "PhoneThread." + accessor);
+            }
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneNotificationStore"), "addPlayerNotification",
+                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneCaseStore"), "drawPhoneShell",
+                    "(Lnet/minecraft/client/gui/GuiGraphics;IIIII)V");
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneSettingsStore"), "getBrightnessOverlayColor", "()I");
+            assertHasStaticMethod(readPhoneClass(phone, gui + "PhoneSoundManager"), "playMessageSend", "()V");
+        }
+    }
+
     private static void assertCalls(ClassNode type, String methodName, String owner, String called) {
         boolean found = false;
         for (var method : type.methods) {

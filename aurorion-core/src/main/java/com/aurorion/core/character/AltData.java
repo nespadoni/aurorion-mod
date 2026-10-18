@@ -39,7 +39,7 @@ import java.util.UUID;
  *
  * <p>Conta real → alt (UUID, nome tecnico de perfil, e se o alt e quem entra no proximo login), e o
  * inverso, para o alt conseguir voltar sem ser OP. Salvo com o resto dos dados do mundo; quem troca
- * grava com {@code SavedDataAccess.flushAll} antes de desconectar.
+ * grava este arquivo com {@link #flush} antes de desconectar.
  *
  * <p>So a thread do servidor mexe aqui.
  */
@@ -66,6 +66,11 @@ public final class AltData extends SavedData {
 
     public static AltData get(MinecraftServer server) {
         return ACCESS.get(server);
+    }
+
+    /** Grava so este arquivo, com {@code fsync}. Ver {@link SavedDataAccess#flush}. */
+    public static void flush(MinecraftServer server) throws java.io.IOException {
+        ACCESS.flush(server);
     }
 
     /** UUID do primeiro slot: preserva a identidade usada pelo cadastro antigo. */

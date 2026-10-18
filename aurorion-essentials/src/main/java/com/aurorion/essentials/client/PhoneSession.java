@@ -94,8 +94,9 @@ public final class PhoneSession {
      * telefone 1.3.4 — o mesmo que ele teria sem nenhum arquivo gravado.
      */
     static void resetMemory() {
-        // Agenda e conversas: sai o que e de jogador; a conversa de sistema do proprio telefone fica.
+        // Agenda e conversas: sai o que e de jogador ou de grupo; a conversa de sistema do proprio telefone fica.
         forgetPlayerThreads();
+        PhoneGroupsClient.reset();
         set("PhoneMessagesStore", "playerContactsLoaded", false);
         set("PhoneMessagesStore", "loadingPlayerContacts", false);
         clear("PhoneMessagesStore", "PHONE_ID_TO_PLAYER");
@@ -178,8 +179,10 @@ public final class PhoneSession {
             Map<String, ?> unread = (Map<String, ?>) field(store, "UNREAD_COUNTS").get(null);
             for (Iterator<Object> it = threads.iterator(); it.hasNext(); ) {
                 Object thread = it.next();
-                if (!(boolean) thread.getClass().getMethod("playerThread").invoke(thread)) continue;
                 String id = (String) thread.getClass().getMethod("id").invoke(thread);
+                // Grupo tambem e do personagem: a conversa volta da pasta dele ou do servidor.
+                if (!(boolean) thread.getClass().getMethod("playerThread").invoke(thread)
+                        && !PhoneGroupsClient.isGroupThread(id)) continue;
                 it.remove();
                 messages.remove(id);
                 unread.remove(id);

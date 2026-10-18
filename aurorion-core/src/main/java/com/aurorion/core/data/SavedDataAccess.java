@@ -123,9 +123,19 @@ public final class SavedDataAccess<T extends SavedData> {
     }
 
     /**
-     * Zera todos os caches. Chamado pelo {@code aurorion-core} em {@code ServerStoppedEvent} — e o
-     * que solta a referencia ao {@link MinecraftServer} parado, que de outro jeito seguraria o grafo
-     * inteiro do servidor na memoria ate o proximo mundo abrir.
+     * Grava so este arquivo, com a mesma garantia do {@link #flushAll}: arquivo temporario,
+     * {@code fsync} e troca atomica, e falha de IO chega a quem chamou. Para transacao que mexe num
+     * {@code SavedData} so — nao serializa nem sincroniza o resto do mundo na thread do servidor.
+     * Nada a fazer quando o dado nao esta sujo.
+     */
+    public void flush(MinecraftServer server) throws java.io.IOException {
+        DurableSavedData.flush(server, fileId, get(server));
+    }
+
+    /**
+     * Grava todo {@code SavedData} sujo deste servidor que passa por esta classe. Para transacao que
+     * espalha mudanca por varios mods (ex.: o {@code CharacterResetEvent}, que cada mod responde
+     * zerando o proprio dado).
      */
     public static void flushAll(MinecraftServer server) throws java.io.IOException {
         for (SavedDataAccess<?> access : ALL) {
@@ -135,6 +145,11 @@ public final class SavedDataAccess<T extends SavedData> {
         }
     }
 
+    /**
+     * Zera todos os caches. Chamado pelo {@code aurorion-core} em {@code ServerStoppedEvent} — e o
+     * que solta a referencia ao {@link MinecraftServer} parado, que de outro jeito seguraria o grafo
+     * inteiro do servidor na memoria ate o proximo mundo abrir.
+     */
     public static void invalidateAll() {
         for (SavedDataAccess<?> access : ALL) {
             access.invalidate();

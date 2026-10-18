@@ -2,8 +2,7 @@
 
 Código preparado na branch `fix/correcoes-magias-simplymore-2026-10-17`, baseada em
 `3f20213` da `release/2026-10-05` (release de 08/10). A `master` aberta inicialmente
-não continha Ceifar Vida e Entregar Vida. A cópia de trabalho desta entrega é
-`../aurorion-correcoes-2026-10-17`.
+não continha Ceifar Vida e Entregar Vida.
 
 **Estado: alterações de código e revisão estática concluídas. Compilação, aplicação
 dos mixins e testes em jogo pendentes em outra máquina, conforme `AGENTS.md`.**
@@ -17,6 +16,10 @@ Não há JAR novo compilado nem alteração aplicada ao servidor de produção.
 | Aurorion Vidas | 0.2.5 | API de transferência de uma vida entre dois jogadores |
 | Aurorion Utils | 0.2.4 | Proteção de lado no cooldown do Simply More; inclui a proteção anterior da Mimi-Cry |
 | Aurorion Profissões | 0.5.2 | Mesa de ferraria somente para ferreiros; revalidação contra duplicação |
+| Aurorion Essentials | 0.8.0 | Grupos no Mensagens, Gram salvo no servidor, otimizações (ver README do módulo) |
+| Aurorion Core | 0.6.5 | `SavedDataAccess#flush` por arquivo |
+| Aurorion Personagem | 0.3.2 | Flush só dos dados da transação; exige Core 0.6.5 |
+| Aeonita 0.3.3, Áreas 0.6.4, Ethereal 0.3.5, Limbo 0.4.7, Mundos 0.1.3, Serviços 0.1.3, Talk 0.1.3, Trama 0.1.2 | — | Otimizações de [AUDITORIA-OTIMIZACAO-2026-10-18.md](AUDITORIA-OTIMIZACAO-2026-10-18.md) |
 
 Magia e Utils precisam carregar também nos clientes. A proteção de Simply More
 deve chegar a **todos os clientes próximos do dummy**, pois o erro ocorre no mundo

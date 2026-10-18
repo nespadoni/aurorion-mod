@@ -355,6 +355,10 @@ public final class LimboServerEvents {
         AdmCompat.reset();
         LimboEnvironment.reset();
         DiscordSink.shutdown();
+        // A auditoria grava numa thread propria: o que ficou na fila chega ao disco antes de o
+        // processo poder sair.
+        com.aurorion.limbo.report.AuditLog.drain();
+        com.aurorion.limbo.oracle.OracleRotation.reset();
         counter = 0;
         cleanupCounter = 0;
     }

@@ -8,6 +8,7 @@
     "AbstractClientPlayerMixin",
     "ChatComponentMixin",
     "ChatListenerMixin",
+    "EntityRenderDispatcherAccessor",
     "PlayerRendererMixin"
   ],
   "injectors": {

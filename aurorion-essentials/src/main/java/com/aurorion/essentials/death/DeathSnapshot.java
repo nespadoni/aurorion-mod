@@ -6,6 +6,7 @@ import com.aurorion.essentials.AurorionEssentials;
 import com.aurorion.essentials.fakename.FakeName;
 import com.aurorion.essentials.fakename.FakeNameRegistry;
 import net.minecraft.SharedConstants;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
@@ -13,10 +14,13 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -72,13 +76,23 @@ public final class DeathSnapshot {
     public static CompoundTag capture(ServerPlayer player, String cause, UUID id) {
         CompoundTag tag = metadata(player, cause, id);
         // Archive only. Never Player#load: that would rewind identity, lives, quests and capabilities.
-        tag.put("PlayerData", player.saveWithoutId(new CompoundTag()));
+        CompoundTag playerData = player.saveWithoutId(new CompoundTag());
+        tag.put("PlayerData", playerData);
+        // O PlayerData acima ja serializou inventario e ender chest. Os itens da lista saem dele (copia
+        // sem o "Slot"), e nao de um segundo encode de cada ItemStack. Slot cujo item gravado nao bate
+        // com o vivo (mod que mexe no layout ou no save do inventario) cai no encode de sempre.
+        Inventory inventory = player.getInventory();
+        boolean vanillaLayout = inventory.items.size() == 36 && inventory.armor.size() == 4
+                && inventory.offhand.size() == 1 && inventory.getContainerSize() == 41;
+        Map<Integer, CompoundTag> savedInventory = vanillaLayout
+                ? bySlot(playerData.getList("Inventory", Tag.TAG_COMPOUND)) : Map.of();
+        Map<Integer, CompoundTag> savedEnder = bySlot(playerData.getList("EnderItems", Tag.TAG_COMPOUND));
         ListTag items = new ListTag();
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            add(items, "inventory", i, player.getInventory().getItem(i), player);
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            add(items, "inventory", i, inventory.getItem(i), player, savedInventory.get(vanillaSlot(i)));
         }
         for (int i = 0; i < player.getEnderChestInventory().getContainerSize(); i++) {
-            add(items, "ender", i, player.getEnderChestInventory().getItem(i), player);
+            add(items, "ender", i, player.getEnderChestInventory().getItem(i), player, savedEnder.get(i));
         }
         add(items, "cursor", 0, player.containerMenu.getCarried(), player);
         try {
@@ -123,10 +137,50 @@ public final class DeathSnapshot {
     }
 
     private static void add(ListTag items, String group, int slot, ItemStack stack, ServerPlayer player) {
+        add(items, group, slot, stack, player, null);
+    }
+
+    /** @param saved o mesmo item ja serializado no PlayerData (com "Slot"), ou {@code null} */
+    private static void add(ListTag items, String group, int slot, ItemStack stack, ServerPlayer player,
+                            @Nullable CompoundTag saved) {
         CompoundTag entry = new CompoundTag();
         entry.putString("Group", group); entry.putInt("Slot", slot);
-        if (!stack.isEmpty()) entry.put("Stack", stack.save(player.registryAccess()));
+        if (!stack.isEmpty()) {
+            Tag encoded;
+            if (sameItem(saved, stack)) {
+                CompoundTag copy = saved.copy();
+                copy.remove("Slot");
+                encoded = copy;
+            } else {
+                encoded = stack.save(player.registryAccess());
+            }
+            entry.put("Stack", encoded);
+        }
         items.add(entry);
+    }
+
+    /** Lista do save vanilla ({@code Inventory#save}, {@code EnderItems}) indexada pelo byte "Slot". */
+    private static Map<Integer, CompoundTag> bySlot(ListTag saved) {
+        Map<Integer, CompoundTag> slots = new HashMap<>();
+        for (int i = 0; i < saved.size(); i++) {
+            CompoundTag item = saved.getCompound(i);
+            slots.put(item.getByte("Slot") & 255, item);
+        }
+        return slots;
+    }
+
+    /** Indice do container ({@code Inventory#getItem}) para o "Slot" do save: 0-35, armadura 100+, mao secundaria 150. */
+    private static int vanillaSlot(int index) {
+        if (index < 36) return index;
+        if (index < 40) return 100 + index - 36;
+        return 150 + index - 40;
+    }
+
+    /** O item gravado e o mesmo do slot vivo (id e quantidade). Barato, e pega layout fora do vanilla. */
+    private static boolean sameItem(@Nullable CompoundTag saved, ItemStack stack) {
+        return saved != null
+                && (saved.contains("count") ? saved.getInt("count") : 1) == stack.getCount()
+                && saved.getString("id").equals(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
     }
 
     /**

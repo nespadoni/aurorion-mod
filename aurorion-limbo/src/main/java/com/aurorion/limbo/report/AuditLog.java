@@ -15,6 +15,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * O registro permanente do que aconteceu no Limbo.
@@ -31,18 +37,33 @@ import java.util.ArrayList;
  *       historia de quem saiu pela Porta continua la. E essa historia que a staff usa depois.</li>
  * </ul>
  *
- * <h2>Por que a escrita e sincrona (e o webhook nao)</h2>
+ * <h2>Onde a escrita acontece</h2>
  *
- * <p>Sao duzentos bytes num evento que acontece algumas vezes por dia — o custo real e menor que o de
- * agendar a tarefa. Em compensacao, escrever na hora significa que um servidor que caia um segundo
- * depois <b>ja gravou</b> o acontecido. O webhook e o oposto: rede, latencia imprevisivel, e um
- * destino que pode estar fora do ar. Por isso ele sai da thread do servidor e este arquivo nao.
+ * <p>Numa thread propria e unica, e nao na do servidor: abrir, acrescentar e fechar um arquivo e IO de
+ * disco, e um disco lento (backup rodando, HD compartilhado) nao deve virar engasgo de tick. Uma
+ * thread so mantem a ordem das linhas igual a ordem dos eventos. A linha sai da fila em milissegundos,
+ * entao um servidor que caia um segundo depois <b>ja gravou</b> o acontecido; no desligamento normal
+ * {@link #drain} espera a fila esvaziar, e o {@link #tail} tambem, para o {@code /limbo auditoria}
+ * mostrar o que acabou de acontecer. O webhook segue a parte: rede, latencia imprevisivel, e um
+ * destino que pode estar fora do ar.
  */
 public final class AuditLog {
     private static final String DIR = AurorionLimbo.MOD_ID;
     private static final String FILE = "auditoria.jsonl";
 
+    /** Quanto o servidor espera a fila de escrita antes de seguir sem ela. */
+    private static final long DRAIN_TIMEOUT_SECONDS = 5;
+
     private AuditLog() {
+    }
+
+    /** Criada so no primeiro evento: os testes que so leem o arquivo nao sobem thread nenhuma. */
+    private static final class Writer {
+        private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor(task -> {
+            Thread thread = new Thread(task, "Aurorion Limbo auditoria");
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     public static Path path(MinecraftServer server) {
@@ -57,17 +78,13 @@ public final class AuditLog {
      */
     public static void record(MinecraftServer server, AuditEvent event) {
         String line = event.toLine();
-
+        // Caminho e JSON montados aqui, na thread do servidor; a fila so recebe texto pronto.
+        Path file = path(server);
+        String json = event.toJson().toString();
         try {
-            Path file = path(server);
-            Files.createDirectories(file.getParent());
-            Files.write(file,
-                    List.of(event.toJson().toString()),
-                    StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND);
-        } catch (IOException e) {
-            AurorionLimbo.LOGGER.error("Nao consegui gravar a auditoria do Limbo: {}", line, e);
+            Writer.EXECUTOR.execute(() -> append(file, json, line));
+        } catch (RejectedExecutionException e) {
+            append(file, json, line);
         }
 
         if (LimboConfig.AUDIT_TO_LOG.get()) {
@@ -84,6 +101,33 @@ public final class AuditLog {
         }
     }
 
+    private static void append(Path file, String json, String line) {
+        try {
+            Files.createDirectories(file.getParent());
+            Files.write(file,
+                    List.of(json),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            AurorionLimbo.LOGGER.error("Nao consegui gravar a auditoria do Limbo: {}", line, e);
+        }
+    }
+
+    /**
+     * Espera as linhas ja enfileiradas chegarem ao disco (no maximo {@value #DRAIN_TIMEOUT_SECONDS} s).
+     * Chamado no desligamento do servidor e antes de ler o arquivo.
+     */
+    public static void drain() {
+        try {
+            Writer.EXECUTOR.submit(() -> { }).get(DRAIN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException | TimeoutException | RejectedExecutionException e) {
+            AurorionLimbo.LOGGER.warn("A fila da auditoria do Limbo nao esvaziou a tempo.", e);
+        }
+    }
+
     /**
      * As ultimas {@code limit} linhas, mais novas primeiro. Para o {@code /limbo auditoria}.
      *
@@ -91,6 +135,7 @@ public final class AuditLog {
      * nao o historico inteiro da temporada.
      */
     public static List<String> tail(MinecraftServer server, int limit) {
+        drain();
         Path file = path(server);
         if (!Files.isReadable(file)) {
             return List.of();

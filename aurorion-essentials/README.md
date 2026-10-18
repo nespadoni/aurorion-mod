@@ -407,6 +407,68 @@ via as notas, a agenda e as conversas do principal. Agora:
 - **Migração.** Na primeira entrada da conta principal depois da atualização, o que estava na raiz da
   pasta vai para a pasta dela (uma vez, marcada com `.aurorion_migrado`). O alt começa vazio.
 
+### Gram: posts e foto de perfil salvos no servidor
+
+**Sintoma.** As fotos postadas e a foto de perfil do Gram "sumiam do perfil". Pelo bytecode do
+telefone (`mattupolisphone112.jar`), três causas somadas:
+
+- **Cliente descartava o que era do próprio jogador.** O servidor guarda os posts (com foto) e manda
+  todos no login, mas `PhoneInstagramStore.receiveMultiplayerPhotoPost`/`receiveMultiplayerPost` só
+  anotam a hora quando o autor é o próprio jogador. O post próprio existia apenas como o caminho local
+  da foto, criado ao postar e guardado em memória: reiniciou o jogo, o perfil próprio ficava vazio
+  (os outros ainda viam).
+- **Perfil próprio só em memória, e apagado no servidor.** O perfil próprio desenha só
+  `profileAvatarPhoto` (um `Path` em memória), nunca o avatar que veio do servidor; nome e bio também
+  eram só memória. Reiniciou, sumiam — e a tela de editar abria com avatar nulo e bio padrão. Salvar
+  a bio mandava avatar vazio, e o `rememberGramProfile` do servidor gravava o vazio por cima: o
+  avatar sumia para todo mundo.
+- **Servidor frágil.** Tudo do Gram vai para `mattupolis_phone/server_social.properties` (raiz do
+  servidor), com cada foto em base64 dentro do arquivo, regravado inteiro **na thread do servidor** a
+  cada curtida, comentário, follow ou post, sem `.tmp`. Desligar no meio truncava o arquivo; a
+  leitura seguinte falhava calada (`catch (Exception)` marca como carregado) e a próxima gravação
+  salvava o Gram vazio por cima. E no login (e a cada atualização automática do app) o servidor
+  mandava todas as fotos para cada jogador — até 2000 posts de ~30 KB, mais os avatares.
+
+**Correção.** O servidor é a fonte da verdade, e o cliente espelha o que ele manda:
+
+- **Fotos em arquivo, deduplicadas** (`PhoneGramServerStoreMixin` + `PhoneGramImageStore`). No
+  lugar do base64, o arquivo do telefone guarda `aurorion:sha256:<hash>`, e a foto vai para
+  `mattupolis_phone/aurorion_gram/<2 letras>/<hash>.img` — ao lado do arquivo que a cita, para os
+  dois irem juntos no backup. Mesma foto, um arquivo só. Só JPEG/PNG até 256 KB (o telefone manda
+  ~30 KB). O arquivo antigo é lido normalmente e migra sozinho na primeira gravação; antes dela, uma
+  cópia fica em `server_social.properties.antes-aurorion`.
+- **Gravação fora da thread do servidor e atômica.** O telefone escreve o `.properties` em memória
+  (agora pequeno: só texto e referências); a thread `Aurorion Gram IO` grava com `.tmp` + move,
+  juntando rajadas (vale a versão mais nova). As fotos citadas chegam no disco antes do arquivo que
+  as cita. Ao desligar, espera até 10 s pela fila.
+- **Fotos sob demanda.** No login, quem tem o essentials recebe, no lugar de cada foto, uma marca de
+  73 bytes (`PhoneGramImageRef`). O app pede a foto (`PhoneGramImagePayloads`) só quando vai
+  desenhá-la — post na tela, perfil aberto, avatar visível — e mostra o "carregando" dele enquanto
+  isso. O servidor lê do disco na thread de IO, guarda as mais pedidas (16 MB) e limita 40 pedidos
+  por segundo por jogador. Cliente sem o essentials recebe as fotos inteiras, como antes.
+- **Post próprio de volta ao perfil** (`PhoneGramStoreMixin`). O post do próprio jogador que vem do
+  servidor entra na lista como o de qualquer autor (sem a notificação "postou uma foto").
+- **Perfil próprio vindo do servidor.** Nome e bio próprios passam a ser os do servidor. O avatar
+  próprio vira um PNG na pasta do personagem (`aurorion_gram_avatar-<hash>.png`, `PhoneGramMedia`),
+  e é esse o caminho que o app desenha e que a tela de editar abre. Na entrada/saída de um servidor o
+  perfil próprio volta a vazio — o alt não herda o do principal.
+- **Salvar sem foto não apaga a foto.** O app não tem "remover foto"; perfil sem avatar só chegava
+  porque o cliente não sabia qual era o atual. O servidor mantém o avatar anterior (o Twitter do
+  próprio telefone já fazia assim).
+- **Limpeza.** No início do servidor, fotos que nenhum post ou perfil cita mais (post apagado,
+  reset de personagem — o `PhoneSocialReset` continua tirando tudo do nick) e com mais de 24 h são
+  apagadas.
+
+**Custo.** Login: ~150 bytes por post em vez de ~30 KB. Gravação: o arquivo do telefone cai de
+dezenas de MB para dezenas de KB, e o disco sai do tick. Memória do servidor: só as fotos postadas
+desde o último reinício ficam nos records; as antigas são lidas do disco quando pedidas.
+
+**Limites.** DMs e stories do Gram continuam como o telefone faz (DMs persistidas no cliente pelo
+`PhoneGramPersistenceMixin`; stories expiram). Tirar o essentials depois da migração deixa as fotos
+do Gram sem carregar (a referência não é base64) — o resto do Gram fica; para voltar, restaure o
+`.antes-aurorion`. Os ganchos têm `require = 0` e o `PhoneGramPersistenceContractTest` confere todos
+contra o jar instalado (`AURORION_PHONE_JAR`).
+
 ### Nome do personagem em todos os apps
 
 O telefone roteia tudo pelo nick da conta, então o nome do personagem é só de exibição
@@ -428,3 +490,55 @@ O telefone roteia tudo pelo nick da conta, então o nome do personagem é só de
   nick digitado passa intacto.
 
 Fica com o nick o `/phonecall <nick>` (comando de depuração do telefone, digitado pelo nick).
+
+### Grupos no Mensagens
+
+O app Mensagens do telefone só conversa com um jogador por vez: o SMS vai ao servidor pelo nick
+(`ServerboundPhoneTextPacket`), o servidor entrega a quem estiver online e responde "está offline" para
+o resto, e o histórico fica só na memória do cliente (o essentials grava em disco). Não existe grupo no
+telefone. Agora existe, dentro do próprio app:
+
+- **Criar.** O "+ Adicionar" da lista de conversas abre um menu com *Nova conversa* (a tela de sempre) e
+  *Novo grupo*: nome (até 24 caracteres) e contatos escolhidos da agenda, mostrados pelo nome do
+  personagem. O grupo aparece na lista como uma conversa comum (avatar roxo), com prévia "Nome: texto",
+  não lidas, notificação e som do próprio telefone.
+- **Conversar.** É a mesma tela de conversa. O envio vai ao servidor, que entrega aos membros online e
+  guarda para quem está offline (até 50 linhas por pessoa, por 7 dias; chegam no login, com a hora em que
+  foram enviadas). Só texto: foto, câmera e localização avisam "Grupos aceitam só texto."
+- **Detalhes.** Tocar no nome do grupo, no topo da conversa, mostra os membros. O criador adiciona e
+  remove; todos podem silenciar e sair. Quem sai (ou é removido) fica com o histórico e pode apagar a
+  conversa. Se o criador sai, o membro mais antigo herda o grupo; o último a sair encerra o grupo.
+- **Avisos no grupo.** "Fulano criou o grupo", "adicionou", "removeu", "saiu do grupo", sempre com o nome do
+  personagem.
+
+Limites (`PhoneGroupBook`): 16 membros por grupo, 10 grupos por personagem, 2048 no servidor, mensagem de
+até 180 caracteres (o campo do telefone), uma mensagem a cada 0,5 s e uma ação de grupo a cada 0,8 s por
+jogador no servidor (`ActionCooldown`; o cliente espera 0,7 s e 1 s para não bater no limite).
+
+Custo para o servidor: nenhum trabalho por tick. Uma mensagem vira no máximo 15 pacotes pequenos (um
+objeto só, reaproveitado), só para membros — nada é enviado a todos. O disco só é marcado quando um grupo
+ou a fila de alguém muda (`PhoneGroupData`, `data/aurorion_essentials_phone_groups.dat`, gravado pelo
+autosave). O login manda os grupos do jogador e a fila dele em um ou dois pacotes.
+
+Identidade e personagem:
+
+- O servidor é a fonte da verdade: membro é a conta do **perfil conectado** (o alt é outro perfil, com os
+  próprios grupos). O nick só é usado para achar a conta (online ou `usercache.json`), como no resto do
+  telefone; o que aparece é o nome do personagem.
+- **Reset de personagem**: a conta sai de todos os grupos e perde a fila (`EssentialsCharacterReset` →
+  `PhoneGroupService.forgetAccount`), e os outros membros veem "Fulano saiu do grupo" com o nome de quem
+  morreu.
+- O histórico do grupo fica na pasta do personagem, no mesmo arquivo das conversas de jogador
+  (`aurorion_messages.properties`, via `PhoneConversations`), e some no `/personagem trocar` como o resto.
+
+Peças: `PhoneGroupBook` (regras, puro e testado), `PhoneGroupData` (disco), `PhoneGroupService` (rede e
+entrega), `PhoneGroupPayloads`, `PhoneGroupsClient` (estado no cliente e ponte com o `PhoneMessagesStore`),
+`PhoneGroupEditScreen`/`PhoneGroupInfoScreen`, e os mixins `PhoneGroupChatMixin` (envio, anexos, toque no
+topo), `PhoneGroupListMixin` (menu do "+") e `PhoneScreenScaleMixin` (as telas do essentials no celular
+ficam na escala 3, inclusive o menu de opções). Cliente ou servidor sem essentials atualizado: o "+"
+continua abrindo a tela de sempre e nada de grupo é enviado.
+
+Junto veio uma correção de desempenho no histórico (`PhoneConversations`/`PhoneConversationFile`):
+classes, campos, acessores e construtores do telefone são resolvidos uma vez, em vez de
+`Class.forName`/`getDeclaredField` a cada tick da conversa aberta e `getRecordComponents` para cada
+mensagem a cada gravação.

@@ -89,7 +89,10 @@ public final class AeonicProjectorBlockEntity extends BlockEntity {
     }
 
     public void setRenderedLines(List<BoardLine> lines) {
-        renderedLines = List.copyOf(lines.size() > MAX_LINES ? lines.subList(0, MAX_LINES) : lines);
+        List<BoardLine> trimmed = lines.size() > MAX_LINES ? lines.subList(0, MAX_LINES) : lines;
+        // Mesmas linhas: nada a gravar nem reenviar aos clientes.
+        if (renderedLines.equals(trimmed)) return;
+        renderedLines = List.copyOf(trimmed);
         changedAndSync();
     }
 

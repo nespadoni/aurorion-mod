@@ -18,8 +18,10 @@ public final class TramaRuntime {
     private static final Map<String,String> ORIGINS = Map.of("ignivar","I00","sylvara","S00","nyx","N00","venthra","V00","aetheris","A00");
     private static final Map<UUID,TramaState> STATES = new HashMap<>();
     private static final Set<UUID> LOGIN_PENDING = new HashSet<>();
+    /** Rede de seguranca para mudancas feitas direto no Pufferfish (comando de admin), que nao disparam evento. */
+    private static final int FULL_SYNC_TICKS = 200;
     private TramaRuntime() {}
-    public static void invalidate(UUID account) { var state = STATES.get(account); if (state != null) state.dirty = true; }
+    public static void invalidate(UUID account) { var state = STATES.get(account); if (state != null) { state.dirty = true; state.unsynced = true; } }
     public static void forget(UUID account) { STATES.remove(account); }
     public static void login(ServerPlayer p) { forget(p.getUUID()); LOGIN_PENDING.add(p.getUUID()); }
     public static void logout(UUID account) { forget(account); LOGIN_PENDING.remove(account); }
@@ -82,6 +84,34 @@ public final class TramaRuntime {
         reconcile(p,c,entry);
         return true;
     }
+    /**
+     * O sync de cada segundo, pulado enquanto nada do que ele le mudou desde o ultimo completo: mesma
+     * entrada e personagem, mesma origem, mesmos pontos ganhos, sem apagar pendente e sem evento de
+     * lock/unlock. As chamadas ao Pufferfish (categoria, cinco origens, pontos) sao a parte cara. Um
+     * sync completo ainda roda a cada FULL_SYNC_TICKS para reparar edicao feita direto no Pufferfish.
+     */
+    private static boolean quietSync(ServerPlayer p, TramaState s) {
+        long tick = p.server.getTickCount();
+        if (s != null && !s.unsynced && tick - s.syncedAt < FULL_SYNC_TICKS && tick >= s.syncedAt) {
+            var entry = ProgressData.get(p.server).find(p.getUUID());
+            var character = CharacterData.get(p.server).find(p.getUUID());
+            var root = origin(p);
+            if (entry != null && entry == s.syncedEntry && !entry.eraseCategory && entry.earned == s.syncedEarned
+                    && character != null && entry.character.equals(character.id())
+                    && root != null && root.equals(entry.origin) && root.equals(s.syncedOrigin)) return true;
+        }
+        if (!sync(p)) return false;
+        var after = STATES.get(p.getUUID());
+        if (after != null) {
+            var entry = ProgressData.get(p.server).find(p.getUUID());
+            after.syncedEntry = entry;
+            after.syncedEarned = entry == null ? -1 : entry.earned;
+            after.syncedOrigin = entry == null ? "" : entry.origin;
+            after.syncedAt = tick;
+            after.unsynced = false;
+        }
+        return true;
+    }
     private static void reconcile(ServerPlayer p, Category c, ProgressData.Entry entry) {
         int earned = ProgressRules.earned(entry.experience,entry.activeSeconds,TramaConfig.XP_FIRST.get(),
                 TramaConfig.XP_INCREMENT.get(),TramaConfig.MINUTES_FIRST.get(),TramaConfig.MINUTES_INCREMENT.get());
@@ -115,7 +145,7 @@ public final class TramaRuntime {
             boolean transition = previous.sprint != p.isSprinting();
             previous.sprint(p.isSprinting(),now(p));
             if (transition && eligible(p)) {
-                var s = state(p); TramaAttributes.apply(p,s.build.effects(context(p,s)));
+                var s = state(p); TramaAttributes.apply(p,s.effects(context(p,s)));
             }
         }
         if (Math.floorMod(p.server.getTickCount()+p.getId(),20) != 0) return;
@@ -126,12 +156,12 @@ public final class TramaRuntime {
             sync(p);
             return;
         }
-        if (!sync(p)) return;
+        if (!quietSync(p,previous)) return;
         if (login) backfill(p);
         var s = state(p);
         String dimension = p.level().dimension().location().toString();
         if (!s.dimension.equals(dimension)) { s.dimension = dimension; s.activity.clear(); }
-        TramaAttributes.apply(p,s.build.effects(context(p,s)));
+        TramaAttributes.apply(p,s.effects(context(p,s)));
         heal(p,s);
         var entry = entry(p);
         if (entry.earned >= ProgressRules.MAX_POINTS) return;
@@ -185,7 +215,7 @@ public final class TramaRuntime {
     public static void refresh(ServerPlayer p) {
         invalidate(p.getUUID()); sync(p); backfill(p);
         if (eligible(p)) {
-            var s = state(p); TramaAttributes.apply(p,s.build.effects(context(p,s)));
+            var s = state(p); TramaAttributes.apply(p,s.effects(context(p,s)));
         } else TramaAttributes.apply(p,null);
     }
     public static void interaction(ServerPlayer p, int kind) {

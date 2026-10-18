@@ -1,6 +1,7 @@
 package com.aurorion.talk.mixin;
 
 import com.aurorion.talk.client.BalloonRenderer;
+import com.aurorion.talk.client.IrisShadowPass;
 import com.aurorion.talk.util.BalloonHolder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.PlayerModel;
@@ -35,6 +36,10 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
         holder.aurorion_talk$pruneBalloons(gameTime);
 
         if (holder.aurorion_talk$getBalloons().isEmpty()) return;
+        // Boneco do inventario (o vanilla desliga a sombra so ali) e passe de sombra do Iris: o balao
+        // nao aparece em nenhum dos dois, so custaria vertices.
+        if (!((EntityRenderDispatcherAccessor) this.entityRenderDispatcher).aurorion_talk$shouldRenderShadow()
+                || IrisShadowPass.active()) return;
 
         BalloonRenderer.render(player, poseStack, buffer, this.entityRenderDispatcher, this.getFont(), gameTime);
     }

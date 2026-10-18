@@ -3,6 +3,7 @@ package com.aurorion.magia.effect;
 import com.aurorion.magia.AurorionMagia;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.util.Utils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.effect.MobEffect;
@@ -46,17 +47,17 @@ public final class InfiniteVoidEffect extends MobEffect {
             }
             CompoundTag anchor = data.getCompound(ANCHOR);
             // Uma troca por comando da staff nao arrasta coordenadas de outra dimensao.
-            if (!anchor.getString("Dim").equals(entity.level().dimension().location().toString())) return false;
-            Vec3 position = new Vec3(anchor.getDouble("X"), anchor.getDouble("Y"), anchor.getDouble("Z"));
-            if (!Double.isFinite(position.lengthSqr()) || !Float.isFinite(anchor.getFloat("Yaw"))
-                    || !Float.isFinite(anchor.getFloat("Pitch"))) return false;
-            if (entity.position().distanceToSqr(position) > .0025) {
-                if (entity instanceof ServerPlayer player) player.connection.teleport(position.x, position.y, position.z,
-                        anchor.getFloat("Yaw"), anchor.getFloat("Pitch"));
-                else entity.setPos(position.x, position.y, position.z);
+            if (!sameDimension(anchor.getString("Dim"), entity.level().dimension().location())) return false;
+            // Por tick: primitivos direto da tag, sem Vec3 nem String novos.
+            double x = anchor.getDouble("X"), y = anchor.getDouble("Y"), z = anchor.getDouble("Z");
+            float yaw = anchor.getFloat("Yaw"), pitch = anchor.getFloat("Pitch");
+            if (!Double.isFinite(x * x + y * y + z * z) || !Float.isFinite(yaw) || !Float.isFinite(pitch)) return false;
+            if (entity.distanceToSqr(x, y, z) > .0025) {
+                if (entity instanceof ServerPlayer player) player.connection.teleport(x, y, z, yaw, pitch);
+                else entity.setPos(x, y, z);
             }
-            entity.setYRot(anchor.getFloat("Yaw"));
-            entity.setXRot(anchor.getFloat("Pitch"));
+            entity.setYRot(yaw);
+            entity.setXRot(pitch);
             entity.setYHeadRot(entity.getYRot());
         }
         if (entity instanceof Mob mob) {
@@ -70,4 +71,13 @@ public final class InfiniteVoidEffect extends MobEffect {
     }
 
     public static void release(LivingEntity entity) { entity.getPersistentData().remove(ANCHOR); }
+
+    /** {@code stored.equals(dim.toString())} sem montar a String "namespace:path" a cada tick. */
+    private static boolean sameDimension(String stored, ResourceLocation dim) {
+        String namespace = dim.getNamespace();
+        String path = dim.getPath();
+        int split = namespace.length();
+        return stored.length() == split + 1 + path.length() && stored.startsWith(namespace)
+                && stored.charAt(split) == ':' && stored.startsWith(path, split + 1);
+    }
 }

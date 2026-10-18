@@ -19,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -42,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  *
  * <p>O custo que sobra e inerente ao truque: cada mudanca de posicao e um {@code setBlock}, que
- * refaz iluminacao do chunk. Por isso a feature tem chave de desligar em
+ * refaz iluminacao do chunk. Para conter isso, so acende portador a ate {@value #RANGE} blocos da
+ * camera, roda a cada {@value #INTERVAL} ticks e a luz so muda de lugar quando o portador sai do
+ * bloco vizinho a ela (histerese de 1 bloco). Ainda assim a feature tem chave de desligar em
  * {@link AeonitaClientConfig} — num modpack pesado, esse e o primeiro item a sacrificar por FPS.
  */
 @EventBusSubscriber(modid = AurorionAeonita.MOD_ID, value = Dist.CLIENT)
@@ -69,8 +72,17 @@ public final class DynamicLightHandler {
      */
     private static final int LIGHT_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 
+    /** Alcance da luz falsa a partir da camera. Mais longe que isso a luz nao se ve e so custa. */
+    private static final int RANGE = 32;
+    private static final double RANGE_SQR = (double) RANGE * RANGE;
+
+    /** Ticks entre duas passadas. Cada passada pode virar varios {@code setBlock}. */
+    private static final int INTERVAL = 2;
+
     @Nullable
     private static ClientLevel lastLevel;
+
+    private static int ticks;
 
     private DynamicLightHandler() {
     }
@@ -97,10 +109,20 @@ public final class DynamicLightHandler {
             return;
         }
 
+        if (++ticks % INTERVAL != 0) {
+            return;
+        }
+
         int lightLevel = AeonitaClientConfig.DYNAMIC_LIGHT_LEVEL.get();
+        // Campo do Camera, sem copia: e so leitura.
+        Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
         SEEN.clear();
 
         for (Entity entity : level.entitiesForRendering()) {
+            // Fora do alcance conta como apagado: nao entra em SEEN e o pruneGone tira a luz.
+            if (entity.distanceToSqr(camera) > RANGE_SQR) {
+                continue;
+            }
             BlockPos target = glowPos(entity);
             if (target == null) {
                 continue;
@@ -109,7 +131,8 @@ public final class DynamicLightHandler {
             int id = entity.getId();
             BlockPos previous = ACTIVE.get(id);
 
-            if (previous != null && previous.equals(target)) {
+            // Histerese: ainda no bloco da luz ou num vizinho dele, a luz fica onde esta.
+            if (previous != null && near(previous, target)) {
                 SEEN.add(id);
                 continue;
             }
@@ -151,6 +174,13 @@ public final class DynamicLightHandler {
                     Mth.floor(living.getZ()));
         }
         return null;
+    }
+
+    /** No maximo 1 bloco de distancia em cada eixo (inclui a mesma posicao). */
+    private static boolean near(BlockPos a, BlockPos b) {
+        return Math.abs(a.getX() - b.getX()) <= 1
+                && Math.abs(a.getY() - b.getY()) <= 1
+                && Math.abs(a.getZ() - b.getZ()) <= 1;
     }
 
     private static boolean emitsLight(ItemStack stack) {

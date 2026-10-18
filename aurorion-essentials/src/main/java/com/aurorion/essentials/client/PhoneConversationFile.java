@@ -3,6 +3,8 @@ package com.aurorion.essentials.client;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.lang.reflect.RecordComponent;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -94,29 +96,61 @@ public final class PhoneConversationFile {
         }
     }
 
+    /**
+     * Componentes, acessores e construtor canonico de um record, levantados uma vez por classe. A
+     * gravacao captura cada mensagem de cada conversa a cada segundo com o historico sujo; antes,
+     * cada captura pedia {@code getRecordComponents()} de novo (que copia o array e os acessores).
+     */
+    private record Shape(String[] names, Class<?>[] types, Method[] accessors, Constructor<?> constructor) {
+    }
+
+    private static final ClassValue<Shape> SHAPES = new ClassValue<>() {
+        @Override
+        protected Shape computeValue(Class<?> type) {
+            RecordComponent[] components = type.getRecordComponents();
+            if (components == null) return null;
+            String[] names = new String[components.length];
+            Class<?>[] types = new Class<?>[components.length];
+            Method[] accessors = new Method[components.length];
+            for (int i = 0; i < components.length; i++) {
+                names[i] = components[i].getName();
+                types[i] = components[i].getType();
+                accessors[i] = components[i].getAccessor();
+            }
+            Constructor<?> constructor;
+            try {
+                constructor = type.getDeclaredConstructor(types);
+            } catch (NoSuchMethodException e) {
+                constructor = null;
+            }
+            return new Shape(names, types, accessors, constructor);
+        }
+    };
+
     /** Registra os componentes do record real; Path e texto, nunca um objeto de filesystem serializado. */
     public static Map<String, String> capture(Object record) throws ReflectiveOperationException {
-        if (!record.getClass().isRecord()) throw new IllegalArgumentException("O telefone mudou o formato das conversas");
+        Shape shape = record.getClass().isRecord() ? SHAPES.get(record.getClass()) : null;
+        if (shape == null) throw new IllegalArgumentException("O telefone mudou o formato das conversas");
         Map<String, String> values = new LinkedHashMap<>();
-        for (RecordComponent component : record.getClass().getRecordComponents()) {
-            Object value = component.getAccessor().invoke(record);
-            if (value != null) values.put(component.getName(), value.toString());
+        for (int i = 0; i < shape.accessors().length; i++) {
+            Object value = shape.accessors()[i].invoke(record);
+            if (value != null) values.put(shape.names()[i], value.toString());
         }
         return values;
     }
 
     /** Restaura sem chamar envio de pacote, notificacao, som, ou os metodos que criam mensagens. */
     public static Object restore(Class<?> type, Map<String, String> values) throws ReflectiveOperationException {
-        RecordComponent[] components = type.getRecordComponents();
-        if (components == null) throw new IllegalArgumentException("O telefone mudou o formato das conversas");
-        Class<?>[] types = new Class<?>[components.length];
-        Object[] arguments = new Object[components.length];
-        for (int i = 0; i < components.length; i++) {
-            RecordComponent component = components[i];
-            Class<?> fieldType = types[i] = component.getType();
-            String value = values.get(component.getName());
+        Shape shape = type.isRecord() ? SHAPES.get(type) : null;
+        if (shape == null) throw new IllegalArgumentException("O telefone mudou o formato das conversas");
+        if (shape.constructor() == null) throw new NoSuchMethodException(type.getName() + ": construtor canonico");
+        Class<?>[] types = shape.types();
+        Object[] arguments = new Object[types.length];
+        for (int i = 0; i < types.length; i++) {
+            Class<?> fieldType = types[i];
+            String value = values.get(shape.names()[i]);
             if (value == null) {
-                if (fieldType.isPrimitive()) throw new IllegalArgumentException("Campo ausente: " + component.getName());
+                if (fieldType.isPrimitive()) throw new IllegalArgumentException("Campo ausente: " + shape.names()[i]);
                 arguments[i] = null;
             } else if (fieldType == String.class) arguments[i] = value;
             else if (fieldType == boolean.class) {
@@ -127,7 +161,7 @@ public final class PhoneConversationFile {
             else if (fieldType == Path.class) arguments[i] = Path.of(value);
             else throw new IllegalArgumentException("Componente desconhecido: " + fieldType.getName());
         }
-        return type.getDeclaredConstructor(types).newInstance(arguments);
+        return shape.constructor().newInstance(arguments);
     }
 
     private static Map<String, String> readRecord(Properties properties, String prefix) throws IOException {

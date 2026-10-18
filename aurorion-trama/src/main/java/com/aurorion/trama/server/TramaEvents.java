@@ -12,6 +12,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.neoforged.bus.api.*;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.*;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.*;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -21,6 +22,8 @@ import net.neoforged.neoforge.event.tick.*;
 
 @EventBusSubscriber(modid = AurorionTrama.MOD_ID)
 public final class TramaEvents {
+    private static final net.minecraft.resources.ResourceLocation BBR_MODIFIER =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("aurorion_trama","bbr");
     private TramaEvents() {}
     @SubscribeEvent public static void started(ServerStartedEvent event) {
         if (!HouseGate.installed()) AurorionTrama.LOGGER.warn("Trama suspensa: nenhum provedor de Casas instalado. Instale Aurorion Ethereal.");
@@ -88,20 +91,24 @@ public final class TramaEvents {
         var s = TramaRuntime.state(p);
         if (s.build.has("NO4") && (!event.getState().requiresCorrectToolForDrops() || p.getMainHandItem().isCorrectToolForDrops(event.getState()))) {
             var attribute = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_BREAK_SPEED);
-            var modifier = attribute == null ? null : attribute.getModifier(net.minecraft.resources.ResourceLocation.parse("aurorion_trama:bbr"));
+            var modifier = attribute == null ? null : attribute.getModifier(BBR_MODIFIER);
             double already = modifier == null ? 0 : modifier.amount();
-            double total = Math.min(.10,s.build.effects(TramaRuntime.context(p,s)).get(Rating.BBR)+.02);
+            double total = Math.min(.10,s.effects(TramaRuntime.context(p,s)).get(Rating.BBR)+.02);
             event.setNewSpeed((float)(event.getNewSpeed()*(1+total)/(1+already)));
         }
     }
-    @SubscribeEvent public static void projectile(EntityTickEvent.Pre event) {
+    /**
+     * Na entrada no mundo, e nao no tick de toda entidade: a flecha ja chega com dono e velocidade, e o
+     * bonus sai no proprio pacote de spawn. Flecha carregada do disco traz a marca persistida.
+     */
+    @SubscribeEvent public static void projectile(EntityJoinLevelEvent event) {
         var entity = event.getEntity();
-        if (entity.level().isClientSide() || entity.tickCount > 1 || !(entity instanceof Projectile projectile)
+        if (event.getLevel().isClientSide() || !(entity instanceof Projectile projectile)
                 || !entity.getType().is(TramaTags.PROJECTILES) || entity.getPersistentData().getBoolean("aurorion_trama_speed")) return;
         if (!(projectile.getOwner() instanceof ServerPlayer owner) || !TramaRuntime.eligible(owner)) return;
         if (projectile.getDeltaMovement().lengthSqr() == 0) return;
         var s = TramaRuntime.state(owner);
-        double speed = s.build.effects(TramaRuntime.context(owner,s)).get(Rating.PSPD);
+        double speed = s.effects(TramaRuntime.context(owner,s)).get(Rating.PSPD);
         projectile.setDeltaMovement(projectile.getDeltaMovement().scale(1+speed));
         entity.getPersistentData().putBoolean("aurorion_trama_speed",true);
     }

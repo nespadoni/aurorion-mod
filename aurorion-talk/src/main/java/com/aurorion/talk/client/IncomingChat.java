@@ -62,11 +62,13 @@ public final class IncomingChat {
         List<FormattedCharSequence> lines = font.split(FormattedText.of(message), maxWidth);
 
         int widest = 0;
-        for (FormattedCharSequence line : lines) {
-            widest = Math.max(widest, font.width(line));
+        int[] widths = new int[lines.size()];
+        for (int i = 0; i < widths.length; i++) {
+            widths[i] = font.width(lines.get(i));
+            widest = Math.max(widest, widths[i]);
         }
 
         long lifetime = TalkConfig.BALLOON_AGE_SECONDS.get() * 20L;
-        return new BalloonMessage(lines, widest, gameTime + lifetime);
+        return new BalloonMessage(lines, widths, widest, gameTime + lifetime);
     }
 }

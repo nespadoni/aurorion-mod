@@ -167,10 +167,11 @@ public final class EtherealServerEvents {
         CeremonyManager.forget(event.getEntity().getUUID());
     }
 
-    /** Sem rito ativo, o relogio sai imediatamente. */
+    /** Sem rito ativo e sem projetor sujo, os dois relogios saem imediatamente. */
     @SubscribeEvent
     public static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
         BindingRite.tick(event.getServer());
+        BoardService.tick(event.getServer());
     }
 
     /** Limpa estado transitorio inclusive entre mundos do servidor integrado. */

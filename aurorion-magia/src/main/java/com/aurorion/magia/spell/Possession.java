@@ -96,7 +96,11 @@ public final class Possession {
         if (target == null || !target.isAlive() || target.level() != caster.level()
                 || !target.hasEffect(MagiaEffects.POSSESSED)) return false;
 
-        target.connection.teleport(caster.getX(), caster.getY(), caster.getZ(), caster.getYRot(), caster.getXRot());
+        // Parados os dois, nao manda pacote de posicao por tick so para repetir o obvio (como WaterCage.hold).
+        if (target.distanceToSqr(caster.getX(), caster.getY(), caster.getZ()) > 1.0E-6
+                || target.getYRot() != caster.getYRot() || target.getXRot() != caster.getXRot()) {
+            target.connection.teleport(caster.getX(), caster.getY(), caster.getZ(), caster.getYRot(), caster.getXRot());
+        }
         target.setYHeadRot(caster.getYHeadRot());
         target.setShiftKeyDown(caster.isShiftKeyDown());
         target.setSprinting(caster.isSprinting());
