@@ -99,14 +99,21 @@ public final class VoidPocket {
 
     // --- Tecla -------------------------------------------------------------------------------------
 
+    /**
+     * Entrar e sair: 3 s entre um e outro. Cada um troca de dimensao Iris e ate 8 convidados, com chunk
+     * carregado dos dois lados; sem limite, um cliente modificado fazia isso varias vezes por tick.
+     * Marcar e mandar de volta (Shift) nao trocam a dimensao de quem usa e ficam livres.
+     */
+    private static final com.aurorion.core.rate.ActionCooldown CROSSING = new com.aurorion.core.rate.ActionCooldown(3_000L);
+
     public static void use(ServerPlayer iris, boolean alternate) {
         if (isInside(iris) && isOwnerInside(iris)) {
             if (alternate) sendBackLooked(iris);
-            else collapse(iris, true);
+            else if (CROSSING.acquire(iris.getUUID(), net.minecraft.Util.getMillis())) collapse(iris, true);
             return;
         }
         if (alternate) toggleMark(iris);
-        else enter(iris);
+        else if (CROSSING.acquire(iris.getUUID(), net.minecraft.Util.getMillis())) enter(iris);
     }
 
     private static void toggleMark(ServerPlayer iris) {
@@ -169,7 +176,10 @@ public final class VoidPocket {
                     .withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        // A replica e o mesmo terreno: a altura de la e a daqui. Pedir a altura carrega (ou gera) o chunk.
+        // A replica e o mesmo terreno: a altura de la e a daqui. Level.getHeight NAO carrega o chunk: sem
+        // ele, devolve o fundo do mundo, e o bolso quase sempre vazio caia na reserva abaixo (gente
+        // enterrada ou no ar). O chunk e carregado (ou gerado) antes — por isso o README pede pregerar.
+        pocket.getChunk(column.getX() >> 4, column.getZ() >> 4);
         int y = pocket.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
         if (y <= pocket.getMinBuildHeight() + 1) y = Math.max(pocket.getSeaLevel() + 1, (int) iris.getY());
         Vec3 center = new Vec3(column.getX() + 0.5, y, column.getZ() + 0.5);
@@ -264,8 +274,9 @@ public final class VoidPocket {
             double dx = member.getX() - center.x, dz = member.getZ() - center.z;
             if (dx * dx + dz * dz > radius * radius) {
                 double scale = (radius - 2) / Math.sqrt(dx * dx + dz * dz);
-                member.connection.teleport(center.x + dx * scale, member.getY(), center.z + dz * scale,
-                        member.getYRot(), member.getXRot());
+                double toX = center.x + dx * scale, toZ = center.z + dz * scale;
+                TwilightTeleportCompat.immediateRun(() -> member.connection.teleport(toX, member.getY(), toZ,
+                        member.getYRot(), member.getXRot()));
                 member.displayClientMessage(Component.translatable("aurorion_magia.vazio.borda")
                         .withStyle(ChatFormatting.DARK_GRAY), true);
             }

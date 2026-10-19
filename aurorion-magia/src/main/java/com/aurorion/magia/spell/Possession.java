@@ -1,5 +1,6 @@
 package com.aurorion.magia.spell;
 
+import com.aurorion.core.compat.TwilightTeleportCompat;
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
@@ -75,8 +76,9 @@ public final class Possession {
         caster.addEffect(new MobEffectInstance(MagiaEffects.POSSESSING, ticks, 0, false, false, true));
         caster.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, ticks, 0, false, false, false));
         caster.addEffect(new MobEffectInstance(MagiaEffects.UNTARGETABLE, ticks, 0, false, false, false));
-        caster.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(),
-                Set.of(), target.getYRot(), target.getXRot());
+        // Sincrono: o Twilight Teleport adiaria (e animaria) qualquer viagem acima de 4 blocos.
+        TwilightTeleportCompat.immediateRun(() -> caster.teleportTo(target.serverLevel(), target.getX(), target.getY(),
+                target.getZ(), Set.of(), target.getYRot(), target.getXRot()));
 
         AurorionSpell.sound(target, SoundEvents.SCULK_SHRIEKER_SHRIEK, 1.0f, 0.5f);
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.POSSESSIO_CORPORIS, ticks);
@@ -99,7 +101,8 @@ public final class Possession {
         // Parados os dois, nao manda pacote de posicao por tick so para repetir o obvio (como WaterCage.hold).
         if (target.distanceToSqr(caster.getX(), caster.getY(), caster.getZ()) > 1.0E-6
                 || target.getYRot() != caster.getYRot() || target.getXRot() != caster.getXRot()) {
-            target.connection.teleport(caster.getX(), caster.getY(), caster.getZ(), caster.getYRot(), caster.getXRot());
+            TwilightTeleportCompat.immediateRun(() -> target.connection.teleport(caster.getX(), caster.getY(), caster.getZ(),
+                    caster.getYRot(), caster.getXRot()));
         }
         target.setYHeadRot(caster.getYHeadRot());
         target.setShiftKeyDown(caster.isShiftKeyDown());
@@ -134,8 +137,8 @@ public final class Possession {
             // dentro do Nether enterraria a pessoa na pedra.
             ServerLevel home = origin(player, tag);
             if (player.isAlive() && home != null) {
-                player.teleportTo(home, tag.getDouble("X"), tag.getDouble("Y"), tag.getDouble("Z"),
-                        Set.of(), player.getYRot(), player.getXRot());
+                TwilightTeleportCompat.immediateRun(() -> player.teleportTo(home, tag.getDouble("X"), tag.getDouble("Y"),
+                        tag.getDouble("Z"), Set.of(), player.getYRot(), player.getXRot()));
                 player.resetFallDistance();
             }
             AurorionSpell.sound(player, SoundEvents.SOUL_ESCAPE.value(), 1.4f, 0.6f);

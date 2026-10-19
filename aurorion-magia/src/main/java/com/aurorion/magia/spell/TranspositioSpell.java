@@ -91,7 +91,8 @@ public final class TranspositioSpell extends AurorionSpell {
     /** Jogador pelo teleporte de conexao (senao o cliente discorda e volta); o resto direto. */
     private static void moveTo(LivingEntity entity, Vec3 pos) {
         if (entity instanceof ServerPlayer player) {
-            player.teleportTo(player.serverLevel(), pos.x, pos.y, pos.z, player.getYRot(), player.getXRot());
+            com.aurorion.core.compat.TwilightTeleportCompat.immediateRun(
+                    () -> player.teleportTo(player.serverLevel(), pos.x, pos.y, pos.z, player.getYRot(), player.getXRot()));
         } else {
             entity.teleportTo(pos.x, pos.y, pos.z);
         }

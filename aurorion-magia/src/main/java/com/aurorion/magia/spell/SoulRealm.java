@@ -110,8 +110,8 @@ public final class SoulRealm {
         if (!validHorizontal(x, z)) { onEffectEnded(player); return false; }
         if (Math.abs(player.getX() - x) > 14 || Math.abs(player.getZ() - z) > 14
                 || player.getY() < 65 || player.getY() > 76) {
-            player.connection.teleport(Math.max(x - 13, Math.min(x + 13, player.getX())), 65,
-                    Math.max(z - 13, Math.min(z + 13, player.getZ())), player.getYRot(), player.getXRot());
+            double toX = Math.max(x - 13, Math.min(x + 13, player.getX())), toZ = Math.max(z - 13, Math.min(z + 13, player.getZ()));
+            TwilightTeleportCompat.immediateRun(() -> player.connection.teleport(toX, 65, toZ, player.getYRot(), player.getXRot()));
             player.resetFallDistance();
         }
         if (player.tickCount % 40 == 0) {

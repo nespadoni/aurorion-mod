@@ -100,6 +100,10 @@ public final class ServicosData extends SavedData {
         if (jobs.remove(id) != null) setDirty();
     }
 
+    public void removeOrder(long id) {
+        if (orders.remove(id) != null) setDirty();
+    }
+
     public List<Anuncio> adsOf(UUID owner) {
         List<Anuncio> result = new ArrayList<>();
         for (Anuncio anuncio : ads.values()) if (anuncio.owner().equals(owner)) result.add(anuncio);

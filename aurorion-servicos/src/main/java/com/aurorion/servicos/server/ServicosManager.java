@@ -58,6 +58,13 @@ public final class ServicosManager {
     public static final String FILTER_RECEBIDOS = "recebidos";
 
     private static final long ACTION_COOLDOWN_MS = 400L;
+    /**
+     * Pedido novo (aberto ou direto) avisa profissionais no celular: um a cada 20 s por pessoa basta para
+     * uso normal e tira o laco de pedir-e-cancelar que lotava o aviso de quem esta trabalhando. Nao e
+     * zerado no logout, para relogar nao furar o limite.
+     */
+    private static final long ORDER_COOLDOWN_MS = 20_000L;
+    private static final Map<UUID, Long> LAST_ORDER = new HashMap<>();
     private static final long QUERY_COOLDOWN_MS = 150L;
     /** O limite do rascunho no chat do celular. */
     private static final int DRAFT = 180;
@@ -199,6 +206,9 @@ public final class ServicosManager {
         String text = ServicosRules.clean(payload.text(), ServicosRules.ORDER_TEXT);
         if (text.isEmpty()) text = "Quero contratar: " + ad.title();
 
+        if (!cooldown(LAST_ORDER, player, ORDER_COOLDOWN_MS)) {
+            return Result.fail("Aguarde alguns segundos antes de fazer outro pedido.");
+        }
         long now = System.currentTimeMillis();
         data.put(new Pedido(data.nextId(), me, ad.category(), text, ad.owner(), ad.id(), PedidoStatus.ABERTO, null, now, now));
         notify(provider, "Novo pedido de " + ServicosNames.name(server, me), text);
@@ -217,6 +227,9 @@ public final class ServicosManager {
         if (text.isEmpty()) return Result.fail("Descreva o que você precisa.");
         if (data.openOrdersOf(me) >= ServicosRules.MAX_OPEN_ORDERS) {
             return Result.fail("Você já tem " + ServicosRules.MAX_OPEN_ORDERS + " pedidos aguardando. Cancele um ou espere.");
+        }
+        if (!cooldown(LAST_ORDER, player, ORDER_COOLDOWN_MS)) {
+            return Result.fail("Aguarde alguns segundos antes de fazer outro pedido.");
         }
 
         long now = System.currentTimeMillis();
@@ -289,6 +302,12 @@ public final class ServicosManager {
         Pedido pedido = data.order(id);
         if (pedido == null) return Result.fail("Esse pedido não existe mais.");
         if (!ServicosRules.canCancel(pedido, me)) return Result.fail("Você não pode cancelar esse pedido.");
+        if (pedido.status() == PedidoStatus.ABERTO && pedido.provider() == null) {
+            // Pedido aberto que ninguem pegou: nao tem historia para guardar. Mante-lo como CANCELADO por
+            // um dia deixava criar-e-cancelar em laco encher o arquivo e todas as varreduras de pedido.
+            data.removeOrder(id);
+            return Result.done("Pedido cancelado.");
+        }
         data.put(pedido.with(PedidoStatus.CANCELADO, pedido.provider(), System.currentTimeMillis()));
         warnCounterpart(server, pedido, me, "Pedido cancelado", ServicosNames.name(server, me) + " cancelou o pedido.");
         return Result.done("Pedido cancelado.");
@@ -570,6 +589,7 @@ public final class ServicosManager {
         ON_DUTY.clear();
         LAST_ACTION.clear();
         LAST_QUERY.clear();
+        LAST_ORDER.clear();
         LOGIN_REMINDERS.clear();
     }
 

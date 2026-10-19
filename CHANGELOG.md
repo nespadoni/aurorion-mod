@@ -1,3 +1,61 @@
+# Verificação geral do repositório - 18/10/2026
+
+Revisão de todos os módulos, com as chamadas de API conferidas nas fontes do NeoForge 21.1.248 e nos
+jars do pack. Correções:
+
+- **Economia 0.3.3:**
+  - a bolsa inicial **somava errado**: ela substituía o saldo. O evento de personagem nomeado também
+    dispara na renomeação pela staff, e quem tinha dinheiro voltava a 4 óbolos;
+  - o canal ficou `optional()`, como o mod promete, e cobrar quem não tem o mod é recusado sem crash.
+- **Essentials:**
+  - `/deathhistory devolver` podia planejar dois itens no mesmo slot e apagar um;
+  - os grupos do celular resolviam nick pela Mojang por HTTP na thread do servidor, e 16 nicks
+    inventados travavam o tick. Agora só olham a memória;
+  - `getName()` devolve uma cópia;
+  - a faixa de versão do Voice Chat ganhou mínimo.
+- **Limbo:**
+  - um exilado com Vínculo na mão saía do Limbo com 0 vidas ao "resgatar" outro;
+  - a passagem de resgate agora reconfere o alvo (se ele já saiu, a passagem fecha e a vida volta);
+  - uma travessia recusada não se repete mais a cada tick;
+  - o Limbo carrega depois do portais, para a liberação de dimensão funcionar sempre.
+- **Magia:**
+  - a chegada no Bolso do Vazio caía enterrada ou no ar, porque a altura era lida sem o chunk
+    carregado;
+  - Possessão, Olhar Anacrônico, borda do Bolso, Corrente, Transpositio e Reino das Almas agora
+    teleportam sem o adiamento do Twilight Teleport;
+  - entrar e sair do Bolso tem 3 s de intervalo.
+- **Talk:**
+  - mandar estilo para um cliente sem o mod derrubava a conexão no login (o canal é opcional);
+  - 1 troca de estilo por segundo;
+  - o reset de personagem avisa os outros clientes.
+- **Areas:**
+  - um `/reload` não manda mais avisos falsos de "saiu/entrou" para a staff;
+  - pet ou invocação com dono conta como o dono na regra de PvP.
+- **Ethereal:**
+  - o reset de personagem passa pelo `HouseManager` (quadros, tab, Trama e site deixam de mostrar a
+    casa antiga);
+  - um texto de projetor que não lê não apaga mais o bloco;
+  - o pedido do Protetor tem limite de frequência;
+  - uma falha passageira da economia não esvazia os quadros até o restart.
+- **Profissões:**
+  - o invocador de chefe do Apotheosis é barrado também quando usado num bloco;
+  - a regra padrão do Apotheosis lista as receitas de gema, soquete e sigilo uma por uma, e os
+    upgrades de equipamento ficam com o ferreiro.
+- **Mundos:** a trava de spawner deixa colocar bloco encostado nele.
+- **Serviços:**
+  - pedido aberto cancelado sem ninguém ter aceitado é apagado, e não guardado por um dia;
+  - 20 s entre pedidos novos.
+- **Intenção:** nome com teto de 48 caracteres e id de som com teto de 256 no tema.
+- **Utils:**
+  - o cache de camada sólida também é zerado no tick depois da recarga de modelos;
+  - nome da `freeze_anchor` traduzido.
+- **Faixas de core nos mods.toml:** economia, essentials, talk, diário e integração exigiam um core
+  mínimo mais antigo do que as classes que usam.
+- **Versões:** economia 0.3.3, integração 0.2.3 e diário 0.1.4, porque o conteúdo mudou e a versão
+  anterior já estava no pack.
+- **Tradução:** `pt_br` do celular (MikasRevs Phone), dentro do essentials.
+- Código preparado sem build nesta máquina, conforme AGENTS.md.
+
 # Copycats+ mais leve no cliente - 18/10/2026
 
 - Utils 0.2.5 (cliente e servidor; precisa chegar aos clientes pelo AutoModpack):

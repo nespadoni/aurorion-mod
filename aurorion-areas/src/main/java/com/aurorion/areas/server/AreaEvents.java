@@ -118,7 +118,12 @@ public final class AreaEvents {
             double factor = source.getPersistentData().getDouble(STRENGTH);
             if (factor >= .1 && factor <= 20) event.setAmount((float) (event.getAmount() * factor));
         }
-        if (source instanceof ServerPlayer attacker && victim instanceof ServerPlayer target && attacker != target
+        // Lobo domesticado, invocacao ou outro bicho com dono conta como o dono: sem isto, a regra de PvP
+        // se contornava mandando o pet atacar. (Flecha e magia ja trazem o jogador como fonte.)
+        ServerPlayer attacker = source instanceof ServerPlayer player ? player
+                : source instanceof net.minecraft.world.entity.OwnableEntity owned && owned.getOwner() instanceof ServerPlayer owner
+                ? owner : null;
+        if (attacker != null && victim instanceof ServerPlayer target && attacker != target
                 && (!AreaApi.allowsFor(target, AreaRule.PVP) || !AreaApi.allowsFor(attacker, AreaRule.PVP))) {
             event.setCanceled(true);
         }

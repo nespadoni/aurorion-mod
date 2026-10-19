@@ -74,6 +74,13 @@ public final class ProfileEvents {
     public static void onUseSpawner(PlayerInteractEvent.RightClickBlock event) {
         if (event.getLevel().isClientSide() || !locked(event.getEntity())) return;
         if (!event.getLevel().getBlockState(event.getPos()).is(SPAWNERS)) return;
+        // Bloco na mao (tocha, pedra): e o jogador colocando algo ENCOSTADO no spawner, o jeito comum de
+        // apaga-lo. O spawner em si nao reage (setUseBlock FALSE); so o item age, e coloca o bloco.
+        var held = event.getItemStack().getItem();
+        if (held instanceof net.minecraft.world.item.BlockItem && !(held instanceof net.minecraft.world.item.SpawnEggItem)) {
+            event.setUseBlock(net.neoforged.neoforge.common.util.TriState.FALSE);
+            return;
+        }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.FAIL);
         event.getEntity().displayClientMessage(Component.translatable("aurorion_mundos.spawner.travado")

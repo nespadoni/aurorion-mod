@@ -292,8 +292,12 @@ public final class PhoneGroupService {
     }
 
     /**
-     * Conta de um nick: online, ou do cache de perfis do servidor ({@code usercache.json}) — o mesmo
-     * que o {@link PhoneNameDirectorySync} usa. Quem nunca entrou no servidor nao e encontrado.
+     * Conta de um nick: online, ou uma das contas conhecidas cujo perfil em cache tem esse nick — o
+     * mesmo universo do {@link PhoneNameDirectorySync}. Quem nunca entrou no servidor nao e encontrado.
+     *
+     * <p>Nunca {@code GameProfileCache.get(String)}: para nome fora do cache ele consulta a Mojang por
+     * HTTP e grava {@code usercache.json}, na thread do servidor. Com 16 nicks inventados por pacote, um
+     * cliente travaria o tick por segundos. Aqui so ha leitura de memoria ({@code get(UUID)} e cache).
      */
     @Nullable
     private static UUID resolve(MinecraftServer server, String nick) {
@@ -303,7 +307,11 @@ public final class PhoneGroupService {
         if (online != null) return online.getUUID();
         GameProfileCache profiles = server.getProfileCache();
         if (profiles == null) return null;
-        return profiles.get(clean).map(GameProfile::getId).orElse(null);
+        for (UUID account : FakeNameData.get(server).allRaw().keySet()) {
+            String known = profiles.get(account).map(GameProfile::getName).orElse(null);
+            if (known != null && known.equalsIgnoreCase(clean)) return account;
+        }
+        return null;
     }
 
     private static String nickOf(MinecraftServer server, UUID account) {

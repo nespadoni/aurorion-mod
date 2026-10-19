@@ -129,8 +129,14 @@ public final class AnachronicSight {
         if (caster.distanceToSqr(target) > FOLLOW_SQR) {
             // Um passo atras do alvo, e nao dentro dele: dois jogadores sobrepostos se empurram, e o alvo
             // sentiria o corpo invisivel colado nas costas.
-            Vec3 behind = target.position().subtract(target.getLookAngle().multiply(1, 0, 1).normalize().scale(1.5));
-            caster.connection.teleport(behind.x, target.getY(), behind.z, caster.getYRot(), caster.getXRot());
+            // Olhando reto para cima ou para baixo, o olhar horizontal zera: usa a direcao do corpo.
+            Vec3 flat = target.getLookAngle().multiply(1, 0, 1);
+            if (flat.lengthSqr() < 1.0E-4) flat = Vec3.directionFromRotation(0, target.getYRot());
+            Vec3 behind = target.position().subtract(flat.normalize().scale(1.5));
+            // Sincrono: o Twilight Teleport adiaria o passo e mostraria o efeito dele a quem esta perto,
+            // revelando o corpo invisivel de Gretta.
+            TwilightTeleportCompat.immediateRun(() -> caster.connection.teleport(behind.x, target.getY(), behind.z,
+                    caster.getYRot(), caster.getXRot()));
         }
         caster.resetFallDistance();
 

@@ -193,7 +193,9 @@ public final class Binding {
     /** Jogador pelo teleporte de conexao; o resto direto. Teleportar jogador "na mao" desincroniza. */
     private static void moveTo(ServerLevel level, LivingEntity entity, Vec3 to) {
         if (entity instanceof ServerPlayer player) {
-            player.teleportTo(level, to.x, to.y, to.z, player.getYRot(), player.getXRot());
+            // Sincrono: adiado pelo Twilight Teleport, o puxao da corrente abriria uma janela de fuga.
+            com.aurorion.core.compat.TwilightTeleportCompat.immediateRun(
+                    () -> player.teleportTo(level, to.x, to.y, to.z, player.getYRot(), player.getXRot()));
         } else {
             entity.teleportTo(to.x, to.y, to.z);
         }

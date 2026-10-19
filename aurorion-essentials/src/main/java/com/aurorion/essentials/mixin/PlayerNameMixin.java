@@ -29,6 +29,8 @@ public abstract class PlayerNameMixin {
     @Inject(method = "getName", at = @At("HEAD"), cancellable = true)
     private void aurorion_essentials$fakeGetName(CallbackInfoReturnable<Component> cir) {
         Component fakeName = FakeNameRegistry.getDisplayName(((Player) (Object) this).getUUID());
-        if (fakeName != null) cir.setReturnValue(fakeName);
+        // Copia, como o vanilla (Component.literal novo a cada chamada): a mesma instancia para todos os
+        // chamadores deixaria um mod que faz getName().withStyle(...) mudar o nome do jogador para sempre.
+        if (fakeName != null) cir.setReturnValue(fakeName.copy());
     }
 }

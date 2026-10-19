@@ -116,7 +116,10 @@ public final class AreaRuntime {
         // Querying rules from another event must not consume the transition used to cancel a cast.
         if ((magic && !s.magicBlocked) || (flight && !s.flightBlocked)) IronSpellsCompat.stopForbiddenCast(player, magic, flight);
         s.magicBlocked = magic; s.flightBlocked = flight;
-        boolean ambienceChanged = s.profile != profile;
+        // Pelo id, nao pela instancia: um /reload decodifica perfis novos, e comparar a referencia faria
+        // todo mundo dentro de um ambiente com aviso "sair" e "entrar" de novo para a staff.
+        boolean ambienceChanged = !java.util.Objects.equals(s.profile == null ? null : s.profile.id(),
+                profile == null ? null : profile.id());
         if (ambienceChanged || s.profileRevision != AreaProfiles.revision()) {
             // O aviso de saida usa o ambiente e o nome de lugar antigos, entao vem antes da troca.
             // Um /reload nao dispara nada: a pessoa nao saiu de lugar nenhum.

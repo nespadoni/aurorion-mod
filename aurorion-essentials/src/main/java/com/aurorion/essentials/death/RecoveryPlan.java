@@ -94,7 +94,10 @@ final class RecoveryPlan {
                 if (origin != null) {
                     ItemStack current = origin.get();
                     if (ItemStack.matches(current, stack)) { plan.held++; continue; }
-                    if (current.isEmpty() && planned.add(group + "/" + slot)) {
+                    // Vazio AGORA nao basta: um item anterior pode ter sido planejado para este mesmo slot
+                    // (ver firstFree abaixo). Os dois seriam gravados nele e o primeiro sumiria.
+                    boolean reserved = group.equals("inventory") && slot >= 0 && slot < busy.length && busy[slot];
+                    if (current.isEmpty() && !reserved && planned.add(group + "/" + slot)) {
                         if (group.equals("inventory") && slot < busy.length) busy[slot] = true;
                         plan.add(index, stack, origin, target);
                         continue;
@@ -104,6 +107,7 @@ final class RecoveryPlan {
             int free = firstFree(busy);
             if (free < 0) { plan.leftover.add(stack.getHoverName()); continue; }
             busy[free] = true;
+            planned.add("inventory/" + free);
             plan.add(index, stack, inventorySpot(inventory, free), target);
         }
         return plan;
