@@ -170,7 +170,11 @@ public class WalletData extends SavedData {
         if (!starterGrants.add(characterId)) return false;
 
         long initial = Math.min(Math.max(fragments, 0L), Money.MAX);
-        setBalance(account, initial);
+        // SOMA, nao substitui. O evento que chega aqui (personagem nomeado) dispara tambem em renomeacao
+        // pela staff e em personagem antigo, de antes deste registro: trocar o saldo zerava quem ja tinha
+        // dinheiro. Personagem novo chega aqui com a carteira zerada pelo reset, e fica com a bolsa exata.
+        long current = balance(account);
+        setBalance(account, current >= Money.MAX - initial ? Money.MAX : current + initial);
         // Registrar a concessao separadamente torna repeticoes do evento inofensivas.
         setDirty();
         return true;

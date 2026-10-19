@@ -407,7 +407,7 @@ da Porta ter sido limpa, então o `aurorion_portais` trancava a saída do Limbo 
 rejected"). O Vínculo era usado e o exilado nunca saía.
 
 Todo teleporte do Limbo (saída por resgate ou pela Porta, entrada pela passagem, coleira e Fio da
-Volta) passa por `TwilightTeleportCompat`, que marca a causa como uma das que o próprio Twilight
+Volta) passa por `TwilightTeleportCompat` (do `aurorion-core`), que marca a causa como uma das que o próprio Twilight
 deixa passar sem interceptar, pela API pública dele e por reflexão. Sem o mod, a chamada é direta.
 
 ### Cinematic Respawn

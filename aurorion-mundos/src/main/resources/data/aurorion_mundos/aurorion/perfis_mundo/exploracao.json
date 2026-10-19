@@ -1,0 +1,7 @@
+{
+  "descricao": "Mundo de exploracao: estruturas por toda parte, monstros mais duros, mais recompensa.",
+  "monstros": { "vida": 2.5, "dano": 1.75, "armadura": 3, "alcance": 1.25, "experiencia": 2.5 },
+  "spawn": { "tetoMonstros": 1.3 },
+  "estruturas": { "densidade": 2.5, "conjuntos": { "minecraft:villages": 0.6 } },
+  "ordem": 40
+}

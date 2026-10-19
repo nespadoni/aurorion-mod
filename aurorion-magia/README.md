@@ -1,13 +1,15 @@
 # Aurorion Magia
 
+Novidades da **0.7.0**: Clarão (granada de luz), Garra do Abismo (a ultimate do Malzahar) e as quatro passivas dos representantes dos elementos — Salto Quântico (Robs), Olhar Anacrônico (Gretta), Lua Minguante (Iacy) e Bolso do Vazio (Iris), com uma tecla de passiva. Ver "Clarão", "Garra do Abismo" e "Representantes dos elementos" abaixo.
+
 Novidades da **0.6.0**: Reino das Almas, Vazio Infinito, Santuário Malevolente, duas novas passivas e efeitos ampliados da Lux/Genki Dama. [Detalhes, comandos e validação](../docs/dominios-almas-ultimates-2026-10-08.md).
 
 Addon do [Iron's Spells 'n Spellbooks](https://github.com/iron431/irons-spells-n-spellbooks) para o
 Aurorion. **Nenhuma magia vem liberada**: a staff ensina magias soltas ou escolas inteiras por
 personagem, em aula, com `/aurorion spells`. O estado é espelhado no Iron's Restrictions.
 
-Cinquenta e cinco magias autorais (doze delas **proibidas**), cada uma com um **nome conhecido** e uma
-**invocação** (o id), mais quatro **passivas**: marcas que ficam no personagem em vez de serem
+Cinquenta e sete magias autorais (doze delas **proibidas**), cada uma com um **nome conhecido** e uma
+**invocação** (o id), mais oito **passivas**: marcas que ficam no personagem em vez de serem
 conjuradas. As magias servem para duelo, captura, interrogatório, perseguição, fuga, invasão
 e RP do dia a dia. Cinco delas mudam de forma quando conjuradas **agachado** (ver "Agachado, em
 área"), e três se desfazem conjurando de novo no mesmo alvo (Prostração, Voz Interdita, Mundo Vazio).
@@ -147,6 +149,8 @@ sincronização, só quando algo muda. Login sem mudança não manda nada.
 | Possessão ⛔ | `possessio_corporis` | Eldritch | longa 2 s, reconjurável | assumir o corpo de outro jogador e falar por ele |
 | Justiça Demaciana ⛔ | `iustitia_demaciae` | Sagrado | longa 0,75 s (espada) | espada do céu; executa abaixo do limiar |
 | Morte Vinda das Profundezas ⛔ | `mors_ex_profundis` | Gelo | instantânea | X que executa abaixo do limiar e devolve a magia |
+| Clarão | `fulgor_caecans` | Sagrado | instantânea | flashbang jogada para o alto: tela toda branca e som abafado por até 5 s, raio de 24+ blocos |
+| Garra do Abismo | `manus_abyssi` | Eldritch | instantânea + canalização 2,5 s | suprime, fere a cada 0,25 s e abre a Zona Nula |
 
 Os ids completos são `aurorion_magia:<invocação>`. Escola, nível máximo, raridade e cooldown são
 só o padrão; ver "Trocar escola" abaixo.
@@ -830,6 +834,52 @@ detona meio segundo depois. Quem estiver sobre o X e abaixo do limiar (`limiarPr
 20/25/30%) é **executado**, sem totem; o resto leva o dano. Executar alguém **devolve a magia na
 hora**: a recarga some.
 
+### Clarão — *Fulgor Caecans*
+Uma biribinha de luz sai da mão **para cima** e um pouco para a frente, faz o arco e estoura no alto
+depois de 0,7 s (ou no primeiro bloco ou corpo em que bater). Funciona como a flashbang do CS: **todo
+mundo** num raio de 24 blocos + 4 por nível (`[clarao].raio`) fica com a **tela inteira branca**, 100%
+opaca. Isso cobre hotbar, chat, mira, F3 e até inventário e ESC abertos. O som fica abafado junto:
+
+| Para onde a pessoa olhava | Tela branca |
+|---|---|
+| para o estouro | 5 s |
+| de lado | 4 s |
+| de costas | 3 s |
+
+- **Distância:** até 60% do raio a duração é inteira; dali até a borda ela cai para 70%.
+- **Sumiço:** os últimos 2,5 s clareiam numa curva que fica branca por muito tempo e só solta no fim.
+- **Som:** o volume geral cai para 15% no auge e volta junto com a visão.
+- **Parede:** por padrão não protege, porque o estouro é no alto. Com `exigeVisao = true`, atrás de
+  parede não pega (um raycast por pessoa).
+- **Dois clarões seguidos** só estendem a cegueira, nunca a encurtam.
+- **Criatura** perde o alvo e fica cega e lenta por 5 s.
+
+Não fere ninguém, e quem lançou não fica cego (`poupaConjurador`). Respeita PvP e área protegida.
+Recarga 18 s, mana 35/40/45.
+
+A tela branca é a `FlashLayer`, desenhada pelo cliente de quem foi ofuscado a partir do efeito
+`ofuscado`, sem nenhum pacote além do próprio efeito. A `FlashBlindness` cobre telas abertas e abafa o
+som.
+
+> Servidor que já tinha `config/aurorion/magia-server.toml` mantém o `raio = 10` antigo. Troque para 24
+> à mão, ou apague a seção `[clarao]` para ela voltar com os valores novos.
+
+### Garra do Abismo — *Manus Abyssi*
+A ultimate do Malzahar (Nether Grasp), em blocos:
+
+| LoL | Aqui |
+|---|---|
+| alcance 700 | 10 blocos, mira do Iron's |
+| raio da corrente 1250 | 16 blocos |
+| canalização até 2,5 s, supressão e revelação | o alvo é **derrubado** (desce da montaria, perde o embalo) e **suprimido**: não anda, não pula, não usa item, não conjura. Os dois brilham através das paredes |
+| dano a cada 0,25 s: 125/200/275 (+80% AP) | 10 pulsos, total 8/12/16 de dano de magia (×2 do balanço autoral), escalando com o poder de magia do Iron's |
+| a canalização continua enquanto a corrente não partir | parte se o alvo passar de 16 blocos, morrer, trocar de dimensão, ou se quem conjura for controlado (silêncio, estase, supressão…) |
+| Zona Nula 5 s, a cada 0,5 s: 10/15/20% (+2,5% por 100 AP) da vida máxima, teto 120 em minion/monstro | 10 pulsos dividindo 10/15/20% da vida máxima (+2,5% a cada +10% de poder de magia), teto de 6 de dano por pulso em criatura. **Fica mesmo se a corrente partir** |
+| recarga 140/110/80 | 140/110/80 s, com as reduções de recarga do Iron's valendo |
+| 100 de mana | 100 |
+
+Quem conjura fica parado enquanto canaliza. Mirar alguém em estase não vale.
+
 ### Possessão: a tela de quem é controlado
 
 Quem está sob uma magia de controle vê e ouve diferente, para passar a ideia de possessão. Tudo é
@@ -872,6 +922,10 @@ recarga. Passiva se **recebe uma vez** — o pergaminho é consumido e a marca f
 |---|---|---|---|
 | Mão que Cura | `manus_medica` | não | bater em alguém cura em vez de ferir |
 | Presença Aterradora | `presenca_terrivel` | sim | quem está perto sente medo (sombra nos cantos da tela) e todos ao redor se prostram |
+| Salto Quântico | `salto_quantico` | tecla | Robs: teleporte livre e pedras de teleporte, com energia que se esgota |
+| Olhar Anacrônico | `olhar_anacronico` | tecla | Gretta: uma vez por dia, ver pelos olhos de outra pessoa |
+| Lua Minguante | `lua_minguante` | não | Iacy: cada vez mais forte com a noite; restaura quem está perto |
+| Bolso do Vazio | `bolso_do_vazio` | tecla | Iris: a dimensão de bolso que replica a realidade |
 
 ### Como uma passiva chega a alguém
 
@@ -983,6 +1037,121 @@ a cada ~2 s por pessoa, e não um por segundo. Quem sai do raio volta ao normal 
 volume e o tom subindo conforme o portador se aproxima. Quem carrega a aura nunca ouve nada, e nenhum
 pacote de áudio trafega.
 
+## Representantes dos elementos
+
+Quatro passivas, uma por representante. Como as outras, só a staff concede
+(`/aurorion passivas conceder aurorion_magia:<id> <jogador>`), e são do personagem: morte definitiva
+zera tudo, inclusive a energia do Robs e o "uma vez por dia" da Gretta.
+
+**A tecla de passiva** é `H` por padrão (Controles → *Aurorion — Magia*; o `G` é da Economia).
+
+- **Toque rápido:** a ação de sempre. **Shift + tecla** é a ação alternativa. Quem não tem passiva de
+  usar, mas tem uma de ligar (Presença Aterradora), liga e desliga com o toque.
+- **Segurar (0,3 s):** abre a **roda de passivas**, como a roda de magias do Iron's. Ela mostra todas as
+  passivas de usar e de ligar que a pessoa tem:
+  - a borda dourada indica que a passiva está ligada ou em uso agora (fora do corpo, dentro do bolso);
+  - mire e **solte a tecla** para usar ou alternar; com Shift, a ação alternativa;
+  - soltar no miolo ou apertar Esc fecha sem fazer nada;
+  - as teclas **1–9** escolhem direto pela posição;
+  - se a roda chegar depois de a tecla ser solta (atraso de rede), ela abre no modo de clique: clique
+    esquerdo usa, clique direito faz a alternativa.
+
+  A roda não pausa o jogo e só escurece o fundo.
+
+O servidor decide tudo: o toque manda um byte, a roda manda um pedido vazio e depois o id escolhido,
+que só vale se a pessoa tiver aquela passiva. O comando continua existindo:
+`/aurorion passivas usar <passiva> [alternativa]` e `/aurorion passivas ligar|desligar <passiva>`.
+
+### Salto Quântico — Robs, representante do Quântico
+
+| Ação | O que faz | Custo |
+|---|---|---|
+| Tecla | o corpo se desfaz em átomos e se refaz onde ele olha, até 32 blocos. Não atravessa parede: reaparece antes dela, e sobe até 2 blocos para caber | 1 carga |
+| Shift + tecla | lista clicável das **pedras de teleporte (Waystones)** que ele já ativou; clicar viaja | 3 cargas (+2 em outra dimensão) |
+| `/aurorion quantico` | mostra energia e peso | — |
+
+- **Energia:** 20 cargas, uma volta a cada 30 s.
+- **O peso:** a partir do **10º teleporte seguido**, cada teleporte cobra — lentidão e cansaço; depois
+  náusea; depois fraqueza; insistindo, dano (que nunca mata sozinho). Cada teleporte sai da conta do
+  peso depois de 45 s.
+- **Esgotado:** gastar a última carga deixa Robs **90 s só carregando**, sem teleporte nenhum.
+- A corrente do Vinculum, o Reino das Almas e as áreas que vetam teleporte o recusam como recusam a
+  pérola — e aí não cobra energia.
+- Sem o Waystones instalado, o salto continua; só a lista de pedras não aparece. A ponte é reflexiva
+  (`compat/WaystonesCompat`), sem dependência de build.
+
+Números em `[representantes.quantico]`.
+
+### Olhar Anacrônico — Gretta, representante do Anacrônico
+
+Tecla olhando um jogador (até 24 blocos, à vista): a câmera dela vai para **os olhos dele**, e ela vê
+o que ele vê enquanto ele anda. O alvo não sabe.
+
+- **Uma vez por dia** (`horasEntreUsos = 24`, horas reais).
+- Os primeiros **10 s** são leves. Ela pode ficar até **30 s**; passou de 10, aparece a contagem.
+  Tecla de novo volta antes.
+- **Ao voltar**, fica *fragilizada* (−20% de dano, −10% de velocidade e de ataque) por 30 s, mais
+  9 s por segundo além dos 10. Ficou mais de 20 s além: o dobro da fraqueza. Leite não tira.
+- Fora do corpo ela não anda, não bate, não usa item e não conjura; o corpo some (invisível e
+  intocável) e acompanha o alvo de longe para os chunks dele continuarem carregados na tela dela.
+- Acaba também com a morte ou a saída de qualquer um dos dois e com o alvo trocando de dimensão. Ela
+  volta para onde estava.
+
+A câmera é do cliente (`AnachronicCamera`): a do servidor (`setCamera`) arrastaria o corpo dela para
+dentro do alvo a cada tick.
+
+### Lua Minguante — Iacy, representante do Minguantis
+
+O Escanor ao contrário. Sem tecla (a tecla só diz em que fase a noite está).
+
+- O poder é a **profundidade da noite** — nasce no pôr do sol, cresce até a **meia-noite**, vai embora
+  na aurora — vezes a lua. Minguantis é a lua que mingua: as três fases minguantes valem tanto quanto a
+  cheia; a nova cai para 60%, as crescentes 85%.
+- **4 fases** de bênção. Por fase: +25% de dano, +2 de armadura, +5% de velocidade e de ataque, +10%
+  de resistência a empurrão — na fase 4, **+100% de dano e +8 de armadura**. Visão noturna enquanto
+  durar (`visaoNoturna`).
+- **Restauração:** quem fica perto dela à noite, ela inclusive, recebe Regeneração I (II nas fases 3 e
+  4), num raio de 8 blocos + 2 por fase.
+- Dimensão sem céu (Nether, End) não tem noite. `fraquezaDiurna = true` dá −15% de dano de dia.
+
+O relógio é o marcador infinito `presenca_lunar`, só nela: um pulso a cada 2 s, que de dia só lê a hora.
+
+### Bolso do Vazio — Iris, representante do Vazio
+
+`aurorion_magia:bolso_do_vazio` é uma dimensão que **replica a realidade**: o mesmo gerador, os mesmos
+biomas e o mesmo seed do overworld (Tectonic e Terralith inclusive) — o relevo de lá é o daqui, só que
+sem gente e sem construção.
+
+| Onde | Ação | O que faz |
+|---|---|---|
+| fora | Shift + tecla olhando alguém (6 blocos) | marca ou desmarca. Até 3 (`maximoMarcados`) |
+| fora | tecla | entra no ponto da réplica que corresponde a onde ela está, levando os marcados até 16 blocos |
+| dentro | tecla | sai; todos voltam para onde estavam |
+| dentro | Shift + tecla olhando um marcado | devolve só ele |
+
+- **Seguro:** enquanto Iris estiver viva lá dentro e a barreira de pé, ninguém que ela levou leva dano
+  (só `/kill` e o vazio do mundo passam). Monstro não nasce no bolso.
+- **A barreira e a fenda:** onde Iris entrou fica uma fenda na realidade. Quem ficar **agachado** a
+  até 3 blocos dela força a barreira, e a dificuldade depende de quantos marcados Iris mantém dentro:
+
+  | Marcados dentro | Barreira | Para invadir |
+  |---|---|---|
+  | 0 ou 1 | estável | impossível |
+  | 2 | mediana | 12 s agachado na fenda |
+  | 3+ | frágil | 3 s |
+
+  Quem rompe é puxado para dentro, e o bolso **deixa de proteger** todo mundo até Iris sair. Depois de
+  rompida, quem vier atrás entra direto.
+- O bolso tem 64 blocos de raio a partir da entrada (`raioBolso`): quem passa é puxado de volta.
+- **Iris morreu, saiu ou deslogou: o bolso fecha** e todos voltam. Quem morre lá dentro volta ao mundo
+  antes de Vidas/Limbo registrarem a morte. Quem deslogou ou caiu num crash lá dentro volta no login.
+- Só se entra e sai por ela: portal, pedra e `/tp` de jogador não abrem a porta (staff em criativo sim).
+
+> **Terreno gerado na hora.** A réplica é gerada onde Iris entra. Para não pesar no servidor,
+> pré-gere `aurorion_magia:bolso_do_vazio` com o Chunky nas áreas onde ela costuma andar (é o mesmo
+> mapa do overworld, então pode ser a mesma área já pré-gerada lá), ou ponha
+> `espelhaPosicao = false`: o bolso passa a ter sempre a mesma entrada, e o terreno é gerado uma vez só.
+
 ## Integrações opcionais
 
 | Mod | O que liga | Sem ele |
@@ -1035,7 +1204,15 @@ efeito**, que o vanilla já faz da entidade afetada, e só nela.
 | Presença Aterradora (gente) | 1×/s, **por aura ligada** | nenhuma busca espacial: 1 volta em `level.players()`, teto 32 |
 | Presença Aterradora (bicho) | 1×/2 s, **por aura ligada** | 1 busca em esfera de `dreadRadius` só em `Mob`, teto de 8 rotas; sem aura ligada, zero |
 | Mão que Cura | por golpe corpo a corpo de quem a tem | 1 busca em hash |
-| Varredura de modificador preso | login e renascimento | 14 consultas de atributo por jogador |
+| Varredura de modificador preso | login e renascimento | 26 consultas de atributo por jogador |
+| Clarão | uma vez por estouro | 1 busca no raio (teto 64, os mais perto primeiro); raycast por pessoa só com `exigeVisao` |
+| Garra do Abismo (canalização) | todo tick, só em quem canaliza, ≤ 2,5 s | 1 distância; a cada 5 ticks, 1 dano |
+| Zona Nula | a cada 10 ticks, ≤ 5 s | 1 busca no raio (teto de 20) |
+| Salto Quântico | só ao apertar a tecla | 1 raycast + ≤ 15 testes de colisão; energia calculada, não contada |
+| Olhar Anacrônico | todo tick, só em quem está fora do corpo, ≤ 30 s | 1 distância; 1 pacote de posição quando o alvo abre 4 blocos |
+| Lua Minguante | 1×/2 s, só em quem tem a passiva | de dia, ler a hora; à noite, 1 volta em `level.players()` |
+| Bolso do Vazio | 1×/s, só com Iris dentro | 1 volta nos membros (≤ ~5) + 1 em `level.players()` da dimensão da fenda, se o chunk dela estiver carregado |
+| Proteção do bolso | por golpe dentro do bolso | 2 consultas de mapa |
 
 ### Como os efeitos visuais são feitos sem pesar no TPS
 

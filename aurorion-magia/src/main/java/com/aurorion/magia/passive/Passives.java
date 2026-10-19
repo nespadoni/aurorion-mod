@@ -49,6 +49,11 @@ public final class Passives {
             player.sendSystemMessage(Component.translatable("aurorion_magia.passiva_como_ligar",
                     "/aurorion passivas ligar " + passive.id()).withStyle(ChatFormatting.DARK_GRAY));
         }
+        if (PassiveActions.usesKey(passive)) {
+            player.sendSystemMessage(Component.translatable("aurorion_magia.passiva_como_usar")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+        onGranted(player, passive);
         return true;
     }
 
@@ -80,6 +85,15 @@ public final class Passives {
         if (PassiveData.get(player.server).has(player.getUUID(), Passive.DREAD)) {
             DreadAura.restore(player);
         }
+        WaningMoon.restore(player);
+    }
+
+    /**
+     * Ter e usar sao a mesma coisa nas passivas sem interruptor, entao "comecar" e conceder: a lua da
+     * Iacy acende o marcador na hora, sem esperar o proximo login.
+     */
+    public static void onGranted(ServerPlayer player, Passive passive) {
+        if (passive == Passive.WANING_MOON) WaningMoon.restore(player);
     }
 
     private static void start(ServerPlayer player, Passive passive) {
@@ -88,5 +102,8 @@ public final class Passives {
 
     private static void stop(ServerPlayer player, Passive passive) {
         if (passive == Passive.DREAD) DreadAura.disable(player);
+        if (passive == Passive.WANING_MOON) WaningMoon.restore(player);
+        if (passive == Passive.ANACHRONIC) AnachronicSight.end(player);
+        if (passive == Passive.VOID_POCKET) VoidPocket.collapse(player, false);
     }
 }

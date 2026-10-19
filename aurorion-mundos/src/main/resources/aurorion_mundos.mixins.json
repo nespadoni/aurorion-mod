@@ -4,11 +4,17 @@
   "package": "com.aurorion.mundos.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "ChunkGeneratorStructureStateAccessor",
+    "ChunkMapStructureMixin",
     "DelegateBorderTargetAccessor",
     "LevelBiomeManagerAccessor",
+    "MobCountsCapMixin",
     "NetherPortalDestinationMixin",
     "NetherPortalExitInvoker",
+    "ServerChunkCacheSpawnCapMixin",
     "ServerLevelSeedMixin",
+    "SpawnStateCapMixin",
+    "StructurePlacementAccessor",
     "WorldBorderListenersAccessor"
   ],
   "client": [],

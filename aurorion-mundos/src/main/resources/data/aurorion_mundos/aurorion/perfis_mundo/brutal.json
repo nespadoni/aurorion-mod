@@ -1,0 +1,6 @@
+{
+  "descricao": "Monstros 3,5x mais vivos, mais rapidos e em maior numero.",
+  "monstros": { "vida": 3.5, "dano": 2.25, "armadura": 4, "resistenciaArmadura": 1, "resistenciaEmpurrao": 0.15, "velocidade": 1.1, "alcance": 1.25, "experiencia": 2.5 },
+  "spawn": { "tetoMonstros": 1.25 },
+  "ordem": 20
+}

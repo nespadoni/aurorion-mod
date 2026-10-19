@@ -294,7 +294,7 @@ e somente começa quando a staff executa o comando.
 
 ## Configuração
 
-`config/aurorion_ethereal-server.toml`:
+`config/aurorion/ethereal-server.toml`:
 
 ```toml
 [houses]
@@ -337,7 +337,7 @@ EtherealTags a tag de altares
 
 ### Decisões
 
-- **Zero trabalho por tick no servidor.** Nenhum ticker, timer ou varredura em lugar nenhum.
+- **Quase zero trabalho por tick no servidor.** O único tick (`EtherealServerEvents`) só avança o rito em andamento e o debounce dos quadros, e sai na primeira linha quando não há nenhum dos dois. Nenhuma varredura.
   Cerimônia e vinculação são eventos raros (uma vez por jogador na vida do personagem); o projetor
   recalcula no evento que mudou o dado, percorrendo O(projetores carregados daquela meta). O original
   tinha um `serverTick` por bloco comparando um contador de geração a cada segundo — um projetor que

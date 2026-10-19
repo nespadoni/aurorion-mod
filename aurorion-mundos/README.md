@@ -166,6 +166,106 @@ A ordem ajuda: o `PortalEntryMixin` do outro mod barra em `Entity#canUsePortal`,
 consulta **antes** de `getPortalDestination`. Fora do horário, a travessia custa duas comparações de
 `long` — a busca de portal daqui nem chega a rodar.
 
+## Perfis de mundo: dificuldade, spawn e estruturas
+
+Um **perfil** diz como um mundo se comporta: quão fortes nascem os monstros, quantos cabem nele e
+quantas estruturas o terreno tem. É um molde reaproveitável — o mesmo `pesadelo` serve ao mundo de
+exploração de hoje e ao servidor de evento de amanhã. Mora em
+`data/<namespace>/aurorion/perfis_mundo/<nome>.json`:
+
+```json
+{
+  "descricao": "Mundo de exploração: estruturas por toda parte, monstros mais duros",
+  "dimensoes": ["aurorion_mundos:mundo_tres"],
+  "monstros": {
+    "vida": 5.0, "dano": 3.0, "armadura": 6, "resistenciaArmadura": 2,
+    "resistenciaEmpurrao": 0.3, "velocidade": 1.15, "alcance": 1.5,
+    "experiencia": 4.0, "chefes": false, "spawners": true
+  },
+  "spawn": { "tetoMonstros": 1.5, "tetoCriaturas": 1.0 },
+  "estruturas": { "densidade": 2.5, "conjuntos": { "minecraft:villages": 0.6 } }
+}
+```
+
+Todo campo é opcional; o ausente é o vanilla.
+
+| Campo | O que faz | Quando vale |
+|---|---|---|
+| `monstros.vida` | multiplica a vida máxima | ao nascer, e ao carregar com o chunk |
+| `monstros.dano` | multiplica **todo** dano que um monstro causa: golpe, flecha, bola de fogo, explosão de creeper | na hora |
+| `monstros.armadura`, `resistenciaArmadura`, `resistenciaEmpurrao` | somam pontos | ao nascer/carregar |
+| `monstros.velocidade`, `alcance` | multiplicam velocidade e o raio em que o monstro percebe e persegue | ao nascer/carregar |
+| `monstros.experiencia` | multiplica a XP que o monstro deixa — monstro mais duro paga mais | na hora |
+| `monstros.chefes` | também vale para chefe (`c:bosses`). Padrão: não | — |
+| `monstros.spawners` | também vale para monstro de spawner. Padrão: sim | — |
+| `spawn.tetoMonstros`, `tetoCriaturas` | multiplicam o teto de criaturas do vanilla — o da dimensão e o local, em volta de cada jogador | na hora |
+| `estruturas.densidade` | multiplica quantas estruturas cabem por área (2 = o dobro) | **só no boot, só em chunk novo** |
+| `estruturas.conjuntos` | multiplicador por conjunto (`minecraft:villages`, `minecraft:pillager_outposts`, de mod…), por cima da densidade | idem |
+
+"Monstro" é toda criatura hostil (`Enemy`): zumbi, esqueleto, creeper, slime, ghast, phantom, e as
+de mod que se declaram hostis.
+
+### Quem decide o perfil de cada dimensão
+
+1. `/mundos dificuldade mundo <dimensão> <perfil>` (grava em `[dificuldade].porMundo`);
+2. o campo `dimensoes` do próprio perfil (datapack);
+3. `/mundos dificuldade global <perfil>` (grava em `[dificuldade].global`) — **o servidor inteiro**,
+   inclusive Nether, End e dimensões de mod.
+
+`aurorion_mundos:nenhum` como perfil de um mundo o deixa vanilla mesmo com um global ligado.
+
+Vêm prontos: `normal` (vanilla), `dificil`, `brutal`, `pesadelo` (5× vida, 3× dano) e `exploracao`
+(2,5× estruturas). Nenhum está ligado a dimensão nenhuma: instalar o mod não muda o jogo de ninguém.
+
+```
+/mundos dificuldade                          -> perfis disponíveis e o que vale em cada dimensão
+/mundos dificuldade ver <dimensão>           -> os números em vigor e de onde vieram
+/mundos dificuldade global <perfil>|limpar
+/mundos dificuldade mundo <dimensão> <perfil>|limpar
+/mundos dificuldade aplicar <dimensão>       -> reajusta agora os monstros já carregados
+```
+
+Trocar o perfil vale na hora para dano, XP e teto de spawn, e para todo monstro que nascer ou
+carregar com o chunk dali em diante. Os que já estão andando mudam quando o chunk recarrega — ou
+agora, com `aplicar`, a única coisa do módulo que percorre entidades (uma vez, quando a staff pede).
+Um monstro ferido que muda de perfil mantém a mesma **proporção** de vida.
+
+### Por que estrutura só no boot
+
+O posicionamento de estrutura é calculado quando a dimensão sobe. Mudá-lo com o servidor no ar
+deixaria os chunks já gerados com uma regra e os novos com outra. Para um mundo de exploração novo:
+declare o perfil, suba o servidor (o log diz `N conjunto(s) de estrutura com densidade ajustada`),
+**e só então pré-gere**.
+
+Vale para conjuntos `minecraft:random_spread` — vila, posto, templos, navio, ruína e a maioria dos
+pacotes de estrutura. Ficam como vieram: fortaleza e outros em anéis (`concentric_rings`) e tipos de
+posicionamento próprios de mod (alguns do YUNG's), porque recriá-los como vanilla mudaria a regra
+deles. O registro global não muda: o overworld e as outras dimensões continuam com o espaçamento do
+datapack.
+
+### Custo
+
+| Caminho | Quando | Custo |
+|---|---|---|
+| Atributos do monstro | monstro entra no mundo | 1 consulta a `Map`; sem perfil e sem marca, sai ali. Com perfil, ≤ 6 modificadores de atributo |
+| Dano | golpe de monstro | 1 consulta de tag de entidade + 1 a `Map` |
+| XP | morte de monstro | idem |
+| Teto de spawn | 1×/tick por dimensão | 1 consulta a `Map`; 1 multiplicação por categoria por chunk que tenta spawnar |
+| Estruturas | criação da dimensão | 1 volta pelos conjuntos |
+
+Nada roda por tick que já não rodasse: o teto é o mesmo cálculo do vanilla, com um número diferente.
+
+## Trava de spawners
+
+`[spawners].travar = true` (padrão): fora do criativo da staff, ninguém mexe num spawner — trocar o
+monstro com ovo, aplicar runa ou modificador (Apotheosis/Apothic Spawners), carregar embora com o
+Carry On ou colocar um spawner no mundo. O spawner continua funcionando como no vanilla. Os blocos
+travados são a tag `aurorion_mundos:spawners` (spawner, spawner de desafio, spawner de chefe do
+Apotheosis); um datapack pode acrescentar os de mod.
+
+> **Não instale o Apothic Spawners.** As receitas de runa do Apotheosis só carregam com ele, e sem
+> ele não há como "subir" um spawner. A trava é a segunda linha, para o caso de alguém instalá-lo.
+
 ## Comandos
 
 ```
@@ -206,7 +306,7 @@ não de um profile em produção. Em produção, o que vale olhar é o `spark` e
 
 ## Mixins
 
-Seis, todos cirúrgicos. Quatro são acessores ou invocadores, que não acrescentam bytecode a método
+Doze, todos cirúrgicos. Seis são acessores ou invocadores, que não acrescentam bytecode a método
 nenhum:
 
 | Mixin | Alvo | Para quê |
@@ -217,6 +317,12 @@ nenhum:
 | `NetherPortalExitInvoker` | `NetherPortalBlock#getDimensionTransitionFromExit` | Reaproveitar a física de saída do vanilla |
 | `WorldBorderListenersAccessor` | `WorldBorder.listeners` | Achar o delegado a remover |
 | `DelegateBorderTargetAccessor` | `DelegateBorderChangeListener.worldBorder` | Saber qual delegado é de qual mundo |
+| `ServerChunkCacheSpawnCapMixin` | `ServerChunkCache#tickChunks` (início e fim) | Dizer ao teto de spawn de qual dimensão é o tick |
+| `SpawnStateCapMixin` | `NaturalSpawner.SpawnState#canSpawnForCategory` | Teto global × perfil (`@ModifyExpressionValue`: compõe com In Control!) |
+| `MobCountsCapMixin` | `LocalMobCapCalculator.MobCounts#canSpawn` | Teto local × perfil |
+| `ChunkMapStructureMixin` | fim do construtor de `ChunkMap` | Densidade de estrutura da dimensão |
+| `ChunkGeneratorStructureStateAccessor` | `possibleStructureSets` | Trocar a lista antes de as posições serem calculadas |
+| `StructurePlacementAccessor` | getters protegidos de `StructurePlacement` | Recriar o posicionamento com outro espaçamento |
 
 O mixin de seed é o ponto mais arriscado do mod: um mod que guarde seed em estático na inicialização
 pode discordar. A saída é tirar o seed da config daquela dimensão — degrada para "mundo igual ao

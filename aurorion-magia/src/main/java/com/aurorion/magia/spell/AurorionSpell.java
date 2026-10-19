@@ -144,7 +144,8 @@ public abstract class AurorionSpell extends AbstractSpell {
                 || caster.hasEffect(MagiaEffects.CRUCIATUS) || caster.hasEffect(MagiaEffects.KNEELING)
                 || caster.hasEffect(MagiaEffects.AIRBORNE) || caster.hasEffect(MagiaEffects.STASIS)
                 || caster.hasEffect(MagiaEffects.INFINITE_VOID) || caster.hasEffect(MagiaEffects.POLYMORPH) || caster.hasEffect(MagiaEffects.POSSESSED)
-                || caster.hasEffect(MagiaEffects.POSSESSING)
+                || caster.hasEffect(MagiaEffects.POSSESSING) || caster.hasEffect(MagiaEffects.SUPPRESSED)
+                || caster.hasEffect(MagiaEffects.ANACHRONIC_SIGHT)
                 || FrozenLink.isFrozen(caster);
     }
 

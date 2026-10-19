@@ -103,6 +103,11 @@ public final class ClientSpellVisuals {
         if (!Double.isFinite(at.x) || !Double.isFinite(at.y) || !Double.isFinite(at.z)) return;
 
         switch (payload.kind()) {
+            case ANACHRONIC_SIGHT -> {
+                // Nao e desenho: e a camera da Gretta indo para os olhos do alvo (ou voltando).
+                AnachronicCamera.accept(payload);
+                return;
+            }
             case VINCULUM_SNAP -> {
                 Active chain = find(Kind.VINCULUM, payload.targetId(), null);
                 if (chain != null) chain.flash = 1;

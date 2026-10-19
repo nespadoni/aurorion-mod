@@ -59,6 +59,8 @@ public final class EconomyClient {
                         Component.literal("Olhe diretamente para um jogador próximo para interagir."), true);
                 continue;
             }
+            // Servidor sem o mod (canal opcional): o pacote lancaria no cliente.
+            if (minecraft.getConnection() == null || !minecraft.getConnection().hasChannel(EconomyPayloads.OpenRequest.TYPE)) continue;
             PacketDistributor.sendToServer(new EconomyPayloads.OpenRequest(target.getUUID()));
         }
     }

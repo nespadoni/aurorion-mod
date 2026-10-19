@@ -2,7 +2,10 @@ package com.aurorion.magia.command;
 
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.passive.Passive;
+import com.aurorion.magia.passive.PassiveActions;
 import com.aurorion.magia.passive.PassiveData;
+import com.aurorion.magia.passive.QuantumLeap;
+import net.minecraft.commands.arguments.UuidArgument;
 import com.aurorion.magia.passive.PassiveScrollItem;
 import com.aurorion.magia.passive.Passives;
 import com.aurorion.magia.registry.MagiaItems;
@@ -86,7 +89,55 @@ public final class AurorionPassivesCommand {
                                         .executes(AurorionPassivesCommand::list)))
                         .then(Commands.literal("minhas").executes(AurorionPassivesCommand::mine))
                         .then(toggle("ligar", true))
-                        .then(toggle("desligar", false))));
+                        .then(toggle("desligar", false))
+                        .then(Commands.literal("usar")
+                                .then(Commands.argument(ARG_ID, ResourceLocationArgument.id())
+                                        .suggests(PASSIVE_IDS)
+                                        .executes(context -> useOwn(context, false))
+                                        .then(Commands.literal("alternativa")
+                                                .executes(context -> useOwn(context, true))))))
+                .then(Commands.literal("quantico")
+                        .executes(AurorionPassivesCommand::quantumStatus)
+                        .then(Commands.literal("pedras")
+                                .executes(context -> quantum(context, true)))
+                        .then(Commands.literal("ir")
+                                .then(Commands.argument("pedra", UuidArgument.uuid())
+                                        .executes(AurorionPassivesCommand::quantumTravel)))));
+    }
+
+    /** A mesma acao da tecla, para quem tem mais de uma passiva de tecla ou prefere comando. */
+    private static int useOwn(CommandContext<CommandSourceStack> context, boolean alternate) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        Passive passive = resolve(context);
+        if (passive == null) return 0;
+        if (!PassiveActions.use(player, passive, alternate)) {
+            context.getSource().sendFailure(Component.translatable("commands.aurorion_magia.passiva_nao_usa",
+                    passive.displayName()));
+            return 0;
+        }
+        return 1;
+    }
+
+    private static int quantumStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        if (!Passives.has(player, Passive.QUANTUM)) {
+            context.getSource().sendFailure(Component.translatable("commands.aurorion_magia.passiva_nao_tem",
+                    Passive.QUANTUM.displayName()));
+            return 0;
+        }
+        context.getSource().sendSuccess(() -> QuantumLeap.energyLine(player).withStyle(ChatFormatting.LIGHT_PURPLE), false);
+        return 1;
+    }
+
+    private static int quantum(CommandContext<CommandSourceStack> context, boolean alternate) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        return PassiveActions.use(player, Passive.QUANTUM, alternate) ? 1 : 0;
+    }
+
+    /** O clique da lista de pedras. Confere passiva, energia e pedra de novo: o comando e digitavel. */
+    private static int quantumTravel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        return QuantumLeap.travel(player, UuidArgument.getUuid(context, "pedra")) ? 1 : 0;
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> staff(

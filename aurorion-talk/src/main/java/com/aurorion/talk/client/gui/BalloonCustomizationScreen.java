@@ -238,7 +238,10 @@ public class BalloonCustomizationScreen extends Screen {
         // Normaliza antes de enviar para o preview do proximo abrir ja mostrar o que o servidor gravou.
         BalloonStyle finished = pending.normalized();
 
-        if (!Objects.equals(finished, original) && finished.isWellFormed()) {
+        // Servidor sem o mod (canal opcional): mandar o pacote lancaria no cliente ao fechar a tela.
+        boolean serverHasTalk = this.minecraft.getConnection() != null
+                && this.minecraft.getConnection().hasChannel(SetStylePayload.TYPE);
+        if (serverHasTalk && !Objects.equals(finished, original) && finished.isWellFormed()) {
             PacketDistributor.sendToServer(new SetStylePayload(finished));
         } else if (!finished.isWellFormed()) {
             AurorionTalk.LOGGER.warn("Estilo montado na GUI ficou mal formado, nao enviando: {}", finished);

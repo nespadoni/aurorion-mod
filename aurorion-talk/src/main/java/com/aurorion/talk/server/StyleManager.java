@@ -1,9 +1,11 @@
 package com.aurorion.talk.server;
 
+import com.aurorion.core.rate.ActionCooldown;
 import com.aurorion.talk.AurorionTalk;
 import com.aurorion.talk.network.SyncStylesPayload;
 import com.aurorion.talk.network.UpdateStylePayload;
 import com.aurorion.talk.style.BalloonStyle;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -18,7 +20,23 @@ import java.util.UUID;
  * Ponto unico de escrita dos estilos no servidor: valida, persiste e sincroniza.
  */
 public final class StyleManager {
+    /** Uma troca de estilo por segundo por pessoa: cada troca vira um pacote para todo o servidor. */
+    private static final ActionCooldown STYLE_COOLDOWN = new ActionCooldown(1_000L);
+
     private StyleManager() {
+    }
+
+    /**
+     * O canal e {@code optional()}: cliente sem o mod continua entrando. Mandar um payload para quem nao
+     * tem o canal lanca no NeoForge — no login, isso derruba a conexao ("invalid player data"), e num
+     * broadcast para no meio. Todo envio daqui passa por esta checagem.
+     */
+    private static void send(ServerPlayer player, CustomPacketPayload payload) {
+        if (player.connection.hasChannel(payload.type().id())) PacketDistributor.sendToPlayer(player, payload);
+    }
+
+    private static void broadcast(MinecraftServer server, CustomPacketPayload payload) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) send(player, payload);
     }
 
     /**
@@ -37,6 +55,8 @@ public final class StyleManager {
             AurorionTalk.LOGGER.warn("Ignorando estilo mal formado de {}: {}", sender.getGameProfile().getName(), style);
             return;
         }
+        // A tela so manda ao fechar; mais de uma troca por segundo e cliente modificado.
+        if (!STYLE_COOLDOWN.acquire(sender.getUUID(), System.currentTimeMillis())) return;
 
         setStyle(sender.getServer(), sender.getUUID(), style.normalized());
     }
@@ -45,7 +65,7 @@ public final class StyleManager {
     public static void setStyle(MinecraftServer server, UUID player, @Nullable BalloonStyle style) {
         if (!PlayerStyleData.get(server).setStyle(player, style)) return;
 
-        PacketDistributor.sendToAllPlayers(new UpdateStylePayload(player, Optional.ofNullable(style)));
+        broadcast(server, new UpdateStylePayload(player, Optional.ofNullable(style)));
     }
 
     @Nullable
@@ -66,11 +86,11 @@ public final class StyleManager {
             if (style != null) online.put(other.getUUID(), style);
         }
 
-        PacketDistributor.sendToPlayer(player, new SyncStylesPayload(online));
+        send(player, new SyncStylesPayload(online));
 
         BalloonStyle own = data.getStyle(player.getUUID());
         if (own != null) {
-            PacketDistributor.sendToAllPlayers(new UpdateStylePayload(player.getUUID(), Optional.of(own)));
+            broadcast(server, new UpdateStylePayload(player.getUUID(), Optional.of(own)));
         }
     }
 }

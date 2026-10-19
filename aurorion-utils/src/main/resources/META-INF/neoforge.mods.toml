@@ -6,6 +6,16 @@ issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
 [[mixins]]
 config = "aurorion_utils.mixins.json"
 
+# Otimizacoes do Copycats+ (crash do mesher, aviso inutil no cliente). So com o Copycats no pack.
+[[mixins]]
+config = "aurorion_utils.copycats.mixins.json"
+requiredMods = ["copycats"]
+
+# Ordem do teste de face escondida no Sodium. So com o Sodium no pack.
+[[mixins]]
+config = "aurorion_utils.sodium.mixins.json"
+requiredMods = ["sodium"]
+
 [[mods]]
 modId = "${mod_id}"
 version = "${mod_version}"

@@ -83,6 +83,18 @@ public final class EffectCleanup {
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("vazio_infinito_speed"), MagiaEffects.INFINITE_VOID),
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("vazio_infinito_jump"), MagiaEffects.INFINITE_VOID),
                     new Bond(Attributes.GRAVITY, AurorionMagia.id("vazio_infinito_gravity"), MagiaEffects.INFINITE_VOID),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("suprimido_speed"), MagiaEffects.SUPPRESSED),
+                    new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("suprimido_jump"), MagiaEffects.SUPPRESSED),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("garra_abissal_speed"), MagiaEffects.NETHER_GRASP),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("fragilizada_speed"), MagiaEffects.FRAGILE),
+                    new Bond(Attributes.ATTACK_DAMAGE, AurorionMagia.id("fragilizada_dano"), MagiaEffects.FRAGILE),
+                    new Bond(Attributes.ATTACK_SPEED, AurorionMagia.id("fragilizada_ataque"), MagiaEffects.FRAGILE),
+                    new Bond(Attributes.ATTACK_DAMAGE, AurorionMagia.id("bencao_lunar_dano"), MagiaEffects.LUNAR_BLESSING),
+                    new Bond(Attributes.ARMOR, AurorionMagia.id("bencao_lunar_armadura"), MagiaEffects.LUNAR_BLESSING),
+                    new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("bencao_lunar_speed"), MagiaEffects.LUNAR_BLESSING),
+                    new Bond(Attributes.ATTACK_SPEED, AurorionMagia.id("bencao_lunar_ataque"), MagiaEffects.LUNAR_BLESSING),
+                    new Bond(Attributes.KNOCKBACK_RESISTANCE, AurorionMagia.id("bencao_lunar_empurrao"), MagiaEffects.LUNAR_BLESSING),
+                    new Bond(Attributes.ATTACK_DAMAGE, AurorionMagia.id("sol_pesado_dano"), MagiaEffects.SUNLIT),
                     // Sequestro de Impulso, removido do mod: quem ficou preso nele sai aqui.
                     new Bond(Attributes.MOVEMENT_SPEED, AurorionMagia.id("estase_speed"), null),
                     new Bond(Attributes.JUMP_STRENGTH, AurorionMagia.id("estase_jump"), null));

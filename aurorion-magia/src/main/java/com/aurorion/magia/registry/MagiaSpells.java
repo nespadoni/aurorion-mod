@@ -18,6 +18,8 @@ import com.aurorion.magia.spell.DolorCruciatusSpell;
 import com.aurorion.magia.spell.DolorUniversusSpell;
 import com.aurorion.magia.spell.FerrumLigatumSpell;
 import com.aurorion.magia.spell.FurorVenatorisSpell;
+import com.aurorion.magia.spell.FulgorCaecansSpell;
+import com.aurorion.magia.spell.ManusAbyssiSpell;
 import com.aurorion.magia.spell.GenuaFlecteSpell;
 import com.aurorion.magia.spell.ImperiumMentisSpell;
 import com.aurorion.magia.spell.ImpetusVentiSpell;
@@ -206,6 +208,12 @@ public final class MagiaSpells {
             SPELLS.register("vazio_infinito", VazioInfinitoSpell::new);
     public static final DeferredHolder<AbstractSpell, SantuarioMalevolenteSpell> SANTUARIO_MALEVOLENTE =
             SPELLS.register("santuario_malevolente", SantuarioMalevolenteSpell::new);
+
+    // --- Clarao e a ultimate do Malzahar ---------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, FulgorCaecansSpell> FULGOR_CAECANS =
+            SPELLS.register("fulgor_caecans", FulgorCaecansSpell::new);
+    public static final DeferredHolder<AbstractSpell, ManusAbyssiSpell> MANUS_ABYSSI =
+            SPELLS.register("manus_abyssi", ManusAbyssiSpell::new);
 
     private MagiaSpells() {
     }

@@ -2,6 +2,7 @@ package com.aurorion.magia.network;
 
 import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.client.ClientSpellVisuals;
+import com.aurorion.magia.passive.PassiveActions;
 import com.aurorion.magia.spell.ControlSpells;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.core.BlockPos;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = AurorionMagia.MOD_ID)
 public final class MagiaNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload ou a ordem dos Kind. */
-    private static final String PROTOCOL_VERSION = "9";
+    private static final String PROTOCOL_VERSION = "11";
 
     private MagiaNetwork() {
     }
@@ -31,7 +32,31 @@ public final class MagiaNetwork {
     public static void register(RegisterPayloadHandlersEvent event) {
         // Sem optional(): o mod ja e obrigatorio no cliente por causa dos registros sincronizados.
         event.registrar(PROTOCOL_VERSION)
-                .playToClient(SpellVisualPayload.TYPE, SpellVisualPayload.STREAM_CODEC, MagiaNetwork::handleVisual);
+                .playToClient(SpellVisualPayload.TYPE, SpellVisualPayload.STREAM_CODEC, MagiaNetwork::handleVisual)
+                .playToServer(PassiveActionPayload.TYPE, PassiveActionPayload.STREAM_CODEC, MagiaNetwork::handlePassive)
+                .playToServer(PassiveMenuPayloads.Request.TYPE, PassiveMenuPayloads.Request.STREAM_CODEC,
+                        (payload, context) -> context.enqueueWork(() -> {
+                            if (context.player() instanceof ServerPlayer player) PassiveActions.sendMenu(player);
+                        }))
+                .playToServer(PassiveMenuPayloads.Select.TYPE, PassiveMenuPayloads.Select.STREAM_CODEC,
+                        (payload, context) -> context.enqueueWork(() -> {
+                            if (context.player() instanceof ServerPlayer player) {
+                                PassiveActions.select(player, payload.key(), payload.alternate());
+                            }
+                        }))
+                .playToClient(PassiveMenuPayloads.Menu.TYPE, PassiveMenuPayloads.Menu.STREAM_CODEC,
+                        MagiaNetwork::handleMenu);
+    }
+
+    private static void handleMenu(PassiveMenuPayloads.Menu payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        context.enqueueWork(() -> com.aurorion.magia.client.PassiveKey.openWheel(payload.entries()));
+    }
+
+    private static void handlePassive(PassiveActionPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (context.player() instanceof ServerPlayer player) PassiveActions.activate(player, payload.alternate());
+        });
     }
 
     /**

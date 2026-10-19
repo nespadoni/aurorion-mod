@@ -120,6 +120,12 @@ recebe 4 óbolos uma vez. O saldo é do **personagem**: morte definitiva zera. O
 A profissão aparece como "registrado ✔" no app Serviços e some na troca ou na morte definitiva do
 personagem.
 
+**Apotheosis é do arcanista** (Profissões 0.5.3): as mesas de reforja, salvamento, lapidação e aumento só
+abrem para arcanista, e na mesa de ferraria o encaixe de gemas, soquetes e sigilos só sai para ele (o
+ferreiro continua com o resto da mesa). Para travar outro bloco/item a um ofício, acrescente-o à tag
+`aurorion_profissoes:exclusivo/<profissao>` num datapack; para receitas da mesa de ferraria, use
+`receitasExclusivas` na config. Detalhes no README do `aurorion-profissoes`.
+
 ### 1.6 Magia
 
 | Tarefa | Comando |
@@ -130,6 +136,7 @@ personagem.
 | Bloquear magia / escola | `/aurorion spells lock spell\|school <id> <alvos>` |
 | Ver o que alguém tem | `/aurorion spells list <jogador>` |
 | Passivas | `/aurorion passivas conceder\|remover\|pergaminho <passiva> <alvos>` · `/aurorion passivas ver <jogador>` |
+| Representantes dos elementos | `/aurorion passivas conceder aurorion_magia:salto_quantico\|olhar_anacronico\|lua_minguante\|bolso_do_vazio <jogador>` (Robs, Gretta, Iacy, Iris). O jogador usa com a tecla `H` (Shift = ação alternativa) ou `/aurorion passivas usar <passiva> [alternativa]` |
 
 - **Nenhuma magia vem liberada.** O jogador conjura a magia se ela ou a escola dela foi liberada.
 - **Magias proibidas nunca vêm com a escola.** Nem `unlock school` nem `unlock todos` as concede:
@@ -199,6 +206,14 @@ deixa passar criativo e espectador.
 | Passe individual | `/portais passe dar <jogador> <dimensão> [usos 1-999] [minutos]` (padrão: 1 uso, sem prazo) |
 | Ver / tirar passes | `/portais passe ver <jogador>` · `/portais passe tirar <jogador> [dimensão]` |
 | Mundos extras (todo `/mundos` é nível 2) | `/mundos` · `/mundos ligacoes` · `/mundos borda <dimensão> ver\|set <tamanho> [segundos]\|centro <x> <z>\|aviso distancia <blocos>\|aviso tempo <s>\|dano porbloco <v>\|dano zona <blocos>` |
+| Dificuldade do servidor inteiro | `/mundos dificuldade global aurorion_mundos:dificil\|brutal\|pesadelo\|exploracao` · `/mundos dificuldade global limpar` |
+| Dificuldade de um mundo | `/mundos dificuldade mundo <dimensão> <perfil>` · `... limpar` · `aurorion_mundos:nenhum` = vanilla mesmo com global |
+| Ver / reaplicar | `/mundos dificuldade` · `/mundos dificuldade ver <dimensão>` · `/mundos dificuldade aplicar <dimensão>` (monstros já carregados) |
+
+Perfil de mundo muda na hora vida/dano/XP dos monstros que nascem e o teto de spawn; **densidade de
+estrutura só no próximo boot e só em chunk novo** — declare o perfil antes de pré-gerar. Spawners ficam
+travados (`[spawners].travar`): sem ovo, runa, Carry On nem colocar spawner fora do criativo. Não instale
+o Apothic Spawners.
 
 Staff nível 2 e jogadores em criativo ou espectador atravessam as dimensões trancadas
 (`excecoes.bypassPermissionLevel`, `excecoes.bypassCreative`). Quem está dentro quando a janela
@@ -651,6 +666,10 @@ Quality Food, FoodSpoil, Mattupolis Phone, Immersive Messages, ADM, Simply More,
 guaxinim do Capricho; sem ele, o alvo vira raposa).
 
 ### 3.3 Entrega pendente (preparada em 17–18/10, ainda não compilada)
+
+> Acrescentado em 18/10: **Profissões 0.5.3**, **Mundos 0.2.0** e **Magia 0.7.0** (protocolo 10 —
+> substitui a 0.6.1 da tabela abaixo e vai para todos os clientes). Instalar junto o Apotheosis
+> 8.9.0, que pede Placebo e Apothic Attributes (os dois já estão no pack).
 
 Instalar **juntas** depois de compilar e validar na máquina de build:
 

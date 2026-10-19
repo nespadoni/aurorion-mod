@@ -1,0 +1,47 @@
+{
+  "entity.aurorion_intencao.eco": "Echo",
+  "entity.aurorion_intencao.fragmento": "Memory fragment",
+
+  "aurorion_intencao.chamado": "Intention calls you",
+  "aurorion_intencao.veredito.vitoria": "Your intention prevailed",
+  "aurorion_intencao.veredito.derrota": "Your will gave way",
+  "aurorion_intencao.veredito.empate": "Your wills cancelled out",
+  "aurorion_intencao.hud.titulo": "✦ Battle of Intention · %s ✦",
+  "aurorion_intencao.hud.mesa": "the scene is played at the Discord table · %s",
+  "aurorion_intencao.eco.nome": "%s · in trance",
+  "aurorion_intencao.tema.tribunal": "Stained-Glass Tribunal",
+
+  "aurorion_intencao.fragmento.1": "Every will has a price. Someone here does not know theirs yet.",
+  "aurorion_intencao.fragmento.2": "The glass remembers who knelt before it.",
+  "aurorion_intencao.fragmento.3": "Strength does not decide. Whoever looks away first does.",
+  "aurorion_intencao.fragmento.4": "An old echo whispers a name that is not yours.",
+  "aurorion_intencao.fragmento.5": "Here, a lie weighs more than a sword.",
+  "aurorion_intencao.fragmento.6": "You have been here before. You just don't remember losing.",
+  "aurorion_intencao.fragmento.7": "Intention that hesitates becomes desire. Desire that hesitates becomes longing.",
+  "aurorion_intencao.fragmento.8": "The Houses are watching. None of them forgives doubt.",
+
+  "aurorion_intencao.clima.calmo": "calm",
+  "aurorion_intencao.clima.tenso": "tense",
+  "aurorion_intencao.clima.ruptura": "rupture",
+
+  "aurorion_intencao.erro.poucos": "A battle of intention needs at least two participants.",
+  "aurorion_intencao.erro.muitos": "At most %s participants per battle.",
+  "aurorion_intencao.erro.plano": "The Plane of Intention is not loaded on this server.",
+  "aurorion_intencao.erro.ocupado": "%s is already in a battle of intention.",
+  "aurorion_intencao.erro.morto": "%s is not alive right now.",
+  "aurorion_intencao.erro.cheio": "No free arena in the Plane of Intention.",
+  "aurorion_intencao.erro.arena": "Failed to build the arena. Check the server log.",
+  "aurorion_intencao.erro.recusado": "Something blocked your passage to the Plane of Intention. Tell the game master.",
+  "aurorion_intencao.erro.volta": "Something blocked your return from the Plane of Intention. Tell the game master (/intencao recuperar).",
+  "aurorion_intencao.erro.sem_rival": "Name at least one rival who is not among the players.",
+  "aurorion_intencao.erro.tema": "Theme '%s' not found.",
+  "aurorion_intencao.erro.sem_sessao": "That player is not in an open battle of intention.",
+  "aurorion_intencao.erro.ja_encerrada": "That battle already has a verdict.",
+
+  "aurorion_intencao.comando.iniciada": "Battle of intention started with %s participants.",
+  "aurorion_intencao.comando.vencedor": "Verdict: %s prevailed.",
+  "aurorion_intencao.comando.empate": "Verdict: draw.",
+  "aurorion_intencao.comando.clima": "Scene mood: %s.",
+  "aurorion_intencao.comando.nenhuma": "No open battle of intention.",
+  "aurorion_intencao.comando.recuperados": "%s player(s) returned."
+}

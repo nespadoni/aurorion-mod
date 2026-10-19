@@ -47,11 +47,46 @@ public final class ProfessionEvents {
         var state = event.getLevel().getBlockState(event.getPos());
         boolean anvil = state.is(BlockTags.ANVIL);
         if (!anvil && !state.is(Blocks.SMITHING_TABLE) || SpecialtyRules.smith(event.getEntity())) return;
+        // A mesa tambem abre para o oficio dono de alguma familia de receita dela (o arcanista, com as
+        // gemas do Apotheosis); o menu entao so entrega as receitas daquele oficio.
+        if (!anvil && ExclusiveUse.ownsSmithingRecipes(event.getEntity())) return;
         event.setCanceled(true); event.setCancellationResult(InteractionResult.FAIL);
         if (event.getEntity() instanceof ServerPlayer player)
             ServiceManager.status(player, "Conhecimento de ferraria", anvil
                     ? "O uso da bigorna exige um ferreiro. Segure o equipamento e interaja com ele enquanto estiver agachado."
                     : "O uso da mesa de ferraria exige um ferreiro.");
+    }
+    /**
+     * Blocos de oficio por tag ({@code aurorion_profissoes:exclusivo/<profissao>}): as mesas do
+     * Apotheosis sao do arcanista. {@code HIGH} para cancelar antes de o bloco abrir o menu.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH) public static void exclusiveBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!ProfessionsConfig.enabled()) return;
+        // Item exclusivo usado NUM bloco (o invocador de chefe do Apotheosis so tem useOn): o
+        // RightClickItem nao dispara nesse caminho, entao o item e barrado aqui. O bloco continua
+        // usavel; so o item nao age.
+        Profession itemOwner = ExclusiveUse.owner(event.getItemStack());
+        if (itemOwner != null && !ExclusiveUse.allowed(event.getEntity(), itemOwner)) {
+            event.setUseItem(net.neoforged.neoforge.common.util.TriState.FALSE);
+            if (event.getEntity() instanceof ServerPlayer player)
+                ServiceManager.status(player, "Conhecimento de " + itemOwner.label().toLowerCase(java.util.Locale.ROOT),
+                        "Só um(a) " + itemOwner.label().toLowerCase(java.util.Locale.ROOT) + " sabe usar isto.");
+        }
+        Profession owner = ExclusiveUse.owner(event.getLevel().getBlockState(event.getPos()));
+        if (owner == null || ExclusiveUse.allowed(event.getEntity(), owner)) return;
+        event.setCanceled(true); event.setCancellationResult(InteractionResult.FAIL);
+        if (event.getEntity() instanceof ServerPlayer player)
+            ServiceManager.status(player, "Conhecimento de " + owner.label().toLowerCase(java.util.Locale.ROOT),
+                    "Só um(a) " + owner.label().toLowerCase(java.util.Locale.ROOT) + " sabe usar isto.");
+    }
+    @SubscribeEvent(priority = EventPriority.HIGH) public static void exclusiveItem(PlayerInteractEvent.RightClickItem event) {
+        if (!ProfessionsConfig.enabled()) return;
+        Profession owner = ExclusiveUse.owner(event.getItemStack());
+        if (owner == null || ExclusiveUse.allowed(event.getEntity(), owner)) return;
+        event.setCanceled(true); event.setCancellationResult(InteractionResult.FAIL);
+        if (event.getEntity() instanceof ServerPlayer player)
+            ServiceManager.status(player, "Conhecimento de " + owner.label().toLowerCase(java.util.Locale.ROOT),
+                    "Só um(a) " + owner.label().toLowerCase(java.util.Locale.ROOT) + " sabe usar isto.");
     }
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void mending(GetEnchantmentLevelEvent event) {
         // Evento muito quente (toda leitura de encantamento): o teste barato vem antes da leitura do NBT.

@@ -1,29 +1,30 @@
-package com.aurorion.limbo.compat;
+package com.aurorion.core.compat;
 
-import com.aurorion.limbo.AurorionLimbo;
+import com.aurorion.core.AurorionCore;
 import net.neoforged.fml.ModList;
 
 import java.lang.reflect.Method;
 import java.util.function.Supplier;
 
 /**
- * Faz os teleportes do Limbo acontecerem <b>na hora</b>, mesmo com o Twilight Teleport instalado.
+ * Faz um teleporte nosso acontecer <b>na hora</b>, mesmo com o Twilight Teleport instalado.
+ *
+ * <p>Estava escrito duas vezes, no {@code aurorion-limbo} e no {@code aurorion-magia}, com diferenca
+ * so na mensagem de log; a batalha de intencao seria a terceira copia.
  *
  * <h2>O defeito que isto fecha</h2>
  *
  * <p>O Twilight Teleport intercepta {@code ServerPlayer#changeDimension} e {@code teleportTo} para
  * tocar a animacao dele: devolve o jogador <b>ainda no lugar</b> e agenda a viagem para alguns
- * segundos depois. Para o Limbo isso quebra duas coisas ao mesmo tempo:
+ * segundos depois. Quem teleporta e confere o resultado logo em seguida quebra:
  *
  * <ul>
- *   <li>quem chamou ve o jogador na dimensao de origem e conclui que a viagem falhou — o resgate
- *       nao fecha, o resgatador "nao voltou do Limbo";</li>
- *   <li>quando a viagem adiada finalmente roda, a autorizacao da {@code ForgottenDoor} (que so vale
- *       dentro da chamada sincrona) ja foi limpa, o {@code aurorion_portais} trata a saida do Limbo
+ *   <li>quem chamou ve o jogador na dimensao de origem e conclui que a viagem falhou — o resgate do
+ *       Limbo nao fecha, o duelo do Reino das Almas desfaz metade;</li>
+ *   <li>quando a viagem adiada finalmente roda, a autorizacao que so vale dentro da chamada sincrona
+ *       (a {@code ForgottenDoor} do Limbo) ja foi limpa, e o {@code aurorion_portais} trata a saida
  *       como dimensao trancada e cancela. No log: "Deferred teleport was rejected".</li>
  * </ul>
- *
- * <p>O sintoma no servidor era o Vinculo de Alma sendo usado e o exilado nunca saindo.
  *
  * <h2>Como</h2>
  *
@@ -31,7 +32,8 @@ import java.util.function.Supplier;
  * {@code TeleportCauseContext} e perola do End ou fruta do coro — e assim que ele libera os
  * teleportes que nao sao dele. Marcamos a mesma causa em volta da nossa chamada, pela API publica
  * dele, e desmarcamos no {@code finally}. Por reflexao, como as outras pontes opcionais: o jar dele
- * nao entra no classpath, e sem o mod isto vira uma chamada direta.
+ * nao entra no classpath, e sem o mod isto vira uma chamada direta. Nao ignora trancas de dimensao
+ * de outros mods: so evita o adiamento.
  *
  * <p>Nunca lanca: uma versao do Twilight com API diferente desliga a ponte e o teleporte segue sem
  * ela — o mesmo comportamento de antes, nao um servidor que cai.
@@ -72,7 +74,7 @@ public final class TwilightTeleportCompat {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static boolean resolve() {
+    private static synchronized boolean resolve() {
         if (resolved) return begin != null;
         resolved = true;
         if (!ModList.get().isLoaded(MOD_ID)) return false;
@@ -83,13 +85,14 @@ public final class TwilightTeleportCompat {
             cause = Enum.valueOf(causeType, BYPASS_CAUSE);
             begin = context.getMethod("begin", causeType);
             end = context.getMethod("end", causeType);
-            AurorionLimbo.LOGGER.info("Twilight Teleport encontrado: teleportes do Limbo passam sem adiamento.");
+            AurorionCore.LOGGER.info("Twilight Teleport encontrado: teleportes do Aurorion passam sem adiamento.");
             return true;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             begin = null;
             end = null;
-            AurorionLimbo.LOGGER.warn("Twilight Teleport presente mas a ponte nao iniciou ({}); "
-                    + "resgates podem falhar se ele adiar a viagem.", e.toString());
+            AurorionCore.LOGGER.warn("Twilight Teleport presente mas a ponte nao iniciou ({}); "
+                    + "resgates do Limbo, duelos e batalhas de intencao podem falhar se ele adiar a viagem.",
+                    e.toString());
             return false;
         }
     }
@@ -99,7 +102,7 @@ public final class TwilightTeleportCompat {
             method.invoke(null, cause);
             return true;
         } catch (ReflectiveOperationException | RuntimeException e) {
-            AurorionLimbo.LOGGER.warn("Twilight Teleport recusou a marca de causa ({}).", e.toString());
+            AurorionCore.LOGGER.warn("Twilight Teleport recusou a marca de causa ({}).", e.toString());
             return false;
         }
     }

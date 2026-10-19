@@ -13,6 +13,7 @@ public final class TalkCharacterReset {
 
     @SubscribeEvent
     public static void onReset(CharacterResetEvent event) {
-        PlayerStyleData.get(event.server()).setStyle(event.account(), null);
+        // Pelo StyleManager: alem de apagar, avisa os clientes, senao eles mostram o balao antigo ate relogar.
+        StyleManager.setStyle(event.server(), event.account(), null);
     }
 }

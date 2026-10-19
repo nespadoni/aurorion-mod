@@ -108,6 +108,11 @@ public final class ChargeManager {
             status(charger, "Cobrança não enviada", refusal, false);
             return;
         }
+        // Canal opcional: o pagador sem o mod nao recebe a tela de aprovacao, e mandar o pacote lancaria.
+        if (!supports(payer)) {
+            status(charger, "Cobrança não enviada", "O outro jogador não tem o módulo de economia instalado.", false);
+            return;
+        }
 
         long amount;
         try {

@@ -4,6 +4,6 @@
   "package": "com.aurorion.utils.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": ["MimicryClientUseMixin", "SimplyMoreCooldownSideMixin"],
-  "client": ["DisposedDynamicTextureMixin"],
+  "client": ["DisposedDynamicTextureMixin", "BlockStateSolidLayerMixin", "ClientHooksSolidLayerMixin"],
   "injectors": {"defaultRequire": 1}
 }

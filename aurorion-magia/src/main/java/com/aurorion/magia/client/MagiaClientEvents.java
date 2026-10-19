@@ -21,6 +21,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -53,6 +55,8 @@ public final class MagiaClientEvents {
             // A possessao vai acima, porque ali o ponto e justamente cobrir a tela inteira.
             event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS, FogLayer.ID, new FogLayer());
             event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, PossessionLayer.ID, new PossessionLayer());
+            // O clarao cobre tudo, hotbar e chat inclusive: e uma granada de atordoar.
+            event.registerAboveAll(FlashLayer.ID, new FlashLayer());
         }
 
         @SubscribeEvent
@@ -77,6 +81,7 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             ClientSpellVisuals.tick();
+            AnachronicCamera.tick();
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
             if (player == null || minecraft.level == null || minecraft.isPaused()) return;
@@ -297,7 +302,9 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onMovementInput(MovementInputUpdateEvent event) {
             Input input = event.getInput();
-            if (event.getEntity().hasEffect(MagiaEffects.INFINITE_VOID)) {
+            // Fora do corpo (Olhar Anacronico) o corpo nao anda; suprimido (Garra do Abismo) tambem nao.
+            if (event.getEntity().hasEffect(MagiaEffects.INFINITE_VOID) || AnachronicCamera.locked()
+                    || event.getEntity().hasEffect(MagiaEffects.SUPPRESSED)) {
                 input.forwardImpulse = 0; input.leftImpulse = 0;
                 input.up = false; input.down = false; input.left = false; input.right = false;
                 input.jumping = false; input.shiftKeyDown = false;
@@ -317,8 +324,23 @@ public final class MagiaClientEvents {
             input.right = left;
         }
 
+        /** Nos olhos de outro, a mao dela nao aparece na frente da cena. */
+        @SubscribeEvent
+        public static void onRenderHand(RenderHandEvent event) {
+            if (AnachronicCamera.locked()) event.setCanceled(true);
+        }
+
+        /** Fora do corpo, nada de golpe nem de uso: a pessoa so assiste. */
+        @SubscribeEvent
+        public static void onInteraction(InputEvent.InteractionKeyMappingTriggered event) {
+            if (!AnachronicCamera.locked()) return;
+            event.setSwingHand(false);
+            event.setCanceled(true);
+        }
+
         @SubscribeEvent
         public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+            AnachronicCamera.reset();
             voidLocked = false;
             MagiaSoundscape.clear();
             ClientSpellVisuals.clear();

@@ -1,0 +1,5 @@
+{
+  "descricao": "Monstros com o dobro de vida, 50% mais dano e um pouco de armadura.",
+  "monstros": { "vida": 2.0, "dano": 1.5, "armadura": 2, "experiencia": 1.5 },
+  "ordem": 10
+}

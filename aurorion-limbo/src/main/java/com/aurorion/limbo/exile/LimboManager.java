@@ -2,7 +2,7 @@ package com.aurorion.limbo.exile;
 
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.core.character.CharacterData;
-import com.aurorion.limbo.compat.TwilightTeleportCompat;
+import com.aurorion.core.compat.TwilightTeleportCompat;
 import com.aurorion.limbo.finale.FinaleManager;
 import com.aurorion.limbo.AurorionLimbo;
 import com.aurorion.limbo.config.LimboConfig;

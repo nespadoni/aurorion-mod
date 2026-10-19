@@ -34,6 +34,19 @@ public final class MagiaConfig {
     public static final ModConfigSpec.IntValue VOID_DURATION;
     public static final ModConfigSpec.IntValue SHRINE_RADIUS;
     public static final ModConfigSpec.IntValue SHRINE_DURATION;
+
+    public static final ModConfigSpec.IntValue QUANTUM_ENERGY, QUANTUM_RECHARGE, QUANTUM_BLINK_COST, QUANTUM_STONE_COST,
+            QUANTUM_DIMENSION_COST, QUANTUM_RANGE, QUANTUM_STRAIN_FROM, QUANTUM_STRAIN_DECAY, QUANTUM_EXHAUSTED;
+    public static final ModConfigSpec.IntValue ANACHRONIC_RANGE, ANACHRONIC_COOLDOWN_HOURS, ANACHRONIC_SAFE_SECONDS,
+            ANACHRONIC_MAX_SECONDS, ANACHRONIC_FRAGILE_BASE, ANACHRONIC_FRAGILE_EXTRA;
+    public static final ModConfigSpec.IntValue LUNAR_HEAL_RADIUS, LUNAR_HEAL_RADIUS_STEP;
+    public static final ModConfigSpec.BooleanValue LUNAR_NIGHT_VISION, LUNAR_DAY_PENALTY;
+    public static final ModConfigSpec.IntValue POCKET_BRING_RADIUS, POCKET_MAX_GUESTS, POCKET_MEDIUM_SECONDS,
+            POCKET_FRAGILE_SECONDS, POCKET_RADIUS;
+    public static final ModConfigSpec.BooleanValue POCKET_MIRRORS;
+    public static final ModConfigSpec.IntValue FLASH_RADIUS;
+    public static final ModConfigSpec.BooleanValue FLASH_SPARES_CASTER;
+    public static final ModConfigSpec.BooleanValue FLASH_NEEDS_SIGHT;
     public static final ModConfigSpec SPEC;
 
     static {
@@ -185,6 +198,82 @@ public final class MagiaConfig {
                 .defineInRange("raioSantuarioMalevolente", 200, 8, 200);
         SHRINE_DURATION = BUILDER.comment("Santuario Malevolente: duracao; cortes a cada 10 ticks.")
                 .defineInRange("duracaoSantuarioMalevolente", 600, 100, 2400);
+        BUILDER.pop();
+
+        BUILDER.comment("Passivas dos representantes dos elementos. Tempos em segundos, salvo indicacao.")
+                .push("representantes");
+        BUILDER.comment("Quantico (Robs): teleporte livre e pedras de teleporte, com energia propria.").push("quantico");
+        QUANTUM_ENERGY = BUILDER.comment("Energia maxima, em cargas.")
+                .defineInRange("energiaMaxima", 20, 1, 200);
+        QUANTUM_RECHARGE = BUILDER.comment("Segundos para recuperar uma carga.")
+                .defineInRange("segundosPorCarga", 30, 1, 3600);
+        QUANTUM_BLINK_COST = BUILDER.comment("Cargas por salto (teleporte para onde se olha).")
+                .defineInRange("custoSalto", 1, 0, 200);
+        QUANTUM_STONE_COST = BUILDER.comment("Cargas por viagem a uma pedra de teleporte (Waystones).")
+                .defineInRange("custoPedra", 3, 0, 200);
+        QUANTUM_DIMENSION_COST = BUILDER.comment("Cargas a mais quando a pedra fica em outra dimensao.")
+                .defineInRange("custoOutraDimensao", 2, 0, 200);
+        QUANTUM_RANGE = BUILDER.comment("Alcance do salto, em blocos.")
+                .defineInRange("alcanceSalto", 32, 4, 128);
+        QUANTUM_STRAIN_FROM = BUILDER.comment("A partir de quantos teleportes seguidos Robs sente o peso da energia.")
+                .defineInRange("pesoAPartirDe", 10, 1, 200);
+        QUANTUM_STRAIN_DECAY = BUILDER.comment("Segundos para um teleporte sair da conta do peso.")
+                .defineInRange("segundosPorAlivio", 45, 1, 3600);
+        QUANTUM_EXHAUSTED = BUILDER.comment("Esgotou a energia: segundos carregando antes do proximo teleporte.")
+                .defineInRange("segundosEsgotado", 90, 0, 3600);
+        BUILDER.pop();
+
+        BUILDER.comment("Anacronico (Gretta): ver pelos olhos de outra pessoa, uma vez por dia.").push("anacronico");
+        ANACHRONIC_RANGE = BUILDER.comment("Distancia maxima do alvo ao comecar, em blocos.")
+                .defineInRange("alcance", 24, 4, 128);
+        ANACHRONIC_COOLDOWN_HOURS = BUILDER.comment("Horas REAIS entre duas possessoes (24 = uma por dia).")
+                .defineInRange("horasEntreUsos", 24, 0, 720);
+        ANACHRONIC_SAFE_SECONDS = BUILDER.comment("Segundos sem custo extra.")
+                .defineInRange("segundosLeves", 10, 1, 120);
+        ANACHRONIC_MAX_SECONDS = BUILDER.comment("Segundos maximos fora do corpo.")
+                .defineInRange("segundosMaximos", 30, 1, 300);
+        ANACHRONIC_FRAGILE_BASE = BUILDER.comment("Segundos fragilizada ao voltar, mesmo sem passar do tempo leve.")
+                .defineInRange("fragilBase", 30, 0, 3600);
+        ANACHRONIC_FRAGILE_EXTRA = BUILDER.comment("Segundos fragilizada a mais por segundo alem do tempo leve.")
+                .defineInRange("fragilPorSegundoExtra", 9, 0, 600);
+        BUILDER.pop();
+
+        BUILDER.comment("Minguantis (Iacy): mais forte quanto mais funda a noite, e cura quem esta perto.").push("minguantis");
+        LUNAR_HEAL_RADIUS = BUILDER.comment("Raio da restauracao na primeira hora da noite, em blocos.")
+                .defineInRange("raioCura", 8, 1, 48);
+        LUNAR_HEAL_RADIUS_STEP = BUILDER.comment("Blocos a mais de raio por fase de poder (ate 3 fases, na meia-noite).")
+                .defineInRange("raioCuraPorFase", 2, 0, 16);
+        LUNAR_NIGHT_VISION = BUILDER.comment("Visao noturna enquanto a bencao estiver ativa.")
+                .define("visaoNoturna", true);
+        LUNAR_DAY_PENALTY = BUILDER.comment("O contrario do Escanor ate o fim: de dia, fraqueza leve.")
+                .define("fraquezaDiurna", false);
+        BUILDER.pop();
+
+        BUILDER.comment("Vazio (Iris): a dimensao de bolso que replica a realidade.").push("vazio");
+        POCKET_BRING_RADIUS = BUILDER.comment("Marcados ate esta distancia entram junto com Iris.")
+                .defineInRange("raioLevar", 16, 1, 64);
+        POCKET_MAX_GUESTS = BUILDER.comment("Quantos marcados ela pode manter.")
+                .defineInRange("maximoMarcados", 3, 0, 8);
+        POCKET_MEDIUM_SECONDS = BUILDER.comment("Com 2 marcados dentro: segundos de pressao na fenda para invadir.")
+                .defineInRange("segundosInvasaoMediana", 12, 1, 600);
+        POCKET_FRAGILE_SECONDS = BUILDER.comment("Com 3 ou mais marcados dentro: segundos para invadir.")
+                .defineInRange("segundosInvasaoFacil", 3, 1, 600);
+        POCKET_RADIUS = BUILDER.comment("Quanto se anda dentro do bolso a partir da entrada, em blocos.",
+                        "Tambem e o que limita quanto terreno a replica precisa gerar.")
+                .defineInRange("raioBolso", 64, 16, 512);
+        POCKET_MIRRORS = BUILDER.comment("true: entra no ponto da replica que corresponde a onde Iris esta.",
+                        "false: sempre na mesma ancora (a primeira entrada dela), que so gera terreno uma vez.")
+                .define("espelhaPosicao", true);
+        BUILDER.pop();
+        BUILDER.pop();
+
+        BUILDER.comment("Clarao (Fulgor Caecans).").push("clarao");
+        FLASH_RADIUS = BUILDER.comment("Raio da cegueira no nivel 1; +4 por nivel. O estouro e no alto: o raio e grande.")
+                .defineInRange("raio", 24, 2, 64);
+        FLASH_SPARES_CASTER = BUILDER.comment("Quem lancou nao fica cego.")
+                .define("poupaConjurador", true);
+        FLASH_NEEDS_SIGHT = BUILDER.comment("Atras de parede nao pega. Desligado (padrao): todo mundo no raio fica cego.")
+                .define("exigeVisao", false);
         BUILDER.pop();
         SPEC = BUILDER.build();
     }

@@ -167,6 +167,9 @@ public final class HouseMuralManager {
     }
 
     public static void openProtector(ServerPlayer player, BlockPos pos) {
+        // Cada pedido percorre e ordena todos os personagens: um cliente modificado mandando isso a cada
+        // tick pesaria no servidor inteiro.
+        if (throttled(player)) return;
         HouseMuralBlockEntity mural = accessibleMural(player, pos, false);
         if (mural == null) return;
         ResourceLocation houseId = mural.house();

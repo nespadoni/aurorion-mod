@@ -1,1 +1,13 @@
 apply from: "$rootDir/gradle/aurorion-mod.gradle"
+
+// Jar de terceiros so para compilar os mixins de compatibilidade (o jogo usa o do modpack). Mesmo
+// esquema do aurorion-diario: outro caminho com -PcopycatsJar=C:/caminho/copycats.jar.
+def referencia = { String propriedade, String arquivo ->
+    files(providers.gradleProperty(propriedade).orElse("$rootDir/mod-servidor-referencia/$arquivo").get())
+}
+
+dependencies {
+    // Copycats+ 3.0.9: so as classes simples (MaterialItemStorage) entram nos mixins, de proposito —
+    // as interfaces dele herdam do Create, e assim o Create nao precisa estar no classpath.
+    compileOnly referencia('copycatsJar', 'copycats-3.0.9+mc.1.21.1-neoforge.jar')
+}

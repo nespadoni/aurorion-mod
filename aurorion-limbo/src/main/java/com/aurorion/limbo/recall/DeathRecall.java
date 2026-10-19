@@ -6,7 +6,7 @@ import com.aurorion.core.death.DeathId;
 import com.aurorion.core.level.ProtectedDrops;
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.limbo.AurorionLimbo;
-import com.aurorion.limbo.compat.TwilightTeleportCompat;
+import com.aurorion.core.compat.TwilightTeleportCompat;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.exile.LimboManager;
 import com.aurorion.limbo.narrate.LimboText;

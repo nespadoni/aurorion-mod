@@ -17,5 +17,6 @@
 
   "subtitles.aurorion_utils.abduction_beam": "Abduction beam",
 
-  "entity.aurorion_utils.abduction_beam": "Abduction Beam"
+  "entity.aurorion_utils.abduction_beam": "Abduction Beam",
+  "entity.aurorion_utils.freeze_anchor": "Freeze Anchor"
 }

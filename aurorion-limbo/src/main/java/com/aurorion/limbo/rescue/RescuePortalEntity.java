@@ -43,6 +43,10 @@ public class RescuePortalEntity extends Entity {
 
     /** Raio de entrada. Generoso: atravessar nao pode depender de mira. */
     private static final double ENTER_RADIUS = 1.25D;
+    /** Depois de uma travessia recusada, 5 s ate tentar de novo. */
+    private static final int RETRY_TICKS = 100;
+    /** So em memoria: perder isto num restart so antecipa uma tentativa. */
+    private int retryAt;
 
     @Nullable
     private UUID target;
@@ -97,10 +101,16 @@ public class RescuePortalEntity extends Entity {
         // Consulta direta ao dono: terceiros veem a passagem, mas nunca entram nela. Alem de fechar
         // o acidente de jogo, isto evita uma busca de entidades a cada tick por passagem aberta.
         ServerPlayer owner = level().getServer().getPlayerList().getPlayer(rescuer);
+        if (tickCount < retryAt) return;
         if (owner != null && owner.level() == level()
-                && getBoundingBox().inflate(ENTER_RADIUS).intersects(owner.getBoundingBox())
-                && RescueManager.enterPassage(owner, target)) {
-            discard();
+                && getBoundingBox().inflate(ENTER_RADIUS).intersects(owner.getBoundingBox())) {
+            if (RescueManager.enterPassage(owner, target)) {
+                discard();
+            } else {
+                // Recusou (sem chegada segura, viagem cancelada): parado dentro da passagem, a tentativa
+                // se repetiria a cada tick, com log de erro e aviso 20 vezes por segundo.
+                retryAt = tickCount + RETRY_TICKS;
+            }
         }
     }
 

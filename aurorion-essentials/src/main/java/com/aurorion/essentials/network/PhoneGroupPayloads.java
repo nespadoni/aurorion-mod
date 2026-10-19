@@ -44,7 +44,7 @@ public final class PhoneGroupPayloads {
      * @param nicks convidados ao criar, quem entra ao adicionar, quem sai ao remover
      */
     public record Action(byte action, UUID group, String name, List<String> nicks) implements CustomPacketPayload {
-        public static final Type<Action> TYPE = type("phone_group_action");
+        public static final Type<Action> TYPE = PhoneGroupPayloads.type("phone_group_action");
         public static final StreamCodec<RegistryFriendlyByteBuf, Action> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BYTE, Action::action,
                 UUIDUtil.STREAM_CODEC, Action::group,
@@ -60,7 +60,7 @@ public final class PhoneGroupPayloads {
 
     /** Uma mensagem de texto para o grupo. */
     public record Send(UUID group, String text) implements CustomPacketPayload {
-        public static final Type<Send> TYPE = type("phone_group_send");
+        public static final Type<Send> TYPE = PhoneGroupPayloads.type("phone_group_send");
         public static final StreamCodec<RegistryFriendlyByteBuf, Send> STREAM_CODEC = StreamCodec.composite(
                 UUIDUtil.STREAM_CODEC, Send::group,
                 ByteBufCodecs.stringUtf8(TEXT), Send::text,
@@ -99,7 +99,7 @@ public final class PhoneGroupPayloads {
      * @param gone grupos de que o jogador saiu, foi removido, ou que acabaram
      */
     public record Sync(boolean full, List<View> groups, List<UUID> gone) implements CustomPacketPayload {
-        public static final Type<Sync> TYPE = type("phone_group_sync");
+        public static final Type<Sync> TYPE = PhoneGroupPayloads.type("phone_group_sync");
         public static final StreamCodec<RegistryFriendlyByteBuf, Sync> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BOOL, Sync::full,
                 View.STREAM_CODEC.apply(ByteBufCodecs.list(PhoneGroupBook.MAX_GROUPS_PER_MEMBER * 4)), Sync::groups,
@@ -132,7 +132,7 @@ public final class PhoneGroupPayloads {
     public record Messages(List<Line> lines) implements CustomPacketPayload {
         /** Mais que a fila de uma conta inteira (50): o login cabe num pacote so. */
         public static final int MAX_LINES = 64;
-        public static final Type<Messages> TYPE = type("phone_group_messages");
+        public static final Type<Messages> TYPE = PhoneGroupPayloads.type("phone_group_messages");
         public static final StreamCodec<RegistryFriendlyByteBuf, Messages> STREAM_CODEC = StreamCodec.composite(
                 Line.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)), Messages::lines,
                 Messages::new);
@@ -158,7 +158,7 @@ public final class PhoneGroupPayloads {
 
     /** Resposta a uma acao: o {@link PhoneGroupBook.Result} (ordinal) que o cliente mostra no aviso. */
     public record Notice(byte result) implements CustomPacketPayload {
-        public static final Type<Notice> TYPE = type("phone_group_notice");
+        public static final Type<Notice> TYPE = PhoneGroupPayloads.type("phone_group_notice");
         public static final StreamCodec<RegistryFriendlyByteBuf, Notice> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.BYTE, Notice::result,
                 Notice::new);

@@ -3,7 +3,7 @@ package com.aurorion.ethereal.config;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Config do lado servidor, gravada em {@code config/aurorion_ethereal-server.toml}.
+ * Config do lado servidor, gravada em {@code config/aurorion/ethereal-server.toml}.
  *
  * <p>O que <em>nao</em> esta aqui e tao proposital quanto o que esta: nome, cor, lema, icone e
  * lotacao de casa nao sao config, sao datapack ({@link com.aurorion.ethereal.house.House}). Config e

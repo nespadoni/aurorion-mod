@@ -74,6 +74,7 @@ public class MagiaProjectileRenderer extends EntityRenderer<MagiaProjectileEntit
                 pose.popPose();
             }
             case TEMPERIES -> glowBall(pose, buffers, entity.size(), 0xFFCC4D);
+            case FULGOR -> glowBall(pose, buffers, entity.size() * (1 + .15F * Mth.sin(life * 1.3F)), 0xFFFBE8);
             case RAPAX -> glowBall(pose, buffers, entity.size(), 0xFFD34A);
             default -> {
             }

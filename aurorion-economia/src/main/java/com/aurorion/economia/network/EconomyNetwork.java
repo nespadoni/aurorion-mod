@@ -18,7 +18,8 @@ public final class EconomyNetwork {
 
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("2");
+        // optional(): cliente sem o mod entra (ver neoforge.mods.toml); todo envio ao cliente checa o canal antes.
+        var registrar = event.registrar("2").optional();
         var serverRegistrar = registrar.executesOn(HandlerThread.NETWORK);
         serverRegistrar.playToServer(LandPayloads.Submit.TYPE, LandPayloads.Submit.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player && ChargeManager.admitPacket(player, ChargeManager.PacketAction.LAND_SUBMIT))

@@ -16,6 +16,12 @@ import com.aurorion.magia.passive.Passives;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.registry.MagiaSpells;
 import com.aurorion.magia.spell.SoulRealm;
+import com.aurorion.magia.spell.ManusAbyssiSpell;
+import com.aurorion.magia.passive.AnachronicSight;
+import com.aurorion.magia.passive.RepresentativeData;
+import com.aurorion.magia.passive.VoidPocket;
+import com.aurorion.magia.passive.WaningMoon;
+import net.minecraft.world.entity.monster.Enemy;
 import com.aurorion.magia.spell.Domains;
 import com.aurorion.magia.passive.DomainPassives;
 import com.aurorion.magia.effect.InfiniteVoidEffect;
@@ -152,6 +158,15 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.corpo_tomado").withStyle(ChatFormatting.DARK_PURPLE));
             return;
         }
+        // Garra do Abismo: suprimido nao conjura. Fora do corpo (Olhar Anacronico) tambem nao.
+        if (player.hasEffect(MagiaEffects.SUPPRESSED)) {
+            deny(event, player, Component.translatable("aurorion_magia.suprimido").withStyle(ChatFormatting.DARK_PURPLE));
+            return;
+        }
+        if (player.hasEffect(MagiaEffects.ANACHRONIC_SIGHT)) {
+            deny(event, player, Component.translatable("aurorion_magia.anacronico.fora_do_corpo").withStyle(ChatFormatting.GOLD));
+            return;
+        }
 
         AbstractSpell spell = SpellRegistry.getSpell(event.getSpellId());
         // Dentro do corpo de outro, a unica magia que responde e a que devolve o corpo.
@@ -173,6 +188,9 @@ public final class MagiaServerEvents {
     public static void onCooldown(SpellCooldownAddedEvent.Pre event) {
         if (ToggleCooldown.consume(event.getEntity(), event.getSpell())) {
             event.setCanceled(true);
+        } else if (event.getSpell() == MagiaSpells.MANUS_ABYSSI.get()) {
+            // 140 / 110 / 80 s: o evento do Iron's nao traz o nivel, entao a magia o guardou na conjuracao.
+            event.setEffectiveCooldown(ManusAbyssiSpell.cooldownFor(event.getEntity(), event.getEffectiveCooldown()));
         } else if (event.getSpell() == MagiaSpells.DOLIUM_ARDENS.get() && event.getEffectiveCooldown() <= 0) {
             // Multiplicadores de arma/atributos tambem podem zerar a recarga depois do config.
             event.setEffectiveCooldown(event.getSpell().getSpellCooldown());
@@ -218,6 +236,9 @@ public final class MagiaServerEvents {
         ControlSpells.sendVisualsTo(player, player);
         if (player.hasEffect(MagiaEffects.KNEELING)) EmotecraftCompat.kneel(player);
         Passives.onLogin(player);
+        AnachronicSight.end(player);
+        ManusAbyssiSpell.end(player);
+        VoidPocket.recover(player);
         // Uma zona de tempo parado que sobrou de um crash (o efeito e salvo com o jogador) nao volta
         // a congelar o salao sozinha quando o dono loga.
         TimeStop.stop(player);
@@ -245,6 +266,7 @@ public final class MagiaServerEvents {
             Seals.sendAll(player);
             EffectCleanup.sweep(player);
             Passives.onLogin(player);
+            VoidPocket.recover(player);
         }
     }
 
@@ -259,7 +281,13 @@ public final class MagiaServerEvents {
         Domains.stop(event.getEntity());
         // Possessao: quem sai devolve o corpo, e quem tem o corpo tomado e solto.
         Possession.end(event.getEntity());
-        if (event.getEntity() instanceof ServerPlayer player) Possession.release(player);
+        AnachronicSight.end(event.getEntity());
+        ManusAbyssiSpell.end(event.getEntity());
+        if (event.getEntity() instanceof ServerPlayer player) {
+            Possession.release(player);
+            AnachronicSight.release(player);
+            VoidPocket.onLogout(player);
+        }
     }
 
     /** Morrer tambem devolve o corpo, dos dois lados. Morto nao tica efeito, entao e aqui. */
@@ -271,7 +299,13 @@ public final class MagiaServerEvents {
         SoulRealm.onDeath(entity);
         Domains.stop(entity);
         Possession.end(entity);
-        if (entity instanceof ServerPlayer player) Possession.release(player);
+        AnachronicSight.end(entity);
+        ManusAbyssiSpell.end(entity);
+        if (entity instanceof ServerPlayer player) {
+            Possession.release(player);
+            AnachronicSight.release(player);
+            VoidPocket.onDeath(player);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -299,8 +333,12 @@ public final class MagiaServerEvents {
     public static void onCharacterReset(CharacterResetEvent event) {
         SpellUnlockData.get(event.server()).clear(event.account());
         PassiveData.get(event.server()).clear(event.account());
+        // Personagem novo: energia cheia, dia livre para a Gretta, bolso fechado e sem marcas.
+        RepresentativeData.get(event.server()).clear(event.account());
+        VoidPocket.reset(event.server(), event.account(), event.player());
         ServerPlayer player = event.player();
         if (player != null) {
+            AnachronicSight.end(player);
             SoulRealm.end(player);
             Domains.stop(player);
             player.getPersistentData().remove("aurorion_magia:ultima_colheita");
@@ -355,6 +393,14 @@ public final class MagiaServerEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onTravelDimension(EntityTravelToDimensionEvent event) {
+        // O bolso de Iris so se entra e se sai por ela: portal, pedra ou /tp de jogador nao abrem a porta.
+        Entity traveller = event.getEntity();
+        if (!traveller.level().isClientSide && !VoidPocket.travelling()
+                && (event.getDimension().equals(VoidPocket.DIMENSION) || VoidPocket.isInside(traveller))
+                && !(traveller instanceof ServerPlayer staff && staff.hasPermissions(2) && staff.isCreative())) {
+            event.setCanceled(true);
+            return;
+        }
         if (event.getEntity() instanceof LivingEntity living && !living.level().isClientSide
                 && living.isAlive() && (living.hasEffect(MagiaEffects.SOUL_REALM) || living.hasEffect(MagiaEffects.INFINITE_VOID))) {
             event.setCanceled(true); return;
@@ -466,6 +512,7 @@ public final class MagiaServerEvents {
                 && (player.hasEffect(MagiaEffects.DISORIENTED)
                 || player.hasEffect(MagiaEffects.CRUCIATUS)
                 || player.hasEffect(MagiaEffects.KNEELING)
+                || player.hasEffect(MagiaEffects.SUPPRESSED)
                 || bodyLocked(player));
     }
 
@@ -478,7 +525,8 @@ public final class MagiaServerEvents {
                 && (living.hasEffect(MagiaEffects.INFINITE_VOID) || living.hasEffect(MagiaEffects.STASIS)
                 || living.hasEffect(MagiaEffects.POLYMORPH)
                 || living.hasEffect(MagiaEffects.POSSESSED)
-                || living.hasEffect(MagiaEffects.POSSESSING));
+                || living.hasEffect(MagiaEffects.POSSESSING)
+                || living.hasEffect(MagiaEffects.ANACHRONIC_SIGHT));
     }
 
     /** Golpe corpo a corpo de jogador: o corpo travado nao bate, e quem esta na Poca de Sangue tambem nao. */
@@ -549,6 +597,11 @@ public final class MagiaServerEvents {
             event.setCanceled(true);
             return;
         }
+        // Bolso do Vazio: enquanto Iris estiver viva la dentro e a barreira de pe, quem ela levou nao sofre.
+        if (VoidPocket.protects(victim, incoming)) {
+            event.setCanceled(true);
+            return;
+        }
         // Corpo travado nao fere ninguem com golpe nem flecha. Magia e efeito ja lancados continuam: a
         // revoada que ja gira, a poca em que ja se esta, a bigorna que ja cai.
         if (attacker instanceof LivingEntity living
@@ -616,6 +669,11 @@ public final class MagiaServerEvents {
     public static void onEntityJoin(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide && !event.loadedFromDisk() && event.getEntity() instanceof AbstractArrow arrow) {
             SovaArrows.onArrowSpawn(arrow);
+        }
+        // O bolso e a realidade sem gente e sem ameaca: monstro nao nasce la dentro.
+        if (!event.getLevel().isClientSide && event.getEntity() instanceof Enemy
+                && event.getLevel().dimension().equals(VoidPocket.DIMENSION)) {
+            event.setCanceled(true);
         }
     }
 
@@ -700,6 +758,24 @@ public final class MagiaServerEvents {
             entity.setAirSupply(entity.getMaxAirSupply());
         } else if (effect == MagiaEffects.CAGED.get()) {
             WaterCage.release(entity);
+        } else if (effect == MagiaEffects.NETHER_GRASP.get() && entity.getServer() != null) {
+            // Os dois fins mexem nos efeitos da propria entidade; dentro do Remove (inclusive no
+            // /effect clear, que itera o mapa) isso seria ConcurrentModification. Vao para o fim do tick.
+            entity.getServer().tell(new TickTask(entity.getServer().getTickCount(), () -> ManusAbyssiSpell.end(entity)));
+        } else if (effect == MagiaEffects.ANACHRONIC_SIGHT.get() && entity instanceof ServerPlayer player) {
+            player.server.tell(new TickTask(player.server.getTickCount(), () -> AnachronicSight.end(player)));
+        } else if (effect == MagiaEffects.VOID_POCKET.get() && entity instanceof ServerPlayer player) {
+            // Dentro do tick de efeitos: a volta de todo mundo fica para o fim do tick.
+            if (VoidPocket.isInside(player)) VoidPocket.collapse(player, false);
+        } else if (effect == MagiaEffects.LUNAR_PRESENCE.get() && entity instanceof ServerPlayer player
+                && Passives.has(player, Passive.WANING_MOON)) {
+            // Leite nao tira (ClockEffect), mas /effect clear tira: a passiva continua, o marcador volta.
+            // So para quem ainda tem a passiva e perdeu o marcador; o resto nao reenfileira nada.
+            player.server.tell(new TickTask(player.server.getTickCount(), () -> {
+                if (player.isAlive() && player.server.getPlayerList().getPlayer(player.getUUID()) == player
+                        && !player.hasEffect(MagiaEffects.LUNAR_PRESENCE))
+                    WaningMoon.restore(player);
+            }));
         } else if (effect == MagiaEffects.POSSESSING.get()) {
             Possession.end(entity);
         } else if (effect == MagiaEffects.POSSESSED.get() && entity instanceof ServerPlayer player) {
@@ -737,6 +813,7 @@ public final class MagiaServerEvents {
             if (player.isAlive()) {
                 if (player.level().dimension().equals(SoulRealm.DIMENSION) && !player.hasEffect(MagiaEffects.SOUL_REALM))
                     SoulRealm.recover(player);
+                if (player.level().dimension().equals(VoidPocket.DIMENSION)) VoidPocket.recover(player);
                 ControlSpells.syncVoice(player, null);
             }
             else VoiceMute.unmute(player.getUUID());

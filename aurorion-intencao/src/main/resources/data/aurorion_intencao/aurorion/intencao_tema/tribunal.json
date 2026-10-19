@@ -1,0 +1,9 @@
+{
+  "name": "aurorion_intencao.tema.tribunal",
+  "radius": 14,
+  "spawn_radius": 6,
+  "fog": "#23203A",
+  "ambience": "minecraft:ambient.soul_sand_valley.loop",
+  "whisper": "minecraft:ambient.soul_sand_valley.mood",
+  "fragments": 7
+}

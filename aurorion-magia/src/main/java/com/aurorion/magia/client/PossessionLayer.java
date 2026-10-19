@@ -107,6 +107,16 @@ public final class PossessionLayer implements LayeredDraw.Layer {
 
         float beast = weight(player, MagiaEffects.POLYMORPH);
         if (beast > 0) vignette(graphics, width, height, 0x3A5A10, .35F * beast, .2F);
+
+        // Olhar Anacronico: os olhos sao de outro; a moldura sepia lembra de quem sao.
+        float sight = weight(player, MagiaEffects.ANACHRONIC_SIGHT);
+        if (sight > 0) vignette(graphics, width, height, 0x3B2A12, (.4F + .1F * Mth.sin(time * .08F)) * sight, .22F);
+
+        float fragile = weight(player, MagiaEffects.FRAGILE);
+        if (fragile > 0) vignette(graphics, width, height, 0x2A2418, .22F * fragile, .14F);
+
+        float suppressed = weight(player, MagiaEffects.SUPPRESSED);
+        if (suppressed > 0) vignette(graphics, width, height, 0x14002A, .6F * suppressed, .28F);
     }
 
     /**

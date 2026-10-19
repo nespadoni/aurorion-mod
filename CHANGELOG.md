@@ -1,3 +1,73 @@
+# Copycats+ mais leve no cliente - 18/10/2026
+
+- Utils 0.2.5 (cliente e servidor; precisa chegar aos clientes pelo AutoModpack):
+  - fim do crash "building chunk meshes" do Copycats multiestado;
+  - o cliente não reprocessa os vizinhos a cada copycat carregado;
+  - `isBlockInSolidLayer` fica em cache por estado;
+  - o Sodium testa primeiro a condição barata de face escondida.
+  Só correções de baixo risco; o cache de quads ficou de fora. Detalhes em
+  `aurorion-utils/CRASH-FIXES.md`.
+- Dica para os jogadores: *Atualizações de chunk* do Sodium em "Em breve".
+- Código preparado sem compilação ou teste nesta máquina, conforme AGENTS.md.
+
+# Batalha de intenção no jogo - 18/10/2026
+
+- Intenção 0.1.0 (novo mod, servidor e cliente): `/intencao iniciar|clima|encerrar|empate|listar|recuperar`.
+  O mestre chama os participantes para o Plano da Intenção (`aurorion_intencao:plano_intencao`)
+  enquanto a cena acontece na mesa do Discord:
+  - Chamado com palpebras e nomes frente a frente; Eco em transe no lugar de cada um.
+  - Arena por tema de datapack (`aurorion/intencao_tema/`), com o Tribunal de Vitrais procedural nas
+    cores das Casas e fragmentos de memória clicáveis.
+  - Veredito com aura para o vencedor e o perdedor de joelhos.
+  - Sem efeito mecânico. Detalhes no README do `aurorion-intencao`.
+  - Revisão:
+    - A ida e a volta passam pela trava do `aurorion-portais` com autorização de um tick. Sem isso,
+      ninguém entrava no plano, e quem entrasse não saía.
+    - O veredito é por lado (time contra time).
+    - As arenas ficam na menor célula livre, sem sair da borda do mundo.
+    - A âncora fica no chão quando o chamado pega alguém no ar.
+    - O fim é isolado por participante, então uma falha não prende os outros.
+    - O som ambiente não é mais recriado a cada tick quando não toca.
+    - As rachaduras do veredito passaram de ~3.500 para ~200 retângulos por quadro.
+    - Os textos do tema ficam limitados a 1024 caracteres.
+- Magia (revisão):
+  - A roda de passivas desenha com culling desligado (antes ficava invisível).
+  - O branco do Clarão cobre itens e tooltips de telas abertas.
+  - Fechar a roda com `H` ainda apertado não dispara a passiva nem reabre a roda.
+  - Toque rápido em `H` dentro do mesmo tick não se perde mais.
+  - O leite não cura o Clarão.
+- Magia 0.7.0: o Clarão passa a cegar como a flashbang do CS:
+  - tela 100% branca por 5/4/3 s (olhando/de lado/de costas), sumindo devagar só no fim;
+  - cobre também inventário e ESC abertos, e abafa o som;
+  - raio de 24 + 4 por nível, e parede não protege (`[clarao].exigeVisao` religa a regra).
+  Config existente mantém `raio = 10`: ajustar à mão.
+- Magia 0.7.0 (protocolo 11, atualizar também no cliente): **roda de passivas**.
+  - Segurar `H` abre a roda com as passivas de usar e de ligar; soltar escolhe.
+  - A Presença Aterradora liga e desliga sem comando, pela roda ou pelo toque em `H` para quem não tem
+    passiva de usar.
+  - Quem tem mais de uma passiva de tecla escolhe pela roda.
+- Essentials: `PhoneGroupPayloads` não compilava (`type(...)` resolvia para o `type()` do próprio record).
+- Core 0.6.6: `compat/TwilightTeleportCompat` (antes copiado no Limbo e no Magia). Limbo e Magia
+  passam a usar o do core e exigem `aurorion_core` 0.6.6 ou mais novo.
+- Código preparado sem compilação ou teste nesta máquina, conforme AGENTS.md.
+
+# Apotheosis, dificuldade por mundo e representantes - 18/10/2026
+
+- Profissões 0.5.3: Apotheosis só para arcanista — mesas de reforja, salvamento, lapidação e aumento
+  (tag `aurorion_profissoes:exclusivo/arcanista`) e as receitas de gema, soquete e sigilo da mesa de
+  ferraria (`receitasExclusivas = ["apotheosis=arcanista"]`). Mecanismo reaproveitável: tag de bloco e de
+  item `exclusivo/<profissao>` e regras de receita por mod, id de mod ou receita exata.
+- Mundos 0.2.0: perfis de mundo por datapack (`aurorion/perfis_mundo/`) — vida, dano, armadura,
+  velocidade, faro e XP dos monstros, teto de spawn e densidade de estruturas por dimensão;
+  `/mundos dificuldade global|mundo|ver|aplicar`; perfis prontos `normal`, `dificil`, `brutal`,
+  `pesadelo` e `exploracao` (nenhum ligado por padrão). Trava de spawners (`[spawners].travar`): sem
+  ovo, runa, Carry On nem colocar spawner fora do criativo da staff.
+- Magia 0.7.0 (protocolo 10, atualizar também no cliente): Clarão (*Fulgor Caecans*), Garra do Abismo
+  (*Manus Abyssi*, a ultimate do Malzahar) e as passivas dos representantes — Salto Quântico (Robs),
+  Olhar Anacrônico (Gretta), Lua Minguante (Iacy) e Bolso do Vazio (Iris, dimensão
+  `aurorion_magia:bolso_do_vazio`) —, com a tecla de passiva (`H`).
+- Código preparado sem compilação ou teste nesta máquina, conforme AGENTS.md.
+
 # Áreas 0.6.5 - 18/10/2026
 
 - `/area aviso <id> true|false`: avisa no Discord (via `aurorion-bot`, por RCON) quando alguém entra

@@ -3,7 +3,7 @@ package com.aurorion.limbo.rescue;
 import com.aurorion.core.level.SafeSpot;
 import com.aurorion.core.character.CharacterData;
 import com.aurorion.limbo.AurorionLimbo;
-import com.aurorion.limbo.compat.TwilightTeleportCompat;
+import com.aurorion.core.compat.TwilightTeleportCompat;
 import com.aurorion.limbo.config.LimboConfig;
 import com.aurorion.limbo.exile.ExileRecord;
 import com.aurorion.limbo.exile.ForgottenDoor;
@@ -163,8 +163,9 @@ public final class RescueManager {
     /**
      * Entrou na passagem: vai para o Limbo, perto de quem foi abrir.
      *
-     * @return {@code true} se a travessia aconteceu — o chamador para o laco, porque a lista de
-     *         entidades que ele estava percorrendo acabou de mudar de dimensao.
+     * @return {@code true} quando a passagem acabou: a travessia aconteceu (o chamador para o laco,
+     *         porque a lista de entidades que ele percorria mudou de dimensao) ou o alvo ja nao esta no
+     *         exilio (a passagem fecha e a vida e devolvida).
      */
     public static boolean enterPassage(ServerPlayer player, UUID target) {
         MinecraftServer server = player.server;
@@ -177,6 +178,20 @@ public final class RescueManager {
 
         // Exilado nao usa passagem de resgate para sair do proprio exilio.
         if (LivesManager.isExiled(server, player.getUUID())) return false;
+
+        // A passagem dura minutos: o alvo pode ter sido resgatado por outro, vencido o prazo ou morrido
+        // de vez enquanto isso. Entrar assim deixaria o resgatador no Limbo sem ninguem para buscar e sem
+        // saida (o portais tranca a volta, e morrer la renasce la). A passagem fecha e a vida volta.
+        ExileRecord record = LimboData.get(server).record(target);
+        if (record == null || record.remainingMillis() <= 0 || !LivesManager.isExiled(server, target)
+                || com.aurorion.core.character.CharacterData.get(server).isDead(target)) {
+            int cost = LimboConfig.RESCUE_LIFE_COST.get();
+            if (cost > 0) LivesManager.addLives(server, player.getUUID(), cost);
+            player.displayClientMessage(LimboText.refusal(Refusal.NOT_EXILED), true);
+            AurorionLimbo.LOGGER.info("Resgate: passagem de {} fechada; o alvo ja nao esta no exilio ({} vida(s) devolvida(s)).",
+                    player.getGameProfile().getName(), cost);
+            return true;
+        }
 
         BlockPos arrival = arrivalNear(server, limbo, target);
         if (arrival == null) return refuse(player, "nao achei chegada segura no exilio");
@@ -293,6 +308,12 @@ public final class RescueManager {
 
         if (rescuer.getUUID().equals(exiledId)) {
             rescuer.displayClientMessage(LimboText.bondSelf(), true);
+            return false;
+        }
+        // Exilado com um Vinculo na mao (caiu de um resgatador morto, foi entregue, sobrou no chao):
+        // resgatar outro exilado o levaria junto para fora, ainda com 0 vidas. So quem veio de fora resgata.
+        if (LivesManager.isExiled(server, rescuer.getUUID())) {
+            rescuer.displayClientMessage(LimboText.refusal(Refusal.RESCUER_EXILED), true);
             return false;
         }
         if (!LivesManager.isExiled(server, exiledId) || !LimboData.get(server).isTracked(exiledId)) {

@@ -60,6 +60,7 @@ public final class MundosCommand {
                 .executes(MundosCommand::list)
                 .then(Commands.literal("ligacoes")
                         .executes(MundosCommand::links))
+                .then(DifficultyCommand.node())
                 .then(Commands.literal("borda")
                         .then(Commands.argument("dimensao", DimensionArgument.dimension())
                                 .then(Commands.literal("ver")

@@ -31,7 +31,7 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.6.0,)"
+versionRange = "[0.6.6,)"
 ordering = "AFTER"
 side = "BOTH"
 
@@ -71,3 +71,13 @@ requiredMods = ["playerrevive"]
 # O Immersive Messages e opcional de proposito, e nao aparece aqui nem como optional: o mod nunca
 # importa uma classe dele. Ver LimboNarrator — se estiver no pack, as mensagens saem por ele; se nao,
 # saem por chat. Declarar a dependencia obrigaria o pack a te-lo para o Limbo carregar.
+
+# Opcional, so para a ordem: o listener LOWEST + receiveCanceled do Limbo (Porta do Esquecido,
+# resgate, retorno) desfaz o veto de dimensao do portais, e por isso precisa falar DEPOIS dele. Sem esta
+# aresta, a ordem de registro entre os dois mods e a de construcao paralela do FML: indefinida.
+[[dependencies.${mod_id}]]
+modId = "aurorion_portais"
+type = "optional"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"

@@ -1,0 +1,42 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# TwilightTeleportCompat entrou no core em 0.6.6.
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.6.6,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Opcional. O portais tranca o plano (fora de freeDimensions); a viagem do ritual desfaz o veto num
+# listener LOWEST. Carregar depois dele faz esse listener ser o ultimo a falar entre os dois.
+[[dependencies.${mod_id}]]
+modId = "aurorion_portais"
+type = "optional"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"

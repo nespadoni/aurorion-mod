@@ -1,19 +1,15 @@
 {
   "aurorion_mundos.portal.sem_destino": "Não há portal do outro lado. Avise a staff.",
-
   "aurorion_mundos.comando.nao_gerenciada": "Essa dimensão não é gerenciada pelo Aurorion Mundos. Para o overworld, o Nether ou uma dimensão de mod, use /worldborder.",
-
   "aurorion_mundos.comando.lista.vazio": "Nenhum mundo declarado. Adicione um seed em config/aurorion_mundos-server.toml.",
   "aurorion_mundos.comando.lista.cabecalho": "Mundos do Aurorion — dimensão, seed, barreira, geração em runtime:",
   "aurorion_mundos.comando.lista.linha": "  %s — seed %s, barreira %s, %s",
   "aurorion_mundos.comando.lista.ausente": "dimensão não existe",
   "aurorion_mundos.comando.geracao.ligada": "gera em runtime",
   "aurorion_mundos.comando.geracao.desligada": "não gera em runtime",
-
   "aurorion_mundos.comando.ligacoes.vazio": "Nenhuma ligação de portal configurada.",
   "aurorion_mundos.comando.ligacoes.cabecalho": "Ligações de portal — origem, destino, raio de busca:",
   "aurorion_mundos.comando.ligacoes.linha": "  %s → %s (raio %s)%s",
-
   "aurorion_mundos.comando.borda.ver": "%s: barreira de %s blocos, centrada em %s.",
   "aurorion_mundos.comando.borda.set": "Barreira de %s definida para %s blocos.",
   "aurorion_mundos.comando.borda.lerp": "Barreira de %s indo para %s blocos ao longo de %s segundos.",
@@ -21,5 +17,14 @@
   "aurorion_mundos.comando.borda.aviso_distancia": "Aviso da barreira de %s: %s blocos.",
   "aurorion_mundos.comando.borda.aviso_tempo": "Aviso da barreira de %s: %s segundos.",
   "aurorion_mundos.comando.borda.dano": "Dano da barreira de %s: %s por bloco.",
-  "aurorion_mundos.comando.borda.zona": "Zona segura da barreira de %s: %s blocos."
+  "aurorion_mundos.comando.borda.zona": "Zona segura da barreira de %s: %s blocos.",
+  "aurorion_mundos.spawner.travado": "Spawners não podem ser alterados, carregados nem colocados.",
+  "aurorion_mundos.dificuldade.perfis": "Perfis de mundo disponíveis:",
+  "aurorion_mundos.dificuldade.global": "Perfil global: %s",
+  "aurorion_mundos.dificuldade.vanilla": "%s: sem perfil (vanilla).",
+  "aurorion_mundos.dificuldade.ver": "%s: perfil %s (origem: %s)",
+  "aurorion_mundos.dificuldade.global_definido": "Perfil global agora é %s. Monstros novos já nascem assim; use /mundos dificuldade aplicar para os que já estão andando.",
+  "aurorion_mundos.dificuldade.mundo_definido": "%s agora usa o perfil %s. Densidade de estrutura só muda no próximo boot.",
+  "aurorion_mundos.dificuldade.aplicado": "%s criatura(s) reajustada(s) em %s.",
+  "aurorion_mundos.dificuldade.desconhecido": "Perfil de mundo desconhecido: %s"
 }

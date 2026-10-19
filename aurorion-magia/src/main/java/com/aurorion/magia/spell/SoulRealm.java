@@ -1,7 +1,7 @@
 package com.aurorion.magia.spell;
 
 import com.aurorion.magia.AurorionMagia;
-import com.aurorion.magia.compat.TwilightTeleportCompat;
+import com.aurorion.core.compat.TwilightTeleportCompat;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.util.Utils;
 import com.aurorion.magia.network.MagiaNetwork;

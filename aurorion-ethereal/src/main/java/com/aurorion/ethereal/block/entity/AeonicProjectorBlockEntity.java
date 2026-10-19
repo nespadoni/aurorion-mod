@@ -151,7 +151,13 @@ public final class AeonicProjectorBlockEntity extends BlockEntity {
             CompoundTag entry = lines.getCompound(i);
             // Texto que nao parseia mais (formato antigo, arquivo mexido a mao) vira linha vazia em
             // vez de derrubar a leitura do bloco inteiro — o proximo refresh reescreve tudo.
-            MutableComponent text = Component.Serializer.fromJson(entry.getString(KEY_TEXT), registries);
+            MutableComponent text;
+            try {
+                text = Component.Serializer.fromJson(entry.getString(KEY_TEXT), registries);
+            } catch (com.google.gson.JsonParseException invalid) {
+                // No 1.21.1 o fromJson lanca em vez de devolver null; sem isto o bloco inteiro era descartado.
+                text = null;
+            }
             loaded.add(new BoardLine(text == null ? Component.empty() : text, entry.getInt(KEY_COLOR)));
         }
         renderedLines = List.copyOf(loaded);

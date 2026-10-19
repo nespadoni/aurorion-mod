@@ -56,6 +56,8 @@ import java.util.WeakHashMap;
 public final class AeonicProjectorRenderer implements BlockEntityRenderer<AeonicProjectorBlockEntity> {
     /** Altura em que o painel nasce, acima da base do bloco. */
     private static final float PANEL_Y = 1.05F;
+    /** Uma instancia so: o texto ordenado para desenho fica em cache nela, em vez de refeito a cada quadro. */
+    private static final Component EMPTY_TEXT = Component.translatable("gui.aurorion_ethereal.projector.empty");
 
     /** Escala do texto dentro do painel. */
     private static final float TEXT_SCALE = 0.013F;
@@ -321,8 +323,7 @@ public final class AeonicProjectorRenderer implements BlockEntityRenderer<Aeonic
 
         List<BoardLine> lines = projector.renderedLines();
         if (lines.isEmpty()) {
-            Component empty = Component.translatable("gui.aurorion_ethereal.projector.empty");
-            drawCentered(empty.getVisualOrderText(), 28.0F, COLOR_EMPTY, matrix, buffers, false);
+            drawCentered(EMPTY_TEXT.getVisualOrderText(), 28.0F, COLOR_EMPTY, matrix, buffers, false);
         } else {
             FittedLines fitLines = fitted(projector, lines, maxWidth);
             float y = 28.0F;

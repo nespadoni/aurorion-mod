@@ -1,0 +1,47 @@
+{
+  "entity.aurorion_intencao.eco": "Eco",
+  "entity.aurorion_intencao.fragmento": "Fragmento de memória",
+
+  "aurorion_intencao.chamado": "A Intenção te chama",
+  "aurorion_intencao.veredito.vitoria": "Sua intenção prevaleceu",
+  "aurorion_intencao.veredito.derrota": "Sua vontade cedeu",
+  "aurorion_intencao.veredito.empate": "As vontades se anularam",
+  "aurorion_intencao.hud.titulo": "✦ Batalha de Intenção · %s ✦",
+  "aurorion_intencao.hud.mesa": "a cena acontece na mesa do Discord · %s",
+  "aurorion_intencao.eco.nome": "%s · em transe",
+  "aurorion_intencao.tema.tribunal": "Tribunal de Vitrais",
+
+  "aurorion_intencao.fragmento.1": "Toda vontade tem um preço. Alguém aqui ainda não sabe o seu.",
+  "aurorion_intencao.fragmento.2": "O vitral lembra de quem ajoelhou diante dele.",
+  "aurorion_intencao.fragmento.3": "Não é a força que decide. É quem desvia o olhar primeiro.",
+  "aurorion_intencao.fragmento.4": "Um eco antigo sussurra um nome que não é o seu.",
+  "aurorion_intencao.fragmento.5": "Aqui, a mentira pesa mais que a espada.",
+  "aurorion_intencao.fragmento.6": "Você já esteve aqui antes. Só não se lembra de ter perdido.",
+  "aurorion_intencao.fragmento.7": "A intenção que hesita vira desejo. O desejo que hesita vira saudade.",
+  "aurorion_intencao.fragmento.8": "As Casas observam. Nenhuma delas perdoa a dúvida.",
+
+  "aurorion_intencao.clima.calmo": "calmo",
+  "aurorion_intencao.clima.tenso": "tenso",
+  "aurorion_intencao.clima.ruptura": "ruptura",
+
+  "aurorion_intencao.erro.poucos": "Uma batalha de intenção precisa de pelo menos dois participantes.",
+  "aurorion_intencao.erro.muitos": "No máximo %s participantes por batalha.",
+  "aurorion_intencao.erro.plano": "O Plano da Intenção não está carregado neste servidor.",
+  "aurorion_intencao.erro.ocupado": "%s já está numa batalha de intenção.",
+  "aurorion_intencao.erro.morto": "%s não está vivo agora.",
+  "aurorion_intencao.erro.cheio": "Não há arena livre no Plano da Intenção.",
+  "aurorion_intencao.erro.arena": "Falha ao montar a arena. Veja o log do servidor.",
+  "aurorion_intencao.erro.recusado": "Algo impediu sua passagem para o Plano da Intenção. Avise o mestre.",
+  "aurorion_intencao.erro.volta": "Algo impediu sua volta do Plano da Intenção. Avise o mestre (/intencao recuperar).",
+  "aurorion_intencao.erro.sem_rival": "Informe pelo menos um rival diferente dos jogadores.",
+  "aurorion_intencao.erro.tema": "Tema '%s' não encontrado.",
+  "aurorion_intencao.erro.sem_sessao": "Esse jogador não está numa batalha de intenção aberta.",
+  "aurorion_intencao.erro.ja_encerrada": "O veredito dessa batalha já foi dado.",
+
+  "aurorion_intencao.comando.iniciada": "Batalha de intenção iniciada com %s participantes.",
+  "aurorion_intencao.comando.vencedor": "Veredito: %s prevaleceu.",
+  "aurorion_intencao.comando.empate": "Veredito: empate.",
+  "aurorion_intencao.comando.clima": "Clima da cena: %s.",
+  "aurorion_intencao.comando.nenhuma": "Nenhuma batalha de intenção aberta.",
+  "aurorion_intencao.comando.recuperados": "%s jogador(es) devolvido(s)."
+}

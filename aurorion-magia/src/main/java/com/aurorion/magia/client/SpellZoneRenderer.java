@@ -78,6 +78,7 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
                 case WARD -> wardInk(ink, matrix, radius, height, life, fade);
                 case STORM -> stormInk(ink, matrix, radius, height, life, fade);
                 case INFINITE_VOID, MALEVOLENT_SHRINE, SOUL_ARENA -> DomainVisuals.ink(zone, ink, pose, life, fade);
+                case NULL_ZONE -> SigilGeometry.solidDisc(ink, matrix, radius, .02F, 0x07000F, .65F * fade, .2F * fade, 48);
                 default -> {
                 }
             }
@@ -88,6 +89,7 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
             case COLUMN -> column(glow, pose, matrix, radius, height, life, fade);
             case STORM -> storm(glow, pose, matrix, radius, height, life, fade);
             case POCA -> pool(glow, matrix, radius, life, fade);
+            case NULL_ZONE -> nullZone(glow, pose, matrix, radius, life, fade);
             case INFINITE_VOID, MALEVOLENT_SHRINE, SOUL_ARENA -> DomainVisuals.glow(zone, glow, pose, life, fade);
         }
         pose.popPose();
@@ -100,6 +102,17 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
         float pulse = .85F + .15F * Mth.sin(life * .3F);
         SigilGeometry.band(glow, matrix, radius * .15F, radius * pulse, .03F, 0x8E0B1E, .35F * fade, 48);
         SigilGeometry.band(glow, matrix, radius * pulse * .92F, radius * pulse, .04F, 0xD0202E, .7F * fade, 48);
+    }
+
+    /** A Zona Nula: o chao vira vazio, com a borda violeta pulsando e o selo da morte girando devagar. */
+    private static void nullZone(VertexConsumer glow, PoseStack pose, Matrix4f matrix, float radius, float life,
+                                 float fade) {
+        float pulse = .9F + .1F * Mth.sin(life * .4F);
+        SigilGeometry.band(glow, matrix, radius * .9F * pulse, radius * pulse, .03F, 0x9B4DFF, .75F * fade, 48);
+        pose.pushPose();
+        pose.mulPose(ROTATION.rotationY(life * .6F * Mth.DEG_TO_RAD));
+        scaled(glow, pose, SigilGeometry.SEAL_DEATH, radius * .8F, .03F, 0x6A1FC2, .55F * fade, .04F);
+        pose.popPose();
     }
 
     private static float breath(float life) {
@@ -187,6 +200,17 @@ public class SpellZoneRenderer extends EntityRenderer<SpellZoneEntity> {
         RandomSource random = minecraft.level.random;
         float radius = zone.radius();
         float height = zone.height();
+        if (zone.shape() == SpellZoneEntity.Shape.NULL_ZONE) {
+            for (int i = 0; i < Math.max(1, 3 / stride); i++) {
+                double angle = random.nextDouble() * Math.PI * 2;
+                double r = Math.sqrt(random.nextDouble()) * radius;
+                minecraft.level.addParticle(ClientSpellVisuals.VOID, center.x + Math.cos(angle) * r, center.y + 0.1,
+                        center.z + Math.sin(angle) * r, 0, 0.06, 0);
+            }
+            if (random.nextInt(3) == 0) minecraft.level.addParticle(ParticleTypes.REVERSE_PORTAL,
+                    center.x, center.y + 0.3, center.z, 0, 0.05, 0);
+            return;
+        }
         if (zone.shape() == SpellZoneEntity.Shape.POCA) {
             // Sangue borbulhando no chao, e nao vento.
             for (int i = 0; i < Math.max(1, 4 / stride); i++) {

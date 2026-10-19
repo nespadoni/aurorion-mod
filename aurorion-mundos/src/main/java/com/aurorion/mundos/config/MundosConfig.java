@@ -32,6 +32,10 @@ public final class MundosConfig {
     public static final ModConfigSpec.IntValue DENY_MESSAGE_COOLDOWN_SECONDS;
     public static final ModConfigSpec.BooleanValue LOG_DENIALS;
 
+    public static final ModConfigSpec.ConfigValue<String> GLOBAL_PROFILE;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> PROFILE_BY_WORLD;
+    public static final ModConfigSpec.BooleanValue LOCK_SPAWNERS;
+
     public static final ModConfigSpec SPEC;
 
     static {
@@ -130,6 +134,42 @@ public final class MundosConfig {
                         "Ligue enquanto estiver montando os portais de chegada de um mundo novo."
                 )
                 .define("logDenials", false);
+
+        BUILDER.pop();
+        BUILDER.comment(
+                "Dificuldade: qual perfil de mundo (data/<ns>/aurorion/perfis_mundo/) vale em cada dimensao.",
+                "Mude por comando — /mundos dificuldade global <perfil> e /mundos dificuldade mundo <dim> <perfil> —",
+                "que grava aqui. Monstros e teto de spawn valem na hora; densidade de estrutura so no proximo boot."
+        ).push("dificuldade");
+
+        GLOBAL_PROFILE = BUILDER
+                .comment(
+                        "Perfil de toda dimensao que nao tiver um proprio. Vazio = vanilla.",
+                        "Ex.: \"aurorion_mundos:dificil\" deixa o servidor inteiro mais dificil de uma vez."
+                )
+                .define("global", "");
+
+        PROFILE_BY_WORLD = BUILDER
+                .comment(
+                        "Perfil por dimensao, no formato <dimensao>=<perfil>. Ganha do campo 'dimensoes' do",
+                        "proprio perfil e do global. <perfil> = aurorion_mundos:nenhum deixa a dimensao vanilla",
+                        "mesmo com um perfil global ligado."
+                )
+                .defineListAllowEmpty("porMundo", List.of(),
+                        () -> "aurorion_mundos:mundo_dois=aurorion_mundos:dificil",
+                        entry -> entry instanceof String text && text.indexOf('=') > 0);
+
+        BUILDER.pop();
+        BUILDER.comment("Spawners de monstro.").push("spawners");
+
+        LOCK_SPAWNERS = BUILDER
+                .comment(
+                        "Trava os spawners: ninguem fora do criativo troca o monstro com ovo, aplica runa ou",
+                        "modificador (Apotheosis/Apothic Spawners), carrega o spawner embora (Carry On) ou",
+                        "coloca um spawner no mundo. O spawner continua funcionando como o vanilla.",
+                        "Os blocos travados sao a tag aurorion_mundos:spawners."
+                )
+                .define("travar", true);
 
         BUILDER.pop();
 

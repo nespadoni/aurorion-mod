@@ -184,7 +184,26 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
         LUX_CHARGE,
         DOMAIN_SLASH,
         SOUL_REALM_AURA,
-        SOUL_REAP;
+        SOUL_REAP,
+        /** Clarao: a granada de luz estourando no ar. pos = ponto, extra = raio. */
+        FULGOR_BLAST,
+        /** Garra do Abismo: a corrente de vazio de quem conjura ate o suprimido. */
+        NETHER_GRASP,
+        /** Garra do Abismo: a Zona Nula no chao. pos = centro, extra = raio. */
+        NULL_ZONE,
+        /** Robs: o corpo se desfazendo em atomos e se refazendo. pos = de onde ele saiu. */
+        QUANTUM_BLINK,
+        /**
+         * Gretta: a camera do cliente de quem possui passa para o alvo. So vai para ela. ttl 0 devolve
+         * a camera ao proprio corpo.
+         */
+        ANACHRONIC_SIGHT,
+        /** Iacy: o circulo de luar no chao e a restauracao. extra = raio da cura. */
+        LUNAR_AURA,
+        /** Iris: a fenda na realidade onde ela entrou. pos = ponto, extra = 0..1 da pressao de invasao. */
+        VOID_RIFT,
+        /** Iris: a marca do vazio em quem ela pode levar. */
+        VOID_MARK;
 
         private static final Kind[] VALUES = values();
 
@@ -202,7 +221,8 @@ public record SpellVisualPayload(Kind kind, int casterId, int targetId, int ttl,
                     || this == DOLIUM_BLAST || this == INCUS_SHADOW || this == MORS_EX_PROFUNDIS
                     || this == AESTUS_BURST || this == PESTIS_AREA || this == UMBRA_SWAP || this == SECTIO_UMBRAE
                     || this == PYROBOLUS_TARGET || this == PYROBOLUS_BLAST || this == SAGITTA_PULSE
-                    || this == SAGITTA_SHOCK || this == FUROR_VENATORIS;
+                    || this == SAGITTA_SHOCK || this == FUROR_VENATORIS
+                    || this == FULGOR_BLAST || this == NULL_ZONE || this == QUANTUM_BLINK || this == VOID_RIFT;
         }
     }
 }

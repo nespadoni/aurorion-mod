@@ -30,9 +30,14 @@ final class EconomyBoardBridge {
             return mode == BoardMode.RICHEST_HOUSES
                     ? houseLines(server, limit)
                     : playerLines(server, limit);
-        } catch (ReflectiveOperationException | RuntimeException error) {
+        } catch (ReflectiveOperationException error) {
+            // API diferente: desliga de vez, para nao tentar (e logar) a cada atualizacao.
             failed = true;
             AurorionEthereal.LOGGER.warn("Nao foi possivel ler o ranking do mod de economia.", error);
+            return List.of();
+        } catch (RuntimeException error) {
+            // Falha passageira da economia: so este quadro fica vazio; o proximo refresh tenta de novo.
+            AurorionEthereal.LOGGER.warn("Falha ao ler o ranking do mod de economia; tentando de novo no proximo refresh.", error);
             return List.of();
         }
     }

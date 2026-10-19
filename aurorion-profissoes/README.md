@@ -184,6 +184,39 @@ sem `AURORION_QUALITY_FOOD_JAR`.
   Usa as receitas reais do jogo; não inventa amplificadores ou durações além delas.
 - Suportes automáticos também não produzem esses dois aprimoramentos.
 
+### Apotheosis é do arcanista
+
+Tudo o que o Apotheosis faz de "trabalho" fica com o arcanista:
+
+| O quê | Como é travado |
+|---|---|
+| Mesas de reforja (simples e normal), salvamento, lapidação e aumento | tag de bloco `aurorion_profissoes:exclusivo/arcanista` |
+| Encaixar gema, abrir soquete, retirar gema, sigilos (renascimento, aprimoramento, desnomear…) na mesa de ferraria | `receitasExclusivas`, receita por receita: `apotheosis:socketing`, `widthdrawal`, `sigil_add_sockets`, `unnaming`, `malice` e `supremacy`, todas `=arcanista` |
+| Invocador de chefe | tag de item `aurorion_profissoes:exclusivo/arcanista`. É barrado também quando usado **num bloco**, que é o único jeito de usar esse item (`useOn`) |
+
+A mesa de ferraria continua do ferreiro. O arcanista também consegue abri-la, mas ali só saem as
+receitas do Apotheosis, e o ferreiro, por sua vez, não faz essas.
+
+Os upgrades de equipamento que o Apotheosis traz (cota de malha → ferro, ouro → diamante) seguem com
+o ferreiro. Por isso a regra padrão lista as receitas uma por uma. Todos os 27 upgrades também usam
+um serializer próprio do Apotheosis (`apotheosis:sized_upgrade_recipe`), e a regra por mod
+(`apotheosis=arcanista`, que olha o serializer) os mandaria junto para o arcanista. Para passá-los ao
+arcanista de propósito, use `apotheosis=arcanista`.
+
+> Servidor com `config/aurorion/profissoes-server.toml` já criado mantém a regra antiga
+> `["apotheosis=arcanista"]`, que tira os upgrades do ferreiro. Troque à mão pela lista nova.
+> Hoje o Apotheosis nem está no pack do servidor, então nada muda até ele entrar.
+
+**Reaproveitar para outro mod ou ofício** — nada disso é código por mod:
+
+- bloco ou item exclusivo: acrescente o id na tag `data/<qualquer>/tags/block/exclusivo/<profissao>.json`
+  (ou `tags/item/...`) de um datapack, com `"required": false` se o mod puder faltar. Vale para
+  `medico`, `ferreiro`, `cozinheiro`, `arcanista` e `corretor`;
+- receita da mesa de ferraria: uma linha em `receitasExclusivas` — `<mod>` (pelo tipo), `id:<mod>`
+  (pelo id) ou `<mod>:<receita>` (uma só).
+
+Staff em criativo passa por tudo, e `enabled = false` desliga as travas junto com o resto do mod.
+
 ## NPCs de ofício
 
 NPCs que cobrem o atendimento **quando não há um profissional jogador por perto**.
@@ -370,6 +403,7 @@ Config nativa em `config/aurorion/profissoes-server.toml`:
 | `chefFoodDecayMultiplier` | 0.5 |
 | `amateurFoodDecayMultiplier` | 2.0 |
 | `fixFoodSpoilThaw` | `true` |
+| `receitasExclusivas` | as 6 receitas de gema, soquete e sigilo do Apotheosis (`apotheosis:socketing=arcanista`, …) |
 
 `ProfessionApi` consulta o ofício. `ServiceEvent.Validate` permite vetar um atendimento antes
 do consumo; `ServiceEvent.Completed` informa sua conclusão com identificador único.

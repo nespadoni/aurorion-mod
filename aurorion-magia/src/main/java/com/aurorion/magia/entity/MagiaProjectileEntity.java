@@ -2,6 +2,7 @@ package com.aurorion.magia.entity;
 
 import com.aurorion.magia.registry.MagiaEntities;
 import com.aurorion.magia.spell.DoliumArdensSpell;
+import com.aurorion.magia.spell.FulgorCaecansSpell;
 import com.aurorion.magia.spell.Hits;
 import com.aurorion.magia.spell.IncusCaelestisSpell;
 import com.aurorion.magia.spell.ManusRapaxSpell;
@@ -91,7 +92,9 @@ public class MagiaProjectileEntity extends Projectile {
         /** Morte Vinda das Profundezas: parado no chao, invisivel; detona quando o tempo acaba. */
         ABYSSUS(0),
         /** Flecha de Reconhecimento: parado onde a flecha cravou, pulsa a cada segundo. */
-        SPECULA(0);
+        SPECULA(0),
+        /** Clarao: a biribinha de luz que sobe, faz o arco e estoura no alto (ou no primeiro toque). */
+        FULGOR(0.04);
 
         private static final Shape[] VALUES = values();
         final double gravity;
@@ -279,7 +282,7 @@ public class MagiaProjectileEntity extends Projectile {
     private void expire(Shape shape) {
         if (!(level() instanceof ServerLevel level)) return;
         switch (shape) {
-            case SPHAERA, DOLIUM, PYROBOLUS, TEMPERIES, ABYSSUS -> impact(level, shape, position(), null);
+            case SPHAERA, DOLIUM, PYROBOLUS, TEMPERIES, ABYSSUS, FULGOR -> impact(level, shape, position(), null);
             default -> discard();
         }
     }
@@ -296,6 +299,9 @@ public class MagiaProjectileEntity extends Projectile {
                     if (hit != null) ManusRapaxSpell.grab(level, owner, hit, power);
                 }
                 case ABYSSUS -> MorsExProfundisSpell.detonate(level, owner, at, getYRot(), reach, power, aux);
+                // Recuado um pouco: estourar colado na face do bloco poria o proprio bloco entre a luz e os olhos.
+                case FULGOR -> FulgorCaecansSpell.flash(level, owner,
+                        at.subtract(getDeltaMovement().normalize().scale(0.3)), reach);
                 default -> {
                 }
             }
@@ -382,6 +388,11 @@ public class MagiaProjectileEntity extends Projectile {
                 }
             }
             case STELLA -> level.addParticle(ParticleTypes.CRIT, x, y, z, 0, 0, 0);
+            case FULGOR -> {
+                level.addParticle(ParticleTypes.END_ROD, x, y, z, 0, 0, 0);
+                if (random.nextInt(2) == 0) level.addParticle(ParticleTypes.ELECTRIC_SPARK, x, y, z,
+                        random.nextGaussian() * 0.03, random.nextGaussian() * 0.03, random.nextGaussian() * 0.03);
+            }
             case ABYSSUS, SPECULA -> {
             }
             case INCUS -> {

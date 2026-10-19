@@ -33,7 +33,7 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.6.1,)"
+versionRange = "[0.6.3,)"
 ordering = "AFTER"
 side = "BOTH"
 

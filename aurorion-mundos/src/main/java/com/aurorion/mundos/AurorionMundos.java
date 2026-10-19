@@ -2,11 +2,14 @@ package com.aurorion.mundos;
 
 import com.aurorion.core.config.AurorionConfigs;
 import com.aurorion.mundos.config.MundosConfig;
+import com.aurorion.mundos.perfil.WorldProfiles;
 import com.mojang.logging.LogUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import org.slf4j.Logger;
 
 /**
@@ -30,6 +33,9 @@ import org.slf4j.Logger;
  *
  * <p>Nao ha {@code DeferredRegister} aqui: este mod nao registra item, bloco nem entidade.
  *
+ * <p>Por cima dos mundos, os <b>perfis de mundo</b> ({@code perfil}): quao fortes nascem os monstros,
+ * quantos cabem e quantas estruturas o terreno tem, por dimensao, em datapack.
+ *
  * <h2>O que este mod nao faz</h2>
  *
  * <p>Ele decide <b>para onde</b> um portal leva. Quem decide <b>quando</b> se pode atravessar e o
@@ -46,5 +52,12 @@ public class AurorionMundos {
 
     public AurorionMundos(IEventBus modEventBus, ModContainer container) {
         AurorionConfigs.register(container, ModConfig.Type.SERVER, MundosConfig.SPEC);
+        // O perfil de cada dimensao depende da config: carregou ou mudou, o indice e remontado.
+        modEventBus.addListener(ModConfigEvent.Loading.class, event -> WorldProfiles.invalidate());
+        modEventBus.addListener(ModConfigEvent.Reloading.class, event -> WorldProfiles.invalidate());
+    }
+
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }

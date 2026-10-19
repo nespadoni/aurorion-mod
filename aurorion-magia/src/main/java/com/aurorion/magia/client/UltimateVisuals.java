@@ -83,6 +83,10 @@ final class UltimateVisuals {
     }
 
     static void glow(PoseStack pose, VertexConsumer out, Vec3 camera, ClientLevel level, Active a, float partial) {
+        if (RepresentativeVisuals.handles(a.kind)) {
+            RepresentativeVisuals.glow(pose, out, camera, level, a, partial);
+            return;
+        }
         LivingEntity target = a.target(level);
         if (target == null) return;
         float life = a.age + partial, fade = a.fade(partial);
@@ -128,6 +132,10 @@ final class UltimateVisuals {
     }
 
     static void particles(ClientLevel level, Active a, LivingEntity target, int stride, long time) {
+        if (RepresentativeVisuals.handles(a.kind)) {
+            RepresentativeVisuals.particles(level, a, target, stride, time);
+            return;
+        }
         if (target == null || time % stride != 0) return;
         switch (a.kind) {
             case LUX_CHARGE -> {

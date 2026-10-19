@@ -32,6 +32,7 @@ risco de o servidor não subir é péssimo negócio.
 | [`text/TimeFormat`](src/main/java/com/aurorion/core/text/TimeFormat.java) | 1 | Duração e data como `Component` traduzível |
 | [`client/ShaderPacks`](src/main/java/com/aurorion/core/client/ShaderPacks.java) | 2 | "Tem shader pack ligado agora?" — ponte reflexiva com a API v0 do Iris |
 | [`client/ScreenFog`](src/main/java/com/aurorion/core/client/ScreenFog.java) | 2 | Neblina desenhada em espaço de tela, que sobrevive ao pipeline do shader |
+| [`compat/TwilightTeleportCompat`](src/main/java/com/aurorion/core/compat/TwilightTeleportCompat.java) | 2 | Teleporte síncrono mesmo com o Twilight Teleport, que adiaria a viagem (Limbo, Reino das Almas, batalha de intenção) |
 
 `TimeFormat` é a única **utilidade** que entrou sem duas cópias: é pura, sem dependências, e formatar
 duração é o tipo de coisa que o próximo mod vai querer. Se em seis meses ainda tiver um usuário só,
@@ -98,6 +99,7 @@ segura de qualquer lugar — a escrita continua sendo só no reload, na thread d
 
 ```
 character/ CharacterGate, CharacterData, ... — contrato do criador de personagens
+compat/    TwilightTeleportCompat
 config/    DerivedConfig
 data/      SavedDataAccess, PlayerMapNbt
 datapack/  DatapackRegistry

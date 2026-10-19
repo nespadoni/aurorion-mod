@@ -1,0 +1,6 @@
+{
+  "descricao": "Monstros com 5x a vida e 3x o dano, quase sem recuo, em bando.",
+  "monstros": { "vida": 5.0, "dano": 3.0, "armadura": 6, "resistenciaArmadura": 2, "resistenciaEmpurrao": 0.3, "velocidade": 1.15, "alcance": 1.5, "experiencia": 4.0 },
+  "spawn": { "tetoMonstros": 1.5 },
+  "ordem": 30
+}

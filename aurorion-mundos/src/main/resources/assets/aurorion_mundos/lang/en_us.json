@@ -1,19 +1,15 @@
 {
   "aurorion_mundos.portal.sem_destino": "There is no portal on the other side. Let the staff know.",
-
   "aurorion_mundos.comando.nao_gerenciada": "That dimension is not managed by Aurorion Mundos. For the overworld, the Nether or a modded dimension, use /worldborder.",
-
   "aurorion_mundos.comando.lista.vazio": "No worlds declared. Add a seed in config/aurorion_mundos-server.toml.",
   "aurorion_mundos.comando.lista.cabecalho": "Aurorion worlds — dimension, seed, border, runtime generation:",
   "aurorion_mundos.comando.lista.linha": "  %s — seed %s, border %s, %s",
   "aurorion_mundos.comando.lista.ausente": "dimension does not exist",
   "aurorion_mundos.comando.geracao.ligada": "generates at runtime",
   "aurorion_mundos.comando.geracao.desligada": "no runtime generation",
-
   "aurorion_mundos.comando.ligacoes.vazio": "No portal links configured.",
   "aurorion_mundos.comando.ligacoes.cabecalho": "Portal links — origin, destination, search radius:",
   "aurorion_mundos.comando.ligacoes.linha": "  %s → %s (radius %s)%s",
-
   "aurorion_mundos.comando.borda.ver": "%s: border of %s blocks, centered at %s.",
   "aurorion_mundos.comando.borda.set": "Border of %s set to %s blocks.",
   "aurorion_mundos.comando.borda.lerp": "Border of %s moving to %s blocks over %s seconds.",
@@ -21,5 +17,14 @@
   "aurorion_mundos.comando.borda.aviso_distancia": "Border warning for %s: %s blocks.",
   "aurorion_mundos.comando.borda.aviso_tempo": "Border warning for %s: %s seconds.",
   "aurorion_mundos.comando.borda.dano": "Border damage for %s: %s per block.",
-  "aurorion_mundos.comando.borda.zona": "Border safe zone for %s: %s blocks."
+  "aurorion_mundos.comando.borda.zona": "Border safe zone for %s: %s blocks.",
+  "aurorion_mundos.spawner.travado": "Spawners cannot be changed, carried or placed.",
+  "aurorion_mundos.dificuldade.perfis": "Available world profiles:",
+  "aurorion_mundos.dificuldade.global": "Global profile: %s",
+  "aurorion_mundos.dificuldade.vanilla": "%s: no profile (vanilla).",
+  "aurorion_mundos.dificuldade.ver": "%s: profile %s (source: %s)",
+  "aurorion_mundos.dificuldade.global_definido": "Global profile is now %s. New monsters spawn with it; use /mundos dificuldade aplicar for the ones already loaded.",
+  "aurorion_mundos.dificuldade.mundo_definido": "%s now uses profile %s. Structure density only changes on the next boot.",
+  "aurorion_mundos.dificuldade.aplicado": "%s creature(s) readjusted in %s.",
+  "aurorion_mundos.dificuldade.desconhecido": "Unknown world profile: %s"
 }

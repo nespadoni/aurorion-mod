@@ -1,5 +1,51 @@
 # Proteções para crashes de cliente
 
+## Atualização preparada em 18/10/2026: Utils 0.2.5 (Copycats+ e Sodium)
+
+Os copycats travam o jogo no **cliente**, não no servidor. Os decorativos não têm ticker; isso foi
+conferido no bytecode do Copycats+ 3.0.9 e do Create 6.0.10. O custo está na montagem de malha dos
+chunks:
+- cada reconstrução recalcula os quads de cada copycat do zero;
+- os vizinhos são consultados várias vezes;
+- com "Atualizações de chunk = Imediato", o Sodium segura o quadro até terminar.
+
+Esta versão traz só as correções de baixo risco. O cache de quads entre blocos, que daria o ganho
+maior, ficou de fora de propósito por risco de textura errada.
+
+- **`MultiStateMaterialGuardMixin`** (`MultiStateCopycatBlockEntity` e `CopycatCogWheelBlockEntity`).
+  - O problema: o `getMaterial()` padrão não checa nulo. Quando o bloco é quebrado enquanto a thread
+    de malha do Sodium ainda lê o chunk, o cliente cai com "Encountered exception while building chunk
+    meshes" (`crash-2026-09-20_00.19.12-client.txt`, `copycat_byte`).
+  - A correção: usa a parte padrão; senão, qualquer parte com material; senão, a base de copycat do
+    Create.
+- **`CopycatClientNotifyMixin`** (`SyncedBlockEntity.notifyUpdate`).
+  - O problema: cada leitura de NBT de copycat chamava `notifyUpdate()` também no cliente, a cada
+    chunk carregado. No cliente isso só avisa os 6 vizinhos de sinal de comparador, que é trabalho
+    inútil ali.
+  - A correção: cancela só para BEs de copycat e só no cliente.
+- **`ClientHooksSolidLayerMixin`** + **`BlockStateSolidLayerMixin`**.
+  - O problema: `isBlockInSolidLayer` criava um `RandomSource` novo a cada face testada, disputado
+    pelas threads de malha.
+  - A correção: a resposta fica num byte do `BlockState` e é zerada a cada recarga de modelos.
+  - Vale para todos os blocos, não só para os copycats.
+- **`SodiumFaceHidingOrderMixin`** (`NeoForgeBlockAccess.shouldSkipRender`).
+  - O problema: o Sodium calculava primeiro o `hidesNeighborFace` caro do copycat vizinho, e depois
+    descartava o resultado para todo bloco sólido.
+  - A correção: a ordem do "e" foi invertida; o resultado é idêntico. Usa `require = 0`, então outra
+    versão do Sodium só desliga a otimização.
+
+As configs `aurorion_utils.copycats.mixins.json` e `aurorion_utils.sodium.mixins.json` carregam só
+quando o Copycats ou o Sodium estão no pack. Precisa chegar aos **clientes** pelo AutoModpack; trocar
+só o servidor não muda nada. O jar do Copycats em `mod-servidor-referencia/` é só para compilar.
+
+**Para os jogadores, sem atualizar nada:** *Opções de vídeo → Desempenho → Atualizações de chunk*
+em **"Em breve"** em vez de "Imediato". O Sodium deixa de segurar o quadro esperando as reconstruções
+perto da câmera, e é isso que vira "travada" perto de construções com muitos copycats.
+
+Validação pendente: compilar; entrar perto de uma construção grande com copycats e comparar o tempo
+de quadro; quebrar copycats multiestado (byte, painel) repetidamente sem crash; conferir que nenhuma
+face de bloco sumiu ou sobrou encostada em copycat.
+
 ## Atualização preparada em 17/10/2026 — Utils 0.2.4
 
 `SimplyMoreCooldownSideMixin` impede `EntityUtils.putAllItemsOnCooldown` de executar

@@ -7,6 +7,8 @@ import com.aurorion.magia.spell.Domains;
 import com.aurorion.magia.spell.AurorionSpell;
 import com.aurorion.magia.spell.FriendlyFire;
 import com.aurorion.magia.spell.Displacement;
+import com.aurorion.magia.spell.Hits;
+import com.aurorion.magia.spell.ManusAbyssiSpell;
 import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -132,7 +134,9 @@ public class SpellZoneEntity extends Entity {
         POCA,
         INFINITE_VOID,
         MALEVOLENT_SHRINE,
-        SOUL_ARENA;
+        SOUL_ARENA,
+        /** Garra do Abismo: a Zona Nula. Fere em fracao da vida maxima, e fica mesmo se a corrente partir. */
+        NULL_ZONE;
 
         private static final Shape[] VALUES = values();
 
@@ -246,6 +250,7 @@ public class SpellZoneEntity extends Entity {
             case COLUMN -> column();
             case STORM -> storm();
             case POCA -> pool();
+            case NULL_ZONE -> nullZone();
             case INFINITE_VOID, MALEVOLENT_SHRINE -> domain();
             case SOUL_ARENA -> {
                 LivingEntity caster = owner();
@@ -362,6 +367,29 @@ public class SpellZoneEntity extends Entity {
             }
         }
         if (drained > 0) owner.heal(drained * 0.5F);
+    }
+
+    /**
+     * A Zona Nula do Malzahar: a cada meio segundo, quem esta dentro perde uma fatia da vida maxima.
+     * {@code power} e a fracao TOTAL (10/15/20% e o poder de magia), dividida pelos pulsos da duracao.
+     * Contra criatura, cada pulso para no teto ({@code CREATURE_CAP}) — o "120 contra minion e monstro"
+     * do LoL: sem ele, a zona derreteria um chefe de 1000 de vida tanto quanto um jogador.
+     */
+    private void nullZone() {
+        if (tickCount == 0 || tickCount % ManusAbyssiSpell.ZONE_INTERVAL != 0) return;
+        LivingEntity owner = owner();
+        if (owner == null) {
+            discard();
+            return;
+        }
+        float perPulse = power / (ManusAbyssiSpell.ZONE_TICKS / (float) ManusAbyssiSpell.ZONE_INTERVAL);
+        for (LivingEntity victim : inside(radius(), height())) {
+            if (FriendlyFire.spares(owner, victim) || !Hits.hittable(owner, victim)) continue;
+            float damage = victim.getMaxHealth() * perPulse;
+            if (!(victim instanceof Player)) damage = Math.min(damage, ManusAbyssiSpell.CREATURE_CAP);
+            DamageSources.ignoreNextKnockback(victim);
+            FriendlyFire.applyDamage(victim, damage, MagiaSpells.MANUS_ABYSSI.get().getDamageSource(owner));
+        }
     }
 
     /**

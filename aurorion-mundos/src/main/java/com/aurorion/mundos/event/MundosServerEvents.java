@@ -2,6 +2,7 @@ package com.aurorion.mundos.event;
 
 import com.aurorion.mundos.AurorionMundos;
 import com.aurorion.mundos.border.BorderSync;
+import com.aurorion.mundos.perfil.WorldProfiles;
 import com.aurorion.mundos.portal.LinkCatalog;
 import com.aurorion.mundos.portal.PortalRouter;
 import com.aurorion.mundos.world.WorldCatalog;
@@ -30,6 +31,7 @@ public final class MundosServerEvents {
     @SubscribeEvent
     public static void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(LinkCatalog.listener());
+        event.addListener(WorldProfiles.listener());
     }
 
     /**

@@ -42,7 +42,18 @@ public enum Passive {
      */
     DREAD("presenca_terrivel", true),
     SOUL_REAPER("colheita_almas", false),
-    REFINED_DOMAIN("dominio_refinado", false);
+    REFINED_DOMAIN("dominio_refinado", false),
+
+    // --- Representantes dos elementos. Respondem a tecla de passiva (ver PassiveActions). ---------
+
+    /** <b>Quantico</b> (Robs): teleporte livre e pedras de teleporte, com energia que se esgota. */
+    QUANTUM("salto_quantico", false),
+    /** <b>Anacronico</b> (Gretta): ver pelos olhos de outra pessoa, uma vez por dia. */
+    ANACHRONIC("olhar_anacronico", false),
+    /** <b>Minguantis</b> (Iacy): mais forte quanto mais funda a noite; cura quem fica perto. Sem tecla. */
+    WANING_MOON("lua_minguante", false),
+    /** <b>Vazio</b> (Iris): a dimensao de bolso que replica a realidade. */
+    VOID_POCKET("bolso_do_vazio", false);
 
     private final ResourceLocation id;
     private final String key;

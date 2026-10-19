@@ -22,6 +22,12 @@ import com.aurorion.magia.effect.PossessingEffect;
 import com.aurorion.magia.effect.StasisEffect;
 import com.aurorion.magia.effect.ThrownEffect;
 import com.aurorion.magia.effect.TimeStopEffect;
+import com.aurorion.magia.effect.ClockEffect;
+import com.aurorion.magia.effect.SteadyEffect;
+import com.aurorion.magia.passive.AnachronicSight;
+import com.aurorion.magia.passive.VoidPocket;
+import com.aurorion.magia.passive.WaningMoon;
+import com.aurorion.magia.spell.ManusAbyssiSpell;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -202,6 +208,85 @@ public final class MagiaEffects {
             EFFECTS.register("vazio_infinito", InfiniteVoidEffect::new);
     public static final DeferredHolder<MobEffect, SoulRealmEffect> SOUL_REALM =
             EFFECTS.register("reino_almas", SoulRealmEffect::new);
+
+    // --- Clarao e Garra do Abismo ------------------------------------------------------------------
+
+    /**
+     * Fulgor Caecans: a tela inteira branca. Nao mexe em atributo nenhum — quem desenha o branco e o
+     * cliente do proprio ofuscado ({@code FlashLayer}), lendo o efeito que o vanilla ja sincroniza.
+     * Leite nao cura: beber no meio do clarao nao devolve a visao, como nos outros efeitos de controle.
+     */
+    public static final DeferredHolder<MobEffect, MobEffect> FLASHED = EFFECTS.register("ofuscado",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0xFFFFFF) {
+                @Override
+                public void fillEffectCures(java.util.Set<net.neoforged.neoforge.common.EffectCure> cures,
+                                            net.minecraft.world.effect.MobEffectInstance instance) {
+                }
+            });
+
+    /**
+     * Garra do Abismo: suprimido. Nao anda, nao pula, nao usa item e nao conjura — ate a canalizacao
+     * acabar ou a corrente partir.
+     */
+    public static final DeferredHolder<MobEffect, MobEffect> SUPPRESSED = EFFECTS.register("suprimido",
+            () -> new SteadyEffect(MobEffectCategory.HARMFUL, 0x2B0A45)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("suprimido_speed"),
+                            -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.JUMP_STRENGTH, AurorionMagia.id("suprimido_jump"),
+                            -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
+    /** Garra do Abismo: o relogio da canalizacao, em quem conjurou. Ancorado no lugar enquanto dura. */
+    public static final DeferredHolder<MobEffect, MobEffect> NETHER_GRASP = EFFECTS.register("garra_abissal",
+            () -> new ClockEffect(MobEffectCategory.BENEFICIAL, 0x5A1A8C, 1, ManusAbyssiSpell::channel)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("garra_abissal_speed"),
+                            -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
+    // --- Representantes dos elementos (passivas) ----------------------------------------------------
+
+    /** Gretta fora do corpo, vendo pelos olhos de outra pessoa. O relogio da possessao anacronica. */
+    public static final DeferredHolder<MobEffect, MobEffect> ANACHRONIC_SIGHT = EFFECTS.register("olhar_anacronico",
+            () -> new ClockEffect(MobEffectCategory.NEUTRAL, 0xC9A66B, 1, AnachronicSight::tick));
+
+    /** De volta ao proprio corpo, sem forcas. Mais forte e mais longo quanto mais tempo ela ficou fora. */
+    public static final DeferredHolder<MobEffect, MobEffect> FRAGILE = EFFECTS.register("fragilizada",
+            () -> new SteadyEffect(MobEffectCategory.HARMFUL, 0x8C7A5A)
+                    .addAttributeModifier(Attributes.ATTACK_DAMAGE, AurorionMagia.id("fragilizada_dano"),
+                            -0.2, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("fragilizada_speed"),
+                            -0.1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.ATTACK_SPEED, AurorionMagia.id("fragilizada_ataque"),
+                            -0.1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
+    /** Iacy: o marcador infinito e o relogio da lua minguante (um pulso a cada 2 s). */
+    public static final DeferredHolder<MobEffect, MobEffect> LUNAR_PRESENCE = EFFECTS.register("presenca_lunar",
+            () -> new ClockEffect(MobEffectCategory.BENEFICIAL, 0xB8C7FF, WaningMoon.INTERVAL_TICKS, WaningMoon::pulse));
+
+    /**
+     * Iacy a noite. O amplificador e a fase do poder (0 no comeco da noite, 3 na meia-noite de lua
+     * cheia), e o vanilla multiplica cada modificador por ele + 1.
+     */
+    public static final DeferredHolder<MobEffect, MobEffect> LUNAR_BLESSING = EFFECTS.register("bencao_lunar",
+            () -> new SteadyEffect(MobEffectCategory.BENEFICIAL, 0xDDE6FF)
+                    .addAttributeModifier(Attributes.ATTACK_DAMAGE, AurorionMagia.id("bencao_lunar_dano"),
+                            0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.ARMOR, AurorionMagia.id("bencao_lunar_armadura"),
+                            2.0, AttributeModifier.Operation.ADD_VALUE)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("bencao_lunar_speed"),
+                            0.05, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.ATTACK_SPEED, AurorionMagia.id("bencao_lunar_ataque"),
+                            0.05, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.KNOCKBACK_RESISTANCE, AurorionMagia.id("bencao_lunar_empurrao"),
+                            0.1, AttributeModifier.Operation.ADD_VALUE));
+
+    /** Iacy de dia, com {@code fraquezaDiurna} ligada: o Escanor ao contrario. */
+    public static final DeferredHolder<MobEffect, MobEffect> SUNLIT = EFFECTS.register("sol_pesado",
+            () -> new SteadyEffect(MobEffectCategory.HARMFUL, 0xFFD27A)
+                    .addAttributeModifier(Attributes.ATTACK_DAMAGE, AurorionMagia.id("sol_pesado_dano"),
+                            -0.15, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
+    /** Iris dentro do proprio bolso: o relogio da barreira (um pulso por segundo). */
+    public static final DeferredHolder<MobEffect, MobEffect> VOID_POCKET = EFFECTS.register("bolso_do_vazio",
+            () -> new ClockEffect(MobEffectCategory.BENEFICIAL, 0x1A1030, 20, VoidPocket::tick));
 
     private MagiaEffects() {
     }

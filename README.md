@@ -23,6 +23,7 @@ compartilham a mesma versão de Minecraft, NeoForge e mappings (`gradle.properti
 | Aurorion Trama do Eco | [aurorion-trama/README.md](aurorion-trama/README.md) | Árvore de 271 nós ligada às Casas, com 45 pontos por personagem e progressão automática por descobertas e prática ativa, sem XP por abates |
 | Aurorion Profissões | [aurorion-profissoes/](aurorion-profissoes/) | Médico, ferreiro, cozinheiro e arcanista: uma profissão por personagem, atendimento entre jogadores por interface e integrações com LSO, Quality Food e FoodSpoil |
 | Aurorion Magia | [aurorion-magia/](aurorion-magia/) | Addon do Iron's Spells: magia só com liberação da staff (`/aurorion spells`, por magia ou escola, espelhado no Iron's Restrictions) e dezessete magias autorais (três proibidas, só por concessão da staff), com selos mágicos e telas de possessão desenhados no cliente |
+| Aurorion Intenção | [aurorion-intencao/](aurorion-intencao/) | O ritual da batalha de intenção enquanto a cena roda na mesa do Discord: o Chamado, o Plano da Intenção (arena por tema de datapack, nas cores das Casas) com o Eco em transe no mundo, e o Veredito na volta |
 | Aurorion Serviços | [aurorion-servicos/](aurorion-servicos/) | O app **Serviços** do celular: anúncios de profissionais por área, botão "Trabalhando", pedidos diretos e abertos (estilo iFood), vagas de trabalho com candidatura — tudo terminando numa conversa no próprio celular |
 
 ### Conteúdo x comportamento
