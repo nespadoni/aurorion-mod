@@ -4,7 +4,9 @@ import com.aurorion.core.integration.GameFacts;
 import com.aurorion.core.diagnostics.ServerDiagnostics;
 import com.aurorion.core.character.AltData;
 import com.aurorion.diario.AurorionDiario;
+import com.aurorion.core.rate.ActionCooldown;
 import com.aurorion.diario.markup.DiaryMarkup;
+import com.aurorion.diario.markup.DiaryText;
 import com.aurorion.diario.network.DiaryNetwork;
 import com.aurorion.diario.network.DiaryPayloads;
 import com.aurorion.integracao.bridge.FactBridge;
@@ -27,12 +29,13 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -59,13 +62,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @EventBusSubscriber(modid = AurorionDiario.MOD_ID)
 public final class DiaryServer {
-    private static final long MIN_SAVE_INTERVAL_MS = 700L;
+    /**
+     * Ritmo por perfil (ver {@link RequestPacer}): listar e abrir uma entrada, uma vez a cada 2 s
+     * cada; gravar, uma vez a cada 3 s. A tela salva 2 s depois da última tecla e espera a resposta
+     * antes de mandar de novo, então o normal é a gravação esperar um pouco a vez — nunca sumir.
+     */
+    private static final long LIST_INTERVAL_MS = 2_000L;
+    private static final long GET_INTERVAL_MS = 2_000L;
+    private static final long PUBLISH_INTERVAL_MS = 2_000L;
+    private static final long SAVE_INTERVAL_MS = 3_000L;
+    /** Sessões de edição de um perfil esperando a vez de gravar. Passou disso, a tela ouve "lento". */
+    private static final int SAVE_SLOTS = 4;
+    private static final long DISCARD_INTERVAL_MS = 250L;
     private static final long RETRY_EVERY_S = 30L;
     private static final int RETRY_BATCH = 10;
+    /** Espera máxima por uma resposta no reenvio: a thread do diário nunca fica presa para sempre. */
+    private static final long RETRY_WAIT_S = 30L;
     private static final int MAX_EDIT_SESSIONS = 32;
-    private static final Map<UUID, Long> LAST_REQUEST = new HashMap<>();
 
-    private static final Map<UUID, Long> LAST_SAVE = new HashMap<>();
+    private static final RequestPacer LIST = pacer(LIST_INTERVAL_MS, 1);
+    private static final RequestPacer GET = pacer(GET_INTERVAL_MS, 1);
+    private static final RequestPacer PUBLISH = pacer(PUBLISH_INTERVAL_MS, 2);
+    private static final RequestPacer SAVE = pacer(SAVE_INTERVAL_MS, SAVE_SLOTS);
+    /** Descartar só mexe no disco local: o teto curto de antes basta, e não zera no logout. */
+    private static final ActionCooldown DISCARD = new ActionCooldown(DISCARD_INTERVAL_MS);
     /** Sessão de edição → entrada criada nela, para as gravações seguintes não criarem outra. */
     private static final Map<String, Long> CREATED = new ConcurrentHashMap<>();
     /** Sessão de edição → última operação enviada; resposta de uma operação velha não guarda nada. */
@@ -104,11 +124,15 @@ public final class DiaryServer {
         stop();
     }
 
+    /**
+     * Sair não zera o ritmo de ninguém (reconectar não compra chamadas novas). A gravação que esperava
+     * a vez sai agora: o jogador ainda está na lista durante este evento, e o texto não pode se perder
+     * porque a pessoa fechou o jogo. Listar e abrir que esperavam não têm mais para quem responder.
+     */
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
-        LAST_SAVE.remove(id);
-        LAST_REQUEST.remove(id);
+        SAVE.flush(id.toString());
         String prefix = PendingStore.key(id.toString(), "");
         CREATED.keySet().removeIf(key -> key.startsWith(prefix));
         LATEST_OP.keySet().removeIf(key -> key.startsWith(prefix));
@@ -131,9 +155,33 @@ public final class DiaryServer {
         server = null;
         CREATED.clear();
         LATEST_OP.clear();
-        LAST_SAVE.clear();
-        LAST_REQUEST.clear();
+        LIST.clear();
+        GET.clear();
+        PUBLISH.clear();
+        SAVE.clear();
+        DISCARD.clear();
         RETRY_KICKED.set(false);
+    }
+
+    private static RequestPacer pacer(long intervalMillis, int slots) {
+        return new RequestPacer(intervalMillis, slots, System::currentTimeMillis, (task, delay) -> {
+            ScheduledExecutorService current = worker;
+            if (current == null) return false;
+            try {
+                current.schedule(() -> runOnServer(task), delay, TimeUnit.MILLISECONDS);
+                return true;
+            } catch (RejectedExecutionException e) {
+                return false;
+            }
+        });
+    }
+
+    /** Roda {@code action} com o jogador ainda online; quem saiu enquanto esperava a vez fica sem. */
+    private static Runnable whenOnline(UUID id, java.util.function.Consumer<ServerPlayer> action) {
+        return () -> {
+            ServerPlayer online = online(id);
+            if (online != null) action.accept(online);
+        };
     }
 
     private static List<String> diagnostics() {
@@ -169,7 +217,11 @@ public final class DiaryServer {
     // ── /diario ─────────────────────────────────────────────────────────────────
 
     public static void open(ServerPlayer player) {
-        if (!acceptRequest(player)) return;
+        UUID id = player.getUUID();
+        LIST.submit(id.toString(), "lista", whenOnline(id, DiaryServer::list));
+    }
+
+    private static void list(ServerPlayer player) {
         Optional<SiteApi> site = FactBridge.site();
         if (site.isEmpty()) {
             player.sendSystemMessage(error("O diário depende da integração com o site, que está desligada neste servidor."));
@@ -190,7 +242,7 @@ public final class DiaryServer {
             if (online == null) return;
             switch (response.code()) {
                 case "ok" -> DiaryNetwork.send(online, new DiaryPayloads.Open(
-                        subject.characterName().isEmpty() ? "seu personagem" : subject.characterName(),
+                        DiaryText.clip(subject.characterName().isEmpty() ? "seu personagem" : subject.characterName(), DiaryPayloads.CHARACTER),
                         summaries(response.body() != null ? response.body().get("entries") : null, id.toString()),
                         siteUrl(site.get())));
                 case "not_linked" -> online.sendSystemMessage(info("Vincule sua conta do site primeiro: no site, abra Perfil → Diário → "
@@ -203,12 +255,15 @@ public final class DiaryServer {
     // ── Pacotes da tela ─────────────────────────────────────────────────────────
 
     public static void request(ServerPlayer player, DiaryPayloads.Request payload) {
-        if (!"lista".equals(payload.action()) && !acceptRequest(player)) return;
+        UUID id = player.getUUID();
         switch (payload.action()) {
             case "lista" -> open(player);
-            case "abrir" -> openEntry(player, payload.entryId());
+            // Um lugar só: clicar em outra entrada enquanto a anterior espera a vez troca o pedido.
+            case "abrir" -> GET.submit(id.toString(), "abrir", whenOnline(id, online -> openEntry(online, payload.entryId())));
             case "descartar" -> {
-                if (store != null) store.discardConflicts(player.getUUID().toString(), payload.entryId());
+                if (store != null && DISCARD.acquire(id, System.currentTimeMillis())) {
+                    store.discardConflicts(id.toString(), payload.entryId());
+                }
             }
             default -> { }
         }
@@ -228,9 +283,10 @@ public final class DiaryServer {
         Optional<PendingStore.Pending> local = store != null ? store.forEntry(profile, entryId) : Optional.empty();
         if (local.isPresent()) {
             PendingStore.Pending pending = local.get();
-            String markup = DiaryMarkup.toMarkup(JsonParser.parseString(pending.document()).getAsJsonObject());
-            DiaryNetwork.send(player, new DiaryPayloads.Entry(entryId, pending.baseVersion(), pending.title(), pending.loreDate(),
-                    markup, DiaryPayloads.LOCAL | readOnly(markup), pending.draftKey()));
+            String markup = markupOf(documentOf(pending));
+            DiaryNetwork.send(player, new DiaryPayloads.Entry(entryId, pending.baseVersion(),
+                    DiaryText.clip(pending.title(), DiaryPayloads.TITLE_WIRE), DiaryText.clip(pending.loreDate(), DiaryPayloads.LORE_DATE_WIRE),
+                    markup, DiaryPayloads.LOCAL | readOnly(markup), DiaryText.clip(pending.draftKey(), DiaryPayloads.KEY)));
             if (!pending.conflict()) {
                 kickRetry();
                 return;
@@ -251,27 +307,43 @@ public final class DiaryServer {
                 DiaryNetwork.send(online, status("", "erro", entryId, 0, 0, message(response)));
                 return;
             }
-            String markup = DiaryMarkup.toMarkup(entry.get("document") instanceof JsonObject doc ? doc : new JsonObject());
-            DiaryNetwork.send(online, new DiaryPayloads.Entry(entryId, intOf(entry, "version"), stringOf(entry, "title"),
-                    stringOf(entry, "lore_date"), markup, flagsOf(entry) | readOnly(markup), ""));
+            String markup = markupOf(entry.get("document") instanceof JsonObject doc ? doc : new JsonObject());
+            DiaryNetwork.send(online, new DiaryPayloads.Entry(entryId, intOf(entry, "version"),
+                    DiaryText.clip(stringOf(entry, "title"), DiaryPayloads.TITLE_WIRE),
+                    DiaryText.clip(stringOf(entry, "lore_date"), DiaryPayloads.LORE_DATE_WIRE), markup, flagsOf(entry) | readOnly(markup), ""));
         }));
     }
 
+    /**
+     * Gravação vinda da tela. A chave da sessão e o id da operação vêm do cliente e vão para mapas,
+     * arquivo e log: só passam no formato de UUID ({@link DiaryText#validKey}) — uma quebra de linha
+     * ali forjaria linhas no log do servidor.
+     */
     public static void save(ServerPlayer player, DiaryPayloads.Save payload) {
+        if (!DiaryText.validKey(payload.draftKey()) || !DiaryText.validKey(payload.operationId())) return;
+        UUID id = player.getUUID();
+        // O balde é do perfil; o lugar é da sessão: duas entradas abertas em sequência nunca se
+        // atropelam, e a versão nova de uma mesma sessão substitui a que esperava.
+        RequestPacer.Result result = SAVE.submit(id.toString(), payload.draftKey(), whenOnline(id, online -> doSave(online, payload)));
+        if (result == RequestPacer.Result.REFUSED) {
+            DiaryNetwork.send(player, status(payload.draftKey(), "lento", payload.entryId(), payload.baseVersion(), 0, ""));
+        }
+    }
+
+    private static void doSave(ServerPlayer player, DiaryPayloads.Save payload) {
         Optional<SiteApi> site = FactBridge.site();
         PendingStore pendingStore = store;
         if (site.isEmpty() || pendingStore == null) {
             DiaryNetwork.send(player, status(payload.draftKey(), "erro", payload.entryId(), 0, 0, "A integração com o site está desligada."));
             return;
         }
-        if (payload.draftKey().isBlank() || payload.operationId().isBlank()) return;
         long now = System.currentTimeMillis();
-        Long last = LAST_SAVE.get(player.getUUID());
-        if (last != null && now - last < MIN_SAVE_INTERVAL_MS) {
-            DiaryNetwork.send(player, status(payload.draftKey(), "lento", payload.entryId(), payload.baseVersion(), 0, ""));
+        if (DiaryText.isPlaceholder(payload.markup())) {
+            // A tela recebeu o aviso no lugar de um texto longo demais: gravá-lo apagaria o texto no site.
+            DiaryNetwork.send(player, status(payload.draftKey(), "erro", payload.entryId(), 0, 0,
+                    "Esta entrada é longa demais para editar no jogo. Edite pelo site."));
             return;
         }
-        LAST_SAVE.put(player.getUUID(), now);
 
         GameFacts.Subject subject = diarySubject(player);
         if (subject.character() == null) {
@@ -290,8 +362,10 @@ public final class DiaryServer {
             }
         }
         long entryId = payload.entryId() > 0 ? payload.entryId() : CREATED.getOrDefault(session, 0L);
+        // O site conta caracteres Unicode; o pacote, unidades UTF-16. Corta pela conta do site.
         PendingStore.Pending pending = new PendingStore.Pending(payload.draftKey(), payload.operationId(), entryId, payload.baseVersion(),
-                payload.title(), payload.loreDate(), DiaryMarkup.toDocument(payload.markup()).toString(),
+                DiaryText.clipCodePoints(payload.title(), DiaryPayloads.TITLE), DiaryText.clipCodePoints(payload.loreDate(), DiaryPayloads.LORE_DATE),
+                DiaryMarkup.toDocument(payload.markup()).toString(),
                 profile, subject.character().toString(), subject.characterName(), now, false, accountProfile(player).toString());
         LATEST_OP.put(session, payload.operationId());
 
@@ -310,7 +384,10 @@ public final class DiaryServer {
     private static void onSaveResult(UUID playerId, PendingStore.Pending pending, SiteApi.Response response) {
         ServerPlayer player = online(playerId);
         String session = PendingStore.key(pending.profile(), pending.draftKey());
-        boolean latest = pending.operationId().equals(LATEST_OP.get(session));
+        // Sem registro (o jogador saiu e o logout limpou a sessão) nada mais novo chegou: esta é a
+        // última, e com o site fora ela precisa ficar guardada — é o caso da gravação feita no logout.
+        String latestOp = LATEST_OP.get(session);
+        boolean latest = latestOp == null || pending.operationId().equals(latestOp);
         JsonObject entry = response.object("entry");
         switch (response.code()) {
             case "ok" -> {
@@ -350,7 +427,15 @@ public final class DiaryServer {
     }
 
     public static void publish(ServerPlayer player, DiaryPayloads.Publish payload) {
-        if (!acceptRequest(player)) return;
+        UUID id = player.getUUID();
+        RequestPacer.Result result = PUBLISH.submit(id.toString(), Long.toString(payload.entryId()),
+                whenOnline(id, online -> doPublish(online, payload)));
+        if (result == RequestPacer.Result.REFUSED) {
+            DiaryNetwork.send(player, status("", "erro", payload.entryId(), 0, 0, "Muitos pedidos seguidos. Tente de novo em instantes."));
+        }
+    }
+
+    private static void doPublish(ServerPlayer player, DiaryPayloads.Publish payload) {
         Optional<SiteApi> site = FactBridge.site();
         if (site.isEmpty() || payload.entryId() <= 0) return;
         if (store != null && store.forEntry(player.getUUID().toString(), payload.entryId()).isPresent()) {
@@ -396,6 +481,9 @@ public final class DiaryServer {
     /**
      * Thread do diário. Bloqueia esperando o site de propósito: é a única coisa que ela faz. Mandar
      * de novo algo que o site já aplicou é seguro — o operation_id faz o site devolver o resultado.
+     *
+     * <p>A espera tem prazo e é interrompível: o {@code shutdownNow} do desligamento interrompe a
+     * thread, e um {@code join()} sem prazo a deixaria presa até o site responder.
      */
     private static void retryPending() {
         PendingStore current = store;
@@ -403,9 +491,29 @@ public final class DiaryServer {
         Optional<SiteApi> site = FactBridge.site();
         if (current == null || owner == null || site.isEmpty()) return;
         for (PendingStore.Pending pending : current.retryable(RETRY_BATCH)) {
-            SiteApi.Response response = site.get().post("/diary/save", saveBody(pending)).join();
+            JsonObject body;
+            try {
+                body = saveBody(pending);
+            } catch (RuntimeException e) {
+                current.markConflict(pending, 0L); // documento guardado ilegível: não adianta reenviar
+                AurorionDiario.LOGGER.warn("Diario: rascunho guardado com documento ilegivel, sessao {}", safeKey(pending.draftKey()));
+                continue;
+            }
+            SiteApi.Response response;
+            try {
+                response = site.get().post("/diary/save", body).get(RETRY_WAIT_S, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (ExecutionException | TimeoutException e) {
+                return; // tratado como site fora do ar: tenta na próxima rodada
+            }
             if (response.transportFailure()) return; // o site continua fora: tenta na próxima rodada
-            owner.execute(() -> onRetryResult(pending, response));
+            try {
+                owner.execute(() -> onRetryResult(pending, response));
+            } catch (RejectedExecutionException e) {
+                return; // servidor desligando
+            }
         }
     }
 
@@ -436,7 +544,8 @@ public final class DiaryServer {
                 // Erro de regra (personagem, vínculo, documento): não adianta insistir. A cópia fica
                 // guardada — no /diario, se a entrada existe; senão, no arquivo, para a equipe.
                 current.markConflict(pending, 0L);
-                AurorionDiario.LOGGER.warn("Diario: rascunho guardado recusado pelo site ({}), sessão {}", response.code(), pending.draftKey());
+                AurorionDiario.LOGGER.warn("Diario: rascunho guardado recusado pelo site ({}), sessão {}",
+                        safeKey(response.code()), safeKey(pending.draftKey()));
                 if (player != null) player.sendSystemMessage(error("O site recusou \"" + title + "\": " + message(response)
                         + " O texto continua guardado no servidor do jogo."));
             }
@@ -446,9 +555,33 @@ public final class DiaryServer {
     // ── Auxiliares ──────────────────────────────────────────────────────────────
 
     private static void sendConflict(ServerPlayer player, String draftKey, JsonObject entry) {
-        String markup = DiaryMarkup.toMarkup(entry.get("document") instanceof JsonObject doc ? doc : new JsonObject());
-        DiaryNetwork.send(player, new DiaryPayloads.Conflict(draftKey, longOf(entry, "id"), intOf(entry, "version"),
-                stringOf(entry, "title"), stringOf(entry, "lore_date"), markup, stringOf(entry, "origin")));
+        String markup = markupOf(entry.get("document") instanceof JsonObject doc ? doc : new JsonObject());
+        DiaryNetwork.send(player, new DiaryPayloads.Conflict(DiaryText.clip(draftKey, DiaryPayloads.KEY), longOf(entry, "id"), intOf(entry, "version"),
+                DiaryText.clip(stringOf(entry, "title"), DiaryPayloads.TITLE_WIRE),
+                DiaryText.clip(stringOf(entry, "lore_date"), DiaryPayloads.LORE_DATE_WIRE), markup,
+                DiaryText.clip(stringOf(entry, "origin"), DiaryPayloads.ORIGIN)));
+    }
+
+    /**
+     * A marcação que vai para a tela, já no teto do pacote: texto que não cabe vira o aviso
+     * {@link DiaryText#TOO_LONG}, e a entrada abre só para leitura ({@link #readOnly}).
+     */
+    private static String markupOf(JsonObject document) {
+        return DiaryMarkup.toMarkup(document, DiaryPayloads.MARKUP);
+    }
+
+    private static JsonObject documentOf(PendingStore.Pending pending) {
+        try {
+            JsonElement parsed = JsonParser.parseString(pending.document());
+            return parsed.isJsonObject() ? parsed.getAsJsonObject() : new JsonObject();
+        } catch (RuntimeException e) {
+            return new JsonObject();
+        }
+    }
+
+    /** Para o log: só o que tem formato de chave; o resto vira um marcador. */
+    private static String safeKey(String key) {
+        return DiaryText.validKey(key) ? key : "<invalida>";
     }
 
     private static JsonObject actor(ServerPlayer player, GameFacts.Subject subject) {
@@ -483,14 +616,6 @@ public final class DiaryServer {
         return owner == null ? player.getUUID() : owner;
     }
 
-    private static boolean acceptRequest(ServerPlayer player) {
-        long now = System.currentTimeMillis();
-        Long last = LAST_REQUEST.get(player.getUUID());
-        if (last != null && now - last < 250L) return false;
-        LAST_REQUEST.put(player.getUUID(), now);
-        return true;
-    }
-
     private static GameFacts.Subject diarySubject(ServerPlayer player) {
         GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
         // getName passa pelo mixin do essentials; getString retira os estilos sem aceitar
@@ -508,7 +633,7 @@ public final class DiaryServer {
             long id = longOf(entry, "id");
             int flags = flagsOf(entry);
             if (store != null && store.forEntry(profile, id).isPresent()) flags |= DiaryPayloads.LOCAL;
-            out.add(new DiaryPayloads.Summary(id, stringOf(entry, "title"), flags));
+            out.add(new DiaryPayloads.Summary(id, DiaryText.clip(stringOf(entry, "title"), DiaryPayloads.TITLE_WIRE), flags));
             if (out.size() == DiaryPayloads.MAX_ENTRIES) break;
         }
         return out;
@@ -523,7 +648,7 @@ public final class DiaryServer {
     }
 
     private static int readOnly(String markup) {
-        return markup.length() > DiaryPayloads.MARKUP_EDIT ? DiaryPayloads.READ_ONLY : 0;
+        return markup.length() > DiaryPayloads.MARKUP_EDIT || DiaryText.isPlaceholder(markup) ? DiaryPayloads.READ_ONLY : 0;
     }
 
     private static String message(SiteApi.Response response) {
@@ -538,7 +663,7 @@ public final class DiaryServer {
             case "limit" -> "Você chegou ao limite de entradas do diário.";
             case "attachment" -> "A entrada usa uma imagem que não está mais na sua biblioteca. Ajuste pelo site.";
             case "invalid_document" -> {
-                String detail = response.body() != null && response.body().has("message") ? response.body().get("message").getAsString() : "";
+                String detail = response.body() != null ? DiaryText.clip(stringOf(response.body(), "message"), 200) : "";
                 yield "O texto tem algo que o site não aceita" + (detail.isEmpty() ? "." : ": " + detail);
             }
             default -> "O site não respondeu agora. Tente de novo em instantes.";
@@ -546,8 +671,8 @@ public final class DiaryServer {
     }
 
     private static DiaryPayloads.Status status(String draftKey, String state, long entryId, int version, int flags, String message) {
-        String text = message.length() > DiaryPayloads.MESSAGE ? message.substring(0, DiaryPayloads.MESSAGE) : message;
-        return new DiaryPayloads.Status(draftKey, state, entryId, version, flags, text);
+        return new DiaryPayloads.Status(DiaryText.clip(draftKey, DiaryPayloads.KEY), state, entryId, version, flags,
+                DiaryText.clip(message, DiaryPayloads.MESSAGE));
     }
 
     private static String siteUrl(SiteApi site) {
@@ -577,20 +702,26 @@ public final class DiaryServer {
         return value != null && value.isJsonPrimitive() ? value.getAsString() : "";
     }
 
+    /** Resposta do site é dado de fora: tipo errado vira 0, nunca exceção na thread do servidor. */
     private static int intOf(JsonObject object, String member) {
-        JsonElement value = object.get(member);
-        return value != null && value.isJsonPrimitive() ? value.getAsInt() : 0;
+        long value = longOf(object, member);
+        return value < Integer.MIN_VALUE || value > Integer.MAX_VALUE ? 0 : (int) value;
     }
 
     private static long longOf(JsonObject object, String member) {
         JsonElement value = object.get(member);
-        return value != null && value.isJsonPrimitive() ? value.getAsLong() : 0L;
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) return 0L;
+        try {
+            return value.getAsJsonPrimitive().getAsBigDecimal().longValueExact();
+        } catch (NumberFormatException | ArithmeticException e) {
+            return 0L;
+        }
     }
 
     @Nullable
     private static Boolean boolOf(JsonObject object, String member) {
         JsonElement value = object.get(member);
-        return value != null && value.isJsonPrimitive() ? value.getAsBoolean() : null;
+        return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() ? value.getAsBoolean() : null;
     }
 
     private static Component info(String text) {

@@ -12,6 +12,7 @@ import com.aurorion.ethereal.house.HouseCatalog;
 import com.aurorion.ethereal.house.HouseManager;
 import com.aurorion.ethereal.house.HouseMuralManager;
 import com.aurorion.ethereal.house.PendingSelections;
+import com.aurorion.ethereal.house.PlayerThrottle;
 import com.aurorion.ethereal.network.EtherealNetwork;
 import com.aurorion.ethereal.ranking.BoardMode;
 import com.aurorion.ethereal.ranking.BoardService;
@@ -21,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -32,10 +34,26 @@ import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @EventBusSubscriber(modid = AurorionEthereal.MOD_ID)
 public final class EtherealServerEvents {
+    /** O altar manda o catalogo inteiro a cada abertura; clique segurado nao pode virar enxurrada. */
+    private static final PlayerThrottle ALTAR_OPENS = new PlayerThrottle(500L);
+    /** Vitima que renasceu (ou entrou) ha menos de 30 s nao conta vitoria de duelo. */
+    private static final int DUEL_FRESH_SPAWN_TICKS = 30 * 20;
+    /** O mesmo vencedor contra a mesma vitima so pontua uma vez a cada 10 minutos. */
+    private static final long DUEL_PAIR_COOLDOWN_MILLIS = 10L * 60_000L;
+    private static final int DUEL_PAIRS_PRUNE_AT = 512;
+    private static final Map<DuelPair, Long> DUEL_PAIRS = new HashMap<>();
+
+    private record DuelPair(UUID winner, UUID victim) { }
+
     private EtherealServerEvents() {
     }
 
@@ -121,11 +139,11 @@ public final class EtherealServerEvents {
      * jogador escolhe sozinho, para quando nao houver staff conduzindo.
      */
     private static void openAltar(ServerPlayer player, BlockPos pos) {
-        if (CeremonyManager.isRunning(player.getUUID())) return;
+        if (CeremonyManager.isRunning(player.getUUID()) || ALTAR_OPENS.throttled(player)) return;
 
-        boolean locked = EtherealConfig.CEREMONY_REQUIRED.get()
-                || HouseManager.houseIdOf(player.server, player.getUUID()) != null;
-        HouseManager.openSelection(player, pos, locked);
+        // Ja ter casa (e o allowRechoose) e decidido em openSelection; travar aqui por "tem casa"
+        // deixava o allowRechoose sem efeito nenhum.
+        HouseManager.openSelection(player, pos, EtherealConfig.CEREMONY_REQUIRED.get());
     }
 
     @SubscribeEvent
@@ -154,9 +172,48 @@ public final class EtherealServerEvents {
         RankingData data = RankingData.get(victim.server);
         data.recordDeath(victim.getUUID(), victim.getScoreboardName());
 
-        if (event.getSource().getEntity() instanceof ServerPlayer winner && winner != victim) {
+        if (event.getSource().getEntity() instanceof ServerPlayer winner && winner != victim
+                && countsAsDuel(winner, victim)) {
             data.recordDuelWin(winner.getUUID(), winner.getScoreboardName());
             BoardService.refresh(victim.server, BoardMode.DUEL_WINS);
+        }
+    }
+
+    /**
+     * Vitoria de duelo que vale ponto. Sem isto, dois amigos (ou um alt) se matavam em loop no ponto
+     * de renascimento e subiam o ranking: quem acabou de renascer nao conta, e o mesmo par so pontua
+     * uma vez a cada {@link #DUEL_PAIR_COOLDOWN_MILLIS}.
+     */
+    private static boolean countsAsDuel(ServerPlayer winner, ServerPlayer victim) {
+        // tickCount zera no renascimento e no login: o ServerPlayer e uma entidade nova.
+        if (victim.tickCount < DUEL_FRESH_SPAWN_TICKS) return false;
+        long now = System.currentTimeMillis();
+        if (DUEL_PAIRS.size() > DUEL_PAIRS_PRUNE_AT) {
+            DUEL_PAIRS.values().removeIf(at -> now - at >= DUEL_PAIR_COOLDOWN_MILLIS);
+        }
+        DuelPair pair = new DuelPair(winner.getUUID(), victim.getUUID());
+        Long last = DUEL_PAIRS.get(pair);
+        if (last != null && now - last < DUEL_PAIR_COOLDOWN_MILLIS) return false;
+        DUEL_PAIRS.put(pair, now);
+        return true;
+    }
+
+    // --- Mural e projetor ----------------------------------------------------------------------
+
+    /**
+     * Mural e projetor sao mobilia da staff: um jogador quebrando o mural da propria Casa (ou da
+     * rival) apagava o vinculo e o acesso ao cofre de todo mundo. So nivel 2 quebra; os dois tambem
+     * resistem a explosao (ver {@code EtherealBlocks}).
+     */
+    @SubscribeEvent
+    public static void onBreak(BlockEvent.BreakEvent event) {
+        if (event.getLevel().isClientSide()) return;
+        Block block = event.getState().getBlock();
+        if (!(block instanceof HouseMuralBlock) && !(block instanceof AeonicProjectorBlock)) return;
+        if (event.getPlayer() != null && event.getPlayer().hasPermissions(2)) return;
+        event.setCanceled(true);
+        if (event.getPlayer() instanceof ServerPlayer player) {
+            player.displayClientMessage(Component.translatable("aurorion_ethereal.block.staff_only"), true);
         }
     }
 
@@ -176,6 +233,7 @@ public final class EtherealServerEvents {
     /** Limpa estado transitorio inclusive entre mundos do servidor integrado. */
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
+        DUEL_PAIRS.clear();
         PendingSelections.clear();
         CeremonyManager.clear();
         BoardService.clear();

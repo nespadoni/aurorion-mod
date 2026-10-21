@@ -8,7 +8,9 @@ Fork do [Talk Balloons](https://github.com/CERBON-MODS/Talk-Balloons) (LGPL-3.0)
 ## O que ele faz
 
 - Mensagem de jogador → balão acima da cabeça, e some do chat
-- Mensagens de sistema, comandos, morte e entrada/saída **continuam** no chat
+- **Só ouve quem está perto**: o servidor entrega a fala (chat e `/me`) apenas a quem está na mesma
+  dimensão e dentro do alcance (32 blocos por padrão) — ver "Fala por proximidade" abaixo
+- Mensagens de sistema, `/msg`, `/say`, comandos, morte e entrada/saída **continuam** no chat
 - `/msg`, `/tell` e `/w` são **recusados** para jogador comum — a staff continua sussurrando
 - Cada jogador personaliza o **próprio** balão (skin, enfeite, cor do balão, cor do texto) numa
   tela in-game — a escolha é sincronizada, então todo mundo vê o mesmo balão
@@ -42,6 +44,31 @@ achataria escolha demais).
 
 Quem decide é o **servidor**, em `BalloonStyle#normalized()`: a garantia não pode depender de uma GUI
 que é do cliente e pode ser trocada. A tela avisa antes, para a correção não parecer um bug.
+
+## Fala por proximidade
+
+Esconder a fala no HUD não impede ninguém de **ler**: o servidor mandava toda fala para todo mundo,
+e quem desligava a opção (ou entrava sem o mod) lia o chat do servidor inteiro. Agora é o servidor
+quem escolhe os destinatários (`server/ProximityChat`, via `mixin/PlayerListChatMixin`):
+
+- chat comum e `/me` de jogador → só para quem está na mesma dimensão e a até `radius` blocos;
+- a mensagem entregue é a **mesma assinada** — a cadeia do chat seguro continua válida;
+- o `ServerChatEvent` não é cancelado por nós: o que outro mod cancela (silêncio da magia,
+  retenção da criação de personagem) continua cancelado, e quem escuta o evento (ponte com Discord,
+  por exemplo) continua recebendo tudo. O log do console é o mesmo do vanilla;
+- `/say`, `/msg`, `/teammsg` e mensagens do console seguem como o vanilla manda.
+
+Ajuste pelo jogo (nível 2), gravado em `talk-server.toml`:
+
+```
+/aurorion fala                              estado atual
+/aurorion fala alcance <blocos>             4 a 512
+/aurorion fala proximidade ligar|desligar   desligar = chat global do vanilla
+/aurorion fala espiar ligar|desligar        a staff recebe também as falas de longe, com [longe]
+```
+
+O **espiar** começa desligado e vale só enquanto o servidor estiver no ar: ler a cena alheia é
+ferramenta de moderação, e precisa ser decidido a cada sessão. Ligar avisa os outros OPs.
 
 ## O sussurro fecha junto
 
@@ -79,7 +106,7 @@ server/          SavedData (persistência por jogador), validação, broadcast, 
 config/          client (como a fala aparece) e server (o que conta como fala)
 client/          catálogo de texturas (scan em runtime), cache de estilos, renderer 3D, GUI
 client/render/   geometria nine-slice compartilhada entre o balão 3D e o preview 2D da GUI
-mixin/           4 mixins, todos client-side
+mixin/           4 mixins client-side + PlayerListChatMixin (servidor, fala por proximidade)
 ```
 
 **O estilo inteiro trafega na rede — não um id de catálogo.** O jogador monta o balão na GUI a

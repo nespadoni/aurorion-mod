@@ -109,12 +109,15 @@ public final class IncusCaelestisSpell extends AurorionSpell {
      * A bigorna desceu em cima de alguem. Aliado de quem conjurou passa ileso; chefe
      * ({@code imune_deslocamento}) leva so {@value #BOSS_CRUSH} — uma magia rara com meio minuto de
      * recarga nao derruba um Warden ou um Wither de uma vez.
+     *
+     * <p>Sem dono (saiu do jogo com a bigorna no ar) nao ha esmagamento: o dano sairia sem causador,
+     * e dano sem causador passa por cima da protecao de PvP das areas. O projetil ja se desfaz sozinho
+     * quando o dono some; esta conferencia e a segunda trava.
      */
     public static void crush(ServerLevel level, @Nullable LivingEntity caster, LivingEntity victim, float damage) {
-        if (caster != null && !Hits.enemy(caster, victim)) return;
+        if (caster == null || !Hits.enemy(caster, victim) || !Hits.hittable(caster, victim)) return;
         float dealt = Displacement.isImmune(victim) ? Math.min(damage, BOSS_CRUSH) : damage;
-        victim.hurt(caster != null ? FriendlyFire.source(Execution.source(level, caster, DAMAGE_TYPE), victim)
-                : level.damageSources().anvil(null), dealt);
+        victim.hurt(FriendlyFire.source(Execution.source(level, caster, DAMAGE_TYPE), victim), dealt);
         sound(victim, SoundEvents.ANVIL_LAND, 1.8f, 0.6f);
     }
 

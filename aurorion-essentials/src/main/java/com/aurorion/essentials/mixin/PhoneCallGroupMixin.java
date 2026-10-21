@@ -27,7 +27,8 @@ public abstract class PhoneCallGroupMixin {
     @Inject(method = "buildPhoneCallGroup", at = @At("HEAD"), cancellable = true, require = 0)
     private static void aurorion_essentials$openGroup(String callerName, String targetName,
                                                       CallbackInfoReturnable<Object> cir) {
-        Object group = PhoneCallGroups.build();
+        // Os nicks vao junto: so os dois lados da chamada podem entrar no grupo (ver PhoneCallGroups).
+        Object group = PhoneCallGroups.build(callerName, targetName);
         if (group != null) cir.setReturnValue(group);
     }
 }

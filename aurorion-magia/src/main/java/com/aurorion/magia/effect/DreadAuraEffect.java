@@ -40,7 +40,8 @@ public final class DreadAuraEffect extends MobEffect {
 
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
-        if (entity.tickCount % INTERVAL == 0 && entity instanceof ServerPlayer player) DreadAura.pulse(player);
+        // false: passiva revogada ou sessao vencida, o vanilla tira o efeito.
+        if (entity.tickCount % INTERVAL == 0 && entity instanceof ServerPlayer player) return DreadAura.pulse(player);
         return true;
     }
 }

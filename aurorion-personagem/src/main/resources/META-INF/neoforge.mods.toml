@@ -44,6 +44,7 @@ side = "BOTH"
 # proprio codigo. Instalado sozinho, ele continua fazendo a parte vanilla do reset.
 
 # Segundo personagem da staff: troca o perfil no login e ignora a sessao de chat assinada do alt.
-# Ver alt/AltLogin e os dois mixins.
+# Ver alt/AltLogin e os dois mixins. O terceiro (HeldConnectionMixin) prende no lugar quem espera um
+# personagem: o espectador sozinho voa, atravessa parede e se teleporta ate outros jogadores.
 [[mixins]]
 config = "${mod_id}.mixins.json"

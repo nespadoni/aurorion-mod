@@ -142,6 +142,7 @@ public final class LimboManager {
         List<UUID> rescued = null;
         List<UUID> crossed = null;
         List<UUID> expired = null;
+        List<ServerPlayer> outside = null;
 
         for (Map.Entry<UUID, ExileRecord> entry : active.entrySet()) {
             UUID id = entry.getKey();
@@ -177,7 +178,14 @@ public final class LimboManager {
             syncIfChanged(player, record, server);
 
             if (player == null || !player.isAlive()) continue;
-            if (player.level().dimension() != dimension()) continue;
+            if (player.level().dimension() != dimension()) {
+                // Exilado vivo fora do Limbo: escapou por um caminho que nao passa pelo veto de
+                // viagem do aurorion_vidas (teleporte de outro mod, save antigo, troca de config).
+                // Aplicado depois do laco, porque mudar de dimensao mexe na lista de jogadores.
+                if (outside == null) outside = new ArrayList<>(2);
+                outside.add(player);
+                continue;
+            }
 
             warnIfBandChanged(player, record);
             LimboHaunt.tick(player, (ServerLevel) player.level());
@@ -205,6 +213,66 @@ public final class LimboManager {
                     cross(server, player, record, id);
                 }
             }
+        }
+        if (outside != null) {
+            for (ServerPlayer player : outside) {
+                ExileRecord record = data.record(player.getUUID());
+                if (record != null) pullBack(server, player, record);
+            }
+        }
+    }
+
+    /**
+     * Devolve ao Limbo um exilado vivo encontrado fora dele.
+     *
+     * <p>O veto de viagem do {@code aurorion_vidas} so fecha a porta da frente: qualquer teleporte que
+     * nao passe por {@code changeDimension}, ou que outro mod autorize por cima, deixava a pessoa la
+     * fora, exilada e com o prazo correndo como se nada fosse. A varredura ja passa por todo exilado
+     * uma vez por segundo, entao e aqui que a fuga e desfeita.
+     *
+     * <p>Respeita as mesmas excecoes da staff que o veto do {@code aurorion_vidas}: com
+     * {@code blockExileExit=false} o exilio nao prende ninguem, e com {@code ignoreCreative} quem esta
+     * em criativo ou espectador anda livre. Uma travessia autorizada da Porta, em andamento nesta
+     * mesma chamada, tambem nunca e desfeita. Falhar (sem chao, dimensao barrada) espera alguns
+     * segundos antes da proxima tentativa, para nao procurar terreno a cada segundo.
+     */
+    private static void pullBack(MinecraftServer server, ServerPlayer player, ExileRecord record) {
+        if (!com.aurorion.vidas.config.LivesConfig.BLOCK_EXILE_EXIT.get()) return;
+        if (com.aurorion.vidas.config.LivesConfig.IGNORE_CREATIVE.get()
+                && (player.isCreative() || player.isSpectator())) return;
+        if (!player.isAlive() || player.level().dimension() == dimension()) return;
+        if (ForgottenDoor.isAuthorized(player) || FinaleManager.isDead(player)) return;
+        if (!LivesManager.isExiled(server, player.getUUID())) return;
+
+        long tick = server.getTickCount();
+        if (!record.canTryDoor(tick)) return;
+        record.delayDoor(tick);
+
+        ServerLevel limbo = server.getLevel(dimension());
+        if (limbo == null) return;
+        BlockPos spot = LimboSpawn.scattered(limbo);
+        if (spot == null) {
+            AurorionLimbo.LOGGER.warn("Limbo: {} esta exilado fora do Limbo e nao achei chegada; tento de novo.",
+                    player.getGameProfile().getName());
+            return;
+        }
+
+        String from = player.level().dimension().location().toString();
+        boolean moved;
+        ForgottenDoor.authorize(player, limbo.dimension());
+        try {
+            var arrived = player.changeDimension(new DimensionTransition(limbo, spot.getBottomCenter(), Vec3.ZERO,
+                    player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+            moved = arrived != null && arrived.level() == limbo;
+        } finally {
+            ForgottenDoor.clear();
+        }
+        if (moved) {
+            AurorionLimbo.LOGGER.warn("Limbo: {} estava exilado fora do Limbo (em {}); devolvido ao exilio.",
+                    player.getGameProfile().getName(), from);
+        } else {
+            AurorionLimbo.LOGGER.warn("Limbo: {} esta exilado fora do Limbo (em {}) e a volta foi cancelada;"
+                    + " tento de novo.", player.getGameProfile().getName(), from);
         }
     }
 

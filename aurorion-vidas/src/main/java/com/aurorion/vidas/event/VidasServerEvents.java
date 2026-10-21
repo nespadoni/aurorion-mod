@@ -16,6 +16,8 @@ import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerRespawnPositionEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = AurorionVidas.MOD_ID)
 public final class VidasServerEvents {
@@ -33,9 +35,40 @@ public final class VidasServerEvents {
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        // Fecha antes de cobrar: se a cobranca lancar no meio, a rede nao cobra de novo.
+        DeathLedger.close(player);
         if (LivesConfig.IGNORE_CREATIVE.get() && (player.isCreative() || player.isSpectator())) return;
 
         LivesManager.loseLife(player);
+    }
+
+    /**
+     * Abre a conta desta morte antes de qualquer outro mod falar.
+     *
+     * <p>Nao cobra nada: so guarda o evento para {@link DeathLedger} saber, no fim do tick, se a
+     * cobranca em {@code LOW} foi pulada por excecao de outro listener. {@code receiveCanceled} porque
+     * um cancelamento em {@code HIGHEST} por outro mod e informacao, nao motivo para nao registrar.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
+    public static void onDeathOpen(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) DeathLedger.open(player, event);
+    }
+
+    /** O acerto da rede de seguranca, uma vez por tick e so quando ha conta aberta. */
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        DeathLedger.settleAll(event.getServer());
+    }
+
+    /** Antes de qualquer listener escolher o destino: a ultima vida ja precisa estar cobrada. */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onRespawnSettle(PlayerRespawnPositionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) DeathLedger.settle(player);
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        DeathLedger.reset();
     }
 
     /**

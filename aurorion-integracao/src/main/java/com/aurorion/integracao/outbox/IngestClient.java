@@ -65,7 +65,10 @@ public final class IngestClient implements Function<List<String>, Attempt> {
                 response.headers().firstValue("Retry-After").orElse(null), batch.size());
     }
 
-    /** O corpo do lote. Cada linha ja e um objeto JSON valido, entao basta juntar. */
+    /**
+     * O corpo do lote. Cada linha ja e um objeto JSON valido e sem quebra de linha — a {@link Outbox}
+     * confere ({@link Outbox#validLine}) ao gravar e ao ler o spool —, entao basta juntar.
+     */
     static String body(List<String> batch) {
         return "{\"events\":[" + String.join(",", batch) + "]}";
     }
@@ -74,6 +77,9 @@ public final class IngestClient implements Function<List<String>, Attempt> {
     static Attempt interpret(int status, String body, String retryAfter, int size) {
         if (status == 401 || status == 403) return Attempt.forbidden("HTTP " + status);
         if (status == 429) return Attempt.retry(retryAfterMillis(retryAfter), "HTTP 429");
+        // O backend recusou o lote inteiro pelo conteudo: insistir com o mesmo lote nunca passa. A
+        // caixa divide o lote ate isolar o fato ruim (ver Outbox).
+        if (status == 400 || status == 413 || status == 422) return Attempt.malformed("HTTP " + status);
         if (status < 200 || status >= 300) return Attempt.retry(0, "HTTP " + status);
 
         JsonArray results;
@@ -90,17 +96,24 @@ public final class IngestClient implements Function<List<String>, Attempt> {
         List<String> rejections = new ArrayList<>();
         for (int i = 0; i < Math.min(size, results.size()); i++) {
             if (!(results.get(i) instanceof JsonObject item)) continue;
-            String result = item.has("result") ? item.get("result").getAsString() : "";
+            String result = text(item, "result");
             switch (result) {
                 case "accepted", "duplicate" -> resolved[i] = true;
                 case "rejected" -> {
                     resolved[i] = true;
-                    rejections.add(item.has("code") ? item.get("code").getAsString() : "sem_codigo");
+                    String code = text(item, "code");
+                    rejections.add(code.isEmpty() ? "sem_codigo" : code.length() > 64 ? code.substring(0, 64) : code);
                 }
                 default -> { }
             }
         }
         return new Attempt(Attempt.Kind.DELIVERED, resolved, 0, rejections, "HTTP " + status);
+    }
+
+    /** Texto de um campo, ou vazio se ele falta ou nao e texto/numero — nunca excecao com resposta estranha. */
+    private static String text(JsonObject object, String member) {
+        JsonElement value = object.get(member);
+        return value != null && value.isJsonPrimitive() ? value.getAsString() : "";
     }
 
     static long retryAfterMillis(String header) {

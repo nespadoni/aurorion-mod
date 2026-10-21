@@ -5,6 +5,7 @@ import com.aurorion.economia.AurorionEconomia;
 import com.aurorion.economia.api.BrokerAuthorizationEvent;
 import com.aurorion.economia.config.EconomyConfig;
 import com.aurorion.economia.land.LandDeed;
+import com.aurorion.economia.land.LandZoneData;
 import com.aurorion.economia.money.Money;
 import com.aurorion.economia.network.LandPayloads;
 import net.minecraft.Util;
@@ -19,7 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** One editor per broker, one pending offer per buyer; expiry is checked only on interaction. */
+/**
+ * One editor per broker, one pending offer per buyer; expiry is checked only on interaction.
+ *
+ * <p>A zona do lote e do servidor ({@link LandZoneData}): a escolhida na tela so passa se for a
+ * mesma que o mapa da staff da para aquele retangulo, conferida no envio e de novo no aceite.</p>
+ */
 public final class LandSaleManager {
     private record Session(UUID token, UUID broker, UUID buyer, UUID brokerCharacter, UUID buyerCharacter,
                            ResourceLocation dimension, BlockPos origin, List<Long> rates,
@@ -67,10 +73,15 @@ public final class LandSaleManager {
             var deed = new LandDeed(UUID.randomUUID(), session.buyerCharacter, session.brokerCharacter,
                     name(buyer), session.dimension, request.x(), request.z(), request.width(), request.length(),
                     request.zone(), price, System.currentTimeMillis());
+            // O construtor ja validou as coordenadas; so agora a conta de canto final e segura.
+            int zone = serverZone(broker, deed);
+            if (zone != request.zone())
+                throw new IllegalArgumentException("Este lote fica na zona " + EconomyConfig.ZONE_NAMES[zone]
+                        + ". Selecione essa zona e confira o preço mínimo.");
             if (!validLocation(broker, session, deed))
                 throw new IllegalArgumentException("O primeiro canto deve estar a até 8 blocos de você, dentro da borda do mundo.");
-            if (!WalletData.get(broker.server).canSell(deed))
-                throw new IllegalArgumentException("Lote sobreposto a outro terreno, ou cadastro indisponível/cheio.");
+            String sellRefusal = WalletData.get(broker.server).sellRefusal(deed);
+            if (sellRefusal != null) throw new IllegalArgumentException(sellRefusal);
             Offer previous = OFFERS.get(buyer.getUUID());
             if (previous != null && previous.expires > Util.getMillis())
                 throw new IllegalArgumentException("O comprador já está avaliando uma venda. Aguarde.");
@@ -94,7 +105,8 @@ public final class LandSaleManager {
         if (!accepted) { fail(broker, "O comprador recusou. Nenhum dinheiro foi debitado."); return; }
         if (offer.expires < Util.getMillis() || !validSession(offer.session, broker, buyer)
                 || ChargeManager.validatePair(broker, buyer, false) != null
-                || !samePrices(offer.session, offer.deed.zone()) || !validLocation(broker, offer.session, offer.deed)) {
+                || !samePrices(offer.session, offer.deed.zone()) || !validLocation(broker, offer.session, offer.deed)
+                || serverZone(broker, offer.deed) != offer.deed.zone()) {
             fail(buyer, "Proposta expirada: posição, personagens ou preços mudaram. Solicite outra proposta.");
             fail(broker, "A proposta perdeu a validade. Nenhum dinheiro foi debitado."); return;
         }
@@ -119,6 +131,11 @@ public final class LandSaleManager {
         return dx * dx + dz * dz <= 64 && border.isWithinBounds(new BlockPos(deed.x(), 0, deed.z()))
                 && border.isWithinBounds(new BlockPos(deed.endX(), 0, deed.endZ()));
     }
+    /** A zona que o mapa da staff da ao lote, pela taxa atual de cada zona. */
+    private static int serverZone(ServerPlayer broker, LandDeed deed) {
+        return LandZoneData.get(broker.server).zoneFor(deed, zone -> EconomyConfig.ZONE_RATES[(int) zone].get());
+    }
+
     private static boolean samePrices(Session session, int zone) {
         return session.rates.get(zone).longValue() == EconomyConfig.ZONE_RATES[zone].get()
                 && session.floor == EconomyConfig.MIN_PLOT_PRICE.get()

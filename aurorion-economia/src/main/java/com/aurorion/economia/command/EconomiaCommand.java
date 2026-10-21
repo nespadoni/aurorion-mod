@@ -3,6 +3,7 @@ package com.aurorion.economia.command;
 import com.aurorion.economia.AurorionEconomia;
 import com.aurorion.economia.money.Money;
 import com.aurorion.economia.server.HouseTreasury;
+import com.aurorion.economia.server.MoneyLedger;
 import com.aurorion.economia.server.Wallet;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -30,9 +31,20 @@ import java.util.List;
  * <p>E de proposito que criar dinheiro exija um comando de gente, e nao um numero em arquivo de
  * config: enquanto nao existe uma fonte automatica decidida (ECONOMIA.md §7), todo obolo que entra
  * no servidor tem um responsavel e aparece no log de comandos.</p>
+ *
+ * <h2>Quem pode criar dinheiro</h2>
+ *
+ * <p>Emitir ({@code dar}, {@code definir}, e o mesmo no cofre de uma Casa, inclusive salario) exige
+ * nivel {@value #EMISSION_LEVEL}. Bloco de comando roda no nivel 2: com o nivel 2 de antes, quem
+ * conseguisse colocar ou editar um bloco de comando (ou um datapack com funcao) imprimia dinheiro
+ * sem rosto. Tirar dinheiro e consultar continuam no nivel 2. Toda operacao, de qualquer nivel, vira
+ * linha no {@link MoneyLedger} com o nome de quem executou ({@code staff:<acao>:<executor>}).</p>
  */
 @EventBusSubscriber(modid = AurorionEconomia.MOD_ID)
 public final class EconomiaCommand {
+    /** Nivel para emitir moeda: acima do bloco de comando (2), abaixo do dono (4). */
+    static final int EMISSION_LEVEL = 3;
+
     private EconomiaCommand() {
     }
 
@@ -40,18 +52,19 @@ public final class EconomiaCommand {
     public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("economia")
                 .requires(source -> source.hasPermission(2))
-                .then(action("dar", (server, player, amount) -> Wallet.add(server, player.getUUID(), amount)))
-                .then(action("tirar", (server, player, amount) -> Wallet.add(server, player.getUUID(), -amount)))
-                .then(action("definir", (server, player, amount) -> {
-                    Wallet.set(server, player.getUUID(), amount);
+                .then(action("dar", EMISSION_LEVEL, (server, player, amount, origin) -> Wallet.add(server, player.getUUID(), amount, origin)))
+                .then(action("tirar", 2, (server, player, amount, origin) -> Wallet.add(server, player.getUUID(), -amount, origin)))
+                .then(action("definir", EMISSION_LEVEL, (server, player, amount, origin) -> {
+                    Wallet.set(server, player.getUUID(), amount, origin);
                     return amount;
                 }))
                 .then(houseCommands()));
     }
 
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> action(
-            String name, Operation operation) {
+            String name, int level, Operation operation) {
         return Commands.literal(name)
+                .requires(source -> source.hasPermission(level))
                 .then(Commands.argument("jogador", EntityArgument.player())
                         .then(Commands.argument("quantia", StringArgumentType.word())
                                 .executes(context -> run(context, name, operation))));
@@ -61,12 +74,17 @@ public final class EconomiaCommand {
             throws CommandSyntaxException {
         ServerPlayer target = EntityArgument.getPlayer(context, "jogador");
         long amount = MoneyArgument.get(context, "quantia");
-        long after = operation.apply(target.server, target, amount);
+        long after = operation.apply(target.server, target, amount, origin(context, action));
 
         context.getSource().sendSuccess(() -> Component.translatable(
                 "commands.aurorion_economia.economia." + action,
                 Money.describe(amount), target.getDisplayName(), Money.describe(after)), true);
         return 1;
+    }
+
+    /** {@code staff:<acao>:<executor>}: o executor e o nome do jogador, do console ou do bloco. */
+    private static String origin(CommandContext<CommandSourceStack> context, String action) {
+        return "staff:" + action + ":" + context.getSource().getTextName();
     }
 
     /** Casa sem namespace ({@code venthra}) e casa do aurorion-ethereal, onde as cinco moram. */
@@ -78,13 +96,13 @@ public final class EconomiaCommand {
                         .suggests((context, builder) -> SharedSuggestionProvider.suggest(
                                 houseSuggestions(context.getSource().getServer()), builder))
                         .then(Commands.literal("saldo").executes(EconomiaCommand::houseBalance))
-                        .then(Commands.literal("dar")
+                        .then(Commands.literal("dar").requires(source -> source.hasPermission(EMISSION_LEVEL))
                                 .then(Commands.argument("quantia", StringArgumentType.word())
                                         .executes(context -> houseMoney(context, "dar"))))
                         .then(Commands.literal("tirar")
                                 .then(Commands.argument("quantia", StringArgumentType.word())
                                         .executes(context -> houseMoney(context, "tirar"))))
-                        .then(Commands.literal("definir")
+                        .then(Commands.literal("definir").requires(source -> source.hasPermission(EMISSION_LEVEL))
                                 .then(Commands.argument("quantia", StringArgumentType.word())
                                         .executes(context -> houseMoney(context, "definir"))))
                         .then(Commands.literal("cofre")
@@ -93,8 +111,10 @@ public final class EconomiaCommand {
                         .then(Commands.literal("salario")
                                 .executes(EconomiaCommand::showSalary)
                                 .then(Commands.literal("desligar").executes(EconomiaCommand::disableSalary))
-                                .then(Commands.literal("pagar").executes(EconomiaCommand::paySalary))
+                                .then(Commands.literal("pagar").requires(source -> source.hasPermission(EMISSION_LEVEL))
+                                        .executes(EconomiaCommand::paySalary))
                                 .then(Commands.argument("quantia", StringArgumentType.word())
+                                        .requires(source -> source.hasPermission(EMISSION_LEVEL))
                                         .then(Commands.argument("dias",
                                                         IntegerArgumentType.integer(1, HouseTreasury.MAX_SALARY_DAYS))
                                                 .executes(EconomiaCommand::setSalary)))));
@@ -147,19 +167,21 @@ public final class EconomiaCommand {
         var house = house(context);
         long amount = MoneyArgument.get(context, "quantia");
         long balance;
-        if (action.equals("dar")) {
-            HouseTreasury.Deposit deposit = HouseTreasury.deposit(server, house, amount);
-            balance = deposit.balance();
-            if (deposit.overflow() > 0) context.getSource().sendFailure(Component.literal(
-                    "O cofre atingiu a capacidade; " + Money.describe(deposit.overflow()) + " não entrou."));
-        } else if (action.equals("tirar")) {
-            if (!HouseTreasury.withdraw(server, house, amount)) {
-                context.getSource().sendFailure(Component.literal("O cofre não possui esse valor."));
-                return 0;
+        try (var origin = MoneyLedger.origin(origin(context, "casa:" + action))) {
+            if (action.equals("dar")) {
+                HouseTreasury.Deposit deposit = HouseTreasury.deposit(server, house, amount);
+                balance = deposit.balance();
+                if (deposit.overflow() > 0) context.getSource().sendFailure(Component.literal(
+                        "O cofre atingiu a capacidade; " + Money.describe(deposit.overflow()) + " não entrou."));
+            } else if (action.equals("tirar")) {
+                if (!HouseTreasury.withdraw(server, house, amount)) {
+                    context.getSource().sendFailure(Component.literal("O cofre não possui esse valor."));
+                    return 0;
+                }
+                balance = HouseTreasury.balance(server, house);
+            } else {
+                balance = HouseTreasury.set(server, house, amount);
             }
-            balance = HouseTreasury.balance(server, house);
-        } else {
-            balance = HouseTreasury.set(server, house, amount);
         }
         long result = balance;
         context.getSource().sendSuccess(() -> Component.literal(
@@ -226,7 +248,10 @@ public final class EconomiaCommand {
             context.getSource().sendFailure(Component.literal("Casa " + house + " não tem salário definido."));
             return 0;
         }
-        HouseTreasury.Deposit deposit = HouseTreasury.paySalaryNow(server, house);
+        HouseTreasury.Deposit deposit;
+        try (var origin = MoneyLedger.origin(origin(context, "casa:salario"))) {
+            deposit = HouseTreasury.paySalaryNow(server, house);
+        }
         if (deposit.overflow() > 0) context.getSource().sendFailure(Component.literal(
                 "O cofre atingiu a capacidade; " + Money.describe(deposit.overflow()) + " não entrou."));
         context.getSource().sendSuccess(() -> Component.literal("Salário pago a " + house + ": "
@@ -237,6 +262,6 @@ public final class EconomiaCommand {
 
     @FunctionalInterface
     private interface Operation {
-        long apply(net.minecraft.server.MinecraftServer server, ServerPlayer player, long amount);
+        long apply(net.minecraft.server.MinecraftServer server, ServerPlayer player, long amount, String origin);
     }
 }

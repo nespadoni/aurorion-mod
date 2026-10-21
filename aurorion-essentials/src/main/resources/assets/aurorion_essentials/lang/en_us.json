@@ -2,7 +2,9 @@
   "commands.aurorion_essentials.fakename.set.success": "Fake name set: %s",
   "commands.aurorion_essentials.fakename.set.blank": "Fake name can't be blank.",
   "commands.aurorion_essentials.fakename.set.tooLong": "Fake name is too long (max %s characters).",
-  "commands.aurorion_essentials.fakename.set.impersonation": "That name is already in use by another online player.",
+  "commands.aurorion_essentials.fakename.set.impersonation": "That name already belongs to another player or character (online or offline).",
+  "commands.aurorion_essentials.fakename.set.hiddenCharacters": "The name contains invisible or control characters.",
+  "commands.aurorion_essentials.fakename.cooldown": "Wait %s s before changing this name again.",
 
   "commands.aurorion_essentials.fakename.clear.success.self": "Fake name cleared.",
   "commands.aurorion_essentials.fakename.clear.success.other": "Cleared %s's fake name.",

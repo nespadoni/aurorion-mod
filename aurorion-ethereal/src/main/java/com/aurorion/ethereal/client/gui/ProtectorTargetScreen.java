@@ -112,10 +112,6 @@ public final class ProtectorTargetScreen extends Screen {
                             target.lives(), target.maxLives());
             graphics.drawString(font, status, left + 18, y + 20,
                     target.lives() <= 0 ? C_RED : C_MUTED, false);
-            if (!target.online()) {
-                graphics.drawString(font, Component.translatable("gui.aurorion_ethereal.mural.protector.offline"),
-                        left + 210, y + 12, C_MUTED, false);
-            }
         }
     }
 

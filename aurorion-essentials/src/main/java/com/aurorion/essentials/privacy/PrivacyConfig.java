@@ -47,7 +47,8 @@ public final class PrivacyConfig {
                 .defineEnum("deathMessagesInChat", Visibility.ADMINS);
 
         RESTRICT_PRIVATE_MESSAGES = BUILDER
-                .comment("Restringe /msg, /tell e /w para uso exclusivo de operadores.")
+                .comment("Restringe /msg, /tell, /w, /teammsg e /tm para uso exclusivo de operadores.",
+                        "Pode mudar com o servidor no ar: a lista de comandos de quem esta online e reenviada.")
                 .define("restrictPrivateMessages", true);
 
         BUILDER.pop();

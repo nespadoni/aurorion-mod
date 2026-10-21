@@ -69,6 +69,41 @@ class BorderDataTest {
         assertNotNull(reloaded.get(MUNDO_DOIS), "a entrada boa tem que sobreviver a entrada ruim");
     }
 
+    /** NaN, infinito e negativo no arquivo nao podem virar uma barreira que prende ou cura. */
+    @Test
+    void nonFiniteOrNegativeValuesAreSanitizedOnLoad() {
+        CompoundTag entry = new CompoundTag();
+        entry.putString("Dimension", MUNDO_DOIS.location().toString());
+        entry.putDouble("CenterX", Double.NaN);
+        entry.putDouble("CenterZ", 1.0E12D);
+        entry.putDouble("Size", Double.NaN);
+        entry.putDouble("DamagePerBlock", -5.0D);
+        entry.putDouble("SafeZone", Double.POSITIVE_INFINITY);
+        entry.putInt("WarningBlocks", -3);
+        entry.putInt("WarningTime", -1);
+        net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+        list.add(entry);
+        CompoundTag saved = new CompoundTag();
+        saved.put("Borders", list);
+
+        BorderData.Settings loaded = BorderData.load(saved, null).get(MUNDO_DOIS);
+        WorldBorder defaults = new WorldBorder();
+
+        assertNotNull(loaded);
+        assertEquals(0.0D, loaded.centerX());
+        assertEquals(2.9999984E7D, loaded.centerZ());
+        assertEquals(defaults.getSize(), loaded.size());
+        assertEquals(0.0D, loaded.damagePerBlock());
+        assertEquals(defaults.getDamageSafeZone(), loaded.damageSafeZone());
+        assertEquals(0, loaded.warningBlocks());
+        assertEquals(0, loaded.warningTime());
+
+        CompoundTag tiny = entry.copy();
+        tiny.putDouble("Size", -10.0D);
+        list.set(0, tiny);
+        assertEquals(1.0D, BorderData.load(saved, null).get(MUNDO_DOIS).size());
+    }
+
     @Test
     void theInitialSettingsAreCenteredAtTheOriginWithTheConfiguredSize() {
         BorderData.Settings initial = BorderData.Settings.initial(10000.0D);

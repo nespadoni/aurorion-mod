@@ -49,6 +49,12 @@ Qualquer item da tag `aurorion_aeonita:emits_light` acende onde estiver — na m
 de um quadro. É **ilusão local**: troca o ar da posição pelo `minecraft:light` invisível na cópia do
 mundo do próprio cliente. O servidor nunca fica sabendo e nada disso entra no save.
 
+Só é apagada a luz que o próprio handler pôs e que continua igual: um `minecraft:light` de verdade
+(o que a staff usa para iluminar interiores) nunca é removido da tela, e chunk recebido do servidor
+solta a posse das luzes falsas que estavam nele. Resta um caso raro: a staff pôr uma luz real, do
+mesmo nível, exatamente no bloco de uma luz falsa acesa naquele instante — aí ela some da tela de quem
+estava com o item até o chunk recarregar.
+
 Como é tag e não lista em código, dá para fazer o lingote de outro mod acender sem recompilar nada:
 
 ```json

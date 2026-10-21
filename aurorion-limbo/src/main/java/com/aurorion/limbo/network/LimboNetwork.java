@@ -20,7 +20,22 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 @EventBusSubscriber(modid = AurorionLimbo.MOD_ID)
 public final class LimboNetwork {
+    /** Intervalo minimo entre dois pedidos de passagem da mesma conta: um segundo. */
+    private static final int BEGIN_COOLDOWN_TICKS = 20;
+
+    /** Tick do ultimo pedido aceito por conta. So e lido e escrito na thread do servidor. */
+    private static final java.util.Map<java.util.UUID, Long> LAST_BEGIN = new java.util.HashMap<>();
+
     private LimboNetwork() { }
+
+    /** A conta saiu: o mapa nao cresce com cada jogador que ja passou pelo servidor. */
+    public static void forget(java.util.UUID player) {
+        LAST_BEGIN.remove(player);
+    }
+
+    public static void reset() {
+        LAST_BEGIN.clear();
+    }
 
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
@@ -81,6 +96,18 @@ public final class LimboNetwork {
      * que sobrou de dez minutos atras.
      */
     private static void beginRescue(ServerPlayer player, java.util.UUID target) {
+        // Morto, espectador ou personagem encerrado nao abre passagem: a tela pode ter ficado aberta
+        // atras da tela de morte, e um cliente modificado manda o pacote quando quiser.
+        if (!player.isAlive() || player.isSpectator()
+                || com.aurorion.limbo.finale.FinaleManager.isDead(player)) return;
+
+        // Um pedido por segundo por conta. Cada pedido aceito faz busca de entidades em volta, procura
+        // chao e cria entidade; sem teto, um cliente modificado transforma isso em carga de servidor.
+        long tick = player.server.getTickCount();
+        Long last = LAST_BEGIN.get(player.getUUID());
+        if (last != null && tick - last < BEGIN_COOLDOWN_TICKS) return;
+        LAST_BEGIN.put(player.getUUID(), tick);
+
         if (!nearOracle(player)) {
             player.displayClientMessage(LimboText.oracleTooFar(), true);
             return;

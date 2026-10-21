@@ -100,6 +100,10 @@ public final class TemperiesFatiSpell extends AurorionSpell {
                 target -> target.isAlive() && !target.isSpectator() && !untouchable(target)
                         && !(target instanceof Player player && player.isCreative())
                         && !Displacement.isImmune(target)
+                        // A estase protege, mas tambem tranca mao e magia: em outro jogador, so onde
+                        // PvP vale. Quem conjurou entra sempre.
+                        && (target == caster || !target.hasEffect(MagiaEffects.UNTARGETABLE)
+                        && Hits.pvpAllowed(caster, target))
                         && target.position().distanceToSqr(at) <= radiusSqr);
         caught.sort(Comparator.comparingDouble(target -> target.position().distanceToSqr(at)));
         if (caught.size() > MAX_TARGETS) caught = caught.subList(0, MAX_TARGETS);

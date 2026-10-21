@@ -18,7 +18,8 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public final class ServiceActions {
-    private static final TagKey<Item> MEDICAL_SUPPLIES = TagKey.create(Registries.ITEM, ResourceLocation.parse("aurorion_profissoes:medical_supplies"));
+    /** Tambem consumido pela cura completa do medico ({@link DoctorHealing}). */
+    static final TagKey<Item> MEDICAL_SUPPLIES = TagKey.create(Registries.ITEM, ResourceLocation.parse("aurorion_profissoes:medical_supplies"));
     public record Plan(String action, String title, String detail, ItemStack result, int materials, int levels, WoundPart wound, boolean honey) {}
     public static final class Refusal extends RuntimeException { public Refusal(String message) { super(message); } }
     private ServiceActions() {}

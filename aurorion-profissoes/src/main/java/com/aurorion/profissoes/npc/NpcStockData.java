@@ -18,12 +18,20 @@ import java.util.*;
  *
  * <p>O estoque e do NPC configurado (o {@code id} do JSON), nao da entidade: dois corpos do mesmo
  * mercador vendem do mesmo estoque.
+ *
+ * <p>Tambem guarda as recargas dos servicos ({@link #cooldownUntil}). Antes elas moravam so na
+ * memoria do {@code NpcService}: um reinicio (ou crash) devolvia a cura de NPC com recarga de horas.
+ * Relogio de parede ({@code System.currentTimeMillis}), porque precisa atravessar reinicios.</p>
  */
 public final class NpcStockData extends SavedData {
     private static final SavedDataAccess<NpcStockData> ACCESS = new SavedDataAccess<>(
             "aurorion_profissoes_npc_estoque", NpcStockData::new, NpcStockData::load);
     private record Entry(long period, int sold) {}
     private final Map<String, Entry> entries = new HashMap<>();
+    /** chave do servico (conta|npc|indice) -> fim da recarga, em epoch ms. */
+    private final Map<String, Long> cooldowns = new HashMap<>();
+    /** Acima disto, as recargas vencidas sao varridas antes de gravar mais uma. */
+    private static final int COOLDOWN_SWEEP = 4096;
 
     public static NpcStockData get(MinecraftServer server) { return ACCESS.get(server); }
 
@@ -52,6 +60,16 @@ public final class NpcStockData extends SavedData {
         setDirty();
     }
 
+    public long cooldownUntil(String key) {
+        return cooldowns.getOrDefault(key, 0L);
+    }
+
+    public void setCooldown(String key, long until, long now) {
+        if (cooldowns.size() >= COOLDOWN_SWEEP) cooldowns.values().removeIf(value -> value <= now);
+        cooldowns.put(key, until);
+        setDirty();
+    }
+
     /** Repoe todas as ofertas de um NPC. */
     public int reset(String npcId) {
         int before = entries.size();
@@ -68,6 +86,13 @@ public final class NpcStockData extends SavedData {
             if (!entry.getString("Key").isEmpty())
                 data.entries.put(entry.getString("Key"), new Entry(entry.getLong("Period"), Math.max(0, entry.getInt("Sold"))));
         }
+        long now = System.currentTimeMillis();
+        var waits = tag.getList("Cooldowns", Tag.TAG_COMPOUND);
+        for (int i = 0; i < waits.size(); i++) {
+            var entry = waits.getCompound(i);
+            if (!entry.getString("Key").isEmpty() && entry.getLong("Until") > now)
+                data.cooldowns.put(entry.getString("Key"), entry.getLong("Until"));
+        }
         return data;
     }
 
@@ -80,6 +105,15 @@ public final class NpcStockData extends SavedData {
             list.add(out);
         });
         tag.put("Stock", list);
+        long now = System.currentTimeMillis();
+        var waits = new ListTag();
+        cooldowns.forEach((key, until) -> {
+            if (until <= now) return;
+            var out = new CompoundTag();
+            out.putString("Key", key); out.putLong("Until", until);
+            waits.add(out);
+        });
+        tag.put("Cooldowns", waits);
         return tag;
     }
 }

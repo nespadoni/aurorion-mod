@@ -20,6 +20,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * A corrente do Vinculum Carnificis.
  *
@@ -41,10 +45,27 @@ import org.jetbrains.annotations.Nullable;
  * <p>A ancora mora no {@code persistentData} do preso, ao lado do efeito que tambem e salvo:
  * deslogar preso e voltar continua preso, no mesmo lugar.
  *
- * <p><b>A corrente nao tem prazo.</b> Ela fica ate alguem conjurar o Vinculum de novo no preso
- * ({@link #unbind}), ou ate ele morrer. Leite e totem nao a abrem. Como o visual no cliente tem
- * prazo, a propria corrente o renova a cada {@value #VISUAL_REFRESH} ticks — e assim tambem quem
- * chega perto depois passa a ver a ancora.
+ * <p><b>Prazo.</b> A corrente fica ate alguem conjurar o Vinculum de novo no preso ({@link #unbind}),
+ * ate ele morrer ou ate {@value #MAX_DURATION} ticks (5 min). Leite e totem nao a abrem. Antes ela nao
+ * tinha prazo nenhum: prender nao abre cooldown ({@link ToggleCooldown}), e um conjurador prendia
+ * meia praça e ia embora. Como o visual no cliente tem prazo, a propria corrente o renova a cada
+ * {@value #VISUAL_REFRESH} ticks — e assim tambem quem chega perto depois passa a ver a ancora.
+ *
+ * <h2>Limites</h2>
+ *
+ * <ul>
+ *   <li><b>{@value #MAX_PER_CASTER} correntes por conjurador</b> ao mesmo tempo. A contagem e so em
+ *       memoria, refeita pelo proprio tick de cada preso ({@link #enforce}) — depois de um restart ela
+ *       se reconstroi em um segundo, sem varredura.</li>
+ *   <li><b>{@value #REBIND_COOLDOWN} ticks</b> sem poder ser preso de novo depois de solto: soltar e
+ *       prender o mesmo alvo em sequencia nao vira prisao perpetua.</li>
+ *   <li><b>Zona segura e refugio</b>: o preso num lugar onde PvP nao vale sai da corrente. Puxar e
+ *       sangrar dentro da zona segura e justamente o que ela proibe.</li>
+ *   <li><b>Sem dono, sem corrente</b>: quem prendeu saiu do jogo ou morreu, e a corrente se abre. O
+ *       sangramento sai em nome do dono; sem ele, sairia sem causador e passaria pela regra de PvP.</li>
+ *   <li>O sangramento respeita armadura (saiu de {@code bypasses_armor}); so o escudo nao segura, a
+ *       corrente nao vem de frente.</li>
+ * </ul>
  */
 public final class Binding {
     public static final ResourceKey<DamageType> DAMAGE_TYPE =
@@ -74,7 +95,35 @@ public final class Binding {
     private static final float HURT_BASE = 3;
     private static final float HURT_PER_STRAIN = 1;
 
+    /** 5 minutos de corrente, no maximo. */
+    public static final int MAX_DURATION = 20 * 60 * 5;
+    /** Correntes simultaneas por conjurador. */
+    public static final int MAX_PER_CASTER = 3;
+    /** 30 s sem poder ser preso de novo depois de solto. */
+    public static final int REBIND_COOLDOWN = 20 * 30;
+    /** Fora da corrente ate este tick do jogo. Fora do tag da ancora, que sai junto com a corrente. */
+    private static final String KEY_FREE_UNTIL = AurorionMagia.MOD_ID + ":vinculo_livre_ate";
+    /** Preso que nao ticou por este tempo (deslogou, descarregou) deixa de contar no limite. */
+    private static final int SEEN_TIMEOUT = 100;
+    /** Dono e zona segura conferidos uma vez por segundo, nao a cada tick da corrente. */
+    private static final int CHECK_INTERVAL = 20;
+
+    /** Dono -> (preso -> ultimo tick visto). So a thread do servidor mexe aqui. */
+    private static final Map<UUID, Map<UUID, Long>> BY_OWNER = new HashMap<>();
+
     private Binding() {
+    }
+
+    /**
+     * Por que {@code caster} nao pode prender {@code target} agora, ou {@code null} se pode. A chave
+     * de traducao vai para a barra de acao de quem conjurou.
+     */
+    @Nullable
+    public static String refusal(LivingEntity caster, LivingEntity target) {
+        long now = target.level().getGameTime();
+        if (target.getPersistentData().getLong(KEY_FREE_UNTIL) > now) return "aurorion_magia.corrente_recente";
+        if (active(caster.getUUID(), now) >= MAX_PER_CASTER) return "aurorion_magia.corrente_limite";
+        return null;
     }
 
     public static void bind(LivingEntity target, LivingEntity caster, float radius) {
@@ -89,8 +138,9 @@ public final class Binding {
         tag.putLong(KEY_VISUAL_AT, target.level().getGameTime());
         target.getPersistentData().put(KEY, tag);
 
-        target.addEffect(new MobEffectInstance(MagiaEffects.BOUND, MobEffectInstance.INFINITE_DURATION, 0,
+        target.addEffect(new MobEffectInstance(MagiaEffects.BOUND, MAX_DURATION, 0,
                 false, false, true), caster);
+        seen(caster.getUUID(), target.getUUID(), target.level().getGameTime());
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.VINCULUM, VISUAL_TICKS, anchor, radius);
     }
 
@@ -106,11 +156,28 @@ public final class Binding {
         }
     }
 
-    /** Chamado pelo tick do efeito, 5 vezes por segundo, so em quem esta preso. */
-    public static void enforce(LivingEntity entity) {
+    /**
+     * Chamado pelo tick do efeito, 5 vezes por segundo, so em quem esta preso.
+     *
+     * @return {@code false} quando a corrente deve se abrir (dono fora, preso na zona segura). O efeito
+     *         sai pelo retorno do tick — {@code removeEffect} aqui dentro mexeria na lista de efeitos
+     *         que o vanilla esta percorrendo.
+     */
+    public static boolean enforce(LivingEntity entity) {
         CompoundTag tag = tagOf(entity);
-        if (tag == null || !(entity.level() instanceof ServerLevel level)
-                || !tag.getString(KEY_DIM).equals(level.dimension().location().toString())) return;
+        if (tag == null || !(entity.level() instanceof ServerLevel level)) return true;
+        if (tag.hasUUID(KEY_OWNER)) seen(tag.getUUID(KEY_OWNER), entity.getUUID(), level.getGameTime());
+        if (entity.tickCount % CHECK_INTERVAL == 0) {
+            Entity owner = tag.hasUUID(KEY_OWNER) ? Owners.find(level, tag.getUUID(KEY_OWNER)) : null;
+            if (owner == null || !Hits.pvpAllowedFrom(owner, entity)) {
+                if (entity instanceof ServerPlayer player) {
+                    player.displayClientMessage(Component.translatable("aurorion_magia.corrente_solta"), true);
+                }
+                AurorionSpell.sound(entity, SoundEvents.CHAIN_BREAK, 1.0f, 1.2f);
+                return false;
+            }
+        }
+        if (!tag.getString(KEY_DIM).equals(level.dimension().location().toString())) return true;
 
         Vec3 anchor = new Vec3(tag.getDouble(KEY_X), tag.getDouble(KEY_Y), tag.getDouble(KEY_Z));
         float radius = tag.getFloat(KEY_RADIUS);
@@ -121,7 +188,7 @@ public final class Binding {
 
         if (distance <= radius) {
             if (strain > 0) tag.putInt(KEY_STRAIN, strain - 1);
-            return;
+            return true;
         }
 
         strain = Math.min(MAX_STRAIN, strain + 1);
@@ -141,6 +208,7 @@ public final class Binding {
         entity.resetFallDistance();
         bleed(level, entity, tag, strain);
         snap(entity, anchor, strain);
+        return true;
     }
 
     /** Perola ou teleporte negado: mesmo estalo do puxao, sem mover ninguem. */
@@ -160,6 +228,14 @@ public final class Binding {
         CompoundTag tag = tagOf(entity);
         if (tag == null) return;
         entity.getPersistentData().remove(KEY);
+        entity.getPersistentData().putLong(KEY_FREE_UNTIL, entity.level().getGameTime() + REBIND_COOLDOWN);
+        if (tag.hasUUID(KEY_OWNER)) {
+            Map<UUID, Long> held = BY_OWNER.get(tag.getUUID(KEY_OWNER));
+            if (held != null) {
+                held.remove(entity.getUUID());
+                if (held.isEmpty()) BY_OWNER.remove(tag.getUUID(KEY_OWNER));
+            }
+        }
         Vec3 anchor = new Vec3(tag.getDouble(KEY_X), tag.getDouble(KEY_Y), tag.getDouble(KEY_Z));
         // ttl zero: "este visual acabou" (ver ClientSpellVisuals.accept).
         MagiaNetwork.sendVisual(null, entity, SpellVisualPayload.Kind.VINCULUM, 0, anchor, tag.getFloat(KEY_RADIUS));
@@ -183,7 +259,10 @@ public final class Binding {
         if (now - tag.getLong(KEY_HURT_AT) < HURT_INTERVAL) return;
         tag.putLong(KEY_HURT_AT, now);
 
-        Entity owner = tag.hasUUID(KEY_OWNER) ? level.getEntity(tag.getUUID(KEY_OWNER)) : null;
+        // Sem dono nao ha sangue: o dano sairia sem causador e passaria pela regra de PvP. A conferencia
+        // de zona e refeita aqui, no instante do golpe, e nao so na de uma vez por segundo.
+        Entity owner = tag.hasUUID(KEY_OWNER) ? Owners.find(level, tag.getUUID(KEY_OWNER)) : null;
+        if (owner == null || !Hits.pvpAllowedFrom(owner, entity)) return;
         DamageSource source = new DamageSource(
                 level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), owner);
         entity.hurt(FriendlyFire.source(source, entity), HURT_BASE + HURT_PER_STRAIN * strain);
@@ -207,6 +286,24 @@ public final class Binding {
         if (entity instanceof ServerPlayer player) {
             player.displayClientMessage(Component.translatable("aurorion_magia.corrente"), true);
         }
+    }
+
+    private static void seen(UUID owner, UUID victim, long now) {
+        BY_OWNER.computeIfAbsent(owner, key -> new HashMap<>()).put(victim, now);
+    }
+
+    /** Correntes de {@code owner} vistas ha pouco. Limpa as que pararam de ticar. */
+    private static int active(UUID owner, long now) {
+        Map<UUID, Long> held = BY_OWNER.get(owner);
+        if (held == null) return 0;
+        held.values().removeIf(at -> now - at > SEEN_TIMEOUT);
+        if (held.isEmpty()) BY_OWNER.remove(owner);
+        return held.size();
+    }
+
+    /** Estado so em memoria: nao passa de um mundo para outro. */
+    public static void clear() {
+        BY_OWNER.clear();
     }
 
     @Nullable

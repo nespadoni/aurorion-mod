@@ -12,9 +12,10 @@ import java.util.Set;
 /**
  * O marcador de quem esta com o tempo parado — e o relogio da zona ({@link TimeStop}).
  *
- * <p>Mesmo desenho do {@code DreadAuraEffect}: infinito e invisivel, tica so no conjurador, e sem
- * zona ligada no servidor o custo e zero. O intervalo e conferido no tick, e nao em
- * {@link #shouldApplyEffectTickThisTick}, porque a duracao de um efeito infinito nao anda.
+ * <p>Mesmo desenho do {@code DreadAuraEffect}: invisivel, tica so no conjurador, e sem zona ligada no
+ * servidor o custo e zero. Tem prazo ({@link TimeStop#MAX_DURATION}); o intervalo continua conferido
+ * no tick da entidade, e nao em {@link #shouldApplyEffectTickThisTick}, porque zonas antigas foram
+ * salvas com efeito infinito, cuja duracao nao anda.
  */
 public final class TimeStopEffect extends MobEffect {
     public TimeStopEffect() {

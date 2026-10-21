@@ -14,6 +14,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
@@ -30,11 +31,11 @@ import java.util.Optional;
 /**
  * Mortem Dico — Sentenca Final. <b>Magia proibida.</b> "Eu declaro a morte."
  *
- * <p>Mata o alvo na hora, como {@code /kill}: ignora armadura, resistencia, encantamento, escudo,
- * invulnerabilidade de criativo e totem. O dano sai com o tipo proprio
- * {@code aurorion_magia:mortem_dico} (nas tags {@code bypasses_*} do vanilla), que registra quem
- * conjurou na mensagem de morte. Se algum mod ainda segurar a entidade viva, cai no {@code kill()}
- * de verdade.
+ * <p>Mata o alvo na hora, como {@code /kill}: ignora armadura, resistencia, encantamento, escudo e
+ * totem. Criativo, estase, inalvejavel e zona sem PvP seguram — o golpe tem que entrar. O dano sai
+ * com o tipo proprio {@code aurorion_magia:mortem_dico} (nas tags {@code bypasses_*} do vanilla), que registra quem
+ * conjurou na mensagem de morte. Se o golpe entrou e algum mod ainda segurar a entidade viva, cai no
+ * {@code kill()} de verdade.
  *
  * <h2>A sentenca coletiva</h2>
  *
@@ -140,8 +141,10 @@ public final class MortemDicoSpell extends AurorionSpell {
 
         DamageSource death = new DamageSource(
                 level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), caster);
-        target.hurt(FriendlyFire.source(death, target), Float.MAX_VALUE);
-        if (target.isAlive()) target.kill();
+        // So cai no kill() se o golpe entrou: o kill() usa genericKill, que passa por estase,
+        // inalvejavel e protecao de area. Mesma regra do Execution.execute.
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return;
+        if (target.hurt(FriendlyFire.source(death, target), Float.MAX_VALUE) && target.isAlive()) target.kill();
 
         sound(level, feet, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.6f, 1.6f);
         sound(level, feet, SoundEvents.SOUL_ESCAPE.value(), 2.0f, 0.5f);

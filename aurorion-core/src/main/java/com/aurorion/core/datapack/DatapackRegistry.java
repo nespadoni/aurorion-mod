@@ -3,6 +3,7 @@ package com.aurorion.core.datapack;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -39,8 +40,8 @@ import java.util.function.Function;
  *
  * <p>O estado sao dois snapshots imutaveis trocados de uma vez. Consulta em caminho de gameplay
  * nunca copia nem sincroniza; a troca so acontece na thread do servidor, durante o reload. Um
- * arquivo quebrado nao derruba os outros: ele e registrado no log e pulado (SDD §7.5 — dado que vem
- * de fora e hostil ate ser validado).
+ * arquivo quebrado nao derruba os outros: ele e registrado no log e pulado inteiro — nunca aceito pela
+ * metade (SDD §7.5 — dado que vem de fora e hostil ate ser validado).
  *
  * <pre>{@code
  * private static final DatapackRegistry<House> HOUSES =
@@ -136,10 +137,24 @@ public final class DatapackRegistry<T> {
     private void accept(Map<ResourceLocation, JsonElement> files) {
         Map<ResourceLocation, T> parsed = new HashMap<>(files.size());
 
-        files.forEach((id, json) -> codec.apply(id)
-                .parse(JsonOps.INSTANCE, json)
-                .resultOrPartial(error -> logger.error("'{}' ignorado em {}: {}", id, directory, error))
-                .ifPresent(value -> parsed.put(id, value)));
+        // Erro recusa a entrada inteira. O resultOrPartial de antes aceitava o que sobrava de um erro:
+        // uma lista acima do limite chegava cortada, e uma com elemento invalido chegava sem ele — um
+        // arquivo meio valido entrava em jogo como se estivesse certo, so com um log de erro do lado.
+        files.forEach((id, json) -> {
+            DataResult<T> result;
+            try {
+                result = codec.apply(id).parse(JsonOps.INSTANCE, json);
+            } catch (RuntimeException e) {
+                logger.error("'{}' recusado em {}: {}", id, directory, e.toString());
+                return;
+            }
+            var error = result.error();
+            if (error.isPresent()) {
+                logger.error("'{}' recusado inteiro em {}: {}", id, directory, error.get().message());
+                return;
+            }
+            result.result().ifPresent(value -> parsed.put(id, value));
+        });
 
         // Uma ordenacao so, sobre as entradas, e as duas listas saem dela — assim id e valor nunca
         // podem discordar de ordem, o que aconteceria se cada uma fosse ordenada por conta propria.

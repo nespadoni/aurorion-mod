@@ -102,9 +102,12 @@ primeiro. Dá para escrever "de 6 em 6 horas, e mais uma extra no sábado à noi
 é o fuso dos jogadores. E é tempo real, não tempo de jogo: o dia do Minecraft dura 20 minutos e para
 com `doDaylightCycle false`, então não serve de relógio.
 
-**Declare `arrival`.** É a única opção de respawn que o servidor *sabe* que é boa, porque quem
-construiu a estação garantiu. Sem ela, o mod procura um vão seguro na coluna onde a pessoa morreu, e
-só cai no spawn da dimensão se não achar nada.
+**Declare `arrival`.** É a melhor opção de respawn, mas agora ela é **conferida**: só vale se couber
+uma pessoa de pé ali (chão firme, dois blocos livres, sem fluido); senão o mod usa o vão mais próximo
+na coluna da estação ou num quadrado de 4 blocos em volta. Depois vêm, nesta ordem: um vão na coluna
+onde a pessoa morreu, um vão perto do spawn da dimensão (nunca acima do teto de bedrock) e, como
+último recurso, a estação de embarque (`station`) do lado de fora. Se nada servir, o vanilla decide
+— melhor sair da dimensão do que renascer em loop dentro da pedra. O caso aparece no log.
 
 ## Comandos
 

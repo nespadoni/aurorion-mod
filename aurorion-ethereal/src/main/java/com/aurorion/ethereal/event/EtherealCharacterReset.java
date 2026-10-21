@@ -4,7 +4,7 @@ import com.aurorion.core.character.CharacterNamedEvent;
 import com.aurorion.core.character.CharacterResetEvent;
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
-import com.aurorion.ethereal.house.HouseData;
+import com.aurorion.ethereal.house.HouseManager;
 import com.aurorion.ethereal.ranking.BoardService;
 import com.aurorion.ethereal.ranking.RankingData;
 import net.minecraft.server.MinecraftServer;
@@ -29,7 +29,8 @@ public final class EtherealCharacterReset {
         MinecraftServer server = event.server();
         UUID account = event.account();
 
-        HouseData.get(server).setHouse(account, null);
+        // Pelo HouseManager, e nao direto no HouseData: placar, tab e site precisam saber que a casa saiu.
+        HouseManager.clear(server, account);
 
         // Tambem descarta um rito em andamento: a cena pertencia ao personagem que acabou de morrer.
         CeremonyManager.cancel(server, account);

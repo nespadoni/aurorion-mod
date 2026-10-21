@@ -149,6 +149,10 @@ final class DeathHistoryMenu extends AbstractContainerMenu {
             hint("Este item ja foi recuperado deste registro.", ChatFormatting.RED);
             return;
         }
+        if (DeathSnapshot.fromEnderChest(entries.getCompound(entry))) {
+            hint("Ender chest: nao cai na morte, o jogador continua com este item. So para consulta.", ChatFormatting.RED);
+            return;
+        }
         if (DeathSnapshot.keptOnDeath(entries.getCompound(entry), original)) {
             hint("Mantido na morte: o jogador ja ficou com este item.", ChatFormatting.RED);
             return;

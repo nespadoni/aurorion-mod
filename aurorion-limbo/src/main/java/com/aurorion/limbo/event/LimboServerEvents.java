@@ -13,6 +13,7 @@ import com.aurorion.limbo.exile.LimboSpawn;
 import com.aurorion.limbo.finale.FinaleManager;
 import com.aurorion.limbo.network.LimboNetwork;
 import com.aurorion.limbo.report.DiscordSink;
+import com.aurorion.limbo.rescue.RescueManager;
 import com.aurorion.vidas.lives.LivesManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -88,6 +89,10 @@ public final class LimboServerEvents {
         LimboEnvironment.reconcile(player);
         refreshPanel(player);
         announceArrival(player);
+        // Entrou fora do Limbo: qualquer Vinculo no bolso e sobra de uma viagem que ja acabou (ou de
+        // antes de o Vinculo ser atado). Quem entrou DENTRO do Limbo sem motivo e devolvido pela
+        // RescueManager#sweepStrays no proximo segundo, fora do evento de login.
+        if (player.level().dimension() != LimboManager.dimension()) RescueManager.leftLimbo(player);
     }
 
     @SubscribeEvent
@@ -95,6 +100,7 @@ public final class LimboServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             LimboEnvironment.disconnect(player);
             FinaleManager.logout(player);
+            LimboNetwork.forget(player.getUUID());
         }
     }
 
@@ -118,8 +124,13 @@ public final class LimboServerEvents {
         ServerLevel limbo = player.server.getLevel(LimboManager.dimension());
         if (limbo == null) return;
         boolean diedInLimbo = player.serverLevel() == limbo;
-        if (!diedInLimbo && (!LivesManager.isExiled(player.server, player.getUUID())
-                || event.getDimensionTransition().newLevel() != limbo)) return;
+        boolean exiled = LivesManager.isExiled(player.server, player.getUUID());
+        if (!diedInLimbo && (!exiled || event.getDimensionTransition().newLevel() != limbo)) return;
+        // Quem nao esta exilado so renasce no Limbo se estiver no meio de um resgate valido (os
+        // Vinculos cairam com o corpo e ele volta para busca-los). Qualquer outro — alvo ja resgatado,
+        // terceiro que entrou por acidente — renasce na cama ou no spawn, como no vanilla, em vez de
+        // ficar preso num Limbo sem prazo, sem Porta e sem registro.
+        if (!exiled && !RescueManager.isRescuer(player)) return;
 
         BlockPos spot = LimboSpawn.scattered(limbo);
         if (spot == null) return;
@@ -155,6 +166,10 @@ public final class LimboServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             LimboEnvironment.reconcile(player);
             refreshPanel(player);
+            // Saiu do Limbo: a viagem de resgate acabou e o kit que sobrou nao sai junto.
+            if (event.getFrom() == LimboManager.dimension() && event.getTo() != LimboManager.dimension()) {
+                RescueManager.leftLimbo(player);
+            }
         }
     }
 
@@ -268,6 +283,7 @@ public final class LimboServerEvents {
         FinaleManager.sweep(event.getServer());
         LimboEnvironment.tick(event.getServer());
         LimboManager.sweep(event.getServer());
+        RescueManager.sweepStrays(event.getServer());
         com.aurorion.limbo.oracle.OracleRotation.tick(event.getServer());
         if (++cleanupCounter >= 60) {
             cleanupCounter = 0;
@@ -342,6 +358,21 @@ public final class LimboServerEvents {
     }
 
     /**
+     * Um morto tambem nao fala no chat.
+     *
+     * <p>O {@code FinaleConnectionMixin} tranca movimento, interacao e inventario, mas o chat nao
+     * passa por {@code ensureRunningOnSameThread} e por isso nao cabe naquele ponto de injecao. O
+     * {@code aurorion_personagem} so bloqueia quem esta retido na criacao — e quem assiste ao
+     * epilogo nao esta retido (a criacao e adiada, ver {@code CharacterGate#deferWhile}), nem existe
+     * bloqueio nenhum sem aquele mod instalado. Comandos como {@code /msg} e {@code /me} ja caem no
+     * {@link #onCommand}.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onChat(net.neoforged.neoforge.event.ServerChatEvent event) {
+        if (FinaleManager.isDead(event.getPlayer())) event.setCanceled(true);
+    }
+
+    /**
      * Solta o que e do processo, e nao do mundo.
      *
      * <p>O {@code SavedDataAccess} do core ja cuida dos dados. O que sobra aqui e o narrador (que
@@ -355,6 +386,9 @@ public final class LimboServerEvents {
         AdmCompat.reset();
         LimboEnvironment.reset();
         DiscordSink.shutdown();
+        RescueManager.reset();
+        LimboNetwork.reset();
+        com.aurorion.limbo.oracle.OracleRotation.reset();
         counter = 0;
         cleanupCounter = 0;
     }

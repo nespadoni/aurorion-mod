@@ -52,7 +52,7 @@ public final class PhoneNameDirectorySync {
     /** Um nome mudou (ou saiu, com {@code name == null}). */
     public static void changed(MinecraftServer server, UUID account, @Nullable String name) {
         String nick = nickOf(server, account);
-        if (nick == null) return;
+        if (nick == null || !PhoneNameDirectoryPayload.encodable(nick, name == null ? "" : name)) return;
         if (cached != null) {
             if (name == null) cached.remove(nick);
             else if (cached.size() < PhoneNameDirectoryPayload.MAX_ENTRIES || cached.containsKey(nick)) cached.put(nick, name);
@@ -71,7 +71,7 @@ public final class PhoneNameDirectorySync {
             String nick = nickOf(server, entry.getKey());
             if (nick == null) continue;
             String name = FakeName.parse(entry.getValue()).plain();
-            if (!name.isBlank()) built.put(nick, name);
+            if (!name.isBlank() && PhoneNameDirectoryPayload.encodable(nick, name)) built.put(nick, name);
         }
         cached = built;
         return built;

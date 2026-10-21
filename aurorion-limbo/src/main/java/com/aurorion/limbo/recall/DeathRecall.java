@@ -109,8 +109,32 @@ public final class DeathRecall {
     private record Marking(UUID deathId, Collection<ItemEntity> drops) {
     }
 
+    /**
+     * Intervalo entre dois usos do Relicario pela mesma pessoa: 30 s.
+     *
+     * <p>Folga sobre os 10 s do chamado. Sem isto, um Relicario que volta para o bolso a cada chao
+     * vazio podia ser usado em laco — cada uso segurando chunks carregados e gravando auditoria.
+     */
+    public static final int COOLDOWN_TICKS = 20 * 30;
+
     private static final List<Marking> MARKINGS = new ArrayList<>();
     private static final Map<UUID, Recall> RECALLS = new HashMap<>();
+
+    /**
+     * Morte que ja foi procurada com a area inteira carregada e nao tinha mais nada: personagem -> morte.
+     *
+     * <p>Vazio e definitivo para aquela morte — item marcado que alguem pegou vira pilha de inventario
+     * e perde a marca, e nada novo ganha a marca de uma morte antiga. Entao o segundo uso responde
+     * na hora, sem ticket, sem chunk e sem auditoria. Fica so na sessao: um reinicio custa no maximo
+     * mais uma procura.
+     */
+    private static final Map<UUID, UUID> KNOWN_EMPTY = new HashMap<>();
+
+    /**
+     * Relicarios a devolver a quem nao podia recebe-los no fim do chamado (morto, na tela de
+     * respawn). Entregues no primeiro tick em que a pessoa estiver viva de novo. So na sessao.
+     */
+    private static final Map<UUID, Integer> OWED = new HashMap<>();
 
     private DeathRecall() {
     }
@@ -127,6 +151,7 @@ public final class DeathRecall {
     public static void recordDeath(ServerPlayer player) {
         if (!counts(player)) return;
 
+        KNOWN_EMPTY.remove(characterOf(player));
         DeathData.get(player.server).record(characterOf(player), new DeathData.Death(DeathId.of(player),
                 player.level().dimension().location(), player.position(), System.currentTimeMillis()));
     }
@@ -266,6 +291,12 @@ public final class DeathRecall {
         Target target = target(player);
         if (target == null) return false;
 
+        // Ja sabemos que nao sobrou nada: responde sem cobrar, sem ticket e sem auditoria.
+        if (target.death().id().equals(KNOWN_EMPTY.get(target.character()))) {
+            refuse(player, "aurorion_limbo.relicario.vazio");
+            return false;
+        }
+
         ServerLevel level = target.level();
         ChunkPos center = new ChunkPos(BlockPos.containing(target.death().position()));
         int radius = LimboConfig.RELIC_CHUNK_RADIUS.get();
@@ -283,8 +314,11 @@ public final class DeathRecall {
     /** Chamado a cada tick, no fim dele. Sem morte nem Relicario em uso, sao duas listas vazias. */
     public static void tick(MinecraftServer server) {
         if (!MARKINGS.isEmpty()) markPending();
+        if (!OWED.isEmpty()) deliverOwed(server);
         if (RECALLS.isEmpty()) return;
 
+        // Fechar um chamado pode abrir outro (e pode ate mexer em OWED): a lista vem antes.
+        List<Map.Entry<Recall, Boolean>> done = null;
         for (Iterator<Recall> it = RECALLS.values().iterator(); it.hasNext(); ) {
             Recall recall = it.next();
             ServerLevel level = server.getLevel(recall.dimension());
@@ -292,8 +326,47 @@ public final class DeathRecall {
             if (level != null && !ready && level.getGameTime() < recall.deadline()) continue;
 
             it.remove();
-            finish(server, level, recall);
+            if (done == null) done = new ArrayList<>(2);
+            done.add(Map.entry(recall, ready));
         }
+        if (done == null) return;
+        for (Map.Entry<Recall, Boolean> entry : done) {
+            Recall recall = entry.getKey();
+            ServerLevel level = server.getLevel(recall.dimension());
+            finish(server, level, recall, entry.getValue());
+            // O ticket tem prazo proprio, mas segurar a area carregada depois de o chamado fechar e
+            // custo sem motivo — principalmente no caso vazio, que e o mais repetido.
+            if (level != null) {
+                level.getChunkSource().removeRegionTicket(RECALL_TICKET, recall.center(), recall.radius() + 1,
+                        recall.center());
+            }
+        }
+    }
+
+    private static void deliverOwed(MinecraftServer server) {
+        for (Iterator<Map.Entry<UUID, Integer>> it = OWED.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<UUID, Integer> entry = it.next();
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+            if (player == null || !player.isAlive() || player.isSpectator()) continue;
+            it.remove();
+            player.getInventory().placeItemBackInInventory(new ItemStack(LimboItems.RELICARIO.get(), entry.getValue()));
+            player.displayClientMessage(Component.translatable("aurorion_limbo.relicario.devolvido")
+                    .withStyle(style -> style.withColor(LimboText.AMBER)), true);
+        }
+    }
+
+    /**
+     * Quem pagou ainda pode receber o espolio agora?
+     *
+     * <p>O chamado leva ate dez segundos, e nesse tempo a pessoa pode ter morrido, caido no Limbo ou
+     * chegado ao fim do personagem. Entregar o espolio a um corpo morto o espalharia de novo no chao
+     * — agora sem a marca da morte original, fora do alcance de qualquer Relicario.
+     */
+    private static boolean canReceive(ServerPlayer player) {
+        return player.isAlive() && !player.isSpectator()
+                && !com.aurorion.limbo.finale.FinaleManager.isDead(player)
+                && player.level().dimension() != LimboManager.dimension()
+                && !LivesManager.isExiled(player.server, player.getUUID());
     }
 
     private static boolean entitiesLoaded(ServerLevel level, Recall recall) {
@@ -307,13 +380,31 @@ public final class DeathRecall {
         return true;
     }
 
-    private static void finish(MinecraftServer server, @Nullable ServerLevel level, Recall recall) {
+    private static void finish(MinecraftServer server, @Nullable ServerLevel level, Recall recall, boolean ready) {
         ServerPlayer player = server.getPlayerList().getPlayer(recall.account());
         if (player == null || !characterOf(player).equals(recall.character())) {
             // Deslogou (ou trocou de personagem) nos segundos do chamado. Os itens continuam no chao,
             // marcados; um Relicario novo ainda os encontra. O gasto deste fica no log para a staff.
             AurorionLimbo.LOGGER.warn("Relicario da conta {} (personagem {}) fechou sem o dono presente; "
                     + "nada foi movido. morte={}", recall.account(), recall.character(), recall.deathId());
+            return;
+        }
+
+        if (!canReceive(player)) {
+            // Nada sai do chao: os itens continuam la, marcados e protegidos, para um Relicario
+            // futuro. O Relicario pago volta — agora se a pessoa esta viva (exilada, por exemplo), ou
+            // no primeiro tick em que ela estiver viva de novo.
+            if (recall.paid()) {
+                if (player.isAlive() && !player.isSpectator()) {
+                    player.getInventory().placeItemBackInInventory(new ItemStack(LimboItems.RELICARIO.get()));
+                    player.displayClientMessage(Component.translatable("aurorion_limbo.relicario.devolvido")
+                            .withStyle(style -> style.withColor(LimboText.AMBER)), true);
+                } else {
+                    OWED.merge(player.getUUID(), 1, Integer::sum);
+                }
+            }
+            AurorionLimbo.LOGGER.info("Relicario de {} fechou sem entregar: o dono morreu ou foi exilado durante"
+                    + " o chamado. morte={}", player.getGameProfile().getName(), recall.deathId());
             return;
         }
 
@@ -334,7 +425,13 @@ public final class DeathRecall {
         if (stacks == 0) {
             if (recall.paid()) player.getInventory().placeItemBackInInventory(new ItemStack(LimboItems.RELICARIO.get()));
             refuse(player, "aurorion_limbo.relicario.vazio");
-            audit(player, AuditEvent.Type.RELICARIO_USADO, recall.deathId(), "nada restou; relicario devolvido");
+            // Sem auditoria: nada mudou no mundo, e o caso vazio era justamente o que se repetia em
+            // laco (o item volta) enchendo o arquivo e o webhook. So conta como "sabidamente vazio"
+            // se a area inteira tinha carregado; um prazo vencido com chunk faltando pode ter
+            // deixado itens de fora.
+            if (ready) KNOWN_EMPTY.put(recall.character(), recall.deathId());
+            AurorionLimbo.LOGGER.debug("Relicario de {} nao achou nada da morte {} (area completa={}).",
+                    player.getGameProfile().getName(), recall.deathId(), ready);
             return;
         }
 
@@ -370,12 +467,23 @@ public final class DeathRecall {
                 player.getInventory().placeItemBackInInventory(new ItemStack(LimboItems.RELICARIO.get()));
             }
         }
+        OWED.forEach((account, count) -> {
+            ServerPlayer player = server.getPlayerList().getPlayer(account);
+            if (player != null && player.isAlive()) {
+                player.getInventory().placeItemBackInInventory(new ItemStack(LimboItems.RELICARIO.get(), count));
+            } else {
+                AurorionLimbo.LOGGER.warn("Relicario: {} Relicario(s) devido(s) a conta {} nao foram entregues"
+                        + " antes do desligamento; devolva manualmente.", count, account);
+            }
+        });
         reset();
     }
 
     public static void reset() {
         RECALLS.clear();
         MARKINGS.clear();
+        KNOWN_EMPTY.clear();
+        OWED.clear();
     }
 
     // --- Comum -----------------------------------------------------------------------------------

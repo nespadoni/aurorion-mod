@@ -93,6 +93,21 @@ public final class LimboText {
         return Component.translatable("aurorion_limbo.vinculo.nao_exilado");
     }
 
+    /** O Vinculo foi pago por outra pessoa, ou quem segura nao esta em condicao de resgatar. */
+    public static MutableComponent bondNotYours() {
+        return Component.translatable("aurorion_limbo.vinculo.nao_e_seu");
+    }
+
+    /** O Vinculo foi atado a outro exilado (ou a uma queda anterior desta mesma pessoa). */
+    public static MutableComponent bondOtherTarget() {
+        return Component.translatable("aurorion_limbo.vinculo.outro_alvo");
+    }
+
+    /** A passagem fechou porque o alvo saiu do Limbo antes de o dono atravessar. */
+    public static MutableComponent passageTargetGone() {
+        return Component.translatable("aurorion_limbo.passagem.alvo_saiu");
+    }
+
     /**
      * A travessia falhou por um motivo que o jogador nao causou e nao resolve sozinho.
      *

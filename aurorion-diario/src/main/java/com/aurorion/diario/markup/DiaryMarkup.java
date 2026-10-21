@@ -37,7 +37,7 @@ public final class DiaryMarkup {
     public static JsonObject toDocument(String markup) {
         JsonArray blocks = new JsonArray();
         String text = markup == null ? "" : markup.replace("\r\n", "\n").replace('\r', '\n');
-        if (text.length() > MAX_MARKUP_CHARS) text = text.substring(0, MAX_MARKUP_CHARS);
+        text = DiaryText.clip(text, MAX_MARKUP_CHARS);
         String[] lines = text.split("\n", -1);
 
         List<String> paragraph = new ArrayList<>();
@@ -228,9 +228,24 @@ public final class DiaryMarkup {
     // ── Documento → marcação ────────────────────────────────────────────────────
 
     public static String toMarkup(JsonObject document) {
+        return toMarkup(document, Integer.MAX_VALUE);
+    }
+
+    /**
+     * A marcação do documento, ou {@link DiaryText#TOO_LONG} se ela passar de {@code maxChars}.
+     *
+     * <p>A marcação cresce em relação ao texto do site — cada {@code *} e {@code \} vira dois, cada
+     * bloco ganha prefixo e separador —, então um texto dentro do limite do site pode não caber no
+     * pacote. Para de montar assim que passa do teto: nada de construir 1 MiB só para jogar fora.
+     */
+    public static String toMarkup(JsonObject document, int maxChars) {
         if (document == null || !(document.get("blocks") instanceof JsonArray blocks)) return "";
         List<String> out = new ArrayList<>();
+        long size = 0;
+        int counted = 0;
         for (JsonElement element : blocks) {
+            while (counted < out.size()) size += out.get(counted++).length() + 2L;
+            if (size > maxChars + 2L) return DiaryText.TOO_LONG;
             if (!(element instanceof JsonObject block)) continue;
             String type = string(block, "type");
             switch (type) {
@@ -252,7 +267,8 @@ public final class DiaryMarkup {
                 }
             }
         }
-        return String.join("\n\n", out);
+        String markup = String.join("\n\n", out);
+        return markup.length() > maxChars ? DiaryText.TOO_LONG : markup;
     }
 
     private static String markRuns(JsonElement runs) {
@@ -265,6 +281,7 @@ public final class DiaryMarkup {
             boolean italic = false;
             if (run.get("marks") instanceof JsonArray marks) {
                 for (JsonElement mark : marks) {
+                    if (!mark.isJsonPrimitive()) continue; // documento do site e dado de fora: nada de getAsString cego
                     bold |= "bold".equals(mark.getAsString());
                     italic |= "italic".equals(mark.getAsString());
                 }
@@ -307,13 +324,19 @@ public final class DiaryMarkup {
     }
 
     private static int intOf(JsonObject object, String member) {
-        JsonElement value = object.get(member);
-        return value != null && value.isJsonPrimitive() ? value.getAsInt() : 0;
+        long value = longOf(object, member);
+        return value < Integer.MIN_VALUE || value > Integer.MAX_VALUE ? 0 : (int) value;
     }
 
+    /** Numero do JSON, ou 0 se o campo falta, nao e numero ou nao cabe — nunca excecao. */
     private static long longOf(JsonObject object, String member) {
         JsonElement value = object.get(member);
-        return value != null && value.isJsonPrimitive() ? value.getAsLong() : 0L;
+        if (value == null || !value.isJsonPrimitive()) return 0L;
+        try {
+            return value.getAsJsonPrimitive().getAsBigDecimal().longValueExact();
+        } catch (NumberFormatException | ArithmeticException e) {
+            return 0L;
+        }
     }
 
     private static String stripTrailing(String line) {

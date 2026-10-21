@@ -12,6 +12,23 @@ public final class ServicosRules {
     public static final int MAX_JOBS = 3;
     public static final int MAX_CANDIDATES = 50;
 
+    /**
+     * Pedidos novos (diretos ou abertos) por conta por dia UTC. Sem isto, criar e cancelar em
+     * sequencia gravava um pedido a cada toque no save e avisava todos os profissionais a cada vez:
+     * um jogador sozinho enchia o {@code aurorion_servicos.dat} e o celular de todo mundo.
+     */
+    public static final int MAX_ORDERS_PER_DAY = 12;
+    /**
+     * Teto do servidor inteiro. Ao chegar nele, os pedidos encerrados mais antigos saem primeiro; so
+     * se todos estiverem em andamento o pedido novo e recusado. Com alts, o limite por conta nao
+     * basta: este e o que mantem o arquivo e as buscas lineares do tamanho de "centenas".
+     */
+    public static final int MAX_ORDERS_TOTAL = 2_000;
+    /** Intervalo minimo entre dois pedidos novos da mesma conta. */
+    public static final long ORDER_COOLDOWN_MS = 20_000L;
+    /** Um profissional recebe no maximo um aviso de pedido/candidato neste intervalo; o selo conta o resto. */
+    public static final long NOTICE_COOLDOWN_MS = 5_000L;
+
     public static final int TITLE = 40;
     public static final int DESCRIPTION = 160;
     public static final int PRICE = 24;
@@ -92,6 +109,20 @@ public final class ServicosRules {
             return pedido.with(PedidoStatus.CONCLUIDO, pedido.provider(), now);
         }
         return pedido;
+    }
+
+    /**
+     * Pedido cancelado antes de alguem aceitar nao tem historia para guardar: sai do save na hora,
+     * em vez de ficar um dia como "Cancelado". E o que impede o ciclo criar/cancelar de crescer o
+     * arquivo — a cota diaria continua contando o pedido.
+     */
+    public static boolean discardOnCancel(Pedido pedido) {
+        return pedido.status() == PedidoStatus.ABERTO && pedido.provider() == null;
+    }
+
+    /** O dia (UTC) da cota diaria. Pura para o teste; virada a meia-noite UTC, igual para todos. */
+    public static long dayOf(long now) {
+        return Math.floorDiv(now, DAY);
     }
 
     public static boolean purge(Pedido pedido, long now) {

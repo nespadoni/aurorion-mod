@@ -34,7 +34,7 @@ import java.util.List;
  *
  * <h2>O relogio</h2>
  *
- * <p>Mesmo desenho da Presenca Aterradora: um efeito infinito e invisivel no conjurador
+ * <p>Mesmo desenho da Presenca Aterradora: um efeito invisivel (com prazo) no conjurador
  * ({@code tempo_suspenso}) tica a zona uma vez por segundo, e so enquanto ela existe. Sem zona
  * ligada, custo zero. O congelamento em quem esta dentro dura pouco mais que o intervalo entre
  * pulsos e e renovado a cada um — quem for arrastado para fora descongela sozinho, e quem entrar
@@ -49,13 +49,19 @@ import java.util.List;
  *   <li>Um payload de visual por pulso, para quem tem o chunk do centro.</li>
  * </ul>
  *
- * <p>Acaba com a segunda conjuracao, com a morte, ao deslogar e ao trocar de dimensao. Leite e totem
- * nao a desfazem.
+ * <p>Acaba com a segunda conjuracao, com a morte, ao deslogar, ao trocar de dimensao e depois de
+ * {@value #MAX_DURATION} ticks. Leite e totem nao a desfazem. Jogador num lugar onde PvP nao vale e
+ * inalvejavel nao congelam, e chefe ({@code imune_deslocamento}) tambem nao.
  */
 public final class TimeStop {
     public static final int INTERVAL_TICKS = 20;
     /** Altura do cilindro para cada lado do centro. Cobre salao de pe-direito alto e mezanino. */
     public static final double HEIGHT = 12;
+    /**
+     * Prazo da zona: 2 minutos. Antes era infinita, e o conjurador AFK num canto deixava o salao
+     * inteiro congelado ate deslogar. Vencido, o efeito expira e o {@link #release} devolve o tempo.
+     */
+    public static final int MAX_DURATION = 20 * 60 * 2;
 
     /**
      * O congelamento dura tres pulsos e so e renovado quando cai abaixo de um pulso e um quarto: um
@@ -94,7 +100,7 @@ public final class TimeStop {
         tag.putString(KEY_DIM, dimension(level));
         tag.putFloat(KEY_RADIUS, radius);
         caster.getPersistentData().put(KEY, tag);
-        caster.addEffect(new MobEffectInstance(MagiaEffects.TIME_STOP, MobEffectInstance.INFINITE_DURATION, 0,
+        caster.addEffect(new MobEffectInstance(MagiaEffects.TIME_STOP, MAX_DURATION, 0,
                 false, false, false));
 
         sound(level, center, SoundEvents.BELL_RESONATE, 3.0f, 0.35f);
@@ -138,7 +144,14 @@ public final class TimeStop {
         for (ServerPlayer player : level.players()) {
             if (player != caster && player.isAlive() && !player.isSpectator() && !player.isCreative()
                     && inside(player, center, radiusSqr)) {
-                FrozenLink.freezeRenewing(player, PLAYER_FREEZE_TICKS, PLAYER_RENEW_BELOW, caster);
+                // Zona segura e inalvejavel ficam fora do tempo parado, conferido a cada pulso na
+                // posicao de cada um: o salao pode encostar na praça. Quem ja estava congelado e
+                // pisou na zona segura descongela na hora, sem esperar o prazo do ultimo pulso.
+                if (player.hasEffect(MagiaEffects.UNTARGETABLE) || !Hits.pvpAllowed(caster, player)) {
+                    FrozenLink.thaw(player, MOB_FREEZE_TICKS);
+                } else {
+                    FrozenLink.freezeRenewing(player, PLAYER_FREEZE_TICKS, PLAYER_RENEW_BELOW, caster);
+                }
             }
         }
 
@@ -147,6 +160,7 @@ public final class TimeStop {
             List<LivingEntity> mobs = level.getEntitiesOfClass(LivingEntity.class, box,
                     target -> !(target instanceof Player) && target != caster && target.isAlive()
                             && !AurorionSpell.untouchable(target) && !Displacement.isImmune(target)
+                            && !target.hasEffect(MagiaEffects.UNTARGETABLE)
                             && inside(target, center, radiusSqr));
             for (int i = 0; i < Math.min(MAX_CREATURES, mobs.size()); i++) {
                 FrozenLink.freezeRenewing(mobs.get(i), MOB_FREEZE_TICKS, MOB_RENEW_BELOW, caster);

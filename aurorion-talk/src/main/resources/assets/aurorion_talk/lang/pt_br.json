@@ -10,7 +10,7 @@
   "key.categories.aurorion_talk": "Aurorion Talk",
   "key.aurorion_talk.open_config": "Personalizar balão de fala",
   "options.aurorion_talk.hidePlayerChat": "Esconder chat dos jogadores",
-  "options.aurorion_talk.hidePlayerChat.tooltip": "As falas dos jogadores saem do HUD e viram apenas balões. Mensagens de sistema, comandos, morte e entrada/saída continuam aparecendo.",
+  "options.aurorion_talk.hidePlayerChat.tooltip": "As falas dos jogadores saem do HUD e viram apenas balões. Mensagens de sistema, /msg, /me, comandos, morte e entrada/saída continuam aparecendo. Quem recebe cada fala é o servidor que decide.",
   "options.aurorion_talk.hideOnlyWhenBalloonShown": "Só esconder com balão",
   "options.aurorion_talk.hideOnlyWhenBalloonShown.tooltip": "Mantém no chat as falas de quem está longe demais para renderizar o balão, para você não perder mensagem.",
   "options.aurorion_talk.showOwnBalloon": "Mostrar meu balão",

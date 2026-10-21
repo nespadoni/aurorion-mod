@@ -49,5 +49,11 @@ public class SoulBondItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("item.aurorion_limbo.vinculo_de_alma.desc")
                 .withStyle(style -> style.withColor(0x82B0CD).withItalic(true)));
+        // So informativo: quem decide se o atado vale e o RescueManager, no servidor.
+        String bound = RescueManager.boundName(stack);
+        if (bound != null) {
+            tooltip.add(Component.translatable("item.aurorion_limbo.vinculo_de_alma.atado", bound)
+                    .withStyle(style -> style.withColor(0x82B0CD)));
+        }
     }
 }

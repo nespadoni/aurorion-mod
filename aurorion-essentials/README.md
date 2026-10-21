@@ -34,10 +34,16 @@ Códigos de cor no estilo Bukkit (`&` + `0-9a-fk-or`) são traduzidos para forma
 antes de qualquer coisa ser exibida — não é o caractere de seção cru dentro do texto, é `Style`
 por trecho, então funciona igual em chat, tab list e nametag.
 
-`/fakename set` é auto-aplicável, sem permissão especial (é cosmético). Trocar o nome de **outro**
-jogador (`/fakename clear <jogador>`) e descobrir quem está por trás de um nome falso (`/realname`)
-exigem nível de operador 2+ — a segunda é deliberadamente uma ferramenta de moderação, não algo
-disponível para jogadores comuns.
+O `/fakename` inteiro é de staff (nível 2+): o nome exibido vem do personagem, e o celular entrega
+PIX e e-mail pelo nome que mostra — nome exibido não é cosmético. Descobrir quem está por trás de um
+nome falso (`/realname`) também exige nível 2+.
+
+O nome é **reservado**: é recusado se, sem cor, acento, caixa, espaço extra, caractere invisível ou
+letra cirílica disfarçada, for igual ao nome de outra conta — nick (online ou no cache de perfis),
+personagem atual, morto ou reservado, ou outro nome falso gravado, online ou offline. Nome com
+caractere invisível/bidi é recusado de saída. O nome gravado é conferido de novo no login (o que hoje
+seria recusado é apagado e logado), e o nome do próprio personagem sempre vence um nome falso antigo
+igual de outra conta. Cada conta só troca de nome uma vez a cada 10 s (cada troca é broadcast).
 
 ## Privacidade dos avisos do chat
 
@@ -53,7 +59,7 @@ Minecraft), `ADMINS` (só OP nível 2+) e `NOBODY`.
 | `joinLeaveMessages` | `NOBODY` | "Fulano entrou/saiu do jogo" |
 | `advancementMessages` | `NOBODY` | "Fulano completou a conquista..." |
 | `deathMessagesInChat` | `ADMINS` | "Fulano foi morto por..." (inclusive nas rotas de time do scoreboard) |
-| `restrictPrivateMessages` | `true` | `/msg`, `/tell` e `/w` só para operadores |
+| `restrictPrivateMessages` | `true` | `/msg`, `/tell`, `/w`, `/teammsg` e `/tm` só para operadores (mudança com o servidor no ar reenvia a lista de comandos em até 1 s) |
 
 **A morte é administrativa por padrão:** somente OP nível 2+ recebe
 `[admin] <causa da morte> (nome real) [TP] [Inventario]`. Jogadores comuns não recebem

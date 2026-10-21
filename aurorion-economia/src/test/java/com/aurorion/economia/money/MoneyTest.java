@@ -59,6 +59,14 @@ class MoneyTest {
         assertThrows(Money.MoneyFormatException.class, () -> Money.parse("0,0"));
     }
 
+    /** Digito de outro alfabeto passava no isDigit e virava casa decimal absurda. */
+    @Test
+    void acceptsOnlyAsciiDigits() {
+        for (String bad : new String[]{"١٢", "12,٣", "１２", "१"}) {
+            assertThrows(Money.MoneyFormatException.class, () -> Money.parse(bad), "entrada: " + bad);
+        }
+    }
+
     /** Dois saldos validos tem que somar sem estourar — e o que toda transferencia faz. */
     @Test
     void theCeilingLeavesRoomToAddTwoBalances() {

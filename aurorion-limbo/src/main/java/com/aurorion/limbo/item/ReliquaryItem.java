@@ -31,9 +31,14 @@ public class ReliquaryItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if (!(player instanceof ServerPlayer server)) return InteractionResultHolder.success(stack);
 
+        // Cada chamado aceito segura chunks carregados, procura entidades e grava auditoria. O
+        // vanilla ja recusa item em cooldown antes de chegar aqui; a checagem repetida e o que vale
+        // se algum mod chamar use() direto.
+        if (server.getCooldowns().isOnCooldown(this)) return InteractionResultHolder.fail(stack);
         if (!DeathRecall.recall(server, !server.hasInfiniteMaterials())) {
             return InteractionResultHolder.fail(stack);
         }
+        server.getCooldowns().addCooldown(this, DeathRecall.COOLDOWN_TICKS);
         stack.consume(1, server);
         return InteractionResultHolder.consume(stack);
     }

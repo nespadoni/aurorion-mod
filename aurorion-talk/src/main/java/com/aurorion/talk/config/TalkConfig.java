@@ -27,15 +27,21 @@ public final class TalkConfig {
     static {
         BUILDER.comment("Como o chat dos jogadores aparece no HUD.").push("chat");
 
+        // Isto e so aparencia. Quem recebe cada fala e decidido pelo servidor (TalkServerConfig,
+        // secao proximity): desligar aqui mostra no HUD as falas que ja chegaram, nunca as de longe.
         HIDE_PLAYER_CHAT = BUILDER
                 .comment("Remove as mensagens de jogadores do HUD do chat (elas viram apenas baloes).",
-                        "Mensagens de sistema, comandos, morte e entrada/saida continuam visiveis.")
+                        "Mensagens de sistema, comandos, /msg, /me, morte e entrada/saida continuam visiveis.",
+                        "Nao muda o que voce recebe: quem esta longe demais o servidor nem entrega.")
                 .define("hidePlayerChat", true);
 
+        // Padrao true: se o servidor entregou a fala, voce esta no alcance dela. Sem balao (quem
+        // falou esta fora da distancia de renderizacao, ou e a staff espiando de longe), esconder
+        // seria jogar fora a unica copia da mensagem.
         HIDE_ONLY_WHEN_BALLOON_SHOWN = BUILDER
                 .comment("Se true, so esconde a mensagem quando um balao foi realmente criado.",
-                        "Util para nao perder mensagens de jogadores fora do alcance de renderizacao.")
-                .define("hideOnlyWhenBalloonShown", false);
+                        "Evita perder falas de quem esta fora do alcance de renderizacao.")
+                .define("hideOnlyWhenBalloonShown", true);
 
         BUILDER.pop();
         BUILDER.comment("Aparencia e comportamento dos baloes.").push("balloons");

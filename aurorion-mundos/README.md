@@ -67,6 +67,13 @@ dois mapas. Config só é lida no boot, que é a garantia que esse dado precisa.
 da seção abaixo: para pré-gerar em outra máquina, o que precisa viajar é um número num TOML, não um
 save inteiro.
 
+O seed é **congelado no boot** (`ServerAboutToStartEvent`): editar o TOML com o servidor no ar só vale
+no próximo boot — antes, o NeoForge recarregava o arquivo e os chunks novos saíam de outro seed.
+
+⚠️ **Os seeds padrão são públicos** (estão neste repositório): qualquer um gera o mesmo terreno e mapeia
+minérios e estruturas fora do servidor. Eles não mudam no código porque a produção pode já ter gerado
+com eles. **Antes de gerar um mundo novo, defina seeds próprios no TOML do servidor.**
+
 ⚠️ **O id da dimensão vira o nome da pasta em `dimensions/`. Escolha o nome antes de pré-gerar** —
 renomear depois orfana tudo que foi gerado.
 

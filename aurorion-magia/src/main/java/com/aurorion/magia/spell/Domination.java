@@ -136,6 +136,9 @@ public final class Domination {
         if (masterEntity != null && candidate.isAlliedTo(masterEntity)) return true;
         if (candidate instanceof OwnableEntity pet && master.equals(pet.getOwnerUUID())) return true;
         if (candidate instanceof Player player && (player.isCreative() || player.isSpectator())) return true;
+        // O dominado e a mao do mestre: jogador onde PvP nao vale (ou inalvejavel) nao vira alvo dele,
+        // senao o Imperium era o jeito de ferir dentro da zona segura por procuracao.
+        if (candidate.hasEffect(MagiaEffects.UNTARGETABLE) || Hits.safeSpot(candidate)) return true;
         if (!candidate.attackable() || !mob.canAttack(candidate) || AurorionSpell.untouchable(candidate)) return true;
         return master.equals(masterOf(candidate));
     }

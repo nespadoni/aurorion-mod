@@ -12,6 +12,8 @@
   "commands.aurorion_economia.pagar.insufficient": "Not enough money: you have %s.",
   "commands.aurorion_economia.pagar.self": "You cannot pay yourself.",
   "commands.aurorion_economia.pagar.targetFull": "The destination account cannot hold that much.",
+  "commands.aurorion_economia.pagar.blocked": "Your character cannot send money right now: in Limbo, dead or still unnamed.",
+  "commands.aurorion_economia.pagar.starterLocked": "The starter purse (%s) cannot be passed on yet: spend it freely, or play a little longer to unlock it.",
 
   "commands.aurorion_economia.economia.dar": "Created %s for %s. Balance is now %s.",
   "commands.aurorion_economia.economia.tirar": "Removed %s from %s. Balance is now %s.",

@@ -10,11 +10,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /** Estado global dos upgrades de cada Casa; nenhum dado pertence a um jogador ou mural isolado. */
 public final class HouseUpgradeData extends SavedData {
@@ -24,10 +28,24 @@ public final class HouseUpgradeData extends SavedData {
 
     /** Quantas movimentacoes do cofre o mural lembra por Casa. E vitrine, nao extrato: o log e a auditoria. */
     public static final int MAX_MOVEMENTS = 6;
+    /**
+     * Quantas linhas de deposito o historico guarda. Menos que as que a tela mostra, de proposito: uma
+     * enxurrada de depositos minusculos so gira entre estas linhas e nunca empurra um saque para fora
+     * da vitrine logo depois de ele acontecer.
+     */
+    public static final int MAX_DEPOSIT_LINES = 2;
+    /** Deposito abaixo disto (1 Obolo, em Fragmentos) nem entra no historico; continua no log. */
+    public static final long HISTORY_MIN_DEPOSIT = 10L;
 
     public record State(int protectorLevel, long lastLifeGrantAt) {
         public static final State EMPTY = new State(0, 0L);
     }
+
+    /**
+     * Quanto um membro ja tirou do cofre da propria Casa num dia ({@code day} = dia do calendario do
+     * servidor). Gravado em disco para que sair e voltar, ou reiniciar o servidor, nao zere o limite.
+     */
+    public record Usage(ResourceLocation house, long day, long amount) { }
 
     /** Uma linha do cofre: quem (nome do personagem), o que ({@link Kind}), quanto e quando. */
     public record Movement(long at, String actor, Kind kind, long amount) { }
@@ -41,6 +59,7 @@ public final class HouseUpgradeData extends SavedData {
 
     private final Map<ResourceLocation, State> states = new HashMap<>();
     private final Map<ResourceLocation, Deque<Movement>> movements = new HashMap<>();
+    private final Map<UUID, Usage> usage = new HashMap<>();
 
     public static HouseUpgradeData get(MinecraftServer server) {
         return ACCESS.get(server);
@@ -73,9 +92,31 @@ public final class HouseUpgradeData extends SavedData {
     }
 
     public void recordMovement(ResourceLocation house, Movement movement) {
+        if (movement.kind() == Kind.DEPOSIT && movement.amount() < HISTORY_MIN_DEPOSIT) return;
         Deque<Movement> list = movements.computeIfAbsent(house, ignored -> new ArrayDeque<>());
         list.addFirst(movement);
+        // Deposito so desloca deposito; saque e melhoria saem apenas pela idade.
+        if (movement.kind() == Kind.DEPOSIT) {
+            int deposits = 0;
+            for (Iterator<Movement> it = list.iterator(); it.hasNext(); ) {
+                if (it.next().kind() == Kind.DEPOSIT && ++deposits > MAX_DEPOSIT_LINES) it.remove();
+            }
+        }
         while (list.size() > MAX_MOVEMENTS) list.removeLast();
+        setDirty();
+    }
+
+    /** Quanto {@code member} ja tirou hoje do cofre de {@code house}. Outro dia ou outra Casa = zero. */
+    public long withdrawnToday(UUID member, ResourceLocation house, long day) {
+        Usage current = usage.get(member);
+        return current != null && current.day() == day && current.house().equals(house) ? current.amount() : 0L;
+    }
+
+    public void recordWithdrawal(UUID member, ResourceLocation house, long day, long amount) {
+        if (amount <= 0L) return;
+        long before = withdrawnToday(member, house, day);
+        long total = before > Long.MAX_VALUE - amount ? Long.MAX_VALUE : before + amount;
+        usage.put(member, new Usage(house, day, total));
         setDirty();
     }
 
@@ -102,7 +143,20 @@ public final class HouseUpgradeData extends SavedData {
                         Kind.byOrdinal(entry.getInt("Kind")), Math.max(0L, entry.getLong("Amount"))));
             }
         }
+        ListTag used = tag.getList("Withdrawals", Tag.TAG_COMPOUND);
+        for (int i = 0; i < used.size(); i++) {
+            CompoundTag entry = used.getCompound(i);
+            ResourceLocation house = ResourceLocation.tryParse(entry.getString("House"));
+            if (house == null || !entry.hasUUID("Player")) continue;
+            data.usage.put(entry.getUUID("Player"),
+                    new Usage(house, entry.getLong("Day"), Math.max(0L, entry.getLong("Amount"))));
+        }
         return data;
+    }
+
+    /** Dia do calendario no fuso do servidor: o limite "por dia" vira a meia-noite de quem joga aqui. */
+    public static long currentDay() {
+        return LocalDate.now(ZoneId.systemDefault()).toEpochDay();
     }
 
     @Override
@@ -129,6 +183,20 @@ public final class HouseUpgradeData extends SavedData {
             moves.add(entry);
         }));
         tag.put("Movements", moves);
+
+        // Dia que ja passou nao limita mais ninguem: nao precisa ir para o disco.
+        long today = currentDay();
+        ListTag used = new ListTag();
+        usage.forEach((player, entry) -> {
+            if (entry.day() < today) return;
+            CompoundTag item = new CompoundTag();
+            item.putUUID("Player", player);
+            item.putString("House", entry.house().toString());
+            item.putLong("Day", entry.day());
+            item.putLong("Amount", entry.amount());
+            used.add(item);
+        });
+        tag.put("Withdrawals", used);
         return tag;
     }
 }

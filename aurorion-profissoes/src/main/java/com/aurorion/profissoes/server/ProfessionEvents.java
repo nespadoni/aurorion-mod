@@ -6,6 +6,7 @@ import com.aurorion.profissoes.compat.FoodCompat;
 import com.aurorion.profissoes.config.ProfessionsConfig;
 import com.aurorion.profissoes.data.*;
 import com.aurorion.profissoes.network.ProfessionsNetwork;
+import com.aurorion.profissoes.npc.NpcService;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.*;
@@ -36,10 +37,25 @@ public final class ProfessionEvents {
         if (event.getEntity() instanceof ServerPlayer player) ProfessionsNetwork.sync(player);
     }
     @SubscribeEvent public static void stop(ServerStoppedEvent event) { ServiceManager.clear(); }
+    /**
+     * Nunca lanca: o {@link CharacterResetEvent} e um so para todos os mods, e uma excecao aqui (save
+     * de profissoes ilegivel faz {@code assign} lancar de proposito) cortava o evento antes de os
+     * outros ouvintes zerarem carteira, vidas e servicos do morto.
+     */
     @SubscribeEvent public static void reset(CharacterResetEvent event) {
-        ProfessionData.get(event.server()).assign(event.account(), Profession.NONE);
-        ServiceManager.forget(event.account());
-        if (event.player() != null) ProfessionsNetwork.sync(event.player());
+        try {
+            ProfessionData.get(event.server()).assign(event.account(), Profession.NONE);
+        } catch (RuntimeException error) {
+            AurorionProfissoes.LOGGER.error("Profissoes: nao consegui limpar a profissao de {} no reset; corrija o save.",
+                    event.account(), error);
+        }
+        try {
+            ServiceManager.forget(event.account());
+            NpcService.forget(event.account());
+            if (event.player() != null) ProfessionsNetwork.sync(event.player());
+        } catch (RuntimeException error) {
+            AurorionProfissoes.LOGGER.error("Profissoes: falha ao encerrar sessoes de {} no reset.", event.account(), error);
+        }
     }
     @SubscribeEvent public static void anvil(PlayerInteractEvent.RightClickBlock event) {
         if (!ProfessionsConfig.enabled() || !event.getLevel().getBlockState(event.getPos()).is(BlockTags.ANVIL)

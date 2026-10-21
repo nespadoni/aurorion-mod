@@ -46,13 +46,14 @@ public final class PhoneConversationFile {
         }
         if (!"1".equals(properties.getProperty("version"))) throw new IOException("Versao de historico desconhecida");
         int count = count(properties, "thread.count", 10_000);
-        List<ThreadState> threads = new ArrayList<>(count);
+        // O contador vem do arquivo: nao reserva memoria pelo que ele diz, so pelo que chegar a ler.
+        List<ThreadState> threads = new ArrayList<>(Math.min(count, 64));
         for (int i = 0; i < count; i++) {
             String prefix = "thread." + i + ".";
             Map<String, String> thread = readRecord(properties, prefix + "data.");
             int unread = count(properties, prefix + "unread", Integer.MAX_VALUE);
             int messageCount = count(properties, prefix + "message.count", 1_000_000);
-            List<Map<String, String>> messages = new ArrayList<>(messageCount);
+            List<Map<String, String>> messages = new ArrayList<>(Math.min(messageCount, 256));
             for (int j = 0; j < messageCount; j++) messages.add(readRecord(properties, prefix + "message." + j + "."));
             threads.add(new ThreadState(thread, messages, unread));
         }
@@ -60,6 +61,25 @@ public final class PhoneConversationFile {
         Set<String> processed = new LinkedHashSet<>();
         for (int i = 0; i < processedCount; i++) processed.add(required(properties, "processed." + i));
         return new Snapshot(threads, processed);
+    }
+
+    /**
+     * Junta os ids que o telefone processou desde a ultima gravacao ({@code live}) a ordem de chegada
+     * ({@code order}) e esquece os mais antigos alem de {@code max} — na ordem e no conjunto do proprio
+     * telefone, para a memoria tambem ficar limitada numa sessao longa.
+     *
+     * @return os ids a gravar, do mais antigo ao mais novo
+     */
+    static Set<String> keepRecent(LinkedHashSet<String> order, Set<String> live, int max) {
+        order.retainAll(live);
+        for (String id : live) order.add(id);
+        var oldest = order.iterator();
+        while (order.size() > max && oldest.hasNext()) {
+            String id = oldest.next();
+            oldest.remove();
+            live.remove(id);
+        }
+        return new LinkedHashSet<>(order);
     }
 
     /** Fecha o arquivo temporario antes de substitui-lo: uma gravacao incompleta preserva o anterior. */

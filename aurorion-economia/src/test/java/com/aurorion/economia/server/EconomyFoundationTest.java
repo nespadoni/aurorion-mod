@@ -20,8 +20,35 @@ class EconomyFoundationTest {
         assertFalse(data.grantStarter(firstCharacter, account, 40));
         assertEquals(40, data.balance(account));
 
+        // A morte definitiva zera o saldo antes de o proximo personagem receber a bolsa dele.
+        data.setBalance(account, 0);
         assertTrue(data.grantStarter(UUID.randomUUID(), account, 40));
         assertEquals(40, data.balance(account));
+    }
+
+    /** Sobrescrever apagava o que a staff ja tinha dado antes de o personagem ser nomeado. */
+    @Test
+    void starterBalanceIsAddedInsteadOfOverwritingTheWallet() {
+        WalletData data = new WalletData();
+        UUID account = UUID.randomUUID();
+        data.setBalance(account, 25);
+
+        assertTrue(data.grantStarter(UUID.randomUUID(), account, 40));
+        assertEquals(65, data.balance(account));
+    }
+
+    @Test
+    void starterBalanceCanBeSpentButOnlyTransferredAfterPlayTime() {
+        WalletData data = new WalletData();
+        UUID account = UUID.randomUUID();
+
+        assertTrue(data.grantStarter(UUID.randomUUID(), account, 40, 1_000L));
+        assertEquals(0, data.transferable(account, 1_000L + WalletData.STARTER_LOCK_TICKS - 1));
+        data.setBalance(account, 100);
+        assertEquals(60, data.transferable(account, 1_000L), "o que veio depois da bolsa circula");
+        assertEquals(60, data.transferable(account, -1L), "offline nao conta progresso");
+        assertEquals(100, data.transferable(account, 1_000L + WalletData.STARTER_LOCK_TICKS));
+        assertEquals(100, data.transferable(account, 0L), "a trava some de vez depois de vencida");
     }
 
     @Test

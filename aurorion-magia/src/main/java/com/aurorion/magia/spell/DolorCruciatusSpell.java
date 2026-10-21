@@ -18,6 +18,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -124,14 +125,25 @@ public final class DolorCruciatusSpell extends AurorionSpell {
         return !inReach(mob, target);
     }
 
-    private void pulse(LivingEntity caster, LivingEntity target, int spellLevel) {
+    /**
+     * Um pulso. A paralisia so vem junto com o golpe: dano cancelado (zona segura, estase, outro mod)
+     * nao prende ninguem — senao a vitima ficava travada e sem conjurar dentro da zona segura so porque
+     * o feixe a alcancou. A unica excecao e o dano recusado pelos ticks de invulnerabilidade do golpe
+     * anterior, que nao e protecao: o alvo continua sob tortura.
+     */
+    static boolean torment(LivingEntity caster, LivingEntity target, float damage, DamageSource source, int ticks) {
+        if (!Hits.hittable(caster, target)) return false;
         DamageSources.ignoreNextKnockback(target);
-        FriendlyFire.applyDamage(target, pulseDamage(spellLevel, caster), getDamageSource(caster));
-
+        boolean landed = FriendlyFire.applyDamage(target, damage, source);
+        if (!landed && target.invulnerableTime <= 10) return false;
         // visible=false: sem as bolhas de pocao do vanilla, que viajam como dado de entidade para
         // todo mundo por perto. O visual e o nosso feixe; o icone continua no HUD do alvo.
-        target.addEffect(new MobEffectInstance(MagiaEffects.CRUCIATUS, EFFECT_TICKS, 0, false, false, true), caster);
+        target.addEffect(new MobEffectInstance(MagiaEffects.CRUCIATUS, ticks, 0, false, false, true), caster);
+        return true;
+    }
 
+    private void pulse(LivingEntity caster, LivingEntity target, int spellLevel) {
+        if (!torment(caster, target, pulseDamage(spellLevel, caster), getDamageSource(caster), EFFECT_TICKS)) return;
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.CRUCIATUS_BEAM, EFFECT_TICKS);
     }
 

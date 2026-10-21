@@ -81,6 +81,26 @@ class PrivacyMixinTargetTest {
         assertEquals("(Lnet/minecraft/server/level/ServerPlayer;)V", save.desc);
     }
 
+    /** {@code WhisperCommandMixin} e {@code TeamMsgCommandMixin} redirecionam todo {@code Commands.literal} do register. */
+    @Test void privateMessageCommandsStillBuildTheirLiteralsInRegister() throws IOException {
+        assertEquals(3, commandLiterals("net.minecraft.server.commands.MsgCommand"), "msg, tell e w");
+        assertEquals(2, commandLiterals("net.minecraft.server.commands.TeamMsgCommand"), "teammsg e tm");
+    }
+
+    private static int commandLiterals(String className) throws IOException {
+        MethodNode method = methodOf(className, "register");
+        assertNotNull(method, className + "#register nao existe mais nesta versao");
+        int found = 0;
+        for (AbstractInsnNode instruction : method.instructions) {
+            if (instruction instanceof MethodInsnNode call && "net/minecraft/commands/Commands".equals(call.owner)
+                    && "literal".equals(call.name)
+                    && "(Ljava/lang/String;)Lcom/mojang/brigadier/builder/LiteralArgumentBuilder;".equals(call.desc)) {
+                found++;
+            }
+        }
+        return found;
+    }
+
     private static int broadcastCalls(String className, String methodName) throws IOException {
         return calls(className, methodName, BROADCAST, BROADCAST_DESCRIPTOR);
     }

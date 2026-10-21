@@ -29,7 +29,8 @@ aparece **de uma vez**, já na altura cheia (do chão ao "infinito do céu"), na
 alvo — com som. A partir daí:
 
 1. **HOLD** — o alvo fica montado no próprio feixe (imóvel, só pode olhar ao redor — ver
-   "Imobilidade real" abaixo) por um tempo curto antes de começar a subir. Pausa dramática.
+   "Imobilidade real" abaixo) por um tempo curto antes de começar a subir. Pausa dramática. Shift
+   não desmonta do feixe durante HOLD/ASCEND.
 2. **ASCEND** — o feixe (e o alvo montado nele) sobe até a altura configurada. Durante HOLD +
    ASCEND o alvo fica cego (`MobEffects.BLINDNESS`). Ao terminar de subir, o teleporte de verdade
    acontece: o alvo desmonta e é teleportado pro destino real.
@@ -39,6 +40,12 @@ alvo — com som. A partir daí:
 Jogadores que não são o alvo são empurrados pra fora se chegarem perto do feixe durante toda a
 vida dele; ele nunca tem colisão sólida (ver "Decisões de arquitetura"). Depois do teleporte real,
 o jogador fica invisível por um tempo curto (configurável).
+
+**Ninguém morre de queda:** o teleporte acontece ainda montado (o `teleportTo` desmonta no mesmo
+tick) e é conferido; se não chegou (dimensão descarregada, viagem recusada), o alvo volta ao chão do
+ponto de partida. Chegando no ar (destino é a posição exata de quem chamou, que pode estar voando), a
+queda é zerada e o alvo recebe Queda Lenta pelo tempo da descida. Desconectar no meio da subida pousa
+o personagem no chão antes do save. A barreira de casa do `aurorion-areas` ignora quem está no feixe.
 
 `/abduzir voltar` refaz a mesma máquina de 3 fases, partindo de onde o jogador está agora e indo
 para a última posição salva de onde ele foi abduzido — a origem é lembrada entre reinícios do
@@ -59,7 +66,9 @@ consegue olhar em volta.
 | Não bate, não usa, não quebra, não coloca | Eventos de interação, ataque, bloco e uso recusados no servidor |
 | Não troca de slot, não solta item, não troca de mão, não abre inventário | O cliente consome as teclas; um item jogado com Q volta ao inventário |
 | Mob congelado não ataca nem anda | Perde a IA enquanto durar; o estado anterior (`NoAI`) é devolvido no fim |
-| Continua | Olhar, chat, comandos, voz, menu de pausa, F5 |
+| Não foge por teleporte nem portal | Pérola, coro, teleporte de magia e portal recusados; só o `/tp`/`/spreadplayers` da staff e o feixe de abdução passam |
+| Não usa comando de jogador | Só `/msg`, `/tell`, `/w`, `/r`, `/reply`, `/me`, `/teammsg`, `/tm`, `/list`, `/help`; staff (nível 2) passa |
+| Continua | Olhar, chat, os comandos de conversa acima, voz, menu de pausa, F5 |
 
 O estado "congelado" é o efeito `aurorion_utils:congelado`, e ele **não tem cura**: nem leite nem
 totem o removem (e congelado nem consegue beber). A decisão antiga de "montaria, não efeito"
@@ -67,7 +76,12 @@ existia justamente por causa do leite. A montaria continua sendo o que prende; o
 estado que o servidor, o cliente e outros mods consultam. O congelado só sai por:
 - `/unfreeze`;
 - fim do tempo;
-- `/effect clear` da staff.
+- reset de personagem.
+
+`/effect clear` e a purificação de outros mods (`removeAllEffects`, feitiço de limpeza) **não** soltam
+mais o freeze da staff — antes, qualquer remoção do efeito soltava a pessoa e ainda apagava o registro
+de "sem prazo". Só o congelamento curto (até 30 s restantes, o que o Tempus Sistere põe) sai por esse
+caminho.
 
 Por que o freeze antigo "não funcionava direito": ele só montava a pessoa na âncora, e **agachar
 desmonta** no Minecraft. Um Shift e acabou. Nada impedia bater, usar item ou trocar de slot.

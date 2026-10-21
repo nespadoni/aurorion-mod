@@ -35,13 +35,7 @@ public final class DrowningEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         if (entity.level().isClientSide) return true;
-        int air = entity.getAirSupply();
-        if (air > -20) {
-            entity.setAirSupply(air - AIR_PER_PULSE);
-            return true;
-        }
-        entity.setAirSupply(-20);
-        Drowning.suffocate(entity, DAMAGE);
-        return true;
+        // false: dono sumiu, o afogamento acaba (o vanilla tira o efeito, e o fim do efeito no MagiaServerEvents enche o ar).
+        return Drowning.pulse(entity, AIR_PER_PULSE, DAMAGE);
     }
 }

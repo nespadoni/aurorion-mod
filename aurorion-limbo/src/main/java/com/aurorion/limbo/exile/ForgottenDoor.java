@@ -246,6 +246,16 @@ public final class ForgottenDoor {
         authorizedTick = player.server.getTickCount();
     }
 
+    /**
+     * Ha uma travessia de sistema autorizada para este jogador neste tick?
+     *
+     * <p>So consulta, nao consome. Serve a quem desfaz fugas do exilio: uma travessia que o proprio
+     * Limbo autorizou nunca e tratada como fuga.
+     */
+    public static boolean isAuthorized(ServerPlayer player) {
+        return authorized == player && authorizedTick == player.server.getTickCount();
+    }
+
     /** Consulta e limpa: a autorizacao vale para uma travessia, no tick em que foi dada. */
     public static boolean consumeAuthorization(ServerPlayer player, ResourceKey<Level> destination) {
         if (authorized != player || authorizedFrom != player.level().dimension()

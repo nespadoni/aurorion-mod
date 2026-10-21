@@ -2,7 +2,6 @@ package com.aurorion.magia.spell;
 
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
-import com.aurorion.magia.registry.MagiaEffects;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.SchoolRegistry;
 import io.redspace.ironsspellbooks.api.spells.CastSource;
@@ -13,18 +12,15 @@ import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import io.redspace.ironsspellbooks.api.util.AnimationHolder;
 import io.redspace.ironsspellbooks.api.util.Utils;
 import io.redspace.ironsspellbooks.capabilities.magic.MagicManager;
-import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -32,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -138,7 +133,8 @@ public final class DolorUniversusSpell extends AurorionSpell {
                 || !(playerMagicData.getAdditionalCastData() instanceof Suspended suspended)) return;
         for (Hold hold : suspended.holds) {
             LivingEntity target = hold.resolve(serverLevel);
-            if (target == null) continue;
+            // Ficou inalvejavel, entrou em criativo ou a area virou sem PvP: para de ser erguido.
+            if (target == null || !held(entity, target)) continue;
             Vec3 pull = hold.hover.subtract(target.position()).scale(SPRING);
             if (pull.length() > MAX_LIFT_SPEED) pull = pull.normalize().scale(MAX_LIFT_SPEED);
             launch(target, pull);
@@ -155,9 +151,8 @@ public final class DolorUniversusSpell extends AurorionSpell {
             for (Hold hold : suspended.holds) {
                 LivingEntity target = hold.resolve(serverLevel);
                 if (target == null) continue;
-                DamageSources.ignoreNextKnockback(target);
-                FriendlyFire.applyDamage(target, damage, getDamageSource(entity));
-                target.addEffect(new MobEffectInstance(MagiaEffects.CRUCIATUS, EFFECT_TICKS, 0, false, false, true), entity);
+                // Dano e paralisia juntos, e so em quem ainda pode levar golpe (ver DolorCruciatusSpell).
+                DolorCruciatusSpell.torment(entity, target, damage, getDamageSource(entity), EFFECT_TICKS);
             }
             sound(entity, SoundEvents.WARDEN_HEARTBEAT, 2.0f, 0.6f);
             sound(entity, SoundEvents.RAVAGER_ROAR, 0.5f, 0.35f);
@@ -190,21 +185,21 @@ public final class DolorUniversusSpell extends AurorionSpell {
     }
 
     private static Suspended gather(ServerLevel level, LivingEntity caster, int spellLevel) {
-        int radius = radius(spellLevel);
-        double radiusSqr = radius * radius;
         double lift = 1.5 + 0.3 * (spellLevel - 1);
-        List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class, caster.getBoundingBox().inflate(radius),
-                target -> target != caster && target.isAlive() && !target.isSpectator() && !untouchable(target)
-                        && !(target instanceof Player player && player.isCreative())
-                        && !Displacement.isImmune(target)
-                        && target.distanceToSqr(caster) <= radiusSqr);
-        victims.sort(Comparator.comparingDouble(target -> target.distanceToSqr(caster)));
+        // A mesma busca das magias de area: sem chefe, sem inalvejavel, sem jogador onde PvP nao vale.
+        List<LivingEntity> victims = AreaCast.victims(level, caster, caster.position(), radius(spellLevel),
+                MAX_TARGETS, target -> true);
 
         List<Hold> holds = new ArrayList<>();
-        for (LivingEntity victim : victims.subList(0, Math.min(MAX_TARGETS, victims.size()))) {
+        for (LivingEntity victim : victims) {
             holds.add(new Hold(victim.getUUID(), victim.position().add(0, lift, 0)));
         }
         return new Suspended(holds);
+    }
+
+    /** Reconferido a cada tick da suspensao: a busca foi feita uma vez so, no comeco. */
+    private static boolean held(LivingEntity caster, LivingEntity target) {
+        return Hits.hittable(caster, target) && !Displacement.isImmune(target);
     }
 
     private float pulseDamage(int spellLevel, @Nullable LivingEntity caster) {

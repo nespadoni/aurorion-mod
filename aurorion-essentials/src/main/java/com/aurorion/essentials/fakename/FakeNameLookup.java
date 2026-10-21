@@ -2,7 +2,6 @@ package com.aurorion.essentials.fakename;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -25,9 +24,12 @@ public final class FakeNameLookup {
     private FakeNameLookup() {
     }
 
-    /** A forma comparavel de um nome: sem cor, sem caixa, sem espaco sobrando. */
+    /**
+     * A forma comparavel de um nome: sem cor, sem caixa, sem espaco sobrando, sem caractere invisivel
+     * nem acento. A regra mora no {@link NameKey}, a mesma que reserva o nome contra impostor.
+     */
     public static String key(String name) {
-        return LegacyColorCodes.parse(name).getString().trim().toLowerCase(Locale.ROOT);
+        return NameKey.of(name);
     }
 
     /**
@@ -35,7 +37,7 @@ public final class FakeNameLookup {
      *
      * @param rawNames conta -> texto cru do nome falso, como fica em disco
      * @return a conta, ou {@code null} se ninguem usa esse nome. Com mais de uma conta no mesmo nome
-     *         (so acontece com dado antigo: o comando recusa colisao entre quem esta online), vence a
+     *         (so acontece com dado antigo: hoje o nome e reservado contra toda conta conhecida, online ou nao), vence a
      *         menor UUID, para que a resposta seja sempre a mesma.
      */
     @Nullable

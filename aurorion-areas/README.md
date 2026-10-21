@@ -15,7 +15,8 @@ Depende do `aurorion-core` **0.2.0+** (contrato `HouseGate`). A barreira de casa
 - Círculos exatos e polígonos simples, inclusive côncavos; união de partes e subtração de recortes.
 - Altura própria por forma. Uma sala pode ocupar apenas um andar.
 - Prioridade por regra, com herança nas sobreposições.
-- Voo, magia, spawn hostil, dano hostil e PvP controlados no servidor.
+- Voo, magia, spawn hostil, dano hostil e PvP controlados no servidor. PvP indireto (pet, flecha, TNT, raio do tridente) conta como PvP.
+- **Proteção de blocos** por área: `construir`, `interagir`, `explosao`, `fluido`, `pistao`. Áreas de casa já nascem protegidas contra quem não é da casa.
 - Exceções por personagem, regra e área.
 - **Áreas de casa**: barreira invisível que só deixa passar quem é daquela casa do `aurorion-ethereal`.
 - **Água tratada por área**: só a torneira, ou toda a água da área, enche o cantil purificado (Legendary Survival Overhaul).
@@ -114,7 +115,8 @@ Limites: 512 áreas; 32 formas por área (partes + recortes); 128 vértices por 
 | `/area mundo <perfil>\|herdar` | Define/limpa o padrão da dimensão atual |
 | `/area aqui [jogador]` | Mostra regras efetivas, área de origem e sobreposições |
 
-Regras nativas: `voo`, `magia`, `monstros`, `dano_monstros`, `pvp`, mais duas de **concessão**:
+Regras nativas: `voo`, `magia`, `monstros`, `dano_monstros`, `pvp`, as cinco de **proteção de blocos**
+(`construir`, `interagir`, `explosao`, `fluido`, `pistao` — ver [Proteção de blocos](#proteção-de-blocos)), mais duas de **concessão**:
 `casa` (passe de visitante de uma área de casa) e `agua_pura` / `agua_pura_pia` (água tratada).
 Ver abaixo.
 
@@ -122,7 +124,7 @@ Ver abaixo.
 valem no mapa inteiro até alguém negar. `agua_pura` é uma concessão: **não existe em lugar nenhum
 até alguém permitir**. Por isso não adianta deixá-la em `herdar` e esperar que funcione — sem um
 `permitir` explícito, a resposta é não.
-`monstros negar` impede spawn; `dano_monstros negar` impede dano causado por hostis. PvP considera as posições de atacante e vítima.
+`monstros negar` impede spawn; `dano_monstros negar` impede dano causado por hostis. PvP considera as posições de atacante e vítima — e o atacante é o **jogador por trás** do golpe: dono do lobo/gato/cavalo, quem atirou a flecha ou o tridente, quem acendeu a TNT, quem invocou o raio. Com o dono offline, a posição da vítima basta para negar.
 
 A decisão é independente para cada regra: vence a área de maior prioridade que tenha valor explícito. Em empate, vence o id alfabeticamente menor. `herdar` remove o valor local; não significa `permitir`. Ambiente, multiplicador de vida e multiplicador de dano também resolvem separadamente.
 
@@ -138,6 +140,41 @@ Remova com `false`. O nome é o da conta Minecraft (também aceita seletores de 
 NPCs e outras entidades não recebem restrições de voo/magia. Fake players também têm bypass. Para NPCs que usam tipos classificados como monstros, há a tag de tipos `aurorion_areas:exempt_entities` e a tag individual de entidade `aurorion_areas_npc`. A tag individual deve estar definida **antes do spawn** quando a área impede monstros (por exemplo, no NBT de invocação do NPC).
 
 Espectadores e, por padrão, staff em criativo ignoram restrições pessoais e ambientes. **Esta é a causa mais comum de "criei a área e nada acontece":** quem acabou de criar a área quase sempre está em criativo, e por isso continua voando dentro dela. `/area criar` e `/area mundo` avisam na hora quando você está nessa situação, e `/area aqui` mostra o bypass a qualquer momento. Para avaliar a experiência real, consulte um jogador de sobrevivência ou desative `creativeStaffBypass` pela configuração do servidor.
+
+## Proteção de blocos
+
+Cinco regras valem na posição do **bloco** (não na do jogador) e só são consultadas quando alguém mexe
+em algo — nada disso entra no tick do jogador:
+
+| Regra | O que nega | Quem responde |
+|---|---|---|
+| `construir` | Quebrar e colocar blocos, balde, isqueiro, enxada, farinha de osso; quebrar moldura, quadro e suporte de armadura | O jogador |
+| `interagir` | Clique direito em bloco com inventário (qualquer block entity: baú, fornalha, barril, placa, cama…), portas, alçapões, porteiras, botões, alavancas, repetidores e o resto da tag `aurorion_areas:protected_interactions`; girar moldura, mexer no suporte de armadura | O jogador |
+| `explosao` | Blocos (e decorações) destruídos por explosão | O jogador por trás dela (dono da TNT etc.); creeper não tem dono |
+| `fluido` | Água/lava de **fora** escorrendo para dentro; fogo que a lava acende; pedra/obsidiana do encontro de fluidos | Ninguém: só importa de onde vem |
+| `pistao` | Pistão de **fora** empurrando para dentro, puxando para fora (grudento) ou quebrando o que está dentro | Ninguém: só importa onde o pistão está |
+
+**Área comum:** tudo liberado até a staff negar (`/area regra praca construir negar`). Exceções por
+jogador funcionam igual às outras regras (`/area excecao praca Fulano construir true`).
+
+**Área de casa:** nasce **protegida** — quem não é da casa não constrói, não abre nada, e explosão,
+fluido e pistão de fora não entram. Quem é da casa tem exceção implícita em todas as cinco. O passe de
+visitante (`casa`) também libera `interagir` (quem entra precisa abrir a porta), mas não `construir`.
+Para abrir: `/area regra <casa> <regra> permitir` (todo mundo), uma exceção individual, ou uma área de
+**prioridade maior** que opine (um pátio público dentro da casa). Uma área de prioridade menor não abre
+nada. Sem o `aurorion_ethereal` no pack, áreas de casa viram áreas comuns também aqui.
+
+**Quem passa:** staff com permissão 2, em qualquer modo de jogo — é moderação (consertar um grief).
+Fake player **não** passa: é o que impede uma máquina posta do lado de fora de quebrar a parede de
+dentro. `/area aqui` mostra a proteção do bloco em que a pessoa está e quem a define.
+
+**Custo:** a dimensão só consulta a árvore se tiver área de casa ou alguma regra de proteção negada; do
+contrário, cada consulta (inclusive a de cada passo de água do servidor) é um `Set#contains`.
+
+**Limites conhecidos:** fogo que se espalha sozinho de fora para dentro (use a gamerule `doFireTick`
+em evento), dispenser de fora atirando bola de fogo/fluido para dentro e funil puxando de um baú na
+borda não têm evento no NeoForge e não são barrados. Itens de fluido de outros mods que não estendem
+`BucketItem` também não.
 
 ## Áreas de casa (barreira invisível)
 
@@ -196,6 +233,10 @@ prioridade maior **sem** dona não desempata nada: quem não opina sobre casa n�
 ninguém.
 
 ### Quem entrou sem passar pela porta
+
+Quem está montado num veículo roteirizado (tag `aurorion_areas:scripted_vehicles`, hoje o feixe de
+abdução do `aurorion-utils`) não é barrado nem tem posição memorizada: o empurrão soltaria a pessoa
+no meio da subida. Ao descer do feixe, a regra abaixo vale como para quem foi teleportado.
 
 Deslogar dentro, nascer dentro ou ser teleportado para dentro não deixa ninguém preso: sem posição
 anterior guardada, o módulo empurra a pessoa para fora da forma em que ela está (pelo raio, se for
@@ -520,6 +561,8 @@ Tags para datapack (pastas singulares do Minecraft 1.21):
 | `entity_type/hostiles.json` | Acrescenta tipos à classificação hostil |
 | `entity_type/exempt_entities.json` | Isenta tipos da classificação hostil (NPCs, por exemplo) |
 | `block/water_taps.json` | Blocos que contam como torneira para a regra `agua_pura_pia` |
+| `block/protected_interactions.json` | Blocos sem inventário que a regra `interagir` também protege (portas, botões, alavancas…) |
+| `entity_type/scripted_vehicles.json` | Veículos roteirizados que a barreira de casa ignora (feixe de abdução) |
 
 Os eventos de uso não desativam automaticamente armaduras ou acessórios passivos. Entradas de mods opcionais devem usar `{"id":"mod:objeto","required":false}`.
 

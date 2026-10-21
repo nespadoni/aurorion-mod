@@ -1,11 +1,14 @@
 package com.aurorion.magia.entity;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.registry.MagiaEntities;
 import com.aurorion.magia.registry.MagiaSpells;
 import com.aurorion.magia.spell.AurorionSpell;
 import com.aurorion.magia.spell.FriendlyFire;
 import com.aurorion.magia.spell.Displacement;
+import com.aurorion.magia.spell.Hits;
+import com.aurorion.magia.spell.Owners;
 import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -285,7 +288,9 @@ public class SpellZoneEntity extends Entity {
 
     /** O furacao: anda em linha reta, puxa para o eixo e machuca quem fica dentro. */
     private void storm() {
-        if (blockedAhead()) {
+        // Sem dono, o golpe sairia sem causador e passaria pela regra de PvP das areas: o furacao se
+        // desfaz junto com quem o levantou.
+        if (owner() == null || blockedAhead()) {
             // Bateu em parede: a tempestade se desfaz ali, em vez de atravessar a muralha.
             expire();
             return;
@@ -381,21 +386,28 @@ public class SpellZoneEntity extends Entity {
 
     /**
      * Quem a zona alcanca agora. Fora sempre: quem conjurou, espectador, criativo, invulneravel (NPC
-     * de oficio, manequim) e chefe ({@code imune_deslocamento}) — nenhuma magia de area do mod
-     * arrasta chefe.
+     * de oficio, manequim), inalvejavel e chefe ({@code imune_deslocamento}) — nenhuma magia de area
+     * do mod arrasta chefe.
+     *
+     * <p>E jogador num lugar onde PvP nao vale ({@link Hits#pvpAllowedFrom}), conferido a cada tick na
+     * posicao dele: a zona pode ter nascido colada na zona segura, e o furacao anda. Sem dono
+     * conhecido conta a regra de jogador. A consulta da area so roda para jogador que ja passou pelo
+     * resto do filtro.
      */
     private List<LivingEntity> inside(double radius, double height) {
         Vec3 center = position();
         AABB box = new AABB(center.x - radius, center.y - 1, center.z - radius,
                 center.x + radius, center.y + height, center.z + radius);
         double radiusSqr = radius * radius;
+        Entity owner = ownerId != null && level() instanceof ServerLevel server ? Owners.find(server, ownerId) : null;
         List<LivingEntity> found = level().getEntitiesOfClass(LivingEntity.class, box, victim -> {
             if (!victim.isAlive() || victim.isSpectator() || AurorionSpell.untouchable(victim)) return false;
             if (victim instanceof Player player && player.isCreative()) return false;
             if (Displacement.isImmune(victim) || isOwner(victim)) return false;
+            if (victim.hasEffect(MagiaEffects.UNTARGETABLE)) return false;
             double dx = victim.getX() - center.x;
             double dz = victim.getZ() - center.z;
-            return dx * dx + dz * dz <= radiusSqr;
+            return dx * dx + dz * dz <= radiusSqr && Hits.pvpAllowedFrom(owner, victim);
         });
         return found.size() <= MAX_AFFECTED ? found : found.subList(0, MAX_AFFECTED);
     }

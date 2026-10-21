@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +30,23 @@ public final class PhoneConversations {
     private static final Set<String> UNRESTORABLE_PHOTOS = ConcurrentHashMap.newKeySet();
     private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
     private static final PhoneConversationWrites WRITES = new PhoneConversationWrites();
+
+    /*
+     * Tetos do historico em disco. Sem eles o arquivo crescia sem fim: cada gravacao copia o historico
+     * inteiro, e passado o limite que o PhoneConversationFile aceita na leitura o arquivo deixava de
+     * carregar — e, sem carregar, de ser gravado — sem aviso nenhum para o jogador. Corta-se o mais
+     * antigo: conversas no fim da lista (o telefone sobe a conversa ativa para o topo) e mensagens no
+     * comeco de cada conversa.
+     */
+    static final int MAX_SAVED_THREADS = 500;
+    static final int MAX_SAVED_MESSAGES_PER_THREAD = 500;
+    /**
+     * Ids de rede ja processados pelo Gram. O servidor do telefone so guarda as ultimas 256 DMs, fotos
+     * e compartilhamentos; um id mais antigo que isto nunca volta, e lembrar dele so gasta memoria.
+     */
+    static final int MAX_PROCESSED_IDS = 4096;
+    /** O mesmo teto do pacote de foto do telefone ({@code readByteArray(1048576)}). */
+    static final int MAX_SAVED_PHOTO_BYTES = 1024 * 1024;
 
     private PhoneConversations() {}
 
@@ -115,6 +133,7 @@ public final class PhoneConversations {
     /** Fotos de DM antes so existiam em uma textura de GPU e desapareciam ao fechar o jogo. */
     public static void saveGramPhoto(String id, byte[] bytes) {
         if (restoringPhoto || gram == null || id == null || id.isBlank() || bytes == null || bytes.length == 0) return;
+        if (bytes.length > MAX_SAVED_PHOTO_BYTES) return;
         try {
             UNRESTORABLE_PHOTOS.remove(id);
             Path file = gramPhotoFile(gram.file.getParent(), id);
@@ -176,6 +195,8 @@ public final class PhoneConversations {
         private boolean writable = true;
         private boolean dirty;
         private PhoneConversationFile.Snapshot lastSaved;
+        /** Ordem de chegada dos ids processados: o {@code HashSet} do telefone nao tem. */
+        private final LinkedHashSet<String> processedOrder = new LinkedHashSet<>();
 
         private Store(String name, Path file, String threadType, String messageType) {
             this.name = name;
@@ -226,6 +247,7 @@ public final class PhoneConversations {
                         threads.clear();
                         allMessages.clear();
                         ((Set<String>) field(owner, "PROCESSED_NETWORK_IDS")).addAll(snapshot.processedIds());
+                        processedOrder.addAll(snapshot.processedIds());
                     }
                     threads.addAll(0, restoredThreads);
                     allMessages.putAll(restoredMessages);
@@ -254,14 +276,21 @@ public final class PhoneConversations {
                 Map<String, Integer> unread = name.equals(MESSAGES) ? (Map<String, Integer>) field(owner, "UNREAD_COUNTS") : Map.of();
                 List<PhoneConversationFile.ThreadState> states = new ArrayList<>();
                 for (Object thread : threads) {
+                    if (states.size() >= MAX_SAVED_THREADS) break;
                     if (name.equals(MESSAGES) && !(boolean) call(thread, "playerThread")) continue;
                     String id = (String) call(thread, "id");
                     List<Map<String, String>> savedMessages = new ArrayList<>();
-                    for (Object message : allMessages.getOrDefault(id, List.of())) savedMessages.add(PhoneConversationFile.capture(message));
+                    List<Object> threadMessages = allMessages.getOrDefault(id, List.of());
+                    int first = Math.max(0, threadMessages.size() - MAX_SAVED_MESSAGES_PER_THREAD);
+                    for (Object message : threadMessages.subList(first, threadMessages.size())) {
+                        savedMessages.add(PhoneConversationFile.capture(message));
+                    }
                     int threadUnread = name.equals(MESSAGES) ? unread.getOrDefault(id, 0) : (int) call(thread, "unread");
                     states.add(new PhoneConversationFile.ThreadState(PhoneConversationFile.capture(thread), savedMessages, threadUnread));
                 }
-                Set<String> processed = name.equals(GRAM) ? (Set<String>) field(owner, "PROCESSED_NETWORK_IDS") : Set.of();
+                Set<String> processed = name.equals(GRAM)
+                        ? PhoneConversationFile.keepRecent(processedOrder, (Set<String>) field(owner, "PROCESSED_NETWORK_IDS"), MAX_PROCESSED_IDS)
+                        : Set.of();
                 PhoneConversationFile.Snapshot snapshot = new PhoneConversationFile.Snapshot(states, processed);
                 // Abrir uma conversa ja lida nao deve regravar um arquivo a cada frame.
                 if (!snapshot.equals(lastSaved)) {

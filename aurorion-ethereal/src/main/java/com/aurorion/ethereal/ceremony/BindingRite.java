@@ -60,7 +60,8 @@ public final class BindingRite {
                 || !viewer.connection.hasChannel(RitePayload.TYPE)
                 || viewer.distanceToSqr(rite.anchor) > AUDIENCE_RADIUS * AUDIENCE_RADIUS) return;
         rite.audience.add(viewer);
-        PacketDistributor.sendToPlayer(viewer, RitePayload.start(rite.player, rite.house, rite.anchor, rite.tick));
+        PacketDistributor.sendToPlayer(viewer, RitePayload.start(rite.player, rite.house, rite.anchor, rite.tick,
+                rite.tick >= REVEAL_TICK));
     }
 
     public static boolean isBusy() { return active != null; }
@@ -84,9 +85,26 @@ public final class BindingRite {
             return;
         }
         if (++rite.tick == REVEAL_TICK) {
+            // A casa so vira publica agora: tab, placar, mural e areas mudam junto com o anuncio.
+            HouseManager.reveal(server, rite.player.getUUID());
             HouseManager.announce(server, rite.player.getDisplayName(), rite.house);
+            reveal(rite);
         }
         if (rite.tick >= TOTAL_TICKS) finish();
+    }
+
+    /**
+     * Segundo pacote: nome, lema, cor e trilha da casa. O inicio leva so uma identidade neutra, para
+     * que um cliente modificado nao leia o resultado oito segundos antes da plateia.
+     */
+    private static void reveal(Rite rite) {
+        RitePayload payload = RitePayload.start(rite.player, rite.house, rite.anchor, rite.tick, true);
+        for (ServerPlayer viewer : rite.audience) {
+            if (viewer.server.getPlayerList().getPlayer(viewer.getUUID()) == viewer
+                    && viewer.connection.hasChannel(RitePayload.TYPE)) {
+                PacketDistributor.sendToPlayer(viewer, payload);
+            }
+        }
     }
 
     private static void finish() {

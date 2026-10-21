@@ -40,3 +40,9 @@ side = "BOTH"
 [[mixins]]
 config = "aurorion_areas.lso.mixins.json"
 requiredMods = ["legendarysurvivaloverhaul"]
+
+# Regra 'fluido' das areas: agua e lava de fora nao escorrem para dentro de uma area protegida.
+# Sempre carregado (so mexe no vanilla). Injecao com require = 0: se o alvo mudar, o servidor sobe
+# sem ela e o resto da protecao de blocos continua valendo.
+[[mixins]]
+config = "aurorion_areas.mixins.json"

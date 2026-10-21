@@ -138,6 +138,8 @@ public final class CampusStaticusSpell extends AurorionSpell {
         CompoundTag mark = data.getCompound(MARK_KEY);
         data.remove(MARK_KEY);
         if (!mark.hasUUID("By") || !(level.getEntity(mark.getUUID("By")) instanceof LivingEntity attacker)) return;
+        // A marca estoura onde a vitima esta agora: dentro da zona segura, nao estoura.
+        if (!Hits.hittable(attacker, victim)) return;
         FriendlyFire.applyDamage(victim, mark.getFloat("Damage"), MagiaSpells.CAMPUS_STATICUS.get().getDamageSource(attacker));
         sound(victim, SoundEvents.LIGHTNING_BOLT_IMPACT, 0.7f, 1.8f);
         MagiaNetwork.sendVisual(attacker, victim, SpellVisualPayload.Kind.STATIC_MARK, 6);

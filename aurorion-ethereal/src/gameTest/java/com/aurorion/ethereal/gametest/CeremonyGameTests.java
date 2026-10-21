@@ -53,14 +53,29 @@ public final class CeremonyGameTests {
             helper.assertTrue(!BindingRite.isBusy(), "Cadastrar nao inicia cena");
             helper.assertTrue(nyx.equals(HouseManager.houseIdOf(server, selected.player.getUUID())),
                     "Cadastro persiste antes da revelacao");
+            helper.assertTrue(HouseManager.publicHouseIdOf(server, selected.player.getUUID()) == null,
+                    "Cadastro da staff fica oculto ate a revelacao");
             clearPackets(viewer.channel);
             clearPackets(outside.channel);
             helper.assertTrue(dispatcher.execute("casa cerimonia EtherealChosen", staff) == 1,
                     "Comando sem casa revela o cadastro do site");
             RitePayload start = lastRite(viewer.channel);
-            helper.assertTrue(start != null && start.active() && start.color() == 0x439CFF,
-                    "Plateia a 80 blocos recebe inicio com a paleta de Nyx");
+            helper.assertTrue(start != null && start.active() && !start.revealed()
+                            && start.color() == RitePayload.NEUTRAL_COLOR
+                            && start.houseName().getString().isEmpty()
+                            && start.style().equals(RitePayload.NEUTRAL_STYLE),
+                    "Plateia a 80 blocos recebe inicio neutro, sem nome, cor nem trilha da casa");
             helper.assertTrue(lastRite(outside.channel) == null, "Fora do raio nao recebe cena nem musica");
+            for (int i = 0; i < BindingRite.REVEAL_TICK - 1; i++) BindingRite.tick(server);
+            helper.assertTrue(lastRite(viewer.channel) == null
+                            && HouseManager.publicHouseIdOf(server, selected.player.getUUID()) == null,
+                    "Nada da casa sai antes da revelacao");
+            BindingRite.tick(server);
+            RitePayload reveal = lastRite(viewer.channel);
+            helper.assertTrue(reveal != null && reveal.active() && reveal.revealed() && reveal.color() == 0x439CFF,
+                    "Revelacao manda a paleta de Nyx num segundo pacote");
+            helper.assertTrue(nyx.equals(HouseManager.publicHouseIdOf(server, selected.player.getUUID())),
+                    "Casa vira publica no instante da revelacao");
             helper.assertTrue(CeremonyManager.bind(server, viewer.player.getUUID(), ignivar)
                             == CeremonyManager.Result.ALREADY_RUNNING,
                     "Uma pessoa por vez, sem sobrepor trilhas");
@@ -124,7 +139,7 @@ public final class CeremonyGameTests {
                     "Catalogo enviado ao cliente preserva paleta e musica");
             RitePayload payload = new RitePayload(UUID.randomUUID(), 71, true,
                     helper.getLevel().dimension().location(), helper.absoluteVec(net.minecraft.world.phys.Vec3.ZERO),
-                    100, house.name(), house.motto(), house.color(), house.ceremony());
+                    100, true, house.name(), house.motto(), house.color(), house.ceremony());
             buffer.clear();
             RitePayload.STREAM_CODEC.encode(buffer, payload);
             helper.assertTrue(payload.equals(RitePayload.STREAM_CODEC.decode(buffer)),

@@ -62,6 +62,9 @@ public final class CreationManager {
     /** Trocas que falharam ao apagar. Existe so para nao repetir o mesmo erro no log a cada segundo. */
     private static final Set<UUID> REPORTED = new HashSet<>();
 
+    /** Retidos cujo cliente tentou se mover desde a ultima varredura. So a thread do servidor mexe. */
+    private static final Set<UUID> DRIFTED = new HashSet<>();
+
     private CreationManager() {
     }
 
@@ -138,6 +141,7 @@ public final class CreationManager {
 
             if (HELD.containsKey(player.getUUID())) {
                 if (player.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) hold(player);
+                keepInPlace(player);
             } else {
                 onJoin(player);
             }
@@ -146,24 +150,31 @@ public final class CreationManager {
         if (!HELD.isEmpty()) {
             HELD.keySet().removeIf(account -> server.getPlayerList().getPlayer(account) == null);
         }
+        if (!DRIFTED.isEmpty()) DRIFTED.removeIf(account -> !HELD.containsKey(account));
         advancePending(server);
     }
 
     public static void onLogout(ServerPlayer player) {
         HELD.remove(player.getUUID());
+        DRIFTED.remove(player.getUUID());
     }
 
     public static void reset() {
         HELD.clear();
+        DRIFTED.clear();
         REPORTED.clear();
     }
 
     /**
-     * Espectador enquanto espera.
+     * Espectador enquanto espera, e preso no lugar.
      *
-     * <p>Nao e estetica: e o unico estado do vanilla em que a pessoa nao sofre dano, nao empurra
-     * ninguem, nao pega item e nao interage com bloco nenhum. A tela e modal, mas um cliente sem o
-     * mod — ou com a tela fechada na forca — continua parado por causa disto, e nao por causa dela.
+     * <p>O espectador e o unico estado do vanilla em que a pessoa nao sofre dano, nao empurra
+     * ninguem, nao pega item e nao interage com bloco nenhum. Mas ele, sozinho, <b>nao</b> deixa
+     * ninguem parado: voa, atravessa parede, se teleporta ate qualquer jogador pelo menu e gruda a
+     * camera em quem clicar. Quem prende e o {@code HeldConnectionMixin}, que recusa no servidor os
+     * pacotes de movimento, de teleporte do espectador e de interacao de quem esta retido — a tela
+     * modal e so cortesia, um cliente sem o mod ou com a tela fechada na forca continua parado por
+     * causa do servidor, e nao dela.
      */
     public static void hold(ServerPlayer player) {
         GameType before = player.gameMode.getGameModeForPlayer();
@@ -178,6 +189,30 @@ public final class CreationManager {
 
     public static boolean isHeld(ServerPlayer player) {
         return HELD.containsKey(player.getUUID());
+    }
+
+    /**
+     * O cliente retido tentou sair do lugar e o servidor recusou ({@code HeldConnectionMixin}).
+     *
+     * <p>So marca: a correcao (um pacote de teleporte de volta ao ponto real) sai na varredura, no
+     * maximo uma por segundo por pessoa, e nao a cada pacote de movimento que o cliente insistir em
+     * mandar.
+     */
+    public static void refusedMove(ServerPlayer player) {
+        if (isHeld(player)) DRIFTED.add(player.getUUID());
+    }
+
+    /**
+     * Devolve o cliente retido para onde o servidor diz que ele esta.
+     *
+     * <p>A posicao do servidor nao andou — o mixin nao deixa —, mas o cliente desenha o proprio voo
+     * localmente. Sem isto ele continuaria vendo o mundo de onde quer que tivesse voado.
+     */
+    private static void keepInPlace(ServerPlayer player) {
+        if (player.getCamera() != player) player.setCamera(player);
+        if (!DRIFTED.remove(player.getUUID())) return;
+        player.setDeltaMovement(Vec3.ZERO);
+        player.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
     }
 
     /** Reabre a pergunta. O cliente com o mod desenha a tela; o cliente sem o mod le no chat. */
@@ -329,6 +364,7 @@ public final class CreationManager {
     private static void release(ServerPlayer player, CharacterData.Character character) {
         MinecraftServer server = player.server;
         GameType before = HELD.remove(player.getUUID());
+        DRIFTED.remove(player.getUUID());
 
         // Um espectador guardado de antes de um reinicio nao pode virar uma prisao.
         GameType restored = before == null || before == GameType.SPECTATOR

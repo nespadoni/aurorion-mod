@@ -33,7 +33,8 @@ public final class LsoCompat {
     }
     public static boolean available() {
         init();
-        try { return available && enabled.getBoolean(null); }
+        if (!available || enabled == null) return false;
+        try { return enabled.getBoolean(null); }
         catch (IllegalAccessException error) { throw new IllegalStateException(error); }
     }
     @SuppressWarnings("unchecked")
@@ -69,10 +70,22 @@ public final class LsoCompat {
             throw new IllegalStateException("Falha ao sincronizar ferimentos LSO", error);
         }
     }
+    /**
+     * O nome do membro, ou {@code null} se a reflexao nao resolveu.
+     *
+     * <p>Chamado de dentro do {@code writeNbt}/{@code readNBT} do LSO (mixin): lancar aqui derrubava a
+     * gravacao do jogador inteiro, e um {@code partEnum} nulo (API do LSO mudou) era NPE na hora de
+     * salvar. Sem nome, o mixin so deixa de gravar a marca de lesao grave.</p>
+     */
     public static String name(Object part) {
         init();
-        try { return ((Enum<?>)partEnum.invoke(part)).name(); }
-        catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        if (partEnum == null || part == null) return null;
+        try {
+            Object value = partEnum.invoke(part);
+            return value instanceof Enum<?> e ? e.name() : null;
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return null;
+        }
     }
     public static String label(String name) {
         return switch (name) {

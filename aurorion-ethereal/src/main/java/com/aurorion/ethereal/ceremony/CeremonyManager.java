@@ -22,8 +22,10 @@ public final class CeremonyManager {
         if (online == null || !online.isAlive()) return Result.OFFLINE;
         if (BindingRite.isBusy()) return Result.ALREADY_RUNNING;
 
-        // Persistir antes da apresentacao: cancelamento ou desconexao nao desfazem a casa.
-        HouseManager.assign(server, player, houseId);
+        // Persistir antes da apresentacao: cancelamento ou desconexao nao desfazem a casa. Mas grava
+        // oculta: tab e placar so mudam no instante da revelacao (BindingRite.REVEAL_TICK), e nao
+        // segundos antes do anuncio para quem olha a tab.
+        HouseManager.register(server, player, houseId);
         CeremonyData.get(server).cancel(player);
         BindingRite.start(online, house);
         return Result.OK;

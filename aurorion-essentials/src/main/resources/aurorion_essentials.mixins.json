@@ -12,14 +12,11 @@
     "AdvancementAnnounceMixin",
     "DeathMessageMixin",
     "PlayerListSaveInvoker",
-    "WhisperCommandMixin"
+    "WhisperCommandMixin",
+    "TeamMsgCommandMixin"
   ],
   "client": [
-    "StreamerChatListenerMixin",
-    "PhoneDisplayNameMixin",
-    "PhoneContactNameMixin",
-    "PhoneCallingNameMixin",
-    "PhoneIncomingNameMixin"
+    "StreamerChatListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

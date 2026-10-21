@@ -27,12 +27,17 @@ public abstract class BodyPartMixin implements WoundPart {
     }
     @Inject(method = "writeNbt", at = @At("RETURN"))
     private void aurorion$save(CompoundTag tag, CallbackInfoReturnable<CompoundTag> cir) {
-        cir.getReturnValue().putBoolean("AurorionCritical_" + LsoCompat.name(this), aurorion$critical);
+        // Sem nome (reflexao do LSO quebrada) ou sem tag de retorno: nao grava a marca, nunca lanca
+        // dentro da gravacao do jogador.
+        String name = LsoCompat.name(this);
+        CompoundTag out = cir.getReturnValue();
+        if (name != null && out != null) out.putBoolean("AurorionCritical_" + name, aurorion$critical);
     }
     @Inject(method = "readNBT", at = @At("RETURN"))
     private void aurorion$load(CompoundTag tag, CallbackInfo ci) {
-        String key = "AurorionCritical_" + LsoCompat.name(this);
-        aurorion$critical = tag.contains(key) ? tag.getBoolean(key)
+        String name = LsoCompat.name(this);
+        String key = name == null ? null : "AurorionCritical_" + name;
+        aurorion$critical = key != null && tag != null && tag.contains(key) ? tag.getBoolean(key)
                 : InjuryPolicy.severe(damage, maxHealth, ProfessionsConfig.severeThreshold());
     }
     public float aurorionHealth() { return Math.max(0, maxHealth - damage); }

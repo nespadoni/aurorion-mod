@@ -10,6 +10,7 @@ import com.aurorion.areas.network.*;
 import com.aurorion.areas.profile.*;
 import com.aurorion.areas.region.AreaRegion;
 import com.aurorion.areas.rules.*;
+import com.aurorion.areas.server.AreaProtection;
 import com.aurorion.areas.server.AreaRuntime;
 import com.aurorion.areas.server.HouseBarrier;
 import com.aurorion.core.house.HouseGate;
@@ -36,10 +37,11 @@ public final class AreaCommands {
      * mais o passe de visitante da barreira de casa, que nao e um {@link AreaRule} porque nao tem
      * decisao propria por area — ele so existe para ser liberado em cima de uma area de casa.
      */
-    private static final List<String> RULES = java.util.stream.Stream.concat(
+    private static final List<String> RULES = java.util.stream.Stream.of(
             Arrays.stream(AreaRule.ALL).map(AreaRule::key),
+            Arrays.stream(ProtectionRule.ALL).map(ProtectionRule::key),
             java.util.stream.Stream.of(HouseBarrier.PASS_RULE,
-                    LsoThirstCompat.PURE_WATER, LsoThirstCompat.PURE_WATER_TAP)).toList();
+                    LsoThirstCompat.PURE_WATER, LsoThirstCompat.PURE_WATER_TAP)).flatMap(s -> s).toList();
     private static final int PREVIEW_TICKS = 600;
     private AreaCommands() {}
     @FunctionalInterface private interface Action { String execute(CommandContext<CommandSourceStack> c) throws CommandSyntaxException; }
@@ -63,6 +65,8 @@ public final class AreaCommands {
                         /area monstros <id> vida|dano <fator> | excecao <id> <jogador> <regra> true|false
                         /area nome <id> <nome> | ativar <id> true|false | mundo <perfil>|herdar
                         /area casa <id> <casa>|nenhum
+                        Regras: voo magia monstros dano_monstros pvp | proteção: construir interagir explosao fluido pistao
+                        (área de casa: proteção negada a quem não é da casa por padrão)
                         /area aqui [jogador] | ver <id> | listar | visualizar [id] | remover <id>
                         """));
         root.then(literal("selecao").executes(run(c -> start(c.getSource().getPlayerOrException()))));
@@ -239,7 +243,9 @@ public final class AreaCommands {
         }
         if (!HouseGate.exists(id)) throw new IllegalArgumentException("Casa inexistente: " + id);
         return update(c, region.withHouse(id), "Área vinculada à casa " + id
-                + ". Só quem é dessa casa atravessa o limite; criativo passa sempre, sobrevivência nunca.");
+                + ". Só quem é dessa casa atravessa o limite; criativo passa sempre, sobrevivência nunca."
+                + "\nBlocos protegidos: só quem é da casa constrói, abre baús/portas e usa pistão aqui;"
+                + " explosão e fluido de fora não entram. Abra com /area regra " + region.id() + " <regra> permitir.");
     }
     private static String ambience(CommandContext<CommandSourceStack> c, ResourceLocation id) {
         var r = region(c); return update(c, r.withRules(r.rules().withAmbience(id)), "Ambiente atualizado.");
@@ -277,6 +283,19 @@ public final class AreaCommands {
         }
         out.append("\nambiente: ").append(rules.ambience()).append(" | vida x").append(rules.mobHealth())
                 .append(" | dano x").append(rules.mobDamage());
+        // Protecao e por bloco, nao por jogador: mostra a do bloco em que a pessoa esta. As regras de
+        // ambiente (explosao, fluido, pistao) aparecem como seriam para algo sem dono.
+        var feet = p.blockPosition();
+        boolean houses = HouseGate.installed();
+        var myHouse = houses ? HouseGate.of(p.server, p.getUUID()) : null;
+        out.append("\nproteção deste bloco:");
+        for (ProtectionRule rule : ProtectionRule.ALL) {
+            var protection = data.protection(p.level().dimension().location(), feet.getX() + .5, feet.getY() + .5,
+                    feet.getZ() + .5, rule, rule.byPlayer() ? p.getUUID() : null, rule.byPlayer() ? myHouse : null, houses);
+            out.append(" ").append(rule.key()).append("=").append(!protection.denied() ? "permitir"
+                    : "negar(" + (protection.by() == null ? "padrão da dimensão" : protection.by().id()) + ")");
+        }
+        if (AreaProtection.bypass(p)) out.append("\nEste jogador ignora a proteção de blocos (permissão 2).");
         var houseArea = rules.houseArea();
         if (houseArea == null) {
             out.append("\ncasa: nenhuma área de casa aqui");

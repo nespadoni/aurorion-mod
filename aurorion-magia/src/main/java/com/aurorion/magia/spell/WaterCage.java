@@ -62,11 +62,20 @@ public final class WaterCage {
         MagiaNetwork.sendVisual(caster, target, SpellVisualPayload.Kind.CARCER_AQUAE, duration);
     }
 
-    /** Tick do efeito: o corpo volta para o ponto da bolha e a queda nunca acumula. */
-    public static void hold(LivingEntity entity) {
+    /**
+     * Tick do efeito: o corpo volta para o ponto da bolha e a queda nunca acumula.
+     *
+     * <p>Uma vez por segundo, confere se o preso esta num lugar sem PvP (a area pode ter sido criada ou
+     * mudada com ele dentro da bolha): ali a bolha se desfaz. Uma consulta de area por segundo por
+     * preso, e nao por tick.
+     *
+     * @return {@code false} quando a bolha deve se desfazer
+     */
+    public static boolean hold(LivingEntity entity) {
         CompoundTag tag = tagOf(entity);
         if (tag == null || !(entity.level() instanceof ServerLevel level)
-                || !tag.getString(KEY_DIM).equals(level.dimension().location().toString())) return;
+                || !tag.getString(KEY_DIM).equals(level.dimension().location().toString())) return true;
+        if (entity.tickCount % 20 == 0 && Hits.safeSpot(entity)) return false;
 
         Vec3 at = new Vec3(tag.getDouble(KEY_X), tag.getDouble(KEY_Y), tag.getDouble(KEY_Z));
         entity.resetFallDistance();
@@ -74,13 +83,14 @@ public final class WaterCage {
         if (entity.position().distanceToSqr(at) < 0.0004) {
             // Ja esta no lugar: nao manda pacote de posicao por tick so para repetir o obvio.
             entity.hasImpulse = false;
-            return;
+            return true;
         }
         if (entity instanceof ServerPlayer player) {
             player.connection.teleport(at.x, at.y, at.z, player.getYRot(), player.getXRot());
         } else {
             entity.setPos(at.x, at.y, at.z);
         }
+        return true;
     }
 
     public static boolean isCaged(Entity entity) {

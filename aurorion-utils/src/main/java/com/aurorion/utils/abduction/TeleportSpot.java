@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Posicao exata (nao so o bloco) + para onde a pessoa estava olhando, numa dimensao especifica.
@@ -28,10 +29,17 @@ public record TeleportSpot(ResourceKey<Level> dimension, double x, double y, dou
         return tag;
     }
 
+    /**
+     * @return o ponto, ou {@code null} se a entrada esta corrompida (id de dimensao invalido ou
+     * coordenada nao finita). {@code ResourceLocation.parse} lancaria excecao, e uma entrada ruim
+     * derrubaria a leitura do arquivo inteiro — todas as origens de todo mundo, por causa de uma.
+     */
+    @Nullable
     public static TeleportSpot load(CompoundTag tag) {
-        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION,
-                ResourceLocation.parse(tag.getString("Dimension")));
-        return new TeleportSpot(dimension, tag.getDouble("X"), tag.getDouble("Y"), tag.getDouble("Z"),
-                tag.getFloat("Yaw"), tag.getFloat("Pitch"));
+        ResourceLocation id = ResourceLocation.tryParse(tag.getString("Dimension"));
+        double x = tag.getDouble("X"), y = tag.getDouble("Y"), z = tag.getDouble("Z");
+        if (id == null || !Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)) return null;
+        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, id);
+        return new TeleportSpot(dimension, x, y, z, tag.getFloat("Yaw"), tag.getFloat("Pitch"));
     }
 }

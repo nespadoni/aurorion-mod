@@ -148,5 +148,19 @@
   "aurorion_ethereal.mural.upgrade.failed": "The upgrade could not be bought. The price or balance changed.",
   "aurorion_ethereal.mural.upgrade.bought": "Vault upgraded to level %s!",
   "gui.aurorion_ethereal.mural.vault.of": "of %s",
-  "gui.aurorion_ethereal.mural.vault.members_only": "Only members of this House can use the vault."
+  "gui.aurorion_ethereal.mural.vault.members_only": "Only members of this House can use the vault.",
+  "aurorion_ethereal.house.error.same": "You already belong to this house.",
+  "commands.aurorion_ethereal.casa.view.hidden": "%1$s is registered to %2$s (hidden — the player does not know yet).",
+  "commands.aurorion_ethereal.casa.set_hidden": "%1$s registered to %2$s. The house stays hidden until the ceremony or /casa revelar.",
+  "commands.aurorion_ethereal.casa.revealed": "%1$s's house revealed: %2$s.",
+  "commands.aurorion_ethereal.casa.concealed": "%1$s's house (%2$s) hidden until the next reveal.",
+  "commands.aurorion_ethereal.casa.reveal.none": "%s has no hidden house to reveal.",
+  "commands.aurorion_ethereal.casa.conceal.none": "%s has no revealed house to hide.",
+  "commands.aurorion_ethereal.cofre.show": "House vaults: each member may take up to %1$s%% of the capacity per day (withdrawals and upgrades); from %2$s%% on, staff is alerted. Staff has no limit.",
+  "commands.aurorion_ethereal.cofre.limit": "Daily limit per member: %s%% of the vault capacity.",
+  "commands.aurorion_ethereal.cofre.alert": "Withdrawals and purchases from %s%% of the capacity now alert staff.",
+  "aurorion_ethereal.mural.vault.error.daily_limit": "Daily vault limit: you can still take %1$s today (limit of %2$s per day).",
+  "aurorion_ethereal.mural.vault.admin_alert": "[ALERT — VAULT] %1$s withdrew %2$s from %3$s's vault (today: %4$s) at %5$s, %6$s, %7$s.",
+  "aurorion_ethereal.mural.upgrade.admin_alert": "[ALERT — VAULT] %1$s spent %2$s from %3$s's vault on the level %4$s upgrade at %5$s, %6$s, %7$s.",
+  "aurorion_ethereal.block.staff_only": "Only staff can remove this block."
 }

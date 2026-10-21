@@ -36,7 +36,7 @@ public final class CagedEffect extends MobEffect {
     /** Todo tick, e so no preso: manter boiando e cancelar o que o cliente dele tentou andar. */
     @Override
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
-        if (!entity.level().isClientSide) WaterCage.hold(entity);
-        return true;
+        // false: preso ficou num lugar sem PvP, a bolha se desfaz.
+        return entity.level().isClientSide || WaterCage.hold(entity);
     }
 }

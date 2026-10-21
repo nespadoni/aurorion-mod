@@ -148,5 +148,19 @@
   "aurorion_ethereal.mural.upgrade.failed": "A melhoria não pôde ser comprada. O preço ou o saldo mudou.",
   "aurorion_ethereal.mural.upgrade.bought": "Cofre melhorado para o nível %s!",
   "gui.aurorion_ethereal.mural.vault.of": "de %s",
-  "gui.aurorion_ethereal.mural.vault.members_only": "Só membros desta Casa movimentam o cofre."
+  "gui.aurorion_ethereal.mural.vault.members_only": "Só membros desta Casa movimentam o cofre.",
+  "aurorion_ethereal.house.error.same": "Você já pertence a esta casa.",
+  "commands.aurorion_ethereal.casa.view.hidden": "%1$s está cadastrado em %2$s (oculta — o jogador ainda não sabe).",
+  "commands.aurorion_ethereal.casa.set_hidden": "%1$s cadastrado em %2$s. A casa fica oculta até a cerimônia ou /casa revelar.",
+  "commands.aurorion_ethereal.casa.revealed": "Casa de %1$s revelada: %2$s.",
+  "commands.aurorion_ethereal.casa.concealed": "Casa de %1$s (%2$s) ocultada até a próxima revelação.",
+  "commands.aurorion_ethereal.casa.reveal.none": "%s não tem casa oculta para revelar.",
+  "commands.aurorion_ethereal.casa.conceal.none": "%s não tem casa revelada para ocultar.",
+  "commands.aurorion_ethereal.cofre.show": "Cofre das Casas: cada membro tira até %1$s%% da capacidade por dia (saques e melhorias); a partir de %2$s%% a staff é alertada. A staff não tem limite.",
+  "commands.aurorion_ethereal.cofre.limit": "Limite diário por membro: %s%% da capacidade do cofre.",
+  "commands.aurorion_ethereal.cofre.alert": "Saques e compras a partir de %s%% da capacidade agora alertam a staff.",
+  "aurorion_ethereal.mural.vault.error.daily_limit": "Limite diário do cofre: você ainda pode tirar %1$s hoje (limite de %2$s por dia).",
+  "aurorion_ethereal.mural.vault.admin_alert": "[ALERTA — COFRE] %1$s sacou %2$s do cofre de %3$s (hoje: %4$s) em %5$s, %6$s, %7$s.",
+  "aurorion_ethereal.mural.upgrade.admin_alert": "[ALERTA — COFRE] %1$s gastou %2$s do cofre de %3$s na melhoria nível %4$s em %5$s, %6$s, %7$s.",
+  "aurorion_ethereal.block.staff_only": "Só a staff pode remover este bloco."
 }

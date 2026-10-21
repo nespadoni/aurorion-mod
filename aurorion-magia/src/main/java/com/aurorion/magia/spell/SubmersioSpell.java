@@ -76,10 +76,18 @@ public final class SubmersioSpell extends AurorionSpell {
         return aim(level, entity, playerMagicData, RANGE, true, target -> true);
     }
 
+    /** Devolver o ar e ajuda: vale ate dentro da zona segura. Afogar, nao. */
+    @Override
+    protected boolean helps(LivingEntity caster, LivingEntity target) {
+        return target.hasEffect(MagiaEffects.DROWNING);
+    }
+
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            LivingEntity target = target(serverLevel, entity, playerMagicData);
+            LivingEntity raw = rawTarget(serverLevel, entity, playerMagicData);
+            LivingEntity target = raw != null && raw.hasEffect(MagiaEffects.DROWNING)
+                    ? raw : target(serverLevel, entity, playerMagicData);
             if (target != null) {
                 if (target.hasEffect(MagiaEffects.DROWNING)) {
                     breathe(target);

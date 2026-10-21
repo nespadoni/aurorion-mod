@@ -21,11 +21,15 @@ import java.util.function.Consumer;
  * argumento aceita, nesta ordem:
  * <ol>
  *   <li>a UUID da conta, se alguem tiver;</li>
- *   <li>o nome de personagem de quem esta online agora ({@link FakeNameRegistry});</li>
  *   <li>o nick da Mojang de quem esta online;</li>
+ *   <li>o nome de personagem de quem esta online agora ({@link FakeNameRegistry});</li>
  *   <li>o nome de personagem de quem esta OFFLINE ({@link FakeNameData}, que fica em disco);</li>
  *   <li>o nick da Mojang de quem esta offline (cache de perfis do vanilla).</li>
  * </ol>
+ * O nick vem antes do nome de personagem porque e a unica identidade que nao se escolhe: um nome
+ * exibido igual ao nick de outra pessoa (dado antigo, de antes da reserva) nao pode desviar a acao
+ * da staff para a conta errada. Dois online com o mesmo nome exibido tambem nao resolvem para
+ * ninguem por aqui — caem na busca em disco, que tem desempate fixo.
  * Identidades locais são resolvidas na thread do servidor; a consulta por nick offline é assíncrona.
  * O argumento e {@code StringArgumentType.string()}
  * porque nome com espaco existe ("Bella Noob"); o Tab ja sugere com aspas.
@@ -50,13 +54,22 @@ public final class CharacterTarget {
         } catch (IllegalArgumentException notAnId) {
             // Segue para os nomes.
         }
-        String wanted = FakeNameLookup.key(query);
-        for (ServerPlayer online : server.getPlayerList().getPlayers()) {
-            FakeName fakeName = FakeNameRegistry.get(online.getUUID());
-            if (fakeName != null && FakeNameLookup.key(fakeName.raw()).equals(wanted)) return online.getUUID();
-        }
         ServerPlayer byNick = server.getPlayerList().getPlayerByName(query);
         if (byNick != null) return byNick.getUUID();
+
+        String wanted = FakeNameLookup.key(query);
+        if (wanted.isEmpty()) return null;
+        UUID onlineMatch = null;
+        for (ServerPlayer online : server.getPlayerList().getPlayers()) {
+            FakeName fakeName = FakeNameRegistry.get(online.getUUID());
+            if (fakeName == null || !FakeNameLookup.key(fakeName.raw()).equals(wanted)) continue;
+            if (onlineMatch != null) {
+                onlineMatch = null;
+                break;
+            }
+            onlineMatch = online.getUUID();
+        }
+        if (onlineMatch != null) return onlineMatch;
 
         return FakeNameLookup.find(FakeNameData.get(server).allRaw(), query);
     }

@@ -359,7 +359,7 @@ public final class DeathHistoryCommand {
                 RecoveryLedger.release(id, wanted);
                 throw e;
             }
-            String actor = source.getTextName();
+            String actor = auditActor(source);
             UUID targetId = target.getUUID();
             async(source, () -> repository.reserveItems(id, wanted, backup, kind, actor, targetId), reserved -> {
                 if (reserved.length == 0) {
@@ -500,6 +500,8 @@ public final class DeathHistoryCommand {
                 if (item >= entries.size()) throw new IllegalStateException("Indice de item inexistente.");
                 ItemStack stack = DeathSnapshot.item(entries.getCompound(item), target);
                 if (stack.isEmpty()) throw new IllegalStateException("Este slot estava vazio.");
+                if (DeathSnapshot.fromEnderChest(entries.getCompound(item)))
+                    throw new IllegalStateException("Item do ender chest: nao cai na morte, o jogador continua com ele.");
                 if (DeathSnapshot.keptOnDeath(entries.getCompound(item), stack))
                     throw new IllegalStateException("Este item nao cai na morte: o jogador ja ficou com ele.");
                 int empty = target.getInventory().getFreeSlot();
@@ -520,7 +522,7 @@ public final class DeathHistoryCommand {
                         ? "Ja saiu item deste registro (give/devolver/pegar/criativo); a restauracao completa duplicaria."
                         : "Este item ja foi recuperado, ou esta sendo agora.");
             DeathHistoryStore repository = DeathHistoryEvents.store(source.getServer());
-            String actor = source.getTextName();
+            String actor = auditActor(source);
             UUID targetId = target.getUUID();
             async(source, () -> {
                 repository.reserve(id, item, backup, actor, targetId);
@@ -538,7 +540,7 @@ public final class DeathHistoryCommand {
                     status = "APPLIED";
                     say(source, "Recuperacao concluida para " + target.getGameProfile().getName() + ". Backup: " + backup.getUUID("Id"));
                     AurorionEssentials.LOGGER.info("Death history restore {} item={} admin={} target={} backup={} duplicar={}",
-                            id, item, source.getTextName(), target.getUUID(), backup.getUUID("Id"), claim != null);
+                            id, item, actor, target.getUUID(), backup.getUUID("Id"), claim != null);
                 } catch (RuntimeException e) {
                     if (status.equals("FAILED")) {
                         try {
@@ -559,6 +561,19 @@ public final class DeathHistoryCommand {
             });
         });
         return 1;
+    }
+
+    /**
+     * Quem fez a recuperacao, para o recibo e o log: nick da conta e UUID, como o
+     * {@code DeathHistoryMenu} grava. {@code getTextName()} devolve o nome exibido — que e o nome de
+     * personagem (fakename) — e a auditoria de quem tirou item de uma morte nao pode depender de um
+     * nome que muda, se repete entre personagens mortos ou pode ser trocado por staff.
+     */
+    static String auditActor(CommandSourceStack source) {
+        if (source.getEntity() instanceof ServerPlayer player) {
+            return player.getGameProfile().getName() + " (" + player.getUUID() + ")";
+        }
+        return source.getTextName();
     }
 
     private static String claimWarning(DeathClaims.Claim claim) {

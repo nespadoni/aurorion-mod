@@ -27,7 +27,14 @@ import java.time.Instant;
 @Mixin(ChatListener.class)
 public class ChatListenerMixin {
 
-    /** Chat assinado (vanilla). */
+    /**
+     * Chat assinado (vanilla).
+     *
+     * <p>So o {@link ChatType#CHAT} vira balao. Por este mesmo metodo passam {@code /msg} (as duas
+     * pontas), {@code /say}, {@code /teammsg} e {@code /me} — todos assinados. Sem o filtro, o
+     * {@code /msg} da staff virava balao em cima de quem mandou e sumia do HUD de quem recebeu: o
+     * aviso de moderacao ia parar acima da cabeca do admin, longe de quem precisava ler.
+     */
     @Inject(
             method = "showMessageToPlayer",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;getChat()Lnet/minecraft/client/gui/components/ChatComponent;", ordinal = 0)
@@ -36,6 +43,8 @@ public class ChatListenerMixin {
                                             Component decoratedServerContent, GameProfile gameProfile,
                                             boolean onlyShowSecureChat, Instant timestamp,
                                             CallbackInfoReturnable<Boolean> cir) {
+        if (!boundChatType.chatType().is(ChatType.CHAT)) return;
+
         // signedContent() e o texto cru assinado. O servidor pode ter enviado unsignedContent com
         // decoracao ou moderacao; o balao deve mostrar o mesmo corpo que o pipeline vanilla aceitou.
         IncomingChat.handle(chatMessage.sender(), chatMessage.decoratedContent().getString());

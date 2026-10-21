@@ -28,6 +28,7 @@ public final class AreaRuntime {
     private static final Map<UUID, State> STATES = new HashMap<>();
     private static final Component NO_FLIGHT = Component.literal("Uma força neste lugar impede seu voo.");
     private static final Component NO_MAGIC = Component.literal("A magia não responde neste lugar.");
+    private static final Component PROTECTED = Component.literal("Este lugar é protegido: você não pode mexer aqui.");
     /** Meio bloco de diferenca ja se ve na tela; menos que isso so gastaria pacote. */
     private static final float FOG_STEP = .5F;
     /** A neblina so reaperta uma vez por segundo, por mais que o medo suba dentro do tick. */
@@ -285,5 +286,18 @@ public final class AreaRuntime {
         if (now < s.noticeAt) return;
         s.noticeAt = now + 60;
         player.displayClientMessage(rule == AreaRule.FLIGHT ? NO_FLIGHT : NO_MAGIC, true);
+    }
+    /**
+     * Aviso de bloco protegido, com o mesmo relogio dos outros avisos: segurar o botao de quebrar
+     * dispara o evento varias vezes por segundo, e cada uma nao pode virar uma linha nova.
+     */
+    public static void protectionNotice(ServerPlayer player) {
+        // Fake player (maquina) nunca entra no mapa por jogador: nao ha logout que o tire de la.
+        if (player instanceof net.neoforged.neoforge.common.util.FakePlayer) return;
+        State s = state(player);
+        long now = player.serverLevel().getGameTime();
+        if (now < s.noticeAt) return;
+        s.noticeAt = now + 60;
+        player.displayClientMessage(PROTECTED, true);
     }
 }

@@ -1,5 +1,6 @@
 package com.aurorion.magia.spell;
 
+import com.aurorion.magia.registry.MagiaEffects;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -34,8 +35,8 @@ public final class AreaCast {
      * Os vivos ao alcance, do mais perto para o mais longe, ate {@code max}.
      *
      * <p>Sempre de fora: quem conjurou, espectador, jogador em criativo, entidade invulneravel
-     * (NPC de oficio, manequim) e o que estiver em {@code imune_deslocamento} — chefe nao entra em
-     * magia de area.
+     * (NPC de oficio, manequim), inalvejavel, jogador onde PvP nao vale ({@link Hits#pvpAllowed}) e o
+     * que estiver em {@code imune_deslocamento} — chefe nao entra em magia de area.
      */
     public static List<LivingEntity> victims(ServerLevel level, LivingEntity caster, Vec3 center, double radius,
                                              int max, Predicate<LivingEntity> extra) {
@@ -45,6 +46,8 @@ public final class AreaCast {
                 target -> target != caster && target.isAlive() && !target.isSpectator()
                         && !AurorionSpell.untouchable(target)
                         && !(target instanceof Player player && player.isCreative())
+                        && !target.hasEffect(MagiaEffects.UNTARGETABLE)
+                        && Hits.pvpAllowed(caster, target)
                         && !Displacement.isImmune(target)
                         && target.position().distanceToSqr(center) <= radiusSqr
                         && extra.test(target));

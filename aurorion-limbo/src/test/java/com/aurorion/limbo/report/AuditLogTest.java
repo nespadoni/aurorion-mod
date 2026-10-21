@@ -40,6 +40,25 @@ class AuditLogTest {
         assertTrue(AuditLog.tail(file, 0).isEmpty());
     }
 
+    @Test void rotatesWhenFullAndKeepsBoundedHistory() throws Exception {
+        Path file = directory.resolve("auditoria.jsonl");
+        Files.writeString(file, "pequeno\n");
+        AuditLog.rotateIfFull(file);
+        assertTrue(Files.exists(file), "Abaixo do teto o arquivo fica onde esta");
+
+        byte[] full = new byte[(int) AuditLog.MAX_BYTES];
+        for (int round = 1; round <= AuditLog.ROTATED_KEEP + 1; round++) {
+            Files.write(file, full);
+            AuditLog.rotateIfFull(file);
+            assertFalse(Files.exists(file), "Acima do teto o atual vira historico");
+        }
+        for (int i = 1; i <= AuditLog.ROTATED_KEEP; i++) {
+            assertTrue(Files.exists(directory.resolve("auditoria." + i + ".jsonl")));
+        }
+        assertFalse(Files.exists(directory.resolve("auditoria." + (AuditLog.ROTATED_KEEP + 1) + ".jsonl")),
+                "Historico nunca passa de ROTATED_KEEP arquivos");
+    }
+
     @Test void timestampBelongsToEventInsteadOfDeliveryTime() {
         AuditEvent event = new AuditEvent(AuditEvent.Type.PORTA_ATRAVESSADA,
                 UUID.randomUUID(), "Dev1", 1, 0, 1500, 1, "");

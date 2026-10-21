@@ -3,6 +3,7 @@ package com.aurorion.ethereal.command;
 import com.aurorion.ethereal.AurorionEthereal;
 import com.aurorion.ethereal.ceremony.CeremonyManager;
 import com.aurorion.ethereal.block.entity.HouseMuralBlockEntity;
+import com.aurorion.ethereal.config.EtherealConfig;
 import com.aurorion.ethereal.house.House;
 import com.aurorion.ethereal.house.HouseCatalog;
 import com.aurorion.ethereal.house.HouseManager;
@@ -35,6 +36,9 @@ import java.util.Collection;
 /**
  * Consulta publica da casa e ferramentas de staff (nivel 2).
  * Definir aceita perfis offline; cerimonia exige um unico participante online no palco.
+ *
+ * <p>{@code /casa definir} cadastra oculto; a casa so vira publica na revelacao da cerimonia ou num
+ * {@code /casa revelar}. {@code /casa ver} mostra a staff tudo, inclusive o que ainda esta oculto.
  */
 @EventBusSubscriber(modid = AurorionEthereal.MOD_ID)
 public final class HouseCommand {
@@ -65,6 +69,23 @@ public final class HouseCommand {
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
                                 .executes(HouseCommand::clear)))
+                .then(Commands.literal("revelar")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                .executes(context -> visibility(context, true))))
+                .then(Commands.literal("ocultar")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.argument("jogador", GameProfileArgument.gameProfile())
+                                .executes(context -> visibility(context, false))))
+                .then(Commands.literal("cofre")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(HouseCommand::vaultRules)
+                        .then(Commands.literal("limite")
+                                .then(Commands.argument("porcentagem", IntegerArgumentType.integer(0, 100))
+                                        .executes(context -> setVaultRule(context, true))))
+                        .then(Commands.literal("alerta")
+                                .then(Commands.argument("porcentagem", IntegerArgumentType.integer(1, 100))
+                                        .executes(context -> setVaultRule(context, false)))))
                 .then(Commands.literal("mural")
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.literal("vincular")
@@ -90,11 +111,15 @@ public final class HouseCommand {
 
     // --- Consulta ------------------------------------------------------------------------------
 
+    /**
+     * A propria casa, so depois de revelada. Cadastro oculto responde "sem casa", igual a quem nao tem
+     * nenhuma: o jogador nunca descobre pelo comando o que a staff decidiu antes da cerimonia.
+     */
     private static int showSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         MinecraftServer server = context.getSource().getServer();
 
-        ResourceLocation id = HouseManager.houseIdOf(server, player.getUUID());
+        ResourceLocation id = HouseManager.publicHouseIdOf(server, player.getUUID());
         if (id == null) {
             context.getSource().sendSuccess(() -> Component.translatable("commands.aurorion_ethereal.casa.none"), false);
             return 0;
@@ -146,7 +171,9 @@ public final class HouseCommand {
             } else if (house == null) {
                 line = Component.translatable("commands.aurorion_ethereal.casa.view.missing", profile.getName(), id.toString());
             } else {
-                line = Component.translatable("commands.aurorion_ethereal.casa.view.house", profile.getName(), house.coloredName());
+                line = Component.translatable(HouseManager.isHidden(server, profile.getId())
+                        ? "commands.aurorion_ethereal.casa.view.hidden"
+                        : "commands.aurorion_ethereal.casa.view.house", profile.getName(), house.coloredName());
                 found++;
             }
             context.getSource().sendSuccess(() -> line, false);
@@ -167,13 +194,59 @@ public final class HouseCommand {
             return 0;
         }
 
+        // Cadastro silencioso: fica oculto (tab, mural, /casa) ate a cerimonia ou um /casa revelar.
+        // So a staff ve a confirmacao; o "true" avisa os outros operadores, nunca o jogador.
         Collection<GameProfile> profiles = GameProfileArgument.getGameProfiles(context, "jogador");
         for (GameProfile profile : profiles) {
-            HouseManager.assign(server, profile.getId(), houseId);
+            HouseManager.register(server, profile.getId(), houseId);
+            String key = HouseManager.isHidden(server, profile.getId())
+                    ? "commands.aurorion_ethereal.casa.set_hidden" : "commands.aurorion_ethereal.casa.set";
             context.getSource().sendSuccess(() -> Component.translatable(
-                    "commands.aurorion_ethereal.casa.set", profile.getName(), house.coloredName()), true);
+                    key, profile.getName(), house.coloredName()), true);
         }
         return profiles.size();
+    }
+
+    /** Revela sem cerimonia (decisao da staff) ou volta a ocultar um cadastro. */
+    private static int visibility(CommandContext<CommandSourceStack> context, boolean reveal)
+            throws CommandSyntaxException {
+        MinecraftServer server = context.getSource().getServer();
+        int changed = 0;
+        for (GameProfile profile : GameProfileArgument.getGameProfiles(context, "jogador")) {
+            ResourceLocation id = HouseManager.houseIdOf(server, profile.getId());
+            boolean done = reveal ? HouseManager.reveal(server, profile.getId())
+                    : HouseManager.conceal(server, profile.getId());
+            if (done && id != null) {
+                changed++;
+                Component name = HouseCatalog.get(id) == null ? Component.literal(id.toString())
+                        : HouseCatalog.get(id).coloredName();
+                context.getSource().sendSuccess(() -> Component.translatable(reveal
+                        ? "commands.aurorion_ethereal.casa.revealed"
+                        : "commands.aurorion_ethereal.casa.concealed", profile.getName(), name), true);
+            } else {
+                context.getSource().sendFailure(Component.translatable(reveal
+                        ? "commands.aurorion_ethereal.casa.reveal.none"
+                        : "commands.aurorion_ethereal.casa.conceal.none", profile.getName()));
+            }
+        }
+        return changed;
+    }
+
+    private static int vaultRules(CommandContext<CommandSourceStack> context) {
+        context.getSource().sendSuccess(() -> Component.translatable("commands.aurorion_ethereal.cofre.show",
+                EtherealConfig.VAULT_DAILY_WITHDRAW_PERCENT.get(), EtherealConfig.VAULT_ALERT_PERCENT.get()), false);
+        return 1;
+    }
+
+    /** Mesmo padrao do {@code /economia preco}: muda o valor da config e grava na hora. */
+    private static int setVaultRule(CommandContext<CommandSourceStack> context, boolean limit) {
+        int percent = IntegerArgumentType.getInteger(context, "porcentagem");
+        (limit ? EtherealConfig.VAULT_DAILY_WITHDRAW_PERCENT : EtherealConfig.VAULT_ALERT_PERCENT).set(percent);
+        EtherealConfig.SPEC.save();
+        context.getSource().sendSuccess(() -> Component.translatable(limit
+                ? "commands.aurorion_ethereal.cofre.limit"
+                : "commands.aurorion_ethereal.cofre.alert", percent), true);
+        return 1;
     }
 
     private static int clear(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {

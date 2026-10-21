@@ -58,10 +58,14 @@ public final class AurorionEthereal {
         // Publica "em que casa esta este jogador" para o resto do ecossistema (SDD 3.1). Continua
         // valendo que este mod nao conhece nenhum outro: quem pergunta fala com o core, nao conosco,
         // e um pack sem o mod que pergunta nao muda nada aqui.
+        //
+        // So a casa REVELADA sai daqui. Quem pergunta pinta a tab, abre area de casa e escolhe a origem
+        // da Trama: qualquer um deles mostraria ao jogador a casa que a staff cadastrou antes da
+        // cerimonia. O cadastro oculto fica restrito ao Ethereal (HouseManager.houseIdOf).
         HouseGate.provide(new HouseGate.Houses() {
             @Override
             public ResourceLocation of(MinecraftServer server, UUID player) {
-                return HouseManager.houseIdOf(server, player);
+                return HouseManager.publicHouseIdOf(server, player);
             }
 
             @Override

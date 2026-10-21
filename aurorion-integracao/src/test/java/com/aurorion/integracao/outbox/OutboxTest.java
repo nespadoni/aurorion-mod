@@ -46,7 +46,7 @@ class OutboxTest {
         int[] calls = {0};
         Outbox box = outbox(spoolIn(Files.createTempDirectory("outbox")), 1 << 20,
                 batch -> { calls[0]++; return Attempt.retry(0, "private-transport-detail"); });
-        box.offer("private-fact-payload");
+        box.offer("{\"secret\":\"private-fact-payload\"}");
         var queued = box.diagnostics();
         assertEquals(1, queued.queued());
         assertEquals(0, queued.pending());
@@ -82,11 +82,12 @@ class OutboxTest {
     void onlyAnsweredFactsLeaveTheSpool() throws Exception {
         Path spool = spoolIn(Files.createTempDirectory("outbox"));
         Outbox box = outbox(spool, 1 << 20, batch -> delivered(true, false, true));
-        box.offer("1");
-        box.offer("2");
-        box.offer("3");
+        box.offer("{\"n\":1}");
+        box.offer("{\"n\":2}");
+        box.offer("{\"n\":3}");
         box.runOnce(0);
-        assertEquals(List.of("2"), Files.readAllLines(spool, StandardCharsets.UTF_8));
+        assertEquals(List.of("{\"n\":2}"), Files.readAllLines(spool, StandardCharsets.UTF_8),
+                "o que ja saiu pesa mais que o que falta: o arquivo e regravado");
         assertEquals(1, box.backlog());
     }
 
@@ -95,7 +96,7 @@ class OutboxTest {
         Path spool = spoolIn(Files.createTempDirectory("outbox"));
         int[] calls = {0};
         Outbox box = outbox(spool, 1 << 20, batch -> { calls[0]++; return Attempt.retry(0, "HTTP 503"); });
-        box.offer("x");
+        box.offer("{\"x\":1}");
         box.runOnce(0);
         box.runOnce(0);
         assertEquals(1, calls[0], "sem esperar o backoff, nao tenta de novo");
@@ -109,7 +110,7 @@ class OutboxTest {
         Path spool = spoolIn(Files.createTempDirectory("outbox"));
         int[] calls = {0};
         Outbox box = outbox(spool, 1 << 20, batch -> { calls[0]++; return Attempt.forbidden("HTTP 403"); });
-        box.offer("x");
+        box.offer("{\"x\":1}");
         box.runOnce(0);
         clock.addAndGet(5 * 60_000L);
         box.runOnce(0);
@@ -133,10 +134,10 @@ class OutboxTest {
     void fullSpoolDropsWithWarningInsteadOfGrowing() throws Exception {
         Path spool = spoolIn(Files.createTempDirectory("outbox"));
         Outbox box = outbox(spool, 10, batch -> Attempt.retry(0, "rede"));
-        box.offer("12345");
-        box.offer("67890");
+        box.offer("{\"a\":1}");
+        box.offer("{\"b\":2}");
         box.runOnce(0);
-        assertEquals(1, box.backlog(), "so cabe uma linha de 6 bytes num spool de 10");
+        assertEquals(1, box.backlog(), "so cabe uma linha de 8 bytes num spool de 10");
         assertTrue(warnings.stream().anyMatch(w -> w.contains("descartado")));
     }
 
@@ -144,10 +145,91 @@ class OutboxTest {
     void spoolWithBlankLinesIsTolerated() throws IOException, InterruptedException {
         Path spool = spoolIn(Files.createTempDirectory("outbox"));
         Files.createDirectories(spool.getParent());
-        Files.writeString(spool, "a\n\n b\n", StandardCharsets.UTF_8);
+        Files.writeString(spool, "{\"a\":1}\n\n {\"b\":2}\n", StandardCharsets.UTF_8);
         List<String> sent = new ArrayList<>();
         Outbox box = outbox(spool, 1 << 20, batch -> { sent.addAll(batch); return allDelivered(batch); });
         box.runOnce(0);
-        assertEquals(List.of("a", " b"), sent);
+        assertEquals(List.of("{\"a\":1}", " {\"b\":2}"), sent);
+    }
+
+    /** Queda no meio da gravacao: a linha cortada vai para a quarentena e o append seguinte nao cola nela. */
+    @Test
+    void truncatedLineIsQuarantinedAndNextAppendStartsANewLine() throws Exception {
+        Path spool = spoolIn(Files.createTempDirectory("outbox"));
+        Files.createDirectories(spool.getParent());
+        Files.writeString(spool, "{\"a\":1}\n{\"b\":", StandardCharsets.UTF_8);
+        Outbox box = outbox(spool, 1 << 20, batch -> Attempt.retry(0, "rede"));
+        assertEquals(1, box.backlog());
+        assertEquals(1, box.quarantined());
+        assertEquals(List.of("{\"b\":"), Files.readAllLines(spool.resolveSibling(Outbox.REJECTED_FILE), StandardCharsets.UTF_8));
+        assertEquals(List.of("{\"a\":1}"), Files.readAllLines(spool, StandardCharsets.UTF_8), "o spool e regravado limpo");
+
+        box.offer("{\"c\":3}");
+        box.runOnce(0);
+        assertEquals(List.of("{\"a\":1}", "{\"c\":3}"), Files.readAllLines(spool, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void appendAfterAnInterruptedWriteDoesNotGlueLines() throws Exception {
+        Path spool = spoolIn(Files.createTempDirectory("outbox"));
+        Outbox box = outbox(spool, 1 << 20, batch -> Attempt.retry(0, "rede"));
+        Files.createDirectories(spool.getParent());
+        Files.writeString(spool, "{\"a\":1}", StandardCharsets.UTF_8); // sem a quebra final
+        box.offer("{\"b\":2}");
+        box.runOnce(0);
+        assertEquals(List.of("{\"a\":1}", "{\"b\":2}"), Files.readAllLines(spool, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void malformedFactsNeverEnterTheSpool() throws Exception {
+        Path spool = spoolIn(Files.createTempDirectory("outbox"));
+        List<String> sent = new ArrayList<>();
+        Outbox box = outbox(spool, 1 << 20, batch -> { sent.addAll(batch); return allDelivered(batch); });
+        box.offer("nao e json");
+        box.offer("[1,2]");
+        box.offer("{\"ok\":true}");
+        box.runOnce(0);
+        assertEquals(List.of("{\"ok\":true}"), sent);
+        assertEquals(2, box.quarantined());
+    }
+
+    /** Lote recusado inteiro: divide ate isolar o fato ruim, e so ele vai para a quarentena. */
+    @Test
+    void refusedBatchIsSplitUntilTheBadFactIsIsolated() throws Exception {
+        Path spool = spoolIn(Files.createTempDirectory("outbox"));
+        List<String> delivered = new ArrayList<>();
+        Outbox box = outbox(spool, 1 << 20, batch -> {
+            if (batch.contains("{\"bad\":true}")) return Attempt.malformed("HTTP 400");
+            delivered.addAll(batch);
+            return allDelivered(batch);
+        });
+        for (int i = 0; i < 10; i++) box.offer(i == 6 ? "{\"bad\":true}" : "{\"n\":" + i + "}");
+        box.runOnce(0);
+        assertEquals(0, box.backlog());
+        assertEquals(9, delivered.size());
+        assertEquals(1, box.quarantined());
+        assertEquals(List.of("{\"bad\":true}"), Files.readAllLines(spool.resolveSibling(Outbox.REJECTED_FILE), StandardCharsets.UTF_8));
+    }
+
+    /** Site recusando tudo nao e fato ruim: depois de poucos isolados, a caixa volta a esperar. */
+    @Test
+    void siteRefusingEverythingDoesNotDrainTheSpool() throws Exception {
+        Path spool = spoolIn(Files.createTempDirectory("outbox"));
+        Outbox box = outbox(spool, 1 << 20, batch -> Attempt.malformed("HTTP 400"));
+        for (int i = 0; i < 10; i++) box.offer("{\"n\":" + i + "}");
+        box.runOnce(0);
+        assertEquals(Outbox.MAX_CONSECUTIVE_QUARANTINES, box.quarantined());
+        assertEquals(10 - Outbox.MAX_CONSECUTIVE_QUARANTINES, box.backlog());
+        assertTrue(box.diagnostics().retryInMillis() > 0, "espera como numa queda");
+    }
+
+    @Test
+    void spoolLimitAppliesToTheFileLoadedAtStartup() throws Exception {
+        Path spool = spoolIn(Files.createTempDirectory("outbox"));
+        Files.createDirectories(spool.getParent());
+        Files.writeString(spool, "{\"a\":1}\n{\"b\":2}\n{\"c\":3}\n", StandardCharsets.UTF_8);
+        Outbox box = outbox(spool, 20, batch -> Attempt.retry(0, "rede"));
+        assertEquals(2, box.backlog());
+        assertEquals(1, box.quarantined());
     }
 }

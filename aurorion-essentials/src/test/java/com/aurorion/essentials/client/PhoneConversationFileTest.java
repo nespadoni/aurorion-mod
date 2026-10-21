@@ -109,4 +109,30 @@ class PhoneConversationFileTest {
                 Map.of("outgoing", "sometimes", "locationX", "0", "locationY", "0", "locationZ", "0")));
         assertThrows(IllegalArgumentException.class, () -> PhoneConversationFile.restore(Contact.class, Map.of("id", "other")));
     }
+
+    /** Os ids processados do Gram nao crescem sem fim: os mais antigos saem do arquivo e da memoria. */
+    @Test
+    void processedIdsKeepOnlyTheMostRecent() {
+        java.util.LinkedHashSet<String> order = new java.util.LinkedHashSet<>(List.of("a", "b", "c"));
+        Set<String> live = new java.util.HashSet<>(Set.of("a", "b", "c", "d"));
+        Set<String> kept = PhoneConversationFile.keepRecent(order, live, 3);
+        assertEquals(List.of("b", "c", "d"), new ArrayList<>(kept));
+        assertEquals(Set.of("b", "c", "d"), live);
+    }
+
+    /** A pasta de fotos de DM tem teto; a mais antiga sai e a recem-chegada nunca. */
+    @Test
+    void savedPhotosAreCappedOldestFirst() throws Exception {
+        Path photos = Files.createDirectories(directory.resolve("aurorion_gram_photos"));
+        for (int i = 0; i < 4; i++) {
+            Path photo = Files.writeString(photos.resolve(i + ".image"), "x");
+            Files.setLastModifiedTime(photo, java.nio.file.attribute.FileTime.fromMillis(1_000L * (i + 1)));
+        }
+        Path newest = photos.resolve("0.image");
+        PhoneConversationWrites.prunePhotos(photos, newest, 2);
+        assertTrue(Files.exists(newest));
+        assertFalse(Files.exists(photos.resolve("1.image")));
+        assertFalse(Files.exists(photos.resolve("2.image")));
+        assertTrue(Files.exists(photos.resolve("3.image")));
+    }
 }

@@ -15,6 +15,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.*;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -22,8 +23,13 @@ import net.neoforged.neoforge.event.*;
 import net.neoforged.neoforge.event.entity.*;
 import net.neoforged.neoforge.event.entity.living.*;
 import net.neoforged.neoforge.event.entity.player.*;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.level.PistonEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import org.jetbrains.annotations.Nullable;
+import java.util.UUID;
 
 @EventBusSubscriber(modid = AurorionAreas.MOD_ID)
 public final class AreaEvents {
@@ -109,10 +115,26 @@ public final class AreaEvents {
             double factor = source.getPersistentData().getDouble(STRENGTH);
             if (factor >= .1 && factor <= 20) event.setAmount((float) (event.getAmount() * factor));
         }
-        if (source instanceof ServerPlayer attacker && victim instanceof ServerPlayer target && attacker != target
-                && (!AreaApi.allowsFor(target, AreaRule.PVP) || !AreaApi.allowsFor(attacker, AreaRule.PVP))) {
+        if (victim instanceof ServerPlayer target && pvpDenied(target, source != null ? source : event.getSource().getDirectEntity())) {
             event.setCanceled(true);
         }
+    }
+    /**
+     * PvP indireto conta como PvP: lobo, flecha, TNT, raio do tridente, area de pocao. Antes so o soco
+     * de jogador era barrado, e qualquer pet atravessava uma area segura.
+     *
+     * <p>Dono offline (o lobo de quem deslogou) ainda e um jogador: a posicao da vitima basta para
+     * negar. Atacante online tambem precisa estar onde PvP vale, como no golpe direto. Machucar a si
+     * mesmo (a propria TNT) continua sendo problema de quem acendeu.
+     */
+    private static boolean pvpDenied(ServerPlayer target, @Nullable Entity cause) {
+        if (cause == null) return false;
+        UUID responsible = AreaProtection.playerBehind(cause);
+        if (responsible == null || responsible.equals(target.getUUID())) return false;
+        if (!AreaApi.allowsFor(target, AreaRule.PVP)) return true;
+        ServerPlayer attacker = cause instanceof ServerPlayer direct && direct.getUUID().equals(responsible)
+                ? direct : target.server.getPlayerList().getPlayer(responsible);
+        return attacker != null && !AreaApi.allowsFor(attacker, AreaRule.PVP);
     }
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void nonlethal(LivingDamageEvent.Pre event) {
@@ -142,8 +164,107 @@ public final class AreaEvents {
     // fazer o que cabe numa linha no listener que ja existia.
     @SubscribeEvent public static void item(PlayerInteractEvent.RightClickItem event) {
         LsoThirstCompat.beginInteraction(event.getEntity(), null);
-        if (event.getEntity() instanceof ServerPlayer p && blocked(p, event.getItemStack())) {
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        if (blocked(p, event.getItemStack())
+                || event.getItemStack().getItem() instanceof BucketItem && event.getLevel() instanceof ServerLevel level
+                && AreaProtection.deniesBucket(level, p) && protectionNotice(p)) {
             event.setCancellationResult(InteractionResult.FAIL); event.setCanceled(true);
+        }
+    }
+    /** Sempre verdadeiro: so existe para o aviso caber na mesma condicao que cancela. */
+    private static boolean protectionNotice(ServerPlayer player) {
+        AreaRuntime.protectionNotice(player); return true;
+    }
+    // --- Protecao de blocos (ver AreaProtection) --------------------------------------------------
+    /**
+     * Separado do listener {@link #block} de proposito, e em {@code HIGHEST}: o Carry On pega bau do
+     * chao neste mesmo evento em {@code HIGH} (o motivo do {@code aurorion-magia} usar {@code HIGHEST}
+     * para o lacre). Num listener {@code NORMAL}, sair carregando o bau da casa alheia seria a brecha
+     * obvia. A saida antecipada e a mesma de todo o resto: dimensao sem protecao nao consulta nada.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void protectUse(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getEntity() instanceof ServerPlayer p && event.getLevel() instanceof ServerLevel level
+                && AreaProtection.deniesUse(level, p, event.getPos())) {
+            event.setCancellationResult(InteractionResult.FAIL); event.setCanceled(true);
+            AreaRuntime.protectionNotice(p);
+        }
+    }
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void protectBreak(BlockEvent.BreakEvent event) {
+        if (event.getLevel() instanceof ServerLevel level && event.getPlayer() instanceof ServerPlayer p
+                && !AreaProtection.mayAct(level, p, event.getPos(), ProtectionRule.BUILD)) {
+            event.setCanceled(true); AreaRuntime.protectionNotice(p);
+        }
+    }
+    /**
+     * Pega tambem o que o NeoForge captura como "colocar": isqueiro, enxada, machado descascando,
+     * farinha de osso — todo {@code useOn} de item passa pelo snapshot de blocos e cai aqui.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void protectPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof ServerPlayer p)) return;
+        boolean denied;
+        if (event instanceof BlockEvent.EntityMultiPlaceEvent multi) {
+            denied = false;
+            for (var snapshot : multi.getReplacedBlockSnapshots()) {
+                if (!AreaProtection.mayAct(level, p, snapshot.getPos(), ProtectionRule.BUILD)) { denied = true; break; }
+            }
+        } else {
+            denied = !AreaProtection.mayAct(level, p, event.getPos(), ProtectionRule.BUILD);
+        }
+        if (denied) { event.setCanceled(true); AreaRuntime.protectionNotice(p); }
+    }
+    /** Quebrar moldura, quadro ou suporte de armadura e "construir". */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void protectDecorationAttack(AttackEntityEvent event) {
+        if (AreaProtection.decoration(event.getTarget()) && event.getEntity() instanceof ServerPlayer p
+                && event.getTarget().level() instanceof ServerLevel level
+                && !AreaProtection.mayAct(level, p, event.getTarget().blockPosition(), ProtectionRule.BUILD)) {
+            event.setCanceled(true); AreaRuntime.protectionNotice(p);
+        }
+    }
+    /** Girar/tirar item da moldura. */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void protectDecorationUse(PlayerInteractEvent.EntityInteract event) {
+        if (AreaProtection.decoration(event.getTarget()) && event.getEntity() instanceof ServerPlayer p
+                && event.getLevel() instanceof ServerLevel level
+                && !AreaProtection.mayAct(level, p, event.getTarget().blockPosition(), ProtectionRule.INTERACT)) {
+            event.setCancellationResult(InteractionResult.FAIL); event.setCanceled(true);
+            AreaRuntime.protectionNotice(p);
+        }
+    }
+    /** Tirar/por armadura no suporte (o suporte usa {@code interactAt}, que e este evento). */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void protectDecorationUseAt(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (AreaProtection.decoration(event.getTarget()) && event.getEntity() instanceof ServerPlayer p
+                && event.getLevel() instanceof ServerLevel level
+                && !AreaProtection.mayAct(level, p, event.getTarget().blockPosition(), ProtectionRule.INTERACT)) {
+            event.setCancellationResult(InteractionResult.FAIL); event.setCanceled(true);
+            AreaRuntime.protectionNotice(p);
+        }
+    }
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void protectFromExplosion(ExplosionEvent.Detonate event) {
+        if (event.getLevel() instanceof ServerLevel level && AreaProtection.guarded(level)) {
+            AreaProtection.filterExplosion(level, event.getExplosion(), event.getAffectedBlocks(), event.getAffectedEntities());
+        }
+    }
+    /**
+     * Lava acendendo fogo e lava/agua virando pedra. Trocar o resultado pelo estado atual e o mesmo
+     * que cancelar, e funciona igual se outro mod ja tiver mexido no evento. O escoamento em si (agua
+     * e lava andando) e barrado no mixin {@code FlowingFluidSpreadMixin}.
+     */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void protectFromFluid(BlockEvent.FluidPlaceBlockEvent event) {
+        if (event.getLevel() instanceof ServerLevel level && AreaProtection.fluidCrosses(level, event.getLiquidPos(), event.getPos())) {
+            event.setNewState(event.getState());
+        }
+    }
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void protectFromPiston(PistonEvent.Pre event) {
+        if (event.getLevel() instanceof ServerLevel level && AreaProtection.pistonCrosses(level, event)) {
+            event.setCanceled(true);
         }
     }
     @SubscribeEvent public static void block(PlayerInteractEvent.RightClickBlock event) {

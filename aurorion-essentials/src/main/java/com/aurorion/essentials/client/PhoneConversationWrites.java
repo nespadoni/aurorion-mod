@@ -5,6 +5,9 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,9 +15,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /** Uma fila de disco fora da thread do jogo, com o ultimo snapshot de cada personagem em memoria. */
 final class PhoneConversationWrites {
+    /**
+     * Fotos de DM guardadas por personagem. O servidor do telefone so guarda as ultimas 256; alem
+     * disso a mais antiga sai, e a pasta nao cresce sem fim com 1 MiB por foto.
+     */
+    static final int MAX_SAVED_PHOTOS = 256;
     private record Pending(Path directory, PhoneConversationFile.Snapshot snapshot, byte[] photo,
                            Consumer<Exception> failure) {}
 
@@ -128,6 +137,33 @@ final class PhoneConversationWrites {
             }
         } finally {
             Files.deleteIfExists(temporary);
+        }
+        prunePhotos(file.getParent(), file, MAX_SAVED_PHOTOS);
+    }
+
+    /** Apaga as fotos mais antigas (por data do arquivo) alem de {@code max}, nunca a que acabou de chegar. */
+    static void prunePhotos(Path directory, Path keep, int max) throws IOException {
+        List<Path> photos;
+        try (Stream<Path> files = Files.list(directory)) {
+            photos = files.filter(path -> path.getFileName().toString().endsWith(".image")).toList();
+        }
+        if (photos.size() <= max) return;
+        List<Path> oldestFirst = new ArrayList<>(photos);
+        oldestFirst.sort(Comparator.comparingLong(PhoneConversationWrites::modified));
+        int excess = photos.size() - max;
+        for (Path photo : oldestFirst) {
+            if (excess <= 0) break;
+            if (photo.equals(keep)) continue;
+            Files.deleteIfExists(photo);
+            excess--;
+        }
+    }
+
+    private static long modified(Path path) {
+        try {
+            return Files.getLastModifiedTime(path).toMillis();
+        } catch (IOException gone) {
+            return Long.MIN_VALUE;
         }
     }
 }

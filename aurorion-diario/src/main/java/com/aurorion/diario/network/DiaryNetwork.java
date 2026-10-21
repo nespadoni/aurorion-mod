@@ -22,7 +22,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 @EventBusSubscriber(modid = AurorionDiario.MOD_ID)
 public final class DiaryNetwork {
     /** Muda junto com o formato dos pacotes: cliente de outra versão fica sem o canal e recebe o link do site. */
-    private static final String PROTOCOL_VERSION = "2";
+    private static final String PROTOCOL_VERSION = "3";
 
     private DiaryNetwork() {
     }

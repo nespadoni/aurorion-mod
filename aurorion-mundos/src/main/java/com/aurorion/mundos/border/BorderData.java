@@ -105,6 +105,11 @@ public class BorderData extends SavedData {
             int warningBlocks,
             int warningTime
     ) {
+        /** Mesmos limites do {@code /worldborder} do vanilla. */
+        private static final double MAX_SIZE = 5.9999968E7D;
+        private static final double MIN_SIZE = 1.0D;
+        private static final double MAX_CENTER = 2.9999984E7D;
+
         public static Settings of(WorldBorder border) {
             return new Settings(
                     border.getCenterX(),
@@ -133,16 +138,31 @@ public class BorderData extends SavedData {
             border.setWarningTime(warningTime);
         }
 
+        /**
+         * Le e <b>saneia</b>: um arquivo editado a mao (ou corrompido) com {@code NaN}, infinito ou
+         * negativo virava uma barreira de tamanho {@code NaN} — que no vanilla prende todo mundo do
+         * lado de fora e da dano continuo — ou um dano por bloco negativo que cura. Valor que nao e
+         * finito volta ao padrao; o resto e preso na faixa que o proprio vanilla aceita.
+         */
         private static Settings load(CompoundTag tag) {
             WorldBorder defaults = new WorldBorder();
             return new Settings(
-                    tag.getDouble("CenterX"),
-                    tag.getDouble("CenterZ"),
-                    tag.contains("Size") ? tag.getDouble("Size") : defaults.getSize(),
-                    tag.contains("DamagePerBlock") ? tag.getDouble("DamagePerBlock") : defaults.getDamagePerBlock(),
-                    tag.contains("SafeZone") ? tag.getDouble("SafeZone") : defaults.getDamageSafeZone(),
-                    tag.contains("WarningBlocks") ? tag.getInt("WarningBlocks") : defaults.getWarningBlocks(),
-                    tag.contains("WarningTime") ? tag.getInt("WarningTime") : defaults.getWarningTime());
+                    clamp(tag.getDouble("CenterX"), 0.0D, -MAX_CENTER, MAX_CENTER),
+                    clamp(tag.getDouble("CenterZ"), 0.0D, -MAX_CENTER, MAX_CENTER),
+                    tag.contains("Size") ? clamp(tag.getDouble("Size"), defaults.getSize(), MIN_SIZE, MAX_SIZE) : defaults.getSize(),
+                    tag.contains("DamagePerBlock")
+                            ? clamp(tag.getDouble("DamagePerBlock"), defaults.getDamagePerBlock(), 0.0D, Double.MAX_VALUE)
+                            : defaults.getDamagePerBlock(),
+                    tag.contains("SafeZone")
+                            ? clamp(tag.getDouble("SafeZone"), defaults.getDamageSafeZone(), 0.0D, Double.MAX_VALUE)
+                            : defaults.getDamageSafeZone(),
+                    tag.contains("WarningBlocks") ? Math.max(0, tag.getInt("WarningBlocks")) : defaults.getWarningBlocks(),
+                    tag.contains("WarningTime") ? Math.max(0, tag.getInt("WarningTime")) : defaults.getWarningTime());
+        }
+
+        private static double clamp(double value, double fallback, double min, double max) {
+            if (!Double.isFinite(value)) return fallback;
+            return Math.max(min, Math.min(max, value));
         }
 
         private void save(CompoundTag tag) {

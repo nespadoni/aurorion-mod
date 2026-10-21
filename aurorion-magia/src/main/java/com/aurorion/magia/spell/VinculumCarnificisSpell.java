@@ -9,6 +9,7 @@ import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,12 +23,15 @@ import java.util.Optional;
 /**
  * Vinculum Carnificis — Vinculo do Carrasco. "Voce ainda nao recebeu permissao para sair."
  *
- * <p>O ponto onde o alvo foi atingido vira a ancora de uma corrente, e ela <b>nao tem prazo</b>: a
- * primeira conjuracao prende, a segunda no mesmo alvo solta. Toda a regra da corrente esta em
- * {@link Binding}; aqui so a mira, o raio e a alternancia.
+ * <p>O ponto onde o alvo foi atingido vira a ancora de uma corrente, que dura ate
+ * {@link Binding#MAX_DURATION}: a primeira conjuracao prende, a segunda no mesmo alvo solta. Toda a
+ * regra da corrente esta em {@link Binding}; aqui so a mira, o raio e a alternancia.
  *
  * <p>Prender nao abre cooldown, soltar abre ({@link ToggleCooldown}): quem acabou de prender
- * alguem consegue soltar na hora, e nao consegue prender e soltar em sequencia sem pagar.
+ * alguem consegue soltar na hora, e nao consegue prender e soltar em sequencia sem pagar. Como prender
+ * e de graca, os limites estao na corrente: {@link Binding#MAX_PER_CASTER} presos por conjurador e
+ * {@link Binding#REBIND_COOLDOWN} ticks ate o mesmo alvo poder ser preso de novo. A recusa por esses
+ * limites abre o cooldown normal.
  */
 public final class VinculumCarnificisSpell extends AurorionSpell {
     private static final int RANGE = 16;
@@ -55,7 +59,8 @@ public final class VinculumCarnificisSpell extends AurorionSpell {
     public List<MutableComponent> getUniqueInfo(int spellLevel, @Nullable LivingEntity caster) {
         return List.of(
                 Component.translatable("ui.aurorion_magia.raio_corrente", (int) radius(spellLevel)),
-                Component.translatable("ui.aurorion_magia.sem_prazo"),
+                Component.translatable("ui.aurorion_magia.corrente_prazo",
+                        Binding.MAX_DURATION / 1200, Binding.MAX_PER_CASTER),
                 Component.translatable("ui.aurorion_magia.alternar"));
     }
 
@@ -69,16 +74,29 @@ public final class VinculumCarnificisSpell extends AurorionSpell {
                 target -> Binding.isBound(target) || !FriendlyFire.spares(entity, target));
     }
 
+    /** Soltar e ajuda: vale ate dentro da zona segura. */
+    @Override
+    protected boolean helps(LivingEntity caster, LivingEntity target) {
+        return Binding.isBound(target);
+    }
+
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            LivingEntity target = target(serverLevel, entity, playerMagicData);
+            LivingEntity raw = rawTarget(serverLevel, entity, playerMagicData);
+            LivingEntity target = raw != null && Binding.isBound(raw) ? raw : target(serverLevel, entity, playerMagicData);
             if (target != null) {
                 if (Binding.isBound(target)) {
                     Binding.unbind(target);
                 } else {
-                    Binding.bind(target, entity, radius(spellLevel));
-                    ToggleCooldown.skipNext(entity);
+                    String refusal = Binding.refusal(entity, target);
+                    if (refusal == null) {
+                        Binding.bind(target, entity, radius(spellLevel));
+                        ToggleCooldown.skipNext(entity);
+                    } else if (entity instanceof ServerPlayer player) {
+                        // Recusa paga o cooldown normal: tentar de novo em sequencia nao sai de graca.
+                        player.displayClientMessage(Component.translatable(refusal), true);
+                    }
                 }
             }
         }

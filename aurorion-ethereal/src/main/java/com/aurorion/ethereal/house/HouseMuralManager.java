@@ -18,25 +18,33 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
-/** Regras autoritativas do mural, executadas somente no thread do servidor e apenas por interação. */
+/** Regras autoritativas do mural, executadas somente no thread do servidor e apenas por interacao. */
 public final class HouseMuralManager {
     private static final double MAX_DISTANCE_SQR = 64.0D;
     private static final long DAY_MILLIS = 86_400_000L;
     /**
      * Intervalo minimo entre acoes do cofre por jogador. Cada acao custa reflexao e o reenvio do
      * estado inteiro; um cliente modificado mandando pacote por tick nao pode transformar isso em
-     * carga. Chave fraca: o ServerPlayer some do mapa quando sai ou renasce.
+     * carga.
      */
-    private static final long ACTION_INTERVAL_MILLIS = 250L;
-    private static final Map<ServerPlayer, Long> LAST_ACTION = new WeakHashMap<>();
+    private static final PlayerThrottle ACTIONS = new PlayerThrottle(250L);
+    /**
+     * Aberturas (clique no mural, lista do Protetor) tem relogio proprio: abrir a tela e logo depois
+     * clicar em sacar nao pode fazer o saque ser descartado em silencio.
+     */
+    private static final PlayerThrottle OPENS = new PlayerThrottle(500L);
+    /** Nome em log e no historico do mural: o mesmo teto do pacote ({@code Movement.actor}). */
+    private static final int MAX_NAME_LENGTH = 64;
+    private static final char SECTION_SIGN = (char) 0x00A7;
+    private static final char LINE_SEPARATOR = (char) 0x2028;
+    private static final char PARAGRAPH_SEPARATOR = (char) 0x2029;
 
     private HouseMuralManager() { }
 
     public static void open(ServerPlayer player, BlockPos pos) {
+        if (OPENS.throttled(player)) return;
         open(player, pos, HouseMuralPayloads.TAB_VAULT, Component.empty(), false);
     }
 
@@ -72,12 +80,31 @@ public final class HouseMuralManager {
                 upgrade.protectorLevel(), remaining, HouseLivesBridge.available(), tab, notice, error));
     }
 
-    /** Depositar ou sacar: qualquer membro pode, e toda operacao fica no log e no historico do mural. */
+    /**
+     * Depositar ou sacar: qualquer membro pode, e toda operacao fica no log e no historico do mural.
+     *
+     * <p>Saque tem teto diario por membro ({@link #dailyLimit}): sem ele, qualquer um que entrasse na
+     * Casa esvaziava o cofre coletivo num clique. Staff (nivel 2) nao tem teto. Saque grande alerta a
+     * staff online, como o Protetor Arcano.
+     */
     public static void transfer(ServerPlayer player, BlockPos pos, boolean deposit, long amount) {
-        if (throttled(player)) return;
+        if (ACTIONS.throttled(player)) return;
         ResourceLocation houseId = memberHouse(player, pos);
         if (houseId == null) return;
-        long result = amount <= 0L ? HouseEconomyBridge.ERR_INVALID : deposit
+        if (amount <= 0L) {
+            reply(player, pos, HouseMuralPayloads.TAB_VAULT, failure(HouseEconomyBridge.ERR_INVALID), true);
+            return;
+        }
+
+        HouseUpgradeData upgrades = HouseUpgradeData.get(player.server);
+        long day = HouseUpgradeData.currentDay();
+        long capacity = HouseEconomyBridge.capacity(player.server, houseId);
+        if (!deposit && overLimit(player, upgrades, houseId, day, capacity, amount)) {
+            reply(player, pos, HouseMuralPayloads.TAB_VAULT, limitNotice(player, upgrades, houseId, day, capacity), true);
+            return;
+        }
+
+        long result = deposit
                 ? HouseEconomyBridge.deposit(player.server, player.getUUID(), houseId, amount)
                 : HouseEconomyBridge.withdraw(player.server, player.getUUID(), houseId, amount);
         if (result <= 0L) {
@@ -86,11 +113,23 @@ public final class HouseMuralManager {
         }
 
         String actor = actorName(player);
-        HouseUpgradeData.get(player.server).recordMovement(houseId, new HouseUpgradeData.Movement(
+        if (!deposit) upgrades.recordWithdrawal(player.getUUID(), houseId, day, result);
+        upgrades.recordMovement(houseId, new HouseUpgradeData.Movement(
                 System.currentTimeMillis(), actor,
                 deposit ? HouseUpgradeData.Kind.DEPOSIT : HouseUpgradeData.Kind.WITHDRAW, result));
-        AurorionEthereal.LOGGER.info("COFRE_CASA {} actor={} personagem={} house={} quantia={}",
-                deposit ? "deposito" : "saque", player.getGameProfile().getName(), actor, houseId, result);
+        AurorionEthereal.LOGGER.info("COFRE_CASA {} conta={} uuid={} personagem={} house={} quantia={}",
+                deposit ? "deposito" : "saque", player.getGameProfile().getName(), player.getUUID(),
+                actor, houseId, result);
+        House house = HouseCatalog.get(houseId);
+        if (!deposit && house != null && isLarge(result, capacity)) {
+            long today = upgrades.withdrawnToday(player.getUUID(), houseId, day);
+            staffAlert(player, Component.translatable("aurorion_ethereal.mural.vault.admin_alert",
+                    accountLabel(player, actor), HouseMuralPayloads.formatMoney(result), house.coloredName(),
+                    HouseMuralPayloads.formatMoney(today), pos.getX(), pos.getY(), pos.getZ()));
+            AurorionEthereal.LOGGER.warn("COFRE_CASA_ALERTA saque conta={} uuid={} personagem={} house={} quantia={} hoje={} pos={}",
+                    player.getGameProfile().getName(), player.getUUID(), actor, houseId, result, today,
+                    pos.toShortString());
+        }
 
         Component notice = deposit && result < amount
                 ? Component.translatable("aurorion_ethereal.mural.vault.deposit_partial",
@@ -100,11 +139,25 @@ public final class HouseMuralManager {
         reply(player, pos, HouseMuralPayloads.TAB_VAULT, notice, false);
     }
 
-    /** Melhoria paga com o saldo do cofre; o preco citado pela tela precisa bater com o atual. */
+    /**
+     * Melhoria paga com o saldo do cofre; o preco citado pela tela precisa bater com o atual.
+     *
+     * <p>Gastar o cofre numa melhoria tambem e tirar dinheiro dele: conta no mesmo teto diario do
+     * saque, para que um membro sozinho nao torre o cofre inteiro. Acima do teto, quem compra e a
+     * staff (ou ela sobe o teto com {@code /casa cofre limite}).
+     */
     public static void buyVaultUpgrade(ServerPlayer player, BlockPos pos, int nextLevel, long quotedPrice) {
-        if (throttled(player)) return;
+        if (ACTIONS.throttled(player)) return;
         ResourceLocation houseId = memberHouse(player, pos);
         if (houseId == null) return;
+
+        HouseUpgradeData upgrades = HouseUpgradeData.get(player.server);
+        long day = HouseUpgradeData.currentDay();
+        long capacity = HouseEconomyBridge.capacity(player.server, houseId);
+        if (quotedPrice > 0L && overLimit(player, upgrades, houseId, day, capacity, quotedPrice)) {
+            reply(player, pos, HouseMuralPayloads.TAB_UPGRADES, limitNotice(player, upgrades, houseId, day, capacity), true);
+            return;
+        }
         if (!HouseEconomyBridge.buyVaultUpgrade(player.server, houseId, nextLevel, quotedPrice)) {
             reply(player, pos, HouseMuralPayloads.TAB_UPGRADES,
                     Component.translatable("aurorion_ethereal.mural.upgrade.failed"), true);
@@ -112,20 +165,59 @@ public final class HouseMuralManager {
         }
 
         String actor = actorName(player);
-        HouseUpgradeData.get(player.server).recordMovement(houseId, new HouseUpgradeData.Movement(
+        upgrades.recordWithdrawal(player.getUUID(), houseId, day, quotedPrice);
+        upgrades.recordMovement(houseId, new HouseUpgradeData.Movement(
                 System.currentTimeMillis(), actor, HouseUpgradeData.Kind.UPGRADE, quotedPrice));
-        AurorionEthereal.LOGGER.info("COFRE_CASA melhoria actor={} personagem={} house={} nivel={} preco={}",
-                player.getGameProfile().getName(), actor, houseId, nextLevel, quotedPrice);
+        AurorionEthereal.LOGGER.info("COFRE_CASA melhoria conta={} uuid={} personagem={} house={} nivel={} preco={}",
+                player.getGameProfile().getName(), player.getUUID(), actor, houseId, nextLevel, quotedPrice);
+        House house = HouseCatalog.get(houseId);
+        if (house != null && isLarge(quotedPrice, capacity)) {
+            staffAlert(player, Component.translatable("aurorion_ethereal.mural.upgrade.admin_alert",
+                    accountLabel(player, actor), HouseMuralPayloads.formatMoney(quotedPrice), house.coloredName(),
+                    nextLevel, pos.getX(), pos.getY(), pos.getZ()));
+            AurorionEthereal.LOGGER.warn("COFRE_CASA_ALERTA melhoria conta={} uuid={} personagem={} house={} nivel={} preco={} pos={}",
+                    player.getGameProfile().getName(), player.getUUID(), actor, houseId, nextLevel, quotedPrice,
+                    pos.toShortString());
+        }
         reply(player, pos, HouseMuralPayloads.TAB_UPGRADES,
                 Component.translatable("aurorion_ethereal.mural.upgrade.bought", nextLevel), false);
     }
 
-    private static boolean throttled(ServerPlayer player) {
-        long now = System.currentTimeMillis();
-        Long last = LAST_ACTION.get(player);
-        if (last != null && now - last < ACTION_INTERVAL_MILLIS) return true;
-        LAST_ACTION.put(player, now);
-        return false;
+    /**
+     * Quanto um membro pode tirar do cofre por dia: a porcentagem configurada da capacidade atual. A
+     * capacidade, e nao o saldo, para que o teto nao dependa de quem sacou primeiro.
+     */
+    public static long dailyLimit(long capacity) {
+        return percentOf(capacity, EtherealConfig.VAULT_DAILY_WITHDRAW_PERCENT.get());
+    }
+
+    /** {@code value * percent / 100} sem estourar long. */
+    static long percentOf(long value, int percent) {
+        long safe = Math.max(0L, value);
+        return safe / 100L * percent + safe % 100L * percent / 100L;
+    }
+
+    private static boolean overLimit(ServerPlayer player, HouseUpgradeData upgrades, ResourceLocation house,
+                                     long day, long capacity, long amount) {
+        // Staff nao tem teto; sem economia a operacao falha adiante com a mensagem certa.
+        if (player.hasPermissions(2) || !HouseEconomyBridge.available()) return false;
+        return amount > remainingToday(player, upgrades, house, day, capacity);
+    }
+
+    private static long remainingToday(ServerPlayer player, HouseUpgradeData upgrades, ResourceLocation house,
+                                       long day, long capacity) {
+        return Math.max(0L, dailyLimit(capacity) - upgrades.withdrawnToday(player.getUUID(), house, day));
+    }
+
+    private static Component limitNotice(ServerPlayer player, HouseUpgradeData upgrades, ResourceLocation house,
+                                         long day, long capacity) {
+        return Component.translatable("aurorion_ethereal.mural.vault.error.daily_limit",
+                HouseMuralPayloads.formatMoney(remainingToday(player, upgrades, house, day, capacity)),
+                HouseMuralPayloads.formatMoney(dailyLimit(capacity)));
+    }
+
+    private static boolean isLarge(long amount, long capacity) {
+        return amount >= Math.max(1L, percentOf(capacity, EtherealConfig.VAULT_ALERT_PERCENT.get()));
     }
 
     private static void reply(ServerPlayer player, BlockPos pos, int tab, Component notice, boolean error) {
@@ -159,14 +251,38 @@ public final class HouseMuralManager {
     /** Nome do personagem, que e como a staff identifica gente (o nick da conta nao serve). */
     private static String actorName(ServerPlayer player) {
         CharacterData.Character character = CharacterData.get(player.server).find(player.getUUID());
-        return character != null && character.named() ? character.fullName() : player.getGameProfile().getName();
+        return sanitize(character != null && character.named() ? character.fullName() : player.getGameProfile().getName());
+    }
+
+    /** Conta real e personagem, para a staff: o nome exibido pode ser um nome falso. */
+    private static Component accountLabel(ServerPlayer player, String character) {
+        return Component.literal(player.getGameProfile().getName() + " / " + character);
+    }
+
+    /**
+     * Nome de personagem pronto para log e para o historico: sem quebra de linha nem caractere de
+     * controle (que forjariam linhas no log) e sem o simbolo de secao (que mudaria a formatacao no
+     * cliente). Corta no mesmo tamanho que o pacote aceita.
+     */
+    public static String sanitize(@Nullable String text) {
+        if (text == null) return "";
+        StringBuilder out = new StringBuilder(Math.min(text.length(), MAX_NAME_LENGTH));
+        for (int i = 0; i < text.length() && out.length() < MAX_NAME_LENGTH; i++) {
+            char c = text.charAt(i);
+            if (c == SECTION_SIGN || Character.isISOControl(c) || c == LINE_SEPARATOR || c == PARAGRAPH_SEPARATOR) {
+                continue;
+            }
+            out.append(c);
+        }
+        return out.toString();
     }
 
     private static String clip(String text) {
-        return text.length() <= 64 ? text : text.substring(0, 64);
+        return text.length() <= MAX_NAME_LENGTH ? text : text.substring(0, MAX_NAME_LENGTH);
     }
 
     public static void openProtector(ServerPlayer player, BlockPos pos) {
+        if (OPENS.throttled(player)) return;
         HouseMuralBlockEntity mural = accessibleMural(player, pos, false);
         if (mural == null) return;
         ResourceLocation houseId = mural.house();
@@ -191,6 +307,8 @@ public final class HouseMuralManager {
         }
         if (!player.connection.hasChannel(HouseMuralPayloads.OpenTargets.TYPE.id())) return;
 
+        // Sem o "esta online": a lista cobre todo personagem do servidor, e o mural viraria um
+        // rastreador de quem esta conectado (inclusive staff em vanish).
         CharacterData characters = CharacterData.get(player.server);
         int maxLives = HouseLivesBridge.maxLives();
         List<HouseMuralPayloads.Target> targets = characters.characters().entrySet().stream()
@@ -198,13 +316,13 @@ public final class HouseMuralManager {
                 .sorted(Comparator.comparing(entry -> entry.getValue().fullName(), String.CASE_INSENSITIVE_ORDER))
                 .limit(HouseMuralPayloads.OpenTargets.MAX_TARGETS)
                 .map(entry -> new HouseMuralPayloads.Target(entry.getKey(), entry.getValue().fullName(),
-                        HouseLivesBridge.livesOf(player.server, entry.getKey()), maxLives,
-                        player.server.getPlayerList().getPlayer(entry.getKey()) != null))
+                        HouseLivesBridge.livesOf(player.server, entry.getKey()), maxLives))
                 .toList();
         PacketDistributor.sendToPlayer(player, new HouseMuralPayloads.OpenTargets(pos, house.name(), targets));
     }
 
     public static void grantLife(ServerPlayer actor, BlockPos pos, UUID target) {
+        if (ACTIONS.throttled(actor)) return;
         HouseMuralBlockEntity mural = accessibleMural(actor, pos, false);
         if (mural == null) return;
         ResourceLocation houseId = mural.house();
@@ -236,7 +354,7 @@ public final class HouseMuralManager {
         upgrades.recordLifeGrant(houseId, now);
         tell(actor, "aurorion_ethereal.mural.protector.success", ChatFormatting.DARK_PURPLE, character.fullName());
         notifyRecipient(actor.server, target, house);
-        audit(actor, house, character.fullName(), pos);
+        audit(actor, house, sanitize(character.fullName()), target, pos);
     }
 
     public static long cooldownMillis(int protectorLevel) {
@@ -266,8 +384,12 @@ public final class HouseMuralManager {
         return mural;
     }
 
+    /**
+     * Membro pela casa <b>revelada</b>: com o cadastro oculto o mural da casa certa abriria e o dos
+     * outros recusaria, e o jogador descobriria a casa antes da cerimonia.
+     */
     private static boolean memberOf(ServerPlayer player, ResourceLocation house) {
-        return house.equals(HouseManager.houseIdOf(player.server, player.getUUID()));
+        return house.equals(HouseManager.publicHouseIdOf(player.server, player.getUUID()));
     }
 
     private static void notifyRecipient(MinecraftServer server, UUID target, House house) {
@@ -279,16 +401,22 @@ public final class HouseMuralManager {
         }
     }
 
-    private static void audit(ServerPlayer actor, House house, String target, BlockPos pos) {
-        Component alert = Component.translatable("aurorion_ethereal.mural.protector.admin_alert",
-                actor.getDisplayName(), house.coloredName(), target,
-                pos.getX(), pos.getY(), pos.getZ())
-                .withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD);
+    private static void audit(ServerPlayer actor, House house, String target, UUID targetId, BlockPos pos) {
+        String character = actorName(actor);
+        staffAlert(actor, Component.translatable("aurorion_ethereal.mural.protector.admin_alert",
+                accountLabel(actor, character), house.coloredName(), target,
+                pos.getX(), pos.getY(), pos.getZ()));
+        AurorionEthereal.LOGGER.warn("PROTETOR_ARCANO conta={} uuid={} personagem={} house={} alvo={} alvo_uuid={} pos={}",
+                actor.getGameProfile().getName(), actor.getUUID(), character, house.id(), target, targetId,
+                pos.toShortString());
+    }
+
+    /** Alerta em vermelho para toda a staff online (conta real, nao o nome exibido). */
+    private static void staffAlert(ServerPlayer actor, Component message) {
+        Component alert = message.copy().withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD);
         for (ServerPlayer online : actor.server.getPlayerList().getPlayers()) {
             if (online.hasPermissions(2)) online.sendSystemMessage(alert);
         }
-        AurorionEthereal.LOGGER.warn("PROTETOR_ARCANO actor={} house={} target={} pos={}",
-                actor.getGameProfile().getName(), house.id(), target, pos.toShortString());
     }
 
     private static void tell(ServerPlayer player, String key, ChatFormatting color, Object... args) {

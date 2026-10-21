@@ -10,7 +10,7 @@
   "key.categories.aurorion_talk": "Aurorion Talk",
   "key.aurorion_talk.open_config": "Customize speech bubble",
   "options.aurorion_talk.hidePlayerChat": "Hide player chat",
-  "options.aurorion_talk.hidePlayerChat.tooltip": "Player messages leave the chat HUD and become balloons only. System messages, command output, deaths and join/leave still show up.",
+  "options.aurorion_talk.hidePlayerChat.tooltip": "Player messages leave the chat HUD and become balloons only. System messages, /msg, /me, command output, deaths and join/leave still show up. Who receives each message is decided by the server.",
   "options.aurorion_talk.hideOnlyWhenBalloonShown": "Only hide with balloon",
   "options.aurorion_talk.hideOnlyWhenBalloonShown.tooltip": "Keeps messages in chat when the sender is too far away to render a balloon, so nothing is lost.",
   "options.aurorion_talk.showOwnBalloon": "Show my balloon",

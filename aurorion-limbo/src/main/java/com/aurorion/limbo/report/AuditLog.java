@@ -42,7 +42,43 @@ public final class AuditLog {
     private static final String DIR = AurorionLimbo.MOD_ID;
     private static final String FILE = "auditoria.jsonl";
 
+    /**
+     * Tamanho a partir do qual o arquivo vira historico: 8 MiB, umas quarenta mil linhas.
+     *
+     * <p>"So cresce" vale para o conteudo, nao para o disco. Um evento que um jogador consegue
+     * repetir (Relicario, passagem) nao pode encher a particao do servidor; com o teto, o pior caso e
+     * {@code (1 + ROTATED_KEEP) x 8 MiB}.
+     */
+    static final long MAX_BYTES = 8L * 1024 * 1024;
+
+    /** Quantos arquivos antigos ficam: {@code auditoria.1.jsonl} (o mais recente) ate {@code .3}. */
+    static final int ROTATED_KEEP = 3;
+
     private AuditLog() {
+    }
+
+    /**
+     * Gira o arquivo quando passa do teto: {@code .2 -> .3}, {@code .1 -> .2}, atual {@code -> .1}.
+     *
+     * <p>Um {@code stat} por evento, e eventos sao alguns por dia: custo nenhum. O {@code tail} do
+     * {@code /limbo auditoria} le so o arquivo atual — logo depois de girar ele mostra menos linhas,
+     * e o historico continua nos arquivos numerados para quem quiser ler de fora.
+     */
+    static void rotateIfFull(Path file) throws IOException {
+        if (!Files.exists(file) || Files.size(file) < MAX_BYTES) return;
+        Path dir = file.getParent();
+        String base = FILE.substring(0, FILE.length() - ".jsonl".length());
+        Files.deleteIfExists(dir.resolve(base + "." + ROTATED_KEEP + ".jsonl"));
+        for (int i = ROTATED_KEEP - 1; i >= 1; i--) {
+            Path from = dir.resolve(base + "." + i + ".jsonl");
+            if (Files.exists(from)) {
+                Files.move(from, dir.resolve(base + "." + (i + 1) + ".jsonl"),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        Files.move(file, dir.resolve(base + ".1.jsonl"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        AurorionLimbo.LOGGER.info("Auditoria do Limbo passou de {} bytes e foi girada para {}.1.jsonl.",
+                MAX_BYTES, base);
     }
 
     public static Path path(MinecraftServer server) {
@@ -61,6 +97,7 @@ public final class AuditLog {
         try {
             Path file = path(server);
             Files.createDirectories(file.getParent());
+            rotateIfFull(file);
             Files.write(file,
                     List.of(event.toJson().toString()),
                     StandardCharsets.UTF_8,

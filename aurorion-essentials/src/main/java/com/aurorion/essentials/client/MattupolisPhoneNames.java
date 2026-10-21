@@ -2,6 +2,7 @@ package com.aurorion.essentials.client;
 
 import com.aurorion.essentials.fakename.FakeName;
 import com.aurorion.essentials.fakename.FakeNameRegistry;
+import com.aurorion.essentials.fakename.NameKey;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -124,6 +126,12 @@ public final class MattupolisPhoneNames {
      *
      * <p>Um nick digitado passa intacto, mesmo que coincida com o nome de algum personagem: quem
      * sabe o nick quer o dono dele.
+     *
+     * <p><b>Sem palpite.</b> Dinheiro e e-mail vao para quem este metodo escolher, entao a comparacao
+     * e pelo {@link NameKey} (a mesma que o servidor usa para reservar nomes) e, se mais de um nick
+     * tiver esse nome, nenhum e escolhido: o texto segue como foi digitado e o servidor do telefone
+     * responde "jogador nao encontrado". Antes vencia o primeiro da lista — e um impostor com o nome
+     * da vitima, ou com um espaco invisivel no meio, recebia o PIX dela.
      */
     public static String nickFor(String typed) {
         if (typed == null || typed.isBlank()) return typed;
@@ -131,14 +139,33 @@ public final class MattupolisPhoneNames {
         String wanted = typed.trim();
         if (BY_NICK.containsKey(wanted) || DIRECTORY.entries().containsKey(wanted)) return wanted;
 
+        Map<String, String> names = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        names.putAll(DIRECTORY.entries());
+        Map<String, String> live = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (Map.Entry<String, UUID> entry : BY_NICK.entrySet()) {
             FakeName fake = FakeNameRegistry.get(entry.getValue());
-            if (fake != null && fake.plain().equalsIgnoreCase(wanted)) return entry.getKey();
+            if (fake != null) live.put(entry.getKey(), fake.plain());
         }
-        for (Map.Entry<String, String> entry : DIRECTORY.entries().entrySet()) {
-            if (entry.getValue().equalsIgnoreCase(wanted)) return entry.getKey();
+        String nick = uniqueNick(wanted, names, live);
+        return nick != null ? nick : typed;
+    }
+
+    /**
+     * O unico nick cujo nome (em qualquer um dos indices) tem a mesma chave que {@code typed}, ou
+     * {@code null} se nenhum ou mais de um. O mesmo nick nos dois indices conta uma vez so.
+     */
+    @SafeVarargs
+    @Nullable
+    static String uniqueNick(String typed, Map<String, String>... nickToName) {
+        String wanted = NameKey.of(typed);
+        if (wanted.isEmpty()) return null;
+        TreeSet<String> matches = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (Map<String, String> index : nickToName) {
+            for (Map.Entry<String, String> entry : index.entrySet()) {
+                if (entry.getValue() != null && NameKey.of(entry.getValue()).equals(wanted)) matches.add(entry.getKey());
+            }
         }
-        return typed;
+        return matches.size() == 1 ? matches.first() : null;
     }
 
     /**

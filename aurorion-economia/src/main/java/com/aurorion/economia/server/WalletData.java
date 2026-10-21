@@ -5,14 +5,25 @@ import com.aurorion.core.data.SavedDataAccess;
 import com.aurorion.economia.AurorionEconomia;
 import com.aurorion.economia.money.Money;
 import com.aurorion.economia.land.LandDeed;
+import net.minecraft.SharedConstants;
+import net.minecraft.Util;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.LevelResource;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,6 +59,34 @@ public class WalletData extends SavedData {
     private final Map<UUID, LandDeed> deeds = new HashMap<>();
     private Tag unreadableDeeds;
     public static final int MAX_DEEDS = 4096;
+    /**
+     * Escrituras por personagem. Sem isto um corretor e um comprador combinados podiam encher o
+     * cadastro global ({@link #MAX_DEEDS}) de lotes 1x1 pelo preco minimo e travar a venda de terra
+     * para o servidor inteiro.
+     */
+    public static final int MAX_DEEDS_PER_CHARACTER = 8;
+
+    /**
+     * Tempo de jogo (em ticks de {@code minecraft:play_time}) que a conta precisa acumular depois de
+     * receber a bolsa inicial para poder <b>repassar</b> esse valor: 4 horas. Gastar no NPC, na loja
+     * ou num terreno e livre desde o primeiro minuto; so a transferencia para outra conta espera.
+     * Conta secundaria criada so para doar a bolsa ao personagem principal teria que jogar 4 horas
+     * por bolsa, e a fazenda deixa de compensar.
+     */
+    public static final long STARTER_LOCK_TICKS = 4L * 60 * 60 * 20;
+    private static final String KEY_STARTER_LOCKS = "StarterLocks";
+
+    /** Bolsa inicial ainda presa a conta: o valor e o {@code play_time} da conta na concessao. */
+    record StarterLock(long amount, long playTicksAtGrant) { }
+    private final Map<UUID, StarterLock> starterLocks = new HashMap<>();
+
+    /** Servidor dono desta instancia; null em teste de unidade (livro-caixa vira no-op). */
+    @Nullable
+    private MinecraftServer server;
+    /** Relogio monotono da ultima gravacao duravel ({@link #flushIfDue}). */
+    private static long lastFlush;
+    /** Intervalo minimo entre gravacoes duraveis: agrupa as operacoes de dinheiro em lotes. */
+    private static final long FLUSH_INTERVAL_MS = 5_000L;
 
     /** Salario zero = desligado; {@code lastSalaryAt} e o relogio real do ultimo pagamento. */
     record HouseState(long balance, int vaultLevel, int protectorLevel,
@@ -72,17 +111,65 @@ public class WalletData extends SavedData {
     }
 
     public static WalletData get(MinecraftServer server) {
-        return ACCESS.get(server);
+        WalletData data = ACCESS.get(server);
+        data.server = server;
+        return data;
+    }
+
+    /**
+     * Grava a carteira em disco agora, se houver mudanca e o ultimo lote tiver mais de
+     * {@value #FLUSH_INTERVAL_MS} ms. Chamado a cada tick pelo {@code EconomyEvents}.
+     *
+     * <h2>Por que nao esperar o autosave</h2>
+     *
+     * <p>O autosave do vanilla roda de 5 em 5 minutos. Um crash nesse intervalo voltava a carteira
+     * para o estado antigo enquanto o inventario do jogador (gravado no logout ou em outro momento)
+     * podia ja conter o que foi comprado do NPC: compra de graca, repetivel derrubando o servidor.
+     * Com o lote curto a janela cai para segundos e o erro passa a ser no sentido seguro: o pior
+     * caso e o dinheiro saido sem o item, nunca o item sem o dinheiro.</p>
+     *
+     * <p>Mesma tecnica do {@code DurableSavedData} do core (arquivo temporario, {@code force},
+     * troca atomica), que e package-private la; aqui so para este arquivo. Na thread do servidor,
+     * como o autosave: os dois nunca escrevem o mesmo arquivo ao mesmo tempo.</p>
+     */
+    public static void flushIfDue(MinecraftServer server) {
+        long now = Util.getMillis();
+        if (now - lastFlush < FLUSH_INTERVAL_MS) return;
+        WalletData data = get(server);
+        if (!data.isDirty()) return;
+        lastFlush = now;
+        try {
+            Path directory = server.getWorldPath(LevelResource.ROOT).resolve("data");
+            Files.createDirectories(directory);
+            Path target = directory.resolve(FILE_ID + ".dat");
+            Path temporary = directory.resolve(FILE_ID + ".economia-tmp");
+            CompoundTag file = new CompoundTag();
+            file.put("data", data.save(new CompoundTag(), server.registryAccess()));
+            file.putInt("DataVersion", SharedConstants.getCurrentVersion().getDataVersion().getVersion());
+            NbtIo.writeCompressed(file, temporary);
+            try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.WRITE)) { channel.force(true); }
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            data.setDirty(false);
+        } catch (IOException | RuntimeException error) {
+            // Fica sujo: o proximo lote ou o autosave tentam de novo.
+            AurorionEconomia.LOGGER.error("Nao consegui gravar a carteira em disco agora; tento de novo no proximo lote.", error);
+        }
     }
 
     private static WalletData load(CompoundTag tag, HolderLookup.Provider registries) {
         WalletData data = new WalletData();
         // Devolver null descarta a linha: uma entrada zerada por um save antigo nao volta como chave.
+        // Saldo acima do teto (save editado a mao, versao antiga) volta ao teto: o resto do codigo
+        // conta com Money.MAX para somar dois saldos sem estourar o long.
         PlayerMapNbt.read(tag, KEY_ENTRIES, data.balances, entry -> {
             long balance = entry.getLong(KEY_BALANCE);
-            return balance > 0 ? balance : null;
+            return balance > 0 ? Math.min(balance, Money.MAX) : null;
         });
         PlayerMapNbt.readSet(tag, KEY_STARTER_GRANTS, data.starterGrants);
+        PlayerMapNbt.read(tag, KEY_STARTER_LOCKS, data.starterLocks, entry -> {
+            long amount = Math.min(Math.max(entry.getLong("Amount"), 0L), Money.MAX);
+            return amount > 0 ? new StarterLock(amount, Math.max(0L, entry.getLong("PlayTicks"))) : null;
+        });
         ListTag houses = tag.getList(KEY_HOUSES, Tag.TAG_COMPOUND);
         for (int i = 0; i < houses.size(); i++) {
             CompoundTag entry = houses.getCompound(i);
@@ -120,6 +207,10 @@ public class WalletData extends SavedData {
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put(KEY_ENTRIES, PlayerMapNbt.write(balances, (entry, balance) -> entry.putLong(KEY_BALANCE, balance)));
         tag.put(KEY_STARTER_GRANTS, PlayerMapNbt.writeSet(starterGrants));
+        tag.put(KEY_STARTER_LOCKS, PlayerMapNbt.write(starterLocks, (entry, lock) -> {
+            entry.putLong("Amount", lock.amount());
+            entry.putLong("PlayTicks", lock.playTicksAtGrant());
+        }));
         ListTag houses = new ListTag();
         this.houses.forEach((id, state) -> {
             CompoundTag entry = new CompoundTag();
@@ -167,13 +258,48 @@ public class WalletData extends SavedData {
      * bolsa sem permitir repetir a bolsa do mesmo personagem apos reconectar.</p>
      */
     public boolean grantStarter(UUID characterId, UUID account, long fragments) {
+        return grantStarter(characterId, account, fragments, -1L);
+    }
+
+    /**
+     * A bolsa e <b>somada</b> ao saldo, nunca o substitui: se a staff deu dinheiro antes de o
+     * personagem ser nomeado, ou se o evento chegar depois de uma compra, sobrescrever apagaria
+     * dinheiro (ou o devolveria, se o saldo fosse menor). O reset por morte ja zera o saldo antes.
+     *
+     * @param playTicks {@code play_time} atual da conta; negativo nao trava a bolsa (testes, migracao)
+     */
+    public boolean grantStarter(UUID characterId, UUID account, long fragments, long playTicks) {
         if (!starterGrants.add(characterId)) return false;
 
         long initial = Math.min(Math.max(fragments, 0L), Money.MAX);
-        setBalance(account, initial);
+        setBalance(account, Math.min(balance(account) + initial, Money.MAX));
+        if (playTicks >= 0 && initial > 0) starterLocks.put(account, new StarterLock(initial, playTicks));
         // Registrar a concessao separadamente torna repeticoes do evento inofensivas.
         setDirty();
         return true;
+    }
+
+    /**
+     * Quanto do saldo pode ser repassado a outra conta agora. A bolsa inicial fica presa ate a conta
+     * jogar {@link #STARTER_LOCK_TICKS}; depois disso a trava some sozinha.
+     *
+     * @param playTicks {@code play_time} atual da conta; negativo (offline) conta como sem progresso
+     */
+    public long transferable(UUID account, long playTicks) {
+        long balance = balance(account);
+        StarterLock lock = starterLocks.get(account);
+        if (lock == null) return balance;
+        if (playTicks >= 0 && playTicks - lock.playTicksAtGrant() >= STARTER_LOCK_TICKS) {
+            starterLocks.remove(account);
+            setDirty();
+            return balance;
+        }
+        return Math.max(0L, balance - lock.amount());
+    }
+
+    /** O personagem morreu de vez: a trava da bolsa antiga nao vale para a proxima historia. */
+    public void clearStarterLock(UUID account) {
+        if (starterLocks.remove(account) != null) setDirty();
     }
 
     public Map<UUID, Long> playerBalances() {
@@ -183,8 +309,33 @@ public class WalletData extends SavedData {
     public java.util.Collection<LandDeed> deeds() { return java.util.List.copyOf(deeds.values()); }
 
     public boolean canSell(LandDeed deed) {
-        return unreadableDeeds == null && deeds.size() < MAX_DEEDS && !deeds.containsKey(deed.id())
-                && deeds.values().stream().noneMatch(deed::overlaps);
+        return sellRefusal(deed) == null;
+    }
+
+    /** O motivo de o lote nao poder ser registrado, ou {@code null}. */
+    @Nullable
+    public String sellRefusal(LandDeed deed) {
+        if (unreadableDeeds != null) return "O cadastro de terrenos está ilegível; a staff precisa corrigir o save.";
+        if (deeds.size() >= MAX_DEEDS || deeds.containsKey(deed.id())) return "O cadastro de terrenos está cheio.";
+        long owned = deeds.values().stream().filter(other -> other.ownerCharacter().equals(deed.ownerCharacter())).count();
+        if (owned >= MAX_DEEDS_PER_CHARACTER)
+            return "Este personagem já tem " + MAX_DEEDS_PER_CHARACTER + " terrenos registrados.";
+        if (deeds.values().stream().anyMatch(deed::overlaps)) return "O lote se sobrepõe a outro terreno.";
+        return null;
+    }
+
+    /**
+     * Cancela uma escritura (staff). O dinheiro pago nao volta: a compra foi um ralo para o sistema,
+     * e a devolucao, se for o caso, e uma decisao da staff via {@code /economia dar}.
+     *
+     * @return a escritura removida, ou {@code null} se nao existe ou o cadastro esta ilegivel
+     */
+    @Nullable
+    public LandDeed revokeDeed(UUID id) {
+        if (unreadableDeeds != null) return null;
+        LandDeed removed = deeds.remove(id);
+        if (removed != null) setDirty();
+        return removed;
     }
 
     /** Payment is a sink: no broker commission. Title and debit persist in the same save. */
@@ -193,6 +344,7 @@ public class WalletData extends SavedData {
         deeds.put(deed.id(), deed);
         setBalance(payer, balance(payer) - deed.paid());
         setDirty();
+        MoneyLedger.debit(server, payer, deed.paid(), "terreno:" + deed.id());
         return true;
     }
 
@@ -217,6 +369,12 @@ public class WalletData extends SavedData {
         long safe = Math.min(Math.max(balance, 0L), Money.MAX);
         if (before.balance() == safe) return false;
         putHouse(house, before.withBalance(safe));
+        // Deposito de sistema, salario, saque ou ajuste de staff: quem chama diz a origem por escopo.
+        String origin = MoneyLedger.currentOrigin("casa:sistema");
+        if (safe > before.balance())
+            MoneyLedger.record(server, MoneyLedger.Party.system(), MoneyLedger.Party.house(house), safe - before.balance(), origin);
+        else
+            MoneyLedger.record(server, MoneyLedger.Party.house(house), MoneyLedger.Party.system(), before.balance() - safe, origin);
         return true;
     }
 
@@ -247,8 +405,18 @@ public class WalletData extends SavedData {
         long houseAfter = state.balance() + toHouse;
         if (toHouse == 0L || walletAfter < 0L || houseAfter < 0L || walletAfter > Money.MAX || houseAfter > Money.MAX)
             return false;
+        // Depositar no cofre e entregar o dinheiro aos outros membros da Casa: valem as mesmas
+        // travas da transferencia (Limbo/morte/sem nome e bolsa inicial), senao o cofre virava o
+        // desvio das duas. Sem servidor (teste de unidade) nao ha personagem para conferir.
+        if (toHouse > 0 && server != null && (!Wallet.canSend(server, player)
+                || transferable(player, Wallet.playTicks(server, player)) < toHouse))
+            return false;
         setBalance(player, walletAfter);
         putHouse(house, state.withBalance(houseAfter));
+        if (toHouse > 0)
+            MoneyLedger.record(server, MoneyLedger.Party.account(player), MoneyLedger.Party.house(house), toHouse, "casa:deposito");
+        else
+            MoneyLedger.record(server, MoneyLedger.Party.house(house), MoneyLedger.Party.account(player), -toHouse, "casa:saque");
         return true;
     }
 
@@ -275,6 +443,8 @@ public class WalletData extends SavedData {
                 || nextLevel > (protector ? 2 : 3) || before.balance() < cost) return false;
         putHouse(house, before.withBalance(before.balance() - cost).withLevels(
                 protector ? before.vaultLevel() : nextLevel, protector ? nextLevel : before.protectorLevel()));
+        MoneyLedger.record(server, MoneyLedger.Party.house(house), MoneyLedger.Party.system(), cost,
+                "casa:melhoria:" + (protector ? "protetor" : "cofre") + nextLevel);
         return true;
     }
 }

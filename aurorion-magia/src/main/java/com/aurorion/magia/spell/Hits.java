@@ -7,6 +7,7 @@ import io.redspace.ironsspellbooks.damage.DamageSources;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -15,6 +16,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -56,8 +58,30 @@ public final class Hits {
      * que o cancelamento de dano da area nao alcanca. Criatura e sempre alvo.
      */
     public static boolean pvpAllowed(LivingEntity caster, LivingEntity target) {
-        if (!(caster instanceof Player) || !(target instanceof ServerPlayer victim)) return true;
-        return victim.server.isPvpAllowed() && AreasMagic.pvpAt(victim.serverLevel(), victim.position(), victim.getUUID());
+        return !(caster instanceof Player) || !safeSpot(target);
+    }
+
+    /**
+     * {@link #pvpAllowed} para efeito que segue rodando sem quem o lancou a mao: corrente, afogamento,
+     * zona no chao. Sem dono conhecido (saiu do jogo, entidade descarregada), conta como se fosse
+     * jogador — a regra mais estreita. Sem isto, o dono deslogar virava passe livre para ferir dentro
+     * da zona segura.
+     */
+    public static boolean pvpAllowedFrom(@Nullable Entity caster, LivingEntity target) {
+        if (caster instanceof LivingEntity living) return pvpAllowed(living, target);
+        return !safeSpot(target);
+    }
+
+    /**
+     * Jogador parado num lugar onde PvP nao vale: servidor com PvP desligado ou regra {@code pvp} do
+     * {@code aurorion-areas} negada na posicao dele. Criatura nunca esta. E a pergunta que os efeitos
+     * persistentes (corrente, jaula, estase, aura) refazem a cada pulso: quem entrou na zona segura
+     * depois de pego para de sofrer ali.
+     */
+    public static boolean safeSpot(LivingEntity target) {
+        if (!(target instanceof ServerPlayer victim)) return false;
+        return !victim.server.isPvpAllowed()
+                || !AreasMagic.pvpAt(victim.serverLevel(), victim.position(), victim.getUUID());
     }
 
     /**
@@ -85,7 +109,19 @@ public final class Hits {
 
     /** O mesmo ponto, assentado no chao mais proximo (ate 12 blocos acima ou abaixo). */
     public static Vec3 aimGround(Level level, LivingEntity caster, double range) {
-        return Utils.moveToRelativeGroundLevel(level, aimPoint(level, caster, range), 12);
+        return aimGround(level, caster, range, 12);
+    }
+
+    /** Quanto um teletransporte de magia pode subir ou descer para achar chao. */
+    public static final int TELEPORT_STEP = 3;
+
+    /**
+     * O ponto assentado no chao, subindo ou descendo no maximo {@code maxStep} blocos. Teletransporte
+     * usa {@link #TELEPORT_STEP}: com 12, mirar a parede de uma casa punha quem conjura em cima do
+     * telhado — ou no andar de cima de uma construcao fechada.
+     */
+    public static Vec3 aimGround(Level level, LivingEntity caster, double range, int maxStep) {
+        return Utils.moveToRelativeGroundLevel(level, aimPoint(level, caster, range), maxStep);
     }
 
     /**

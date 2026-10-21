@@ -23,6 +23,17 @@ import java.util.List;
 public final class MundosConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
+    /**
+     * Seeds dos mundos.
+     *
+     * <p><b>Os valores padrao abaixo sao publicos</b> — estao no repositorio, entao qualquer pessoa
+     * consegue gerar o mesmo terreno e mapear minerios, estruturas e cavernas fora do servidor. Eles
+     * continuam os mesmos de proposito: producao provavelmente ja gerou terreno com eles, e trocar o
+     * padrao mudaria so os chunks novos, costurando dois mapas. O certo e a producao definir os
+     * proprios seeds no {@code aurorion_mundos-server.toml} <b>antes</b> de gerar um mundo novo.
+     * O seed e congelado no boot ({@code WorldCatalog#freeze}); editar o arquivo com o servidor no
+     * ar so vale no proximo boot.
+     */
     public static final ModConfigSpec.ConfigValue<List<? extends String>> SEEDS;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> RUNTIME_GENERATION;
 

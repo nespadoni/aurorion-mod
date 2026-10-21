@@ -110,8 +110,9 @@ public final class MorsExProfundisSpell extends AurorionSpell {
         for (LivingEntity victim : Hits.around(level, caster, at, radius, MAX_TARGETS,
                 t -> Hits.enemy(caster, t) && onCross(t.position().subtract(at), armA, armB))) {
             if (Execution.below(victim, threshold)) {
-                Execution.execute(level, caster, victim, DAMAGE_TYPE);
-                executed = true;
+                // So abate de verdade devolve a recarga: execucao cancelada (zona segura, estase,
+                // outro mod segurando a vida) nao conta.
+                if (Execution.execute(level, caster, victim, DAMAGE_TYPE)) executed = true;
             } else {
                 FriendlyFire.applyDamage(victim, damage, MagiaSpells.MORS_EX_PROFUNDIS.get().getDamageSource(caster));
             }

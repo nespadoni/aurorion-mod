@@ -108,6 +108,8 @@ public final class PestisSanguineaSpell extends AurorionSpell {
         CompoundTag plague = data.getCompound(PLAGUE_KEY);
         data.remove(PLAGUE_KEY);
         if (!plague.hasUUID("By") || !(level.getEntity(plague.getUUID("By")) instanceof LivingEntity caster)) return;
+        // A praga estoura onde a vitima esta agora: dentro da zona segura, nao estoura.
+        if (!Hits.hittable(caster, victim)) return;
         float damage = plague.getFloat("Damage");
         if (FriendlyFire.applyDamage(victim, damage, MagiaSpells.PESTIS_SANGUINEA.get().getDamageSource(caster))
                 && caster.isAlive()) {

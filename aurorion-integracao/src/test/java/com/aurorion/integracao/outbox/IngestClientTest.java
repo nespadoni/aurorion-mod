@@ -34,6 +34,25 @@ class IngestClientTest {
         assertEquals(Attempt.Kind.RETRY, IngestClient.interpret(200, "<html>", null, 1).kind());
     }
 
+    /** 400/413/422 recusam o lote pelo conteudo: a caixa divide o lote em vez de reenviar igual para sempre. */
+    @Test
+    void contentErrorsAreNotRetriedForever() {
+        assertEquals(Attempt.Kind.MALFORMED, IngestClient.interpret(400, "", null, 2).kind());
+        assertEquals(Attempt.Kind.MALFORMED, IngestClient.interpret(413, "", null, 2).kind());
+        assertEquals(Attempt.Kind.MALFORMED, IngestClient.interpret(422, "", null, 2).kind());
+        assertEquals(Attempt.Kind.RETRY, IngestClient.interpret(404, "", null, 2).kind());
+    }
+
+    /** Resposta com tipos errados nao derruba a thread da caixa. */
+    @Test
+    void oddItemTypesDoNotThrow() {
+        String body = "{\"results\":[{\"result\":{\"x\":1}},{\"result\":null,\"code\":[1]},"
+                + "{\"result\":\"rejected\",\"code\":{\"a\":1}},\"texto\",{\"result\":\"accepted\"}]}";
+        Attempt attempt = IngestClient.interpret(200, body, null, 5);
+        assertArrayEquals(new boolean[]{false, false, true, false, true}, attempt.resolved());
+        assertEquals(List.of("sem_codigo"), attempt.rejections());
+    }
+
     @Test
     void tooManyRequestsHonorsRetryAfter() {
         Attempt attempt = IngestClient.interpret(429, "", "7", 1);

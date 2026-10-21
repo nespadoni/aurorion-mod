@@ -1,8 +1,10 @@
 package com.aurorion.magia.effect;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.spell.PositionHold;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
@@ -23,5 +25,20 @@ public final class StasisEffect extends MobEffect {
                 -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         addAttributeModifier(Attributes.GRAVITY, AurorionMagia.id("estase_fati_gravity"),
                 -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+    }
+
+    @Override
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
+        return true;
+    }
+
+    /**
+     * O atributo para o corpo so no cliente honesto. O servidor confere a posicao e devolve quem se
+     * afastou mais de meio bloco do ponto em que a estase o pegou ({@link PositionHold}).
+     */
+    @Override
+    public boolean applyEffectTick(LivingEntity entity, int amplifier) {
+        if (!entity.level().isClientSide) PositionHold.hold(entity, PositionHold.STASIS, false, 0.5);
+        return true;
     }
 }

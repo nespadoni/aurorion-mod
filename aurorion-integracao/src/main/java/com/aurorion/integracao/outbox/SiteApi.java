@@ -33,6 +33,13 @@ public final class SiteApi implements AutoCloseable {
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(12);
     private static final int MAX_BODY = 256 * 1024;
+    /**
+     * Chamadas ao site ao mesmo tempo, somando todos os jogadores. O ritmo por jogador (diario,
+     * vinculo) nao basta com 80 pessoas: sem teto global, uma rajada vira centenas de conexoes
+     * abertas contra o backend. Acima disto a chamada nem sai e volta como falha de transporte — o
+     * diario guarda o rascunho no servidor e tenta de novo depois, o vinculo pede para tentar de novo.
+     */
+    static final int MAX_IN_FLIGHT = 32;
 
     /** Resposta do site. {@code status} 0 = não houve resposta (rede, timeout). */
     public record Response(int status, @Nullable JsonObject body) {
@@ -106,7 +113,12 @@ public final class SiteApi implements AutoCloseable {
         } catch (IllegalArgumentException e) {
             return CompletableFuture.completedFuture(Response.transport());
         }
-        inFlight.incrementAndGet();
+        if (inFlight.incrementAndGet() > MAX_IN_FLIGHT) {
+            inFlight.decrementAndGet();
+            transportFailures.incrementAndGet();
+            lastResult = "limite de chamadas simultaneas atingido";
+            return CompletableFuture.completedFuture(Response.transport());
+        }
         try {
             return client.sendAsync(request, LimitedResponseBody.utf8(MAX_BODY))
                     .handle((response, error) -> {

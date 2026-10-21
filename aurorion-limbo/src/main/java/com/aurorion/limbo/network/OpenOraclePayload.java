@@ -32,10 +32,16 @@ public record OpenOraclePayload(List<Entry> exiles, int viewerLives, int cost, i
     /** Teto de linhas. Acima disso o Oraculo mostra as mais urgentes e nada mais. */
     public static final int MAX_ENTRIES = 64;
 
+    /**
+     * Teto do nome de cada linha. Nome completo de personagem vai ate 48 (CharacterName.FULL_LIMIT);
+     * o teto antigo de 16 (nick do Minecraft) fazia o encoder estourar e derrubava quem clicava.
+     */
+    public static final int MAX_NAME = 64;
+
     public record Entry(UUID id, String name, long remainingMillis, boolean attempted, boolean online) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.composite(
                 UUIDUtil.STREAM_CODEC, Entry::id,
-                ByteBufCodecs.stringUtf8(16), Entry::name,
+                ByteBufCodecs.stringUtf8(MAX_NAME), Entry::name,
                 ByteBufCodecs.VAR_LONG, Entry::remainingMillis,
                 ByteBufCodecs.BOOL, Entry::attempted,
                 ByteBufCodecs.BOOL, Entry::online,

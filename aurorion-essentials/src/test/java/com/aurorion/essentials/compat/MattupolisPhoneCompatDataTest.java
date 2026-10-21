@@ -21,7 +21,10 @@ public class MattupolisPhoneCompatDataTest {
         unindexedKeysSurviveAndStaleRowsDoNot();
         oldNumberIsRetiredNotHandedBack();
         retryingTheResetDoesNotDuplicateTheReservation();
-        System.out.println("PASS: reset do telefone (5 casos)");
+        aNoteWithTheAccountIdDoesNotDeleteSomeoneElsesRow();
+        aHugeCounterDoesNotHangTheReset();
+        theBankAuditKeepsEveryLineAndGetsAMarker();
+        System.out.println("PASS: reset do telefone (8 casos)");
     }
 
     /**
@@ -117,6 +120,47 @@ public class MattupolisPhoneCompatDataTest {
         expect(actual, "schemaVersion", "3");
         if (actual.getProperty("entry.7") != null) {
             throw new AssertionError("Linha alem do contador deveria sumir: " + actual);
+        }
+    }
+
+    /** A observacao do PIX e texto livre de outro jogador: ter a UUID nela nao faz a linha ser da conta. */
+    private static void aNoteWithTheAccountIdDoesNotDeleteSomeoneElsesRow() throws Exception {
+        Properties bank = new Properties();
+        String row = OTHER + "|tx1|in|YmFy|MTA=|" + ACCOUNT + "|1700000000000";
+        bank.setProperty("entry.count", "1");
+        bank.setProperty("entry.0", row);
+
+        Properties actual = reset(bank);
+        expect(actual, "entry.count", "1");
+        expect(actual, "entry.0", row);
+    }
+
+    /** Contador vindo do disco nao manda no laco: dois bilhoes nao podem travar a thread do servidor. */
+    private static void aHugeCounterDoesNotHangTheReset() throws Exception {
+        Properties bank = new Properties();
+        bank.setProperty("entry.count", String.valueOf(Integer.MAX_VALUE));
+        bank.setProperty("entry.0", OTHER + "|tx1|in|YmFy|MTA=|bm90ZQ==|1700000000000");
+        long started = System.nanoTime();
+        Properties actual = reset(bank);
+        if (System.nanoTime() - started > 30_000_000_000L) throw new AssertionError("Reset sem teto no contador");
+        expect(actual, "entry.0", OTHER + "|tx1|in|YmFy|MTA=|bm90ZQ==|1700000000000");
+    }
+
+    /** A auditoria e de duas pessoas: o reset de uma nao apaga linha nenhuma, so marca o ponto. */
+    private static void theBankAuditKeepsEveryLineAndGetsAMarker() throws Exception {
+        Path file = Files.createTempFile("aurorion-phone-audit-", ".log");
+        try {
+            String line = "2026-09-16 10:00 | Foo -> Bar | 10 coins | " + ACCOUNT;
+            Files.writeString(file, line + System.lineSeparator());
+            var method = MattupolisPhoneCompat.class.getDeclaredMethod("markResetInAudit", Path.class, UUID.class, String.class);
+            method.setAccessible(true);
+            method.invoke(null, file, ACCOUNT, "Foo");
+            var lines = Files.readAllLines(file);
+            if (lines.size() != 2 || !lines.get(0).equals(line) || !lines.get(1).contains("Foo -> [reset de personagem]")) {
+                throw new AssertionError("Auditoria alterada: " + lines);
+            }
+        } finally {
+            Files.delete(file);
         }
     }
 

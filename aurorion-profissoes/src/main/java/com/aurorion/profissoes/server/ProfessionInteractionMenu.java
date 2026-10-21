@@ -22,9 +22,13 @@ public final class ProfessionInteractionMenu {
     public static void collect(InteractionMenuEvent.Collect event) {
         if (ProfessionsConfig.enabled() && ProfessionApi.of(event.actor()) == Profession.BROKER)
             event.add("land_sale", "Vender terreno", "Selecione um lote retangular, a zona e o preço. Pagamento ao sistema.", true);
-        if (ProfessionsConfig.enabled() && ProfessionApi.of(event.actor()) == Profession.DOCTOR)
-            event.add(HEAL_ACTION, "Curar pessoa",
-                    "Restaura a saúde e os ferimentos corporais do alvo.", DoctorHealing.needsHealing(event.target()));
+        if (ProfessionsConfig.enabled() && ProfessionApi.of(event.actor()) == Profession.DOCTOR) {
+            // O menu so apresenta; a acao confere tudo de novo em DoctorHealing.heal.
+            String refusal = DoctorHealing.refusal(event.actor(), event.target());
+            String detail = refusal != null ? refusal
+                    : "Restaura a saúde e os ferimentos do alvo. Consome 1 insumo médico da mão secundária.";
+            event.add(HEAL_ACTION, "Curar pessoa", detail.length() > 256 ? detail.substring(0, 256) : detail, refusal == null);
+        }
         Profession profession = ProfessionApi.of(event.target());
         if (!ProfessionsConfig.enabled() || !offersServices(profession)) return;
         event.add(ACTION, "Solicitar atendimento",

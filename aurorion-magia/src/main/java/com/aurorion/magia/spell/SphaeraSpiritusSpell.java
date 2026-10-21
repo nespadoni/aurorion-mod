@@ -209,7 +209,9 @@ public final class SphaeraSpiritusSpell extends AurorionSpell {
         @Override
         public boolean shouldBlockExplode(Explosion explosion, BlockGetter reader, BlockPos pos, BlockState state, float power) {
             if (!super.shouldBlockExplode(explosion, reader, pos, state, power)) return false;
-            return !(caster instanceof ServerPlayer player) || player.serverLevel().mayInteract(player, pos);
+            // Spawn, modo aventura e a regra construir do aurorion-areas (casa alheia inclusa).
+            return !(caster instanceof ServerPlayer player)
+                    || AreasMagic.mayBuild(player.serverLevel(), player, pos.immutable());
         }
 
         @Override

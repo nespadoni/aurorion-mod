@@ -1,12 +1,17 @@
 package com.aurorion.magia.passive;
 
+import com.aurorion.magia.AurorionMagia;
 import com.aurorion.magia.compat.EmotecraftCompat;
 import com.aurorion.magia.config.MagiaConfig;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import com.aurorion.magia.registry.MagiaEffects;
 import com.aurorion.magia.spell.AurorionSpell;
+import com.aurorion.magia.spell.Displacement;
+import com.aurorion.magia.spell.Hits;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -104,8 +109,17 @@ public final class DreadAura {
     private DreadAura() {
     }
 
+    /**
+     * Quanto a aura fica ligada de uma vez: 20 minutos. Depois ela se esvai e a passiva volta a ficar
+     * desligada — o portador liga de novo se a cena continua. Sem isto, um vilao AFK no meio da praça
+     * deixava todo mundo de joelhos por horas.
+     */
+    public static final int MAX_SESSION_TICKS = 20 * 60 * 20;
+    private static final String KEY_SINCE = AurorionMagia.MOD_ID + ":presenca_desde";
+
     /** Liga a aura: o marcador infinito no portador e quem faz o resto acontecer. */
     public static void enable(ServerPlayer owner) {
+        owner.getPersistentData().putLong(KEY_SINCE, owner.level().getGameTime());
         owner.addEffect(new MobEffectInstance(MagiaEffects.DREAD_AURA, MobEffectInstance.INFINITE_DURATION, 0,
                 false, false, false));
         pulse(owner, true);
@@ -127,18 +141,30 @@ public final class DreadAura {
         }
     }
 
-    /** Um pulso, chamado pelo tick do efeito do portador. */
-    public static void pulse(ServerPlayer owner) {
+    /**
+     * Um pulso, chamado pelo tick do efeito do portador.
+     *
+     * @return {@code false} quando a aura tem que acabar. O efeito devolve isso ao vanilla, que o tira
+     *         — {@code removeEffect} de dentro do proprio tick mexeria na lista de efeitos que o
+     *         vanilla esta percorrendo.
+     */
+    public static boolean pulse(ServerPlayer owner) {
         // Metade dos pulsos cuida de bicho; o relogio e o tick do proprio portador, sem contador nosso.
-        pulse(owner, owner.tickCount % MOB_INTERVAL_TICKS < INTERVAL_TICKS);
+        return pulse(owner, owner.tickCount % MOB_INTERVAL_TICKS < INTERVAL_TICKS);
     }
 
-    private static void pulse(ServerPlayer owner, boolean creatures) {
-        if (!(owner.level() instanceof ServerLevel level) || owner.isSpectator() || !owner.isAlive()) return;
+    private static boolean pulse(ServerPlayer owner, boolean creatures) {
+        if (!(owner.level() instanceof ServerLevel level) || owner.isSpectator() || !owner.isAlive()) return true;
+        PassiveData passives = PassiveData.get(owner.server);
         // A passiva pode ter sido revogada pela staff enquanto a aura estava ligada.
-        if (!PassiveData.get(owner.server).isActive(owner.getUUID(), Passive.DREAD)) {
-            disable(owner);
-            return;
+        if (!passives.isActive(owner.getUUID(), Passive.DREAD)) return false;
+        // Prazo da sessao: a passiva desliga no cadastro antes de o efeito sair, senao o fim do efeito
+        // (MagiaServerEvents) a religaria no tick seguinte.
+        if (level.getGameTime() - owner.getPersistentData().getLong(KEY_SINCE) > MAX_SESSION_TICKS) {
+            passives.setActive(owner.getUUID(), Passive.DREAD, false);
+            owner.displayClientMessage(Component.translatable("aurorion_magia.presenca_esgotada")
+                    .withStyle(ChatFormatting.DARK_PURPLE), true);
+            return false;
         }
 
         double radius = MagiaConfig.DREAD_RADIUS.get();
@@ -159,12 +185,17 @@ public final class DreadAura {
             if (victim == owner || !reaches(owner, victim, spareAllies)) continue;
             double distanceSqr = victim.position().distanceToSqr(center);
             if (distanceSqr > radiusSqr) continue;
+            // Zona segura e inalvejavel: a aura nao alcança, conferido a cada pulso na posicao de cada
+            // um (depois da distancia, que e o filtro barato). O que ja estava posto vence sozinho em
+            // ate tres pulsos.
+            if (victim.hasEffect(MagiaEffects.UNTARGETABLE) || !Hits.pvpAllowed(owner, victim)) continue;
             touched++;
             renew(victim, MagiaEffects.TERRIFIED, owner);
             if (kneelRadius > 0 && distanceSqr <= kneelSqr) prostrate(victim, owner, deep);
         }
 
         if (creatures) scatter(level, owner, center, radius, spareAllies);
+        return true;
     }
 
     /** Quem a aura alcança entre as pessoas da dimensao. */
@@ -211,6 +242,8 @@ public final class DreadAura {
         double radiusSqr = radius * radius;
         List<Mob> mobs = level.getEntitiesOfClass(Mob.class, new AABB(center, center).inflate(radius),
                 mob -> mob.isAlive() && !AurorionSpell.untouchable(mob)
+                        // Chefe nao foge nem perde o alvo: a luta de chefe nao acaba porque o vilao chegou.
+                        && !Displacement.isImmune(mob)
                         && !(spareAllies && mob.isAlliedTo(owner))
                         && mob.position().distanceToSqr(center) <= radiusSqr);
 

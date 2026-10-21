@@ -32,9 +32,13 @@ public final class EssentialsCharacterReset {
         // O diretorio de numeros e gravado fora da thread do servidor (PhoneNumberSaveQueue): o reset
         // le e reescreve o arquivo, entao antes espera a fila esvaziar — senao uma gravacao atrasada
         // devolveria o numero apagado — e depois esquece a ultima gravacao, porque o disco mudou.
-        PhoneNumberSaveQueue.awaitWrites();
+        // Prazo curto: isto roda na thread do servidor. Disco travado faz o reset falhar aqui, antes de
+        // apagar qualquer coisa, e o aurorion_personagem repete a troca mais tarde.
+        if (!PhoneNumberSaveQueue.awaitWrites(PhoneNumberSaveQueue.RESET_DRAIN_TIMEOUT_MILLIS)) {
+            throw new IllegalStateException("Gravacao pendente do diretorio de numeros do telefone; reset adiado");
+        }
         try {
-            MattupolisPhoneCompat.resetCharacterData(event.server(), event.account());
+            MattupolisPhoneCompat.resetCharacterData(event.server(), event.account(), event.transaction().accountName());
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao limpar dados do telefone do personagem anterior", e);
         } finally {
@@ -69,7 +73,7 @@ public final class EssentialsCharacterReset {
 
         if (result != FakeNameManager.Result.OK) {
             // A identidade vale assim mesmo — o que falhou foi so a exibicao. Acontece quando o nome
-            // escolhido coincide com o nick real de alguem que esta online neste momento.
+            // escolhido coincide com o nick real de outra conta (online ou no cache de perfis).
             AurorionEssentials.LOGGER.warn("Nome de personagem '{}' nao pode ser exibido para {}: {}",
                     event.character().fullName(), player.getGameProfile().getName(), result);
         }

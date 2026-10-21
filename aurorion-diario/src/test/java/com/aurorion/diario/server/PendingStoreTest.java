@@ -112,14 +112,48 @@ class PendingStoreTest {
         assertTrue(put(s, pending("outro", "p2", 1, "t", 1)), "outro perfil não é afetado");
     }
 
+    /** O arquivo ilegivel sai do caminho inteiro (para recuperacao) e o modo offline continua para todos. */
     @Test
-    void unreadableFileIsPreservedNotOverwritten() throws Exception {
-        Path file = Files.createTempDirectory("pend").resolve("p.json");
+    void unreadableFileIsPreservedAsideAndDraftsKeepWorking() throws Exception {
+        Path dir = Files.createTempDirectory("pend");
+        Path file = dir.resolve("p.json");
         Files.writeString(file, "{isto não é json");
         PendingStore s = store(file);
         assertEquals(0, s.size());
         assertEquals(1, warnings.size());
-        assertFalse(put(s, pending("k", "p1", 1, "t", 1)), "não confirma o que não conseguiu gravar");
-        assertEquals("{isto não é json", Files.readString(file), "o arquivo fica para recuperação");
+        assertTrue(put(s, pending("k", "p1", 1, "t", 1)), "o diário segue com um arquivo novo");
+        try (var files = Files.list(dir)) {
+            Path aside = files.filter(p -> p.getFileName().toString().startsWith("p.json.ilegivel-")).findFirst().orElseThrow();
+            assertEquals("{isto não é json", Files.readString(aside), "o arquivo antigo fica para recuperação");
+        }
+    }
+
+    /** Um registro ruim vai para a quarentena; os outros continuam valendo. */
+    @Test
+    void badRecordIsQuarantinedWithoutTakingTheOthers() throws Exception {
+        Path dir = Files.createTempDirectory("pend");
+        Path file = dir.resolve("p.json");
+        PendingStore first = store(file);
+        assertTrue(put(first, pending("k1", "p1", 10, "boa", 1)));
+        String good = Files.readString(file).trim();
+        Files.writeString(file, good.substring(0, good.length() - 1) + ",{\"draftKey\":\"ruim\"},42]");
+
+        PendingStore restarted = store(file);
+        assertEquals(1, restarted.size());
+        assertEquals("boa", restarted.get("p1", "k1").orElseThrow().title());
+        assertTrue(put(restarted, pending("k2", "p2", 11, "nova", 2)));
+        try (var files = Files.list(dir)) {
+            Path quarantine = files.filter(p -> p.getFileName().toString().startsWith("p.json.rejeitados-")).findFirst().orElseThrow();
+            assertTrue(Files.readString(quarantine).contains("ruim"));
+        }
+    }
+
+    @Test
+    void oversizedDocumentIsRefused() throws Exception {
+        PendingStore s = store(Files.createTempDirectory("pend").resolve("p.json"));
+        PendingStore.Pending huge = new PendingStore.Pending("k", "op", 1, 1, "t", "",
+                "x".repeat(PendingStore.MAX_DOCUMENT_CHARS + 1), "p1", "char", "Lyra", 1, false);
+        assertFalse(put(s, huge));
+        assertEquals(0, s.size());
     }
 }

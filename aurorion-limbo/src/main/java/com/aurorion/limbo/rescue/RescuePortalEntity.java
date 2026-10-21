@@ -94,6 +94,16 @@ public class RescuePortalEntity extends Entity {
             return;
         }
 
+        // O alvo pode sair do Limbo enquanto a passagem espera (outra equipe, a staff, o prazo). Uma
+        // passagem para ninguem levaria o dono a um Limbo sem alvo e sem saida; ela fecha e avisa.
+        // Sao tres consultas de mapa por tick por passagem aberta — com unidades delas, nada.
+        if (RescueManager.rescuable(level().getServer(), target) == null) {
+            ServerPlayer owner = level().getServer().getPlayerList().getPlayer(rescuer);
+            if (owner != null) owner.displayClientMessage(com.aurorion.limbo.narrate.LimboText.passageTargetGone(), true);
+            discard();
+            return;
+        }
+
         // Consulta direta ao dono: terceiros veem a passagem, mas nunca entram nela. Alem de fechar
         // o acidente de jogo, isto evita uma busca de entidades a cada tick por passagem aberta.
         ServerPlayer owner = level().getServer().getPlayerList().getPlayer(rescuer);

@@ -3,7 +3,10 @@ package com.aurorion.areas.api;
 import com.aurorion.areas.config.AreasConfig;
 import com.aurorion.areas.data.AreaData;
 import com.aurorion.areas.rules.AreaRule;
+import com.aurorion.areas.rules.ProtectionRule;
+import com.aurorion.areas.server.AreaProtection;
 import com.aurorion.areas.server.AreaRuntime;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -50,6 +53,20 @@ public final class AreaApi {
         return AreasConfig.ENABLED.get()
                 && AreaData.get(level.getServer()).granted(level.dimension().location(), x, y, z, actor, key);
     }
+    /**
+     * {@code player} pode quebrar ou colocar neste bloco pela regra {@code construir} (area de casa
+     * protegida para quem nao e da casa). Nao confere modo de jogo nem protecao de spawn do vanilla:
+     * isso e de quem chama. Atalho estavel para outros mods, que nao devem depender do pacote server.
+     */
+    public static boolean mayBuild(ServerLevel level, ServerPlayer player, BlockPos pos) {
+        return !AreasConfig.ENABLED.get() || AreaProtection.mayAct(level, player, pos, ProtectionRule.BUILD);
+    }
+
+    /** O mesmo para abrir/usar o bloco (regra {@code interagir}). */
+    public static boolean mayInteract(ServerLevel level, ServerPlayer player, BlockPos pos) {
+        return !AreasConfig.ENABLED.get() || AreaProtection.mayAct(level, player, pos, ProtectionRule.INTERACT);
+    }
+
     /** Raw location policy, including a character's explicit exceptions but without creative bypass. */
     public static boolean allowsAt(ServerLevel level, double x, double y, double z, @Nullable UUID actor, String key) {
         return !AreasConfig.ENABLED.get()

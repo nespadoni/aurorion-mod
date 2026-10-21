@@ -104,6 +104,10 @@ public abstract class AurorionSpell extends AbstractSpell {
      * Mira do Iron's: UM raio com a hitbox inflada para ajudar quem mira. Grava o alvo no
      * {@code TargetEntityCastData} da conjuracao, que {@link #target} le depois.
      *
+     * <p>Jogador em criativo nunca e alvo, e jogador contra jogador so onde PvP vale na posicao da
+     * vitima ({@link Hits#pvpAllowed}) — salvo o que {@link #helps} libera. Sem isto, quem estava a
+     * um bloco da zona segura puxava, prendia ou desarmava quem estava dentro dela.
+     *
      * @param allowAllies {@code true} para magias que tambem servem para ajudar (Transpositio)
      */
     protected boolean aim(Level level, LivingEntity caster, MagicData data, int range, boolean allowAllies,
@@ -111,8 +115,18 @@ public abstract class AurorionSpell extends AbstractSpell {
         return Utils.preCastTargetHelper(level, caster, data, this, range, AIM_ASSIST, true,
                 target -> target != caster && !untouchable(target)
                         && !target.hasEffect(MagiaEffects.UNTARGETABLE)
+                        && !(target instanceof Player player && player.isCreative())
+                        && (Hits.pvpAllowed(caster, target) || helps(caster, target))
                         && (allowAllies || !FriendlyFire.spares(caster, target))
                         && filter.test(target));
+    }
+
+    /**
+     * A conjuracao neste alvo so ajuda (soltar uma corrente, por exemplo) e por isso vale mesmo onde
+     * PvP nao vale. Padrao: nada ajuda.
+     */
+    protected boolean helps(LivingEntity caster, LivingEntity target) {
+        return false;
     }
 
     /**
@@ -143,9 +157,25 @@ public abstract class AurorionSpell extends AbstractSpell {
                 || FrozenLink.isFrozen(caster);
     }
 
-    /** O alvo escolhido na mira; para mob conjurador, o alvo da IA. */
+    /**
+     * O alvo escolhido na mira; para mob conjurador, o alvo da IA.
+     *
+     * <p>Reconfere o que pode ter mudado desde a mira (conjuracao longa, alvo que andou para dentro da
+     * zona segura ou ficou inalvejavel no meio da carga). Quem precisa do alvo sem essa conferencia —
+     * so para ajudar — usa {@link #rawTarget}.
+     */
     @Nullable
     protected static LivingEntity target(ServerLevel level, LivingEntity caster, @Nullable MagicData data) {
+        LivingEntity target = rawTarget(level, caster, data);
+        if (target == null || target.hasEffect(MagiaEffects.UNTARGETABLE)
+                || (target instanceof Player player && (player.isCreative() || player.isSpectator()))
+                || !Hits.pvpAllowed(caster, target)) return null;
+        return target;
+    }
+
+    /** O alvo da mira sem reconferir PvP nem inalvejavel. So para conjuracoes que ajudam. */
+    @Nullable
+    protected static LivingEntity rawTarget(ServerLevel level, LivingEntity caster, @Nullable MagicData data) {
         if (data != null && data.getAdditionalCastData() instanceof TargetEntityCastData cast) {
             LivingEntity target = cast.getTarget(level);
             if (target != null && target.isAlive()) return target;

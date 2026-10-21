@@ -62,6 +62,17 @@ public final class HouseEconomyBridge {
         }
     }
 
+    /** Capacidade atual do cofre (base do limite diario de saque); 0 sem economia ou em falha. */
+    public static long capacity(MinecraftServer server, ResourceLocation house) {
+        if (METHODS == null) return 0L;
+        try {
+            return (long) METHODS.capacity.invoke(null, server, house);
+        } catch (ReflectiveOperationException | ClassCastException exception) {
+            AurorionEthereal.LOGGER.error("Falha ao consultar a capacidade do cofre da Casa {}.", house, exception);
+            return 0L;
+        }
+    }
+
     /** @return quantia depositada, ou um {@code ERR_*} */
     public static long deposit(MinecraftServer server, UUID player, ResourceLocation house, long amount) {
         return move(METHODS == null ? null : METHODS.depositFromWallet, server, player, house, amount);

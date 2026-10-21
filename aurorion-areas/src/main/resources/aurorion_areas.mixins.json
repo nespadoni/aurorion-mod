@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "com.aurorion.areas.mixin.world",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "FlowingFluidSpreadMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

@@ -1,5 +1,6 @@
 package com.aurorion.servicos.server;
 
+import com.aurorion.core.rate.ActionCooldown;
 import com.aurorion.profissoes.data.Profession;
 import com.aurorion.profissoes.data.ProfessionData;
 import com.aurorion.servicos.data.Anuncio;
@@ -63,6 +64,10 @@ public final class ServicosManager {
     private static final int DRAFT = 180;
 
     private static final Set<UUID> ON_DUTY = new HashSet<>();
+    /** Intervalo entre pedidos novos da mesma conta. Por UUID: sair e voltar nao zera. */
+    private static final ActionCooldown ORDER_CREATION = new ActionCooldown(ServicosRules.ORDER_COOLDOWN_MS);
+    /** Avisos de pedido/candidato por destinatario: o celular de quem trabalha nao vira alvo de spam. */
+    private static final ActionCooldown PRO_NOTICES = new ActionCooldown(ServicosRules.NOTICE_COOLDOWN_MS);
     private static final Map<UUID, Long> LAST_ACTION = new HashMap<>();
     private static final Map<UUID, Long> LAST_QUERY = new HashMap<>();
     /** Quem acabou de entrar e ainda vai ser lembrado dos pedidos, em ticks restantes. */
@@ -93,27 +98,28 @@ public final class ServicosManager {
         sendPage(player, payload.tab(), payload.filter(), Result.done(""));
     }
 
+    /**
+     * Toque recusado pelo intervalo nao ganha resposta: montar e mandar a aba inteira de novo era
+     * exatamente o trabalho que o intervalo existe para poupar, e um cliente forjado podia pedir isso
+     * a cada pacote. O cliente legitimo continua com a pagina que ja tinha.
+     */
     public static void action(ServerPlayer player, ServicosActionPayload payload) {
-        Result result;
-        if (!cooldown(LAST_ACTION, player, ACTION_COOLDOWN_MS)) {
-            result = Result.fail("Um toque de cada vez.");
-        } else {
-            result = switch (payload.action()) {
-                case "anunciar" -> publishAd(player, payload);
-                case "remover_anuncio" -> removeAd(player, payload.id());
-                case "trabalhando" -> setWorking(player, "1".equals(payload.text()));
-                case "pedir" -> orderDirect(player, payload);
-                case "pedido_aberto" -> orderOpen(player, payload);
-                case "aceitar" -> accept(player, payload.id());
-                case "recusar" -> refuse(player, payload.id());
-                case "concluir" -> complete(player, payload.id());
-                case "cancelar" -> cancel(player, payload.id());
-                case "vaga" -> publishJob(player, payload);
-                case "fechar_vaga" -> closeJob(player, payload.id());
-                case "candidatar" -> apply(player, payload.id());
-                default -> Result.fail("Ação desconhecida.");
-            };
-        }
+        if (!cooldown(LAST_ACTION, player, ACTION_COOLDOWN_MS)) return;
+        Result result = switch (payload.action()) {
+            case "anunciar" -> publishAd(player, payload);
+            case "remover_anuncio" -> removeAd(player, payload.id());
+            case "trabalhando" -> setWorking(player, "1".equals(payload.text()));
+            case "pedir" -> orderDirect(player, payload);
+            case "pedido_aberto" -> orderOpen(player, payload);
+            case "aceitar" -> accept(player, payload.id());
+            case "recusar" -> refuse(player, payload.id());
+            case "concluir" -> complete(player, payload.id());
+            case "cancelar" -> cancel(player, payload.id());
+            case "vaga" -> publishJob(player, payload);
+            case "fechar_vaga" -> closeJob(player, payload.id());
+            case "candidatar" -> apply(player, payload.id());
+            default -> Result.fail("Ação desconhecida.");
+        };
         sendPage(player, payload.tab(), payload.filter(), result);
     }
 
@@ -200,8 +206,11 @@ public final class ServicosManager {
         if (text.isEmpty()) text = "Quero contratar: " + ad.title();
 
         long now = System.currentTimeMillis();
+        String limit = orderLimit(data, me, now);
+        if (limit != null) return Result.fail(limit);
         data.put(new Pedido(data.nextId(), me, ad.category(), text, ad.owner(), ad.id(), PedidoStatus.ABERTO, null, now, now));
-        notify(provider, "Novo pedido de " + ServicosNames.name(server, me), text);
+        data.countOrder(me, now);
+        notifyProfessional(provider, "Novo pedido de " + ServicosNames.name(server, me), text);
         return Result.chat("Pedido enviado para " + providerName + ". Combine os detalhes na conversa.",
                 ServicosNames.nick(server, ad.owner()),
                 "Olá! Vi seu anúncio \"" + ad.title() + "\" no Serviços. " + text);
@@ -220,19 +229,38 @@ public final class ServicosManager {
         }
 
         long now = System.currentTimeMillis();
+        String limit = orderLimit(data, me, now);
+        if (limit != null) return Result.fail(limit);
         data.put(new Pedido(data.nextId(), me, category, text, null, 0, PedidoStatus.ABERTO, null, now, now));
+        data.countOrder(me, now);
         String label = Categorias.label(category);
         String myName = ServicosNames.name(server, me);
         int warned = 0;
         for (ServerPlayer other : server.getPlayerList().getPlayers()) {
             UUID account = other.getUUID();
             if (account.equals(me) || !ON_DUTY.contains(account) || !data.offers(account, category)) continue;
-            notify(other, "Pedido aberto: " + label, myName + ": " + text);
-            warned++;
+            if (notifyProfessional(other, "Pedido aberto: " + label, myName + ": " + text)) warned++;
         }
         return Result.done(warned > 0
                 ? "Pedido publicado. " + warned + " profissional(is) trabalhando em " + label + " foram avisados."
-                : "Pedido publicado. Ninguém de " + label + " está trabalhando agora; quem começar verá seu pedido.");
+                : "Pedido publicado. Ninguém de " + label + " foi avisado agora; quem estiver trabalhando verá seu pedido.");
+    }
+
+    /**
+     * Cota diaria, intervalo entre pedidos e teto global, nessa ordem. O intervalo so e gasto quando
+     * o pedido vai mesmo ser criado — quem errou o texto nao fica 20 s esperando.
+     *
+     * @return o motivo da recusa, ou {@code null} se o pedido pode ser criado
+     */
+    @Nullable
+    private static String orderLimit(ServicosData data, UUID me, long now) {
+        if (data.ordersToday(me, now) >= ServicosRules.MAX_ORDERS_PER_DAY)
+            return "Você já fez " + ServicosRules.MAX_ORDERS_PER_DAY + " pedidos hoje. Combine pela conversa ou volte amanhã.";
+        long wait = ORDER_CREATION.remainingMillis(me, now);
+        if (wait > 0) return "Aguarde " + Math.max(1, (wait + 999) / 1000) + " s para fazer outro pedido.";
+        if (!data.roomForOrder()) return "O mural de pedidos está cheio agora. Tente novamente mais tarde.";
+        if (!ORDER_CREATION.acquire(me, now)) return "Aguarde alguns segundos para fazer outro pedido.";
+        return null;
     }
 
     private static Result accept(ServerPlayer player, long id) {
@@ -289,7 +317,8 @@ public final class ServicosManager {
         Pedido pedido = data.order(id);
         if (pedido == null) return Result.fail("Esse pedido não existe mais.");
         if (!ServicosRules.canCancel(pedido, me)) return Result.fail("Você não pode cancelar esse pedido.");
-        data.put(pedido.with(PedidoStatus.CANCELADO, pedido.provider(), System.currentTimeMillis()));
+        if (ServicosRules.discardOnCancel(pedido)) data.removeOrder(id);
+        else data.put(pedido.with(PedidoStatus.CANCELADO, pedido.provider(), System.currentTimeMillis()));
         warnCounterpart(server, pedido, me, "Pedido cancelado", ServicosNames.name(server, me) + " cancelou o pedido.");
         return Result.done("Pedido cancelado.");
     }
@@ -341,7 +370,7 @@ public final class ServicosManager {
         if (vaga.candidates().size() >= ServicosRules.MAX_CANDIDATES) return Result.fail("Essa vaga já tem candidatos demais.");
         data.put(vaga.withCandidate(me));
         ServerPlayer owner = server.getPlayerList().getPlayer(vaga.owner());
-        if (owner != null) notify(owner, "Novo candidato: " + ServicosNames.name(server, me), "Vaga: " + vaga.title());
+        if (owner != null) notifyProfessional(owner, "Novo candidato: " + ServicosNames.name(server, me), "Vaga: " + vaga.title());
         return Result.chat("Candidatura enviada. Apresente-se na conversa.", ownerNick,
                 "Olá! Tenho interesse na vaga \"" + vaga.title() + "\" que vi no Serviços. ");
     }
@@ -484,6 +513,18 @@ public final class ServicosManager {
         ServicosNetwork.send(target, new ServicosNotifyPayload(cut(title, 90), cut(text, 250), badge(data, target.getUUID())));
     }
 
+    /**
+     * Aviso de trabalho novo (pedido ou candidato), limitado por destinatario. O que nao for avisado
+     * continua no selo e na aba de pedidos: so o toque no celular e poupado.
+     *
+     * @return se o aviso foi enviado
+     */
+    private static boolean notifyProfessional(ServerPlayer target, String title, String text) {
+        if (!PRO_NOTICES.acquire(target.getUUID(), System.currentTimeMillis())) return false;
+        notify(target, title, text);
+        return true;
+    }
+
     /** O que espera uma resposta de {@code me}: pedido direto para ele e, trabalhando, os abertos da area. */
     static int badge(ServicosData data, UUID me) {
         int count = 0;
@@ -568,6 +609,8 @@ public final class ServicosManager {
 
     static void clear() {
         ON_DUTY.clear();
+        ORDER_CREATION.clear();
+        PRO_NOTICES.clear();
         LAST_ACTION.clear();
         LAST_QUERY.clear();
         LOGIN_REMINDERS.clear();

@@ -46,7 +46,13 @@ public class AbductionOriginData extends SavedData {
             CompoundTag entry = entries.getCompound(i);
             if (!entry.hasUUID(KEY_PLAYER)) continue;
 
-            data.origins.put(entry.getUUID(KEY_PLAYER), TeleportSpot.load(entry.getCompound(KEY_SPOT)));
+            TeleportSpot spot = TeleportSpot.load(entry.getCompound(KEY_SPOT));
+            if (spot == null) {
+                AurorionUtils.LOGGER.warn("Abducao: origem salva de {} ignorada (dimensao ou coordenada invalida).",
+                        entry.getUUID(KEY_PLAYER));
+                continue;
+            }
+            data.origins.put(entry.getUUID(KEY_PLAYER), spot);
         }
         return data;
     }

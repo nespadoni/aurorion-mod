@@ -35,12 +35,16 @@ public final class Execution {
      * Executa. O {@code kill()} so entra quando o golpe <b>entrou</b> e algum mod ainda segurou a
      * entidade viva: se o dano foi cancelado (area sem PvP, estase, inalvejavel), a execucao tambem e —
      * senao ela passaria por cima de toda protecao que cancela dano.
+     *
+     * @return {@code true} so se o alvo saiu morto daqui. Quem devolve a recarga no abate (Profundezas)
+     *         depende disso: o golpe cancelado pela zona segura ou salvo por outro mod nao e abate.
      */
-    public static void execute(ServerLevel level, LivingEntity caster, LivingEntity target, ResourceKey<DamageType> type) {
-        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return;
+    public static boolean execute(ServerLevel level, LivingEntity caster, LivingEntity target, ResourceKey<DamageType> type) {
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
         if (target.hurt(FriendlyFire.source(source(level, caster, type), target), Float.MAX_VALUE) && target.isAlive()) {
             target.kill();
         }
+        return !target.isAlive();
     }
 
     public static DamageSource source(ServerLevel level, LivingEntity caster, ResourceKey<DamageType> type) {

@@ -86,7 +86,8 @@ public final class ProcellaCorvorumSpell extends AurorionSpell {
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if (level instanceof ServerLevel serverLevel) {
-            Vec3 destination = Hits.aimGround(serverLevel, entity, BLINK);
+            // Pouco degrau: o salto nao sobe telhado nem atravessa para o andar de cima.
+            Vec3 destination = Hits.aimGround(serverLevel, entity, BLINK, Hits.TELEPORT_STEP);
             if (destination.distanceToSqr(entity.position()) > 2.25) Utils.handleSpellTeleport(this, entity, destination);
             int duration = duration(spellLevel);
             // Dois pulsos por segundo: metade do poder em cada um.

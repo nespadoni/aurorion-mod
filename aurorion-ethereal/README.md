@@ -264,12 +264,18 @@ travar a atualização do pack inteiro.
 ## Uso
 
 ```
-/casa                             -> mostra a sua casa (qualquer jogador)
+/casa                             -> mostra a sua casa, so depois de revelada (qualquer jogador)
 
 /casa listar                      -> todas as casas e quantos membros cada uma tem   (nivel 2)
-/casa ver <jogador>               -> a casa de alguem, mesmo offline                 (nivel 2)
-/casa definir <jogador> <casa>    -> atribui, ignorando cerimonia e lotacao          (nivel 2)
+/casa ver <jogador>               -> a casa de alguem, mesmo offline e mesmo oculta  (nivel 2)
+/casa definir <jogador> <casa>    -> cadastra OCULTA, ignorando cerimonia e lotacao  (nivel 2)
+/casa revelar <jogador>           -> torna publica sem cerimonia (tab, mural, areas) (nivel 2)
+/casa ocultar <jogador>           -> volta a esconder a casa ate a revelacao         (nivel 2)
 /casa limpar <jogador>            -> tira da casa                                    (nivel 2)
+
+/casa cofre                       -> mostra as regras do cofre                       (nivel 2)
+/casa cofre limite <0-100>        -> % da capacidade que cada membro tira por dia    (nivel 2)
+/casa cofre alerta <1-100>        -> % da capacidade que alerta a staff              (nivel 2)
 
 # Olhando para o Cofre da Casa, a até 8 blocos:
 /casa mural vincular <casa>       -> vincula o mural à Casa indicada                  (nivel 2)

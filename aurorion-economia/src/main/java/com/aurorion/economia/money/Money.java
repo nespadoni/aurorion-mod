@@ -95,10 +95,17 @@ public final class Money {
         return fragments;
     }
 
+    /**
+     * So {@code '0'..'9'} ASCII. {@link Character#isDigit} aceita digitos de outros alfabetos
+     * (arabe-indico, devanagari, de largura total...), que o {@code Long.parseLong} tambem converte —
+     * mas a casa decimal e lida com {@code charAt(0) - '0'}, que daria um numero absurdo para eles.
+     * Quantia digitada pelo cliente tem uma forma so.
+     */
     private static boolean isDigits(String text) {
         if (text.isEmpty()) return false;
         for (int i = 0; i < text.length(); i++) {
-            if (!Character.isDigit(text.charAt(i))) return false;
+            char c = text.charAt(i);
+            if (c < '0' || c > '9') return false;
         }
         return true;
     }

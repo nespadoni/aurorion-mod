@@ -10,6 +10,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.CommandEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 @EventBusSubscriber(modid = AurorionTalk.MOD_ID)
 public final class TalkServerEvents {
@@ -21,6 +22,16 @@ public final class TalkServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             StyleManager.onPlayerJoin(player);
         }
+    }
+
+    /**
+     * No servidor integrado o processo sobrevive ao mundo: sem isto, o espiar e os prazos de troca
+     * de estilo de um mundo valeriam no proximo.
+     */
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        ProximityChat.clear();
+        StyleManager.clear();
     }
 
     /**

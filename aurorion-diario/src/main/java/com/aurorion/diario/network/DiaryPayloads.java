@@ -2,6 +2,7 @@ package com.aurorion.diario.network;
 
 import com.aurorion.diario.AurorionDiario;
 import com.aurorion.diario.markup.DiaryMarkup;
+import com.aurorion.diario.markup.DiaryText;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -13,10 +14,25 @@ import java.util.List;
 /**
  * Os pacotes do diário. Todo texto que vem do cliente tem teto no próprio codec: um cliente
  * adulterado não consegue alocar além disso no servidor, e o servidor ainda revalida tudo.
+ *
+ * <p>Todo texto que <b>sai</b> do servidor passa por {@link DiaryText#clip} no próprio encoder: o
+ * {@code writeUtf} lança exceção quando o texto passa do teto, e exceção no encoder desconecta o
+ * jogador. O servidor já corta antes ({@code DiaryServer}); o corte aqui é a rede de segurança.
  */
 public final class DiaryPayloads {
+    /** Tetos do site, em caracteres Unicode. */
     public static final int TITLE = 200;
     public static final int LORE_DATE = 120;
+    /**
+     * Tetos no pacote, em unidades UTF-16 (a conta do {@code writeUtf}): o dobro, para que um título
+     * de 200 caracteres do site cheio de emoji (dois cada) ainda caiba inteiro.
+     */
+    public static final int TITLE_WIRE = 2 * TITLE;
+    public static final int LORE_DATE_WIRE = 2 * LORE_DATE;
+    public static final int CHARACTER = 160;
+    public static final int SITE_URL = 200;
+    public static final int ORIGIN = 8;
+    public static final int STATE = 16;
     /** Texto que o servidor manda para leitura (pacote para o cliente aceita até 1 MiB). */
     public static final int MARKUP = DiaryMarkup.MAX_MARKUP_CHARS;
     /**
@@ -54,23 +70,23 @@ public final class DiaryPayloads {
         public static final Type<Open> TYPE = new Type<>(channel("open"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Open> STREAM_CODEC = StreamCodec.of(
                 (buf, data) -> {
-                    buf.writeUtf(data.character, 160);
+                    buf.writeUtf(DiaryText.clip(data.character, CHARACTER), CHARACTER);
                     int count = Math.min(data.entries.size(), MAX_ENTRIES);
                     buf.writeVarInt(count);
                     for (int i = 0; i < count; i++) {
                         Summary s = data.entries.get(i);
                         buf.writeVarLong(s.id());
-                        buf.writeUtf(s.title(), TITLE);
+                        buf.writeUtf(DiaryText.clip(s.title(), TITLE_WIRE), TITLE_WIRE);
                         buf.writeVarInt(s.flags());
                     }
-                    buf.writeUtf(data.siteUrl, 200);
+                    buf.writeUtf(DiaryText.clip(data.siteUrl, SITE_URL), SITE_URL);
                 },
                 buf -> {
-                    String character = buf.readUtf(160);
+                    String character = buf.readUtf(CHARACTER);
                     int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
                     List<Summary> entries = new ArrayList<>(count);
-                    for (int i = 0; i < count; i++) entries.add(new Summary(buf.readVarLong(), buf.readUtf(TITLE), buf.readVarInt()));
-                    return new Open(character, entries, buf.readUtf(200));
+                    for (int i = 0; i < count; i++) entries.add(new Summary(buf.readVarLong(), buf.readUtf(TITLE_WIRE), buf.readVarInt()));
+                    return new Open(character, entries, buf.readUtf(SITE_URL));
                 });
 
         @Override
@@ -90,14 +106,17 @@ public final class DiaryPayloads {
                 (buf, data) -> {
                     buf.writeVarLong(data.id);
                     buf.writeVarInt(data.version);
-                    buf.writeUtf(data.title, TITLE);
-                    buf.writeUtf(data.loreDate, LORE_DATE);
-                    buf.writeUtf(data.markup, MARKUP);
-                    buf.writeVarInt(data.flags);
-                    buf.writeUtf(data.draftKey, KEY);
+                    buf.writeUtf(DiaryText.clip(data.title, TITLE_WIRE), TITLE_WIRE);
+                    buf.writeUtf(DiaryText.clip(data.loreDate, LORE_DATE_WIRE), LORE_DATE_WIRE);
+                    // Texto que nao cabe vira o aviso, e o aviso so abre para leitura: salvar o aviso
+                    // por cima apagaria o texto de verdade no site.
+                    boolean fits = data.markup.length() <= MARKUP;
+                    buf.writeUtf(fits ? data.markup : DiaryText.TOO_LONG, MARKUP);
+                    buf.writeVarInt(fits ? data.flags : data.flags | READ_ONLY);
+                    buf.writeUtf(DiaryText.clip(data.draftKey, KEY), KEY);
                 },
-                buf -> new Entry(buf.readVarLong(), buf.readVarInt(), buf.readUtf(TITLE), buf.readUtf(LORE_DATE), buf.readUtf(MARKUP),
-                        buf.readVarInt(), buf.readUtf(KEY)));
+                buf -> new Entry(buf.readVarLong(), buf.readVarInt(), buf.readUtf(TITLE_WIRE), buf.readUtf(LORE_DATE_WIRE),
+                        buf.readUtf(MARKUP), buf.readVarInt(), buf.readUtf(KEY)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -114,14 +133,14 @@ public final class DiaryPayloads {
         public static final Type<Status> TYPE = new Type<>(channel("status"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Status> STREAM_CODEC = StreamCodec.of(
                 (buf, data) -> {
-                    buf.writeUtf(data.draftKey, KEY);
-                    buf.writeUtf(data.state, 16);
+                    buf.writeUtf(DiaryText.clip(data.draftKey, KEY), KEY);
+                    buf.writeUtf(DiaryText.clip(data.state, STATE), STATE);
                     buf.writeVarLong(data.entryId);
                     buf.writeVarInt(data.version);
                     buf.writeVarInt(data.flags);
-                    buf.writeUtf(data.message, MESSAGE);
+                    buf.writeUtf(DiaryText.clip(data.message, MESSAGE), MESSAGE);
                 },
-                buf -> new Status(buf.readUtf(KEY), buf.readUtf(16), buf.readVarLong(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(MESSAGE)));
+                buf -> new Status(buf.readUtf(KEY), buf.readUtf(STATE), buf.readVarLong(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(MESSAGE)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -134,15 +153,16 @@ public final class DiaryPayloads {
         public static final Type<Conflict> TYPE = new Type<>(channel("conflict"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Conflict> STREAM_CODEC = StreamCodec.of(
                 (buf, data) -> {
-                    buf.writeUtf(data.draftKey, KEY);
+                    buf.writeUtf(DiaryText.clip(data.draftKey, KEY), KEY);
                     buf.writeVarLong(data.entryId);
                     buf.writeVarInt(data.version);
-                    buf.writeUtf(data.title, TITLE);
-                    buf.writeUtf(data.loreDate, LORE_DATE);
-                    buf.writeUtf(data.markup, MARKUP);
-                    buf.writeUtf(data.origin, 8);
+                    buf.writeUtf(DiaryText.clip(data.title, TITLE_WIRE), TITLE_WIRE);
+                    buf.writeUtf(DiaryText.clip(data.loreDate, LORE_DATE_WIRE), LORE_DATE_WIRE);
+                    buf.writeUtf(DiaryText.fitOrPlaceholder(data.markup, MARKUP), MARKUP);
+                    buf.writeUtf(DiaryText.clip(data.origin, ORIGIN), ORIGIN);
                 },
-                buf -> new Conflict(buf.readUtf(KEY), buf.readVarLong(), buf.readVarInt(), buf.readUtf(TITLE), buf.readUtf(LORE_DATE), buf.readUtf(MARKUP), buf.readUtf(8)));
+                buf -> new Conflict(buf.readUtf(KEY), buf.readVarLong(), buf.readVarInt(), buf.readUtf(TITLE_WIRE),
+                        buf.readUtf(LORE_DATE_WIRE), buf.readUtf(MARKUP), buf.readUtf(ORIGIN)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -160,7 +180,7 @@ public final class DiaryPayloads {
         public static final Type<Request> TYPE = new Type<>(channel("request"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Request> STREAM_CODEC = StreamCodec.of(
                 (buf, data) -> {
-                    buf.writeUtf(data.action, 12);
+                    buf.writeUtf(DiaryText.clip(data.action, 12), 12);
                     buf.writeVarLong(data.entryId);
                 },
                 buf -> new Request(buf.readUtf(12), buf.readVarLong()));
@@ -184,12 +204,12 @@ public final class DiaryPayloads {
                     buf.writeUtf(data.operationId, KEY);
                     buf.writeVarLong(data.entryId);
                     buf.writeVarInt(data.baseVersion);
-                    buf.writeUtf(data.title, TITLE);
-                    buf.writeUtf(data.loreDate, LORE_DATE);
+                    buf.writeUtf(DiaryText.clip(data.title, TITLE_WIRE), TITLE_WIRE);
+                    buf.writeUtf(DiaryText.clip(data.loreDate, LORE_DATE_WIRE), LORE_DATE_WIRE);
                     buf.writeUtf(data.markup, MARKUP_EDIT);
                 },
                 buf -> new Save(buf.readUtf(KEY), buf.readUtf(KEY), buf.readVarLong(), buf.readVarInt(),
-                        buf.readUtf(TITLE), buf.readUtf(LORE_DATE), buf.readUtf(MARKUP_EDIT)));
+                        buf.readUtf(TITLE_WIRE), buf.readUtf(LORE_DATE_WIRE), buf.readUtf(MARKUP_EDIT)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

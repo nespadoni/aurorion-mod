@@ -154,17 +154,26 @@ public final class ChargeManager {
             return;
         }
 
-        Transfer.Result result = Wallet.transfer(payer.server, payer.getUUID(), charger.getUUID(), charge.amount());
+        Transfer.Result result = Wallet.transfer(payer.server, payer.getUUID(), charger.getUUID(), charge.amount(), "cobranca");
         if (!result.ok()) {
+            // O saldo e de quem paga: so ele ve o valor. Quem cobrou recebe so o motivo generico,
+            // senao uma cobranca alta virava consulta de saldo alheio.
             String message = switch (result) {
                 case INSUFFICIENT -> "Saldo insuficiente: você possui "
                         + Money.describe(Wallet.balance(payer.server, payer.getUUID())) + ".";
                 case TARGET_FULL -> "A carteira de quem cobrou não comporta esse valor.";
                 case SAME_ACCOUNT -> "Não é possível pagar a si mesmo.";
+                case SENDER_BLOCKED -> "Seu personagem não pode enviar dinheiro agora (Limbo, morte ou sem nome).";
+                case STARTER_LOCKED -> "A bolsa inicial ainda não pode ser repassada; gaste-a ou jogue mais um pouco.";
                 case INVALID_AMOUNT, OK -> "A quantia da cobrança é inválida.";
             };
+            String chargerMessage = switch (result) {
+                case TARGET_FULL -> message;
+                case INVALID_AMOUNT, OK -> message;
+                default -> displayName(payer) + " não conseguiu pagar a cobrança.";
+            };
             status(payer, "Pagamento não realizado", message, false);
-            status(charger, "Pagamento não realizado", message, false);
+            status(charger, "Pagamento não realizado", chargerMessage, false);
             return;
         }
 

@@ -15,6 +15,18 @@ class PhoneSocialResetTest {
     private record Follow(String follower, String followed) {
     }
 
+    private record Block(String blockerName, String targetName, boolean blocked) {
+    }
+
+    /** Bloqueio que outra pessoa fez contra o nick sobrevive ao reset; o que o nick fez, nao. */
+    @Test
+    void onlyTheBlocksMadeByTheCharacterGo() {
+        String key = PhoneSocialReset.normalize("Steve_42");
+        assertTrue(PhoneSocialReset.ownedBy(new Block("steve_42", "alex", true), "blockerName", key));
+        assertFalse(PhoneSocialReset.ownedBy(new Block("alex", "Steve_42", true), "blockerName", key));
+        assertFalse(PhoneSocialReset.ownedBy(new Follow("steve_42", "alex"), "blockerName", key));
+    }
+
     @Test
     void normalizesLikeThePhone() {
         assertEquals("steve_42", PhoneSocialReset.normalize(" @Steve_42 "));

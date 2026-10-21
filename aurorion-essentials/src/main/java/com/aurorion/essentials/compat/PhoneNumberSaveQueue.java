@@ -45,8 +45,14 @@ import java.util.concurrent.atomic.AtomicReference;
 @EventBusSubscriber(modid = AurorionEssentials.MOD_ID)
 public final class PhoneNumberSaveQueue {
     private static final String COMMENT = "Mattupolis Phone Number Directory";
-    /** Quanto o desligamento e o reset de personagem esperam o disco antes de desistir. */
+    /** Quanto o desligamento espera o disco antes de desistir. Fora do tick: pode ser generoso. */
     private static final long DRAIN_TIMEOUT_SECONDS = 10;
+    /**
+     * Quanto o reset de personagem espera. O reset roda na thread do servidor: dez segundos ali eram
+     * dez segundos de servidor parado para 80 pessoas. A fila grava um arquivo pequeno; se nem isso
+     * terminou em meio segundo, o disco esta com problema, e o reset desiste e e repetido depois.
+     */
+    public static final long RESET_DRAIN_TIMEOUT_MILLIS = 500;
 
     private record Snapshot(Path file, List<String> entries) {
     }
@@ -78,21 +84,32 @@ public final class PhoneNumberSaveQueue {
      * reset de personagem) chama isto antes, senao uma gravacao atrasada desfaria a mudanca dele.
      */
     public static void awaitWrites() {
+        awaitWrites(TimeUnit.SECONDS.toMillis(DRAIN_TIMEOUT_SECONDS));
+    }
+
+    /**
+     * @return {@code true} se a fila esvaziou dentro do prazo (ou nunca existiu); {@code false} se o
+     *         disco nao respondeu — quem vai reescrever o arquivo nao deve seguir, ou uma gravacao
+     *         atrasada desfaria a mudanca dele.
+     */
+    public static boolean awaitWrites(long timeoutMillis) {
         ExecutorService executor;
         synchronized (PhoneNumberSaveQueue.class) {
             executor = io;
         }
-        if (executor == null) return;
+        if (executor == null) return true;
         try {
             // Um executor de uma thread so: quando esta tarefa vazia termina, tudo que foi pedido antes
             // dela ja terminou.
-            executor.submit(() -> { }).get(DRAIN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            executor.submit(() -> { }).get(timeoutMillis, TimeUnit.MILLISECONDS);
+            return true;
         } catch (TimeoutException e) {
-            AurorionEssentials.LOGGER.warn("O disco nao respondeu em {}s ao gravar o diretorio de numeros do "
-                    + "telefone; seguindo sem esperar.", DRAIN_TIMEOUT_SECONDS);
+            AurorionEssentials.LOGGER.warn("O disco nao respondeu em {}ms ao gravar o diretorio de numeros do "
+                    + "telefone.", timeoutMillis);
         } catch (Exception e) {
             AurorionEssentials.LOGGER.warn("Falha esperando a gravacao do diretorio de numeros do telefone.", e);
         }
+        return false;
     }
 
     /**

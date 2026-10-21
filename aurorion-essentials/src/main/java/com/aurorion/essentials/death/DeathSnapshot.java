@@ -138,6 +138,15 @@ public final class DeathSnapshot {
         return !entry.getString("Group").equals("ender") && KeptOnDeath.is(stack);
     }
 
+    /**
+     * O item estava no ender chest. O ender chest nao cai na morte: o dono continua com tudo o que
+     * estava nele, entao entregar de novo pelo historico (give, aba Ender no criativo) e criar uma
+     * segunda copia — um dupe ao alcance de qualquer staff. O registro so mostra, para consulta.
+     */
+    public static boolean fromEnderChest(CompoundTag entry) {
+        return entry.getString("Group").equals("ender");
+    }
+
     public static ItemStack item(CompoundTag entry, ServerPlayer player) {
         if (!entry.contains("Stack", Tag.TAG_COMPOUND)) return ItemStack.EMPTY;
         return ItemStack.parse(player.registryAccess(), entry.getCompound("Stack"))

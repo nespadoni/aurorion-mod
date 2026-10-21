@@ -12,6 +12,8 @@
   "commands.aurorion_economia.pagar.insufficient": "Saldo insuficiente: você tem %s.",
   "commands.aurorion_economia.pagar.self": "Não dá para pagar a si mesmo.",
   "commands.aurorion_economia.pagar.targetFull": "A conta de destino não comporta esse valor.",
+  "commands.aurorion_economia.pagar.blocked": "Seu personagem não pode enviar dinheiro agora: está no Limbo, morto ou ainda sem nome.",
+  "commands.aurorion_economia.pagar.starterLocked": "A bolsa inicial (%s) ainda não pode ser repassada: gaste-a à vontade, ou jogue mais um pouco para liberá-la.",
 
   "commands.aurorion_economia.economia.dar": "Criados %s para %s. Saldo agora: %s.",
   "commands.aurorion_economia.economia.tirar": "Retirados %s de %s. Saldo agora: %s.",

@@ -17,6 +17,8 @@ public final class EtherealConfig {
     public static final ModConfigSpec.BooleanValue ANNOUNCE_IN_CHAT;
     public static final ModConfigSpec.IntValue PROTECTOR_I_COOLDOWN_DAYS;
     public static final ModConfigSpec.IntValue PROTECTOR_II_COOLDOWN_DAYS;
+    public static final ModConfigSpec.IntValue VAULT_DAILY_WITHDRAW_PERCENT;
+    public static final ModConfigSpec.IntValue VAULT_ALERT_PERCENT;
 
     public static final ModConfigSpec SPEC;
 
@@ -61,6 +63,22 @@ public final class EtherealConfig {
         PROTECTOR_II_COOLDOWN_DAYS = BUILDER
                 .comment("Recarga do Protetor Arcano II, em dias reais.")
                 .defineInRange("protectorIICooldownDays", 14, 1, 365);
+
+        // Ajustados em jogo por /casa cofre limite|alerta; o arquivo so guarda o valor.
+        VAULT_DAILY_WITHDRAW_PERCENT = BUILDER
+                .comment(
+                        "Quanto cada membro pode tirar do cofre da Casa por dia (saques e compras de melhoria),",
+                        "em porcentagem da capacidade atual do cofre. 0 = so a staff movimenta; 100 = sem limite",
+                        "pratico. Staff (nivel 2) nunca e limitada. Use /casa cofre limite <0-100>."
+                )
+                .defineInRange("vaultDailyWithdrawPercent", 10, 0, 100);
+
+        VAULT_ALERT_PERCENT = BUILDER
+                .comment(
+                        "Saque (ou compra) a partir desta porcentagem da capacidade do cofre alerta a staff online",
+                        "e vai para o log como aviso. Use /casa cofre alerta <1-100>."
+                )
+                .defineInRange("vaultAlertPercent", 5, 1, 100);
 
         BUILDER.pop();
 

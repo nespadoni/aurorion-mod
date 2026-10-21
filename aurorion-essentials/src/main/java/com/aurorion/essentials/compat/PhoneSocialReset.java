@@ -27,7 +27,13 @@ import java.util.Set;
  * quando a chave do mapa e o nick.
  *
  * <p>Fica de fora o que e moderacao, e nao do personagem: bloqueio de app pela staff, permissao de
- * admin social e a lista de OPs. Punicao e cargo sao da conta.
+ * admin social e a lista de OPs. Punicao e cargo sao da conta. Tambem fica o anti-spam (o intervalo
+ * entre posts e entre anuncios): se o reset zerasse o relogio, morrer virava um jeito de postar de novo
+ * na hora.
+ *
+ * <p>Bloqueio no Gram tem dono. O que o personagem anterior bloqueou sai com ele; o que <b>outros</b>
+ * bloquearam contra o nick fica — a pessoa assediada nao decidiu desbloquear so porque o assediador
+ * trocou de personagem com o mesmo nick.
  *
  * <p>Melhor esforco: o reset do personagem nao pode parar porque o telefone mudou. Falhou, avisa no
  * log e segue.
@@ -36,7 +42,13 @@ public final class PhoneSocialReset {
     private static final String SOCIAL = "com.mattupolis.phone.server.social.PhoneSocialServerStore";
     private static final String MARKETPLACE = "com.mattupolis.phone.server.marketplace.PhoneMarketplaceServerStore";
     private static final Set<String> KEPT = Set.of(
-            "TWITTER_APP_BLOCKS", "GRAM_APP_BLOCKS", "SOCIAL_ADMIN_PERMISSIONS", "SERVER_OP_KEYS");
+            "TWITTER_APP_BLOCKS", "GRAM_APP_BLOCKS", "SOCIAL_ADMIN_PERMISSIONS", "SERVER_OP_KEYS",
+            "LAST_GRAM_POST_MILLIS_BY_USER", "LAST_CREATE_BY_PLAYER");
+    /**
+     * Colecoes em que so um campo diz de quem e a entrada. O resto do registro aponta para outra
+     * pessoa, e por isso nao conta (ver {@link #ownedBy}).
+     */
+    private static final Map<String, String> OWNER_FIELD = Map.of("GRAM_BLOCKS", "blockerName");
 
     private PhoneSocialReset() {
     }
@@ -89,6 +101,11 @@ public final class PhoneSocialReset {
             if (!Modifier.isStatic(field.getModifiers()) || KEPT.contains(field.getName())) continue;
             field.setAccessible(true);
             Object value = field.get(null);
+            String owner = OWNER_FIELD.get(field.getName());
+            if (owner != null) {
+                if (value instanceof Collection<?> collection) changed |= collection.removeIf(element -> ownedBy(element, owner, key));
+                continue;
+            }
             if (value instanceof Map<?, ?> map) {
                 changed |= map.entrySet().removeIf(entry -> mentions(entry.getKey(), key) || mentions(entry.getValue(), key));
             } else if (value instanceof Collection<?> collection) {
@@ -113,6 +130,24 @@ public final class PhoneSocialReset {
                 } catch (ReflectiveOperationException | RuntimeException ignored) {
                     // Campo inacessivel: nao decide nada.
                 }
+            }
+        }
+        return false;
+    }
+
+    /** O campo {@code ownerField} (texto) do registro e o nick. Sem o campo, nao e da conta. */
+    static boolean ownedBy(Object value, String ownerField, String key) {
+        if (value == null) return false;
+        for (Class<?> type = value.getClass(); type != null && type != Object.class; type = type.getSuperclass()) {
+            try {
+                Field field = type.getDeclaredField(ownerField);
+                if (field.getType() != String.class || Modifier.isStatic(field.getModifiers())) return false;
+                field.setAccessible(true);
+                return field.get(value) instanceof String text && normalize(text).equals(key);
+            } catch (NoSuchFieldException next) {
+                // Procura na superclasse.
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                return false;
             }
         }
         return false;

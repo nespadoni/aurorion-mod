@@ -28,8 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>A cor de quem esta online fica num mapa concorrente, porque a linha da tab e montada onde o pacote
  * nasce — e um mod de tab pode monta-lo fora da thread do servidor. Nada roda por tick: a cor e lida no
- * login e de novo so quando o Ethereal avisa ({@link HouseChangedEvent}) — {@code /casa definir}, a
- * cerimonia, ou um {@code /reload} que mude a cor de uma casa.
+ * login e de novo so quando o Ethereal avisa ({@link HouseChangedEvent}) — a revelacao da cerimonia,
+ * um {@code /casa revelar}/{@code limpar}, ou um {@code /reload} que mude a cor de uma casa.
+ *
+ * <p>So pinta casa <b>revelada</b>: o {@link HouseGate} do Ethereal responde {@code null} para o
+ * cadastro que a staff fez antes da cerimonia, entao um {@code /casa definir} silencioso nao muda a
+ * cor de ninguem (e nem dispara o evento).
  *
  * <p>Os dois pontos que pintam sao mixins: {@code TabListNameMixin} (o nome que o NeoForge/vanilla
  * calcula) e {@code PlayerInfoEntryMixin} (qualquer entrada da tab que alguem monte, inclusive o Just

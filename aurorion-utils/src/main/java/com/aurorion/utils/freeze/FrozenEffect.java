@@ -27,7 +27,9 @@ import java.util.Set;
  * <p><b>Leite e totem nao curam</b> ({@link #fillEffectCures} vazio). A decisao antiga de "montaria,
  * nao efeito" existia porque um balde de leite desfaria o freeze; aqui a montaria continua, e o
  * efeito simplesmente nao tem cura — alem de que congelado nem consegue beber. So sai por
- * {@code /unfreeze}, pelo fim do tempo ou por {@code /effect clear} da staff.
+ * {@code /unfreeze}, pelo fim do tempo ou pelo reset de personagem; {@code /effect clear} e a
+ * purificacao de outros mods so tiram o congelamento curto da magia (ver
+ * {@code FreezeManager#removalProtected}).
  *
  * <p>O tick, uma vez por segundo e so em quem esta congelado, recoloca a montaria se ela sumiu
  * (relog, {@code /tp} da staff, troca de dimensao).

@@ -6,6 +6,7 @@ import com.aurorion.aeonita.registry.AeonitaTags;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -19,10 +20,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,6 +52,18 @@ import org.jetbrains.annotations.Nullable;
 public final class DynamicLightHandler {
     /** Id da entidade -> posicao onde a luz falsa dela esta agora. */
     private static final Int2ObjectOpenHashMap<BlockPos> ACTIVE = new Int2ObjectOpenHashMap<>();
+
+    /**
+     * Posicao -> o estado exato que <b>este handler</b> pos ali. E a unica autorizacao para apagar:
+     * {@link #clearLight} so troca por ar o que esta aqui e continua igual ao que foi posto.
+     *
+     * <p>Antes bastava "e {@code minecraft:light}" — e a staff usa esse mesmo bloco, de verdade, para
+     * iluminar interiores. Uma luz real que o servidor pusesse (ou reenviasse num chunk recarregado)
+     * na posicao de uma luz falsa era apagada da tela de quem passasse com um item aceso, e a sala
+     * ficava escura ate o proximo carregamento. Chunk recebido do servidor solta a posse de tudo que
+     * estava nele ({@link #onChunkLoad}): o que o servidor mandou e real, nao nosso.
+     */
+    private static final Long2ObjectOpenHashMap<BlockState> OWNED = new Long2ObjectOpenHashMap<>();
 
     /** Entidades que terminaram este tick com luz acesa. Invariante: sempre subconjunto de ACTIVE. */
     private static final IntOpenHashSet SEEN = new IntOpenHashSet();
@@ -83,6 +98,7 @@ public final class DynamicLightHandler {
         if (level != lastLevel) {
             // Trocou de mundo: as luzes antigas foram embora junto com a copia local anterior.
             ACTIVE.clear();
+            OWNED.clear();
             lastLevel = level;
         }
 
@@ -120,7 +136,9 @@ public final class DynamicLightHandler {
 
             if (level.getBlockState(target).isAir()) {
                 BlockPos placed = target.immutable();
-                level.setBlock(placed, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, lightLevel), LIGHT_FLAGS);
+                BlockState light = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, lightLevel);
+                level.setBlock(placed, light, LIGHT_FLAGS);
+                OWNED.put(placed.asLong(), light);
                 ACTIVE.put(id, placed);
                 SEEN.add(id);
             } else {
@@ -173,11 +191,34 @@ public final class DynamicLightHandler {
             clearLight(level, pos);
         }
         ACTIVE.clear();
+        OWNED.clear();
     }
 
+    /** Apaga so a luz que este handler pos e que ainda esta como ele deixou. */
     private static void clearLight(ClientLevel level, BlockPos pos) {
-        if (level.getBlockState(pos).is(Blocks.LIGHT)) {
+        BlockState placed = OWNED.remove(pos.asLong());
+        if (placed != null && level.getBlockState(pos) == placed) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), LIGHT_FLAGS);
+        }
+    }
+
+    /**
+     * Chunk chegou do servidor (entrou no raio de visao, ou foi reenviado): o conteudo dele e o real,
+     * e qualquer luz falsa que existia ali ja sumiu junto com a copia antiga. Solta a posse dessas
+     * posicoes sem tocar em bloco nenhum; a entidade acende de novo no proximo tick se ainda houver ar.
+     */
+    @SubscribeEvent
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (!event.getLevel().isClientSide() || ACTIVE.isEmpty()) return;
+        int chunkX = event.getChunk().getPos().x;
+        int chunkZ = event.getChunk().getPos().z;
+        ObjectIterator<Int2ObjectMap.Entry<BlockPos>> iterator = ACTIVE.int2ObjectEntrySet().fastIterator();
+        while (iterator.hasNext()) {
+            BlockPos pos = iterator.next().getValue();
+            if (pos.getX() >> 4 == chunkX && pos.getZ() >> 4 == chunkZ) {
+                OWNED.remove(pos.asLong());
+                iterator.remove();
+            }
         }
     }
 }

@@ -39,6 +39,16 @@ public final class FreezeManager {
 
     /** Ligado so dentro de {@link #release}: o listener de desmonte deixa passar. */
     static boolean releasing;
+    /**
+     * Ligado so dentro de {@link #unfreeze}: a remocao do efeito que vem daqui e a unica que o
+     * {@code FreezeEvents} deixa passar num congelamento protegido (ver {@link #removalProtected}).
+     */
+    static boolean unfreezing;
+    /**
+     * Ate este prazo restante o congelamento e "curto" e pode ser tirado por qualquer um: e o que o
+     * Tempus Sistere do {@code aurorion-magia} poe e tira ({@code FrozenLink.thaw}) a cada pulso.
+     */
+    static final int SHORT_FREEZE_TICKS = 600;
 
     private FreezeManager() {
     }
@@ -60,8 +70,29 @@ public final class FreezeManager {
     /** @return {@code false} se nao estava congelado. */
     public static boolean unfreeze(LivingEntity entity) {
         if (!isFrozen(entity)) return false;
-        entity.removeEffect(FreezeEffects.FROZEN);
+        unfreezing = true;
+        try {
+            entity.removeEffect(FreezeEffects.FROZEN);
+        } finally {
+            unfreezing = false;
+        }
         return true;
+    }
+
+    /**
+     * Esta remocao do efeito tem que ser recusada?
+     *
+     * <p>Antes, qualquer remocao — {@code removeAllEffects} de um mod de purificacao, um feitico de
+     * limpeza, um {@code /effect clear} — soltava a pessoa <b>e apagava o registro de "congelado sem
+     * prazo"</b>, entao nem o respawn prendia de novo. Agora o congelamento da staff (sem prazo,
+     * registrado em {@link FreezeData}, ou com mais de {@link #SHORT_FREEZE_TICKS} restantes) so sai
+     * por {@code /unfreeze}, pelo fim do prazo ou pelo reset de personagem. O congelamento curto da
+     * magia continua saindo pelo caminho de sempre.
+     */
+    static boolean removalProtected(LivingEntity entity, @Nullable MobEffectInstance instance) {
+        if (unfreezing) return false;
+        if (entity instanceof ServerPlayer player && FreezeData.get(player.server).contains(player.getUUID())) return true;
+        return instance == null || instance.isInfiniteDuration() || instance.getDuration() > SHORT_FREEZE_TICKS;
     }
 
     // --- Comando: freeze sem prazo sobrevive a morte --------------------------------------------

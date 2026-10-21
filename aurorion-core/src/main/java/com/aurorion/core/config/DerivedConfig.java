@@ -44,10 +44,21 @@ public final class DerivedConfig<S, T> {
     private final Supplier<S> source;
     private final Function<S, T> convert;
 
+    /**
+     * O par cru → convertido, publicado de uma vez so.
+     *
+     * <p>Quem le nao e so a thread do servidor: threads de worldgen consultam config derivada em
+     * paralelo. Com dois campos comuns, uma thread podia ver o {@code lastRaw} novo com o
+     * {@code cached} velho (ou um objeto convertido ainda nao visivel por inteiro) e usar a config
+     * errada sem perceber. Um registro imutavel num unico campo {@code volatile} garante que quem le
+     * ve o par inteiro e consistente. Duas threads convertendo ao mesmo tempo e inofensivo: as duas
+     * chegam ao mesmo valor, e a ultima a gravar fica.
+     */
+    private record Snapshot<S, T>(@Nullable S raw, T value) {
+    }
+
     @Nullable
-    private S lastRaw;
-    @Nullable
-    private T cached;
+    private volatile Snapshot<S, T> snapshot;
 
     public DerivedConfig(Supplier<S> source, Function<S, T> convert) {
         this.source = source;
@@ -56,14 +67,14 @@ public final class DerivedConfig<S, T> {
 
     public T get() {
         S raw = source.get();
+        Snapshot<S, T> current = snapshot;
 
-        if (cached != null && (raw == lastRaw || Objects.equals(raw, lastRaw))) {
-            return cached;
+        if (current != null && current.value() != null && (raw == current.raw() || Objects.equals(raw, current.raw()))) {
+            return current.value();
         }
 
         T converted = convert.apply(raw);
-        cached = converted;
-        lastRaw = raw;
+        snapshot = new Snapshot<>(raw, converted);
         return converted;
     }
 }

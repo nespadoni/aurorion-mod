@@ -125,6 +125,21 @@ public final class OracleData extends SavedData {
         oracleUuid = oracle.getUUID(); oracleDimension = dimension; oraclePos = pos.immutable(); setDirty();
     }
 
+    /**
+     * Esquece o NPC guardado: UUID, ultima posicao, movimento pendente e o ponto atual.
+     *
+     * <p>O ponto atual vai junto porque ele e o fallback de saves antigos para achar o NPC — mante-lo
+     * faria a proxima rotacao voltar a carregar o mesmo chunk procurando o mesmo NPC que ja sumiu.
+     */
+    public void forgetOracle() {
+        oracleUuid = null;
+        oracleDimension = null;
+        oraclePos = null;
+        pending = null;
+        current = null;
+        setDirty();
+    }
+
     @Nullable public java.util.UUID oracleUuid() { return oracleUuid; }
     @Nullable public ResourceLocation oracleDimension() { return oracleDimension; }
     @Nullable public BlockPos oraclePos() { return oraclePos; }

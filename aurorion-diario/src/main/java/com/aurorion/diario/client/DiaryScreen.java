@@ -1,6 +1,7 @@
 package com.aurorion.diario.client;
 
 import com.aurorion.diario.AurorionDiario;
+import com.aurorion.diario.markup.DiaryText;
 import com.aurorion.diario.network.DiaryPayloads;
 import com.tesseraui.TesseraFocusManager;
 import com.tesseraui.TesseraInputState;
@@ -303,8 +304,9 @@ public final class DiaryScreen extends TesseraScreen {
         savedDate = dateState.text;
         savedMarkup = text;
         setState("salvando", "Salvando…");
+        // O site conta caracteres Unicode; o corte nunca parte um emoji ao meio.
         send(new DiaryPayloads.Save(draftKey, UUID.randomUUID().toString(), entryId, version,
-                limit(title, DiaryPayloads.TITLE), limit(dateState.text.strip(), DiaryPayloads.LORE_DATE), text));
+                DiaryText.clipCodePoints(title, DiaryPayloads.TITLE), DiaryText.clipCodePoints(dateState.text.strip(), DiaryPayloads.LORE_DATE), text));
     }
 
     private void open(long id) {
@@ -360,6 +362,12 @@ public final class DiaryScreen extends TesseraScreen {
         entryId = current.entryId();
         version = current.version();
         flags &= ~DiaryPayloads.LOCAL;
+        // A versão do site pode ter chegado como o aviso de texto longo demais: aí ela só é lida,
+        // nunca gravada por cima do texto de verdade.
+        if (DiaryText.isPlaceholder(current.markup())) {
+            readOnly = true;
+            flags |= DiaryPayloads.READ_ONLY;
+        }
         fill(current.title(), current.loreDate(), current.markup());
         // O texto recusado já está no histórico da entrada no site: a cópia do servidor pode sair.
         request("descartar", entryId);
@@ -390,7 +398,7 @@ public final class DiaryScreen extends TesseraScreen {
         entryId = payload.id();
         version = payload.version();
         flags = payload.flags();
-        readOnly = (flags & DiaryPayloads.READ_ONLY) != 0;
+        readOnly = (flags & DiaryPayloads.READ_ONLY) != 0 || DiaryText.isPlaceholder(payload.markup());
         conflict = null;
         preview = false;
         publishAfterSave = false;
@@ -633,10 +641,6 @@ public final class DiaryScreen extends TesseraScreen {
 
     private static String clip(String text, int max) {
         return text.length() <= max ? text : text.substring(0, max - 1) + "…";
-    }
-
-    private static String limit(String text, int max) {
-        return text.length() <= max ? text : text.substring(0, max);
     }
 
     private static String resource(String path) {

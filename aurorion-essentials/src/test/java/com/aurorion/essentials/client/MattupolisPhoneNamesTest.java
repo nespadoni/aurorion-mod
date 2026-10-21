@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -76,6 +77,27 @@ class MattupolisPhoneNamesTest {
     void twitterHandleFollowsTheCharacterName() {
         assertEquals("joao_da_silva", MattupolisPhoneNames.handleOf("João da Silva"));
         assertEquals("personagem", MattupolisPhoneNames.handleOf("★★"));
+    }
+
+    /** PIX e e-mail vao para o nick devolvido aqui: com dois donos para o mesmo nome, nenhum. */
+    @Test
+    void aNameWornByTwoNicksResolvesToNobody() {
+        Map<String, String> directory = Map.of("Steve_42", "Arthur Pendragon");
+        Map<String, String> live = Map.of("Impostor", "Arthur​ Pendragon");
+        assertNull(MattupolisPhoneNames.uniqueNick("Arthur Pendragon", directory, live));
+    }
+
+    @Test
+    void aUniqueNameResolvesIgnoringColorAccentAndSpacing() {
+        Map<String, String> directory = Map.of("Steve_42", "&6Artur Pêndragon");
+        assertEquals("Steve_42", MattupolisPhoneNames.uniqueNick("  artur   pendragon ", directory));
+    }
+
+    @Test
+    void theSameNickInBothIndexesCountsOnce() {
+        Map<String, String> directory = Map.of("Steve_42", "Arthur Pendragon");
+        Map<String, String> live = Map.of("steve_42", "Arthur Pendragon");
+        assertEquals("Steve_42", MattupolisPhoneNames.uniqueNick("Arthur Pendragon", directory, live));
     }
 
     private static Function<String, String> names(Map<String, String> byNick) {

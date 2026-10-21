@@ -24,8 +24,10 @@ public final class LimboItems {
      * O Vinculo de Alma: o que transforma achar a pessoa em traze-la de volta.
      *
      * <p>Nao empilha, e de proposito. Empilhavel viraria moeda — alguem acumularia vinte e o resgate
-     * deixaria de custar uma decisao. Um por resgate, e o que sobrar da viagem some junto com a
-     * passagem.
+     * deixaria de custar uma decisao. Cada um nasce atado a quem pagou, ao alvo e a queda do alvo
+     * ({@code RescueManager#bind}), entao o reserva so serve para o mesmo resgate; e o que sobra da
+     * viagem e recolhido do inventario quando o resgate conclui ou quando o resgatador sai do Limbo
+     * ({@code RescueManager#stripBonds}).
      */
     public static final DeferredItem<Item> SOUL_BOND = ITEMS.register("vinculo_de_alma",
             () -> new SoulBondItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));

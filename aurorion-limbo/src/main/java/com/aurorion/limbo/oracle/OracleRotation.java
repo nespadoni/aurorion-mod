@@ -31,7 +31,23 @@ import java.util.Set;
  * desligado volta, percebe que o dia mudou e sorteia na hora, em vez de esperar a proxima virada.
  */
 public final class OracleRotation {
+    /**
+     * Quantas varreduras (uma por segundo) um movimento pendente espera o NPC aparecer: 2 minutos.
+     *
+     * <p>As entidades de um chunk chegam em segundos. Se em dois minutos o NPC nao apareceu, ele nao
+     * existe mais (morto, {@code /kill}, chunk apagado) — e seguir tentando era carregar um chunk e
+     * criar um ticket por segundo, para sempre, com a rotacao diaria parada atras disso.
+     */
+    private static final int PENDING_MAX_ATTEMPTS = 120;
+
+    /** Tentativas do pendente atual. Sessao: depois de reiniciar, o pendente ganha uma janela nova. */
+    private static int pendingAttempts;
+
     private OracleRotation() {}
+
+    public static void reset() {
+        pendingAttempts = 0;
+    }
 
     /** Chamado pela varredura de 1 s do {@code LimboServerEvents}; ler o relogio uma vez por segundo
      *  e barato, e nao amarra a rotacao a nenhum resto de divisao do contador de ticks. */
@@ -44,12 +60,13 @@ public final class OracleRotation {
         if (data.rotatedDay() == today) return;
         // Primeira partida com pontos cadastrados: marca o dia sem teleportar ninguem de surpresa.
         boolean first = data.rotatedDay() < 0;
-        if (first) {
-            data.setRotatedDay(today);
-        } else if (rotate(server, data, null) != null) {
-            // Um retorno nao nulo significa movimento concluido ou garantidamente enfileirado.
-            data.setRotatedDay(today);
+        if (!first && rotate(server, data, null) == null && !data.all().isEmpty()) {
+            // Sem Oraculo conhecido ou sem dimensao: tentar de novo a cada segundo so repetia o mesmo
+            // aviso no log o dia inteiro. O dia fica marcado; a staff move na mao com /oraculo mover,
+            // e um Oraculo invocado entra na rotacao de amanha.
+            AurorionLimbo.LOGGER.warn("Oraculo: rotacao de hoje nao aconteceu; proxima tentativa na virada do dia.");
         }
+        data.setRotatedDay(today);
     }
 
     /**
@@ -112,12 +129,23 @@ public final class OracleRotation {
         OracleData.Spot target = data.pendingSpot();
         if (target == null) {
             data.setPending(null);
+            pendingAttempts = 0;
             return true;
         }
         ServerLevel destination = levelOf(server, target.dimension());
-        if (destination == null) return false;
-        OracleEntity oracle = findForRotation(server, data);
-        if (oracle == null) return false;
+        OracleEntity oracle = destination == null ? null : findForRotation(server, data);
+        if (oracle == null) {
+            if (++pendingAttempts < PENDING_MAX_ATTEMPTS) return false;
+            // Desiste: o NPC guardado nao existe mais. Esquecer o UUID e o que impede a proxima
+            // rotacao de cair no mesmo laco; um Oraculo novo e lembrado assim que entra no mundo.
+            AurorionLimbo.LOGGER.warn("Oraculo: o NPC guardado ({}) nao apareceu em {} tentativas para ir a '{}';"
+                    + " desisti e esqueci a referencia. Invoque um novo com /summon aurorion_limbo:oraculo.",
+                    data.oracleUuid(), PENDING_MAX_ATTEMPTS, target.name());
+            data.forgetOracle();
+            pendingAttempts = 0;
+            return true;
+        }
+        pendingAttempts = 0;
         move(oracle, destination, target, data);
         return true;
     }

@@ -14,9 +14,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 
@@ -27,7 +30,10 @@ import java.util.function.UnaryOperator;
  * ({@link #forget(UUID)}), entao o personagem novo nao herda anuncio, pedido nem vaga.
  *
  * <p>Tamanho: poucos anuncios por pessoa, pedidos que somem em um dia, vagas em duas semanas — as
- * buscas lineares aqui passam por centenas de entradas, nao milhares.
+ * buscas lineares aqui passam por centenas de entradas, nao milhares. Isso deixou de ser so
+ * expectativa: pedidos tem cota diaria por conta ({@link #ordersToday}) e teto global
+ * ({@link #roomForOrder()}), e "quem oferece qual area" e um indice ({@link #offers}) em vez de uma
+ * volta pelos anuncios para cada pedido de cada linha da tela.
  */
 public final class ServicosData extends SavedData {
     private static final String FILE_ID = AurorionServicos.MOD_ID;
@@ -39,7 +45,14 @@ public final class ServicosData extends SavedData {
     private final Map<Long, Anuncio> ads = new LinkedHashMap<>();
     private final Map<Long, Pedido> orders = new LinkedHashMap<>();
     private final Map<Long, Vaga> jobs = new LinkedHashMap<>();
+    /** Pedidos criados hoje por conta. Gravado: reiniciar o servidor nao devolve a cota. */
+    private final Map<UUID, Quota> quotas = new HashMap<>();
+    /** Areas anunciadas por dono. Derivado de {@link #ads}; refeito sob demanda quando eles mudam. */
+    @Nullable
+    private Map<UUID, Set<String>> offerIndex;
     private long nextId = 1;
+
+    private record Quota(long day, int count) { }
 
     public static ServicosData get(MinecraftServer server) {
         return ACCESS.get(server);
@@ -79,6 +92,7 @@ public final class ServicosData extends SavedData {
 
     public void put(Anuncio anuncio) {
         ads.put(anuncio.id(), anuncio);
+        offerIndex = null;
         setDirty();
     }
 
@@ -93,7 +107,14 @@ public final class ServicosData extends SavedData {
     }
 
     public void removeAd(long id) {
-        if (ads.remove(id) != null) setDirty();
+        if (ads.remove(id) != null) {
+            offerIndex = null;
+            setDirty();
+        }
+    }
+
+    public void removeOrder(long id) {
+        if (orders.remove(id) != null) setDirty();
     }
 
     public void removeJob(long id) {
@@ -112,11 +133,44 @@ public final class ServicosData extends SavedData {
         return result;
     }
 
+    /** O(1): chamado por pedido em cada linha da tela e em cada selo, nao pode varrer os anuncios. */
     public boolean offers(UUID owner, String category) {
-        for (Anuncio anuncio : ads.values()) {
-            if (anuncio.owner().equals(owner) && anuncio.category().equals(category)) return true;
+        Map<UUID, Set<String>> index = offerIndex;
+        if (index == null) {
+            index = new HashMap<>();
+            for (Anuncio anuncio : ads.values()) index.computeIfAbsent(anuncio.owner(), key -> new HashSet<>()).add(anuncio.category());
+            offerIndex = index;
         }
-        return false;
+        Set<String> categories = index.get(owner);
+        return categories != null && categories.contains(category);
+    }
+
+    /** Pedidos que {@code account} ja criou no dia UTC de {@code now}. */
+    public int ordersToday(UUID account, long now) {
+        Quota quota = quotas.get(account);
+        return quota == null || quota.day() != ServicosRules.dayOf(now) ? 0 : quota.count();
+    }
+
+    public void countOrder(UUID account, long now) {
+        long day = ServicosRules.dayOf(now);
+        quotas.put(account, new Quota(day, ordersToday(account, now) + 1));
+        setDirty();
+    }
+
+    /**
+     * Garante espaco para mais um pedido sob {@link ServicosRules#MAX_ORDERS_TOTAL}, tirando primeiro
+     * os encerrados mais antigos. Falso se todos os que sobraram estao em andamento.
+     */
+    public boolean roomForOrder() {
+        if (orders.size() < ServicosRules.MAX_ORDERS_TOTAL) return true;
+        List<Pedido> finished = new ArrayList<>();
+        for (Pedido pedido : orders.values()) if (pedido.status().finished()) finished.add(pedido);
+        finished.sort(java.util.Comparator.comparingLong(Pedido::updatedAt));
+        for (int i = 0; i < finished.size() && orders.size() >= ServicosRules.MAX_ORDERS_TOTAL; i++) {
+            orders.remove(finished.get(i).id());
+            setDirty();
+        }
+        return orders.size() < ServicosRules.MAX_ORDERS_TOTAL;
     }
 
     public int openOrdersOf(UUID requester) {
@@ -147,7 +201,12 @@ public final class ServicosData extends SavedData {
             }
         }
         dirty |= jobs.values().removeIf(vaga -> ServicosRules.jobExpired(vaga, now));
-        dirty |= ads.values().removeIf(anuncio -> !online.test(anuncio.owner()) && ServicosRules.adExpired(anuncio, now));
+        if (ads.values().removeIf(anuncio -> !online.test(anuncio.owner()) && ServicosRules.adExpired(anuncio, now))) {
+            offerIndex = null;
+            dirty = true;
+        }
+        long today = ServicosRules.dayOf(now);
+        dirty |= quotas.values().removeIf(quota -> quota.day() != today);
         if (dirty) setDirty();
         return changed;
     }
@@ -160,6 +219,7 @@ public final class ServicosData extends SavedData {
     /** O personagem morreu de vez: nada dele fica no app, nem a candidatura em vaga dos outros. */
     public void forget(UUID account) {
         boolean dirty = ads.values().removeIf(anuncio -> anuncio.owner().equals(account));
+        offerIndex = null;
         dirty |= orders.values().removeIf(pedido -> pedido.involves(account));
         dirty |= jobs.values().removeIf(vaga -> vaga.owner().equals(account));
         for (var entry : jobs.entrySet()) {
@@ -173,6 +233,7 @@ public final class ServicosData extends SavedData {
     }
 
     private <T> void replaceAll(Map<Long, T> map, UnaryOperator<T> change) {
+        if (map == ads) offerIndex = null;
         boolean dirty = false;
         for (var entry : map.entrySet()) {
             T next = change.apply(entry.getValue());
@@ -211,6 +272,12 @@ public final class ServicosData extends SavedData {
             Vaga vaga = new Vaga(c.getLong("Id"), c.getUUID("Owner"), c.getString("Category"), c.getString("Title"),
                     c.getString("Description"), c.getString("Salary"), c.getLong("Created"), candidates);
             data.jobs.put(vaga.id(), vaga);
+        }
+        long today = ServicosRules.dayOf(System.currentTimeMillis());
+        for (Tag entry : tag.getList("Quotas", Tag.TAG_COMPOUND)) {
+            CompoundTag c = (CompoundTag) entry;
+            if (c.hasUUID("Account") && c.getLong("Day") == today)
+                data.quotas.put(c.getUUID("Account"), new Quota(today, Math.max(0, c.getInt("Count"))));
         }
         for (long id : data.ads.keySet()) data.nextId = Math.max(data.nextId, id + 1);
         for (long id : data.orders.keySet()) data.nextId = Math.max(data.nextId, id + 1);
@@ -271,6 +338,16 @@ public final class ServicosData extends SavedData {
             jobList.add(c);
         }
         tag.put("Jobs", jobList);
+
+        ListTag quotaList = new ListTag();
+        quotas.forEach((account, quota) -> {
+            CompoundTag c = new CompoundTag();
+            c.putUUID("Account", account);
+            c.putLong("Day", quota.day());
+            c.putInt("Count", quota.count());
+            quotaList.add(c);
+        });
+        tag.put("Quotas", quotaList);
         return tag;
     }
 }

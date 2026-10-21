@@ -9,6 +9,10 @@
     "PhoneCallChatNameMixin"
   ],
   "client": [
+    "PhoneDisplayNameMixin",
+    "PhoneContactNameMixin",
+    "PhoneCallingNameMixin",
+    "PhoneIncomingNameMixin",
     "PhoneSocialIdentityAccessor",
     "PhoneTweetDisplayNameAccessor",
     "PhoneTwitterAuthorNameMixin",

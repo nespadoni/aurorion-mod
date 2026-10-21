@@ -1,0 +1,28 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:doors",
+    "#minecraft:trapdoors",
+    "#minecraft:fence_gates",
+    "#minecraft:buttons",
+    "#minecraft:flower_pots",
+    "#minecraft:candles",
+    "#minecraft:candle_cakes",
+    "minecraft:lever",
+    "minecraft:repeater",
+    "minecraft:comparator",
+    "minecraft:note_block",
+    "minecraft:daylight_detector",
+    "minecraft:composter",
+    "minecraft:cake",
+    "minecraft:respawn_anchor",
+    "minecraft:cauldron",
+    "minecraft:water_cauldron",
+    "minecraft:lava_cauldron",
+    "minecraft:powder_snow_cauldron",
+    "minecraft:redstone_wire",
+    "minecraft:sweet_berry_bush",
+    "minecraft:cave_vines",
+    "minecraft:cave_vines_plant"
+  ]
+}

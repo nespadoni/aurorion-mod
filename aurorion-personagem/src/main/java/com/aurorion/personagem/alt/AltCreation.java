@@ -15,6 +15,7 @@ import net.minecraft.world.level.storage.LevelResource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,8 @@ final class AltCreation {
     private static final int MAX_CANDIDATES = 16;
     private static final int MAX_LOCAL_NAMES = 1000;
     private static final ActionCooldown REQUESTS = new ActionCooldown(30_000);
+    /** Sorteia nome e UUID do alt novo: nada previsivel a partir da conta. */
+    private static final SecureRandom RANDOM = new SecureRandom();
     private static final Map<UUID, Request> PENDING = new HashMap<>();
     private static MinecraftServer ownerServer;
     private static ThreadPoolExecutor executor;
@@ -84,11 +87,18 @@ final class AltCreation {
             player.sendSystemMessage(Component.literal("Aguarde 30 segundos entre pedidos de criação de personagem alternativo."));
             return false;
         }
-        var names = new ArrayList<String>();
         AltData alts = AltData.get(player.server);
+        // Um alt desvinculado volta como era: mesmo UUID, mesmo perfil, mesmo personagem. Sem isso o
+        // UUID aleatorio se perderia — ele nao e recalculavel a partir da conta.
+        AltData.Alt restored = restore(player, alts);
+        if (restored != null) return true;
+
+        // Nome sorteado, e nao "<nick>_alt": o nome de perfil vai para todo cliente na lista de
+        // jogadores, e nao pode dizer de quem o alt e.
+        var names = new ArrayList<String>();
         for (int attempt = 0; attempt < MAX_LOCAL_NAMES && names.size() < MAX_CANDIDATES; attempt++) {
-            String name = AltData.altNameOf(player.getGameProfile().getName(), attempt);
-            if (!localNameTaken(player.server, alts, name)) names.add(name);
+            String name = AltData.randomProfileName(RANDOM);
+            if (!names.contains(name) && !localNameTaken(player.server, alts, name)) names.add(name);
         }
         if (names.isEmpty() || player.server.getProfileCache() == null) {
             player.sendSystemMessage(Component.literal("Nenhum nome de perfil disponível, ou serviço de perfis indisponível."));
@@ -147,7 +157,7 @@ final class AltCreation {
         }
         AltData.Alt alt;
         try {
-            alt = alts.create(request.player.getUUID(), name);
+            alt = alts.createUnlinked(request.player.getUUID(), name, RANDOM);
         } catch (RuntimeException failure) {
             AurorionPersonagem.LOGGER.warn("Falha ao registrar alt: {}", failure.getClass().getSimpleName());
             finish(request, "Não foi possível registrar o personagem alternativo. Avise a equipe.");
@@ -155,27 +165,45 @@ final class AltCreation {
         }
         // The character already exists: a cache/whitelist failure must not leave a stale request.
         PENDING.remove(request.player.getUUID(), request);
-        GameProfile altProfile = new GameProfile(alt.altId(), alt.altName());
-        try {
-            request.cache.add(altProfile);
-            var players = request.server.getPlayerList();
-            if (players.isUsingWhitelist() && players.isWhiteListed(request.player.getGameProfile())) {
-                players.getWhiteList().add(new UserWhiteListEntry(altProfile));
-            }
-        } catch (RuntimeException failure) {
-            AurorionPersonagem.LOGGER.warn("Alt {} ({}) registrado, mas cache/whitelist falhou: {}",
-                    name, alt.altId(), failure.getClass().getSimpleName());
-            request.player.sendSystemMessage(Component.literal("O personagem " + name
-                    + " foi cadastrado, mas houve uma falha no cache ou na whitelist. Avise a equipe antes de entrar nele."));
-            return;
-        }
+        if (!register(request.server, request.player, alt)) return;
         AurorionPersonagem.LOGGER.info("{} criou o alt {} ({}).", request.player.getGameProfile().getName(), name, alt.altId());
         request.player.sendSystemMessage(Component.literal("Personagem alternativo criado (perfil " + name
                 + "). Ele não tem OP. Use /personagem trocar " + name + " para entrar nele — na primeira vez você escolhe o nome."));
     }
 
+    /** Revincula o alt aposentado mais recente da conta, na thread do servidor. Null se nao ha. */
+    private static AltData.Alt restore(ServerPlayer player, AltData alts) {
+        AltData.Alt alt = alts.restoreRetired(player.getUUID());
+        if (alt == null) return null;
+        if (!register(player.server, player, alt)) return alt;
+        AurorionPersonagem.LOGGER.info("{} revinculou o alt {} ({}).", player.getGameProfile().getName(), alt.altName(), alt.altId());
+        player.sendSystemMessage(Component.literal("Seu personagem alternativo anterior foi revinculado (perfil " + alt.altName()
+                + "). Use /personagem trocar " + alt.altName() + " para entrar nele."));
+        return alt;
+    }
+
+    /** Cache de perfis e whitelist. @return false (ja avisado) se algo falhou depois do cadastro. */
+    private static boolean register(MinecraftServer server, ServerPlayer owner, AltData.Alt alt) {
+        GameProfile altProfile = new GameProfile(alt.altId(), alt.altName());
+        try {
+            GameProfileCache cache = server.getProfileCache();
+            if (cache != null) cache.add(altProfile);
+            var players = server.getPlayerList();
+            if (players.isUsingWhitelist() && players.isWhiteListed(owner.getGameProfile())) {
+                players.getWhiteList().add(new UserWhiteListEntry(altProfile));
+            }
+            return true;
+        } catch (RuntimeException failure) {
+            AurorionPersonagem.LOGGER.warn("Alt {} ({}) registrado, mas cache/whitelist falhou: {}",
+                    alt.altName(), alt.altId(), failure.getClass().getSimpleName());
+            owner.sendSystemMessage(Component.literal("O personagem " + alt.altName()
+                    + " foi cadastrado, mas houve uma falha no cache ou na whitelist. Avise a equipe antes de entrar nele."));
+            return false;
+        }
+    }
+
     private static boolean localNameTaken(MinecraftServer server, AltData alts, String name) {
-        return alts.nameTaken(name) || server.getPlayerList().getPlayerByName(name) != null;
+        return alts.nameReserved(name) || server.getPlayerList().getPlayerByName(name) != null;
     }
 
     private static boolean current(Request request) {

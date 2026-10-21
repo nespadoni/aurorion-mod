@@ -20,6 +20,7 @@ public final class IntegracaoConfig {
     public static final ModConfigSpec.ConfigValue<String> URL;
     public static final ModConfigSpec.ConfigValue<String> TOKEN;
     public static final ModConfigSpec.IntValue SPOOL_MAX_MIB;
+    public static final ModConfigSpec.BooleanValue ALLOW_PLAIN_HTTP;
 
     public static final ModConfigSpec SPEC;
 
@@ -49,6 +50,13 @@ public final class IntegracaoConfig {
                         "site estiver fora do ar. Um fato tem poucas centenas de bytes: 8 MiB guardam dezenas de",
                         "milhares. Acima disso, fatos novos sao descartados com aviso no log.")
                 .defineInRange("spoolMaxMiB", 8, 1, 64);
+
+        ALLOW_PLAIN_HTTP = BUILDER
+                .comment(
+                        "Aceita url http:// (sem TLS) para um host externo. Desligado, so https ou endereco interno",
+                        "(localhost, 127.x, 10.x, 172.16-31.x, 192.168.x, nome sem ponto como 'backend').",
+                        "Ligue so com um tunel seguro no caminho: o token viaja em toda requisicao.")
+                .define("permitirHttpExterno", false);
 
         BUILDER.pop();
         SPEC = BUILDER.build();

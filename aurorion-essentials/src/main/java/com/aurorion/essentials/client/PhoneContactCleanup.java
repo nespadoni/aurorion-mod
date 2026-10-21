@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -36,6 +38,14 @@ import java.util.UUID;
  *
  * <p>No reset da propria conta o celular inteiro e do morto: alem da agenda, a pasta do personagem
  * (notas, calendario, capa, fotos, PIN) e esvaziada e a memoria do telefone volta a de recem-ligado.
+ *
+ * <p><b>A marca vem antes da limpeza.</b> O servidor continua mandando o mesmo reset em todo login
+ * durante dias; se a marca se perdesse (falha ao gravar, arquivo apagado), o login seguinte esvaziava
+ * de novo o celular — agora o do personagem <b>novo</b>. Por isso: a marca e gravada atomica, em dois
+ * lugares (dentro da pasta do personagem e ao lado dela, onde a limpeza nunca chega), e <b>antes</b> de
+ * apagar qualquer coisa. Sem conseguir grava-la, nada e apagado e o login seguinte tenta de novo. Um
+ * crash entre gravar a marca e limpar deixa o celular antigo como estava, que e o erro barato; apagar
+ * o novo nao tem volta.
  */
 public final class PhoneContactCleanup {
     private static final String MESSAGES = "com.mattupolis.phone.client.gui.PhoneMessagesStore";
@@ -53,17 +63,30 @@ public final class PhoneContactCleanup {
         Path characterDir = PhoneCharacterStorage.activeDir();
         Path processedFile = characterDir != null ? characterDir.resolve(PROCESSED_FILE)
                 : minecraft.gameDirectory.toPath().resolve(PhoneCharacterStorage.ROOT).resolve(PROCESSED_FILE);
-        Set<UUID> processed = readProcessed(processedFile);
+        // Copia ao lado da pasta (personagens/<uuid>.aurorion_retired_contacts.txt): a limpeza esvazia a
+        // pasta, nunca o vizinho, e a copia continua sendo so deste perfil — o alt tem a propria agenda.
+        Path backupFile = characterDir != null
+                ? characterDir.resolveSibling(characterDir.getFileName() + "." + PROCESSED_FILE) : null;
+        List<Path> markers = backupFile == null ? List.of(processedFile) : List.of(processedFile, backupFile);
+        Set<UUID> processed = new LinkedHashSet<>();
+        for (Path marker : markers) processed.addAll(readProcessed(marker));
         String self = minecraft.player != null ? minecraft.player.getGameProfile().getName() : minecraft.getUser().getName();
 
         RetiredContacts plan = RetiredContacts.plan(retired, processed, self);
         if (plan.isEmpty()) return;
+
+        Set<UUID> before = new LinkedHashSet<>(processed);
+        processed.addAll(plan.newlyProcessed());
+        // Marca primeiro. A da pasta do personagem e obrigatoria: e ela que acompanha a pasta limpa.
+        if (!writeProcessed(processedFile, processed)) return;
+        if (backupFile != null) writeProcessed(backupFile, processed);
 
         try {
             forgetContacts(plan);
             forgetBankFavorites(plan);
             PhoneConversations.forgetGramContacts(plan);
         } catch (ClassNotFoundException phoneNotInstalled) {
+            undoMarks(markers, before);
             return;
         } catch (ReflectiveOperationException | RuntimeException e) {
             if (!reportedFailure) {
@@ -71,6 +94,8 @@ public final class PhoneContactCleanup {
                 AurorionEssentials.LOGGER.warn("Nao consegui limpar da agenda do telefone os personagens aposentados; "
                         + "tento de novo na proxima entrada.", e);
             }
+            // Nada foi apagado ainda da pasta: a proxima entrada pode tentar de novo.
+            undoMarks(markers, before);
             return;
         }
 
@@ -84,9 +109,11 @@ public final class PhoneContactCleanup {
             PhoneConversations.messagesChanged();
             PhoneConversations.flush();
         }
+    }
 
-        processed.addAll(plan.newlyProcessed());
-        writeProcessed(processedFile, processed);
+    /** A limpeza nao aconteceu: a marca volta ao que era, para a proxima entrada tentar de novo. */
+    private static void undoMarks(List<Path> markers, Set<UUID> before) {
+        for (Path marker : markers) writeProcessed(marker, before);
     }
 
     @SuppressWarnings("unchecked")
@@ -169,14 +196,27 @@ public final class PhoneContactCleanup {
         return processed;
     }
 
-    private static void writeProcessed(Path file, Set<UUID> processed) {
+    /** Atomico: um crash no meio deixa a lista anterior inteira, nunca uma lista vazia. */
+    private static boolean writeProcessed(Path file, Set<UUID> processed) {
         List<String> lines = new ArrayList<>(processed.size());
         for (UUID id : processed) lines.add(id.toString());
         try {
             Files.createDirectories(file.getParent());
-            Files.write(file, lines, StandardCharsets.UTF_8);
+            Path temporary = Files.createTempFile(file.getParent(), PROCESSED_FILE, ".tmp");
+            try {
+                Files.write(temporary, lines, StandardCharsets.UTF_8);
+                try {
+                    Files.move(temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                } catch (AtomicMoveNotSupportedException unsupported) {
+                    Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } finally {
+                Files.deleteIfExists(temporary);
+            }
+            return true;
         } catch (IOException e) {
             AurorionEssentials.LOGGER.warn("Nao consegui gravar {}", file, e);
+            return false;
         }
     }
 }

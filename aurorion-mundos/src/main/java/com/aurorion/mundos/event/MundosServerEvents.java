@@ -14,6 +14,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
@@ -109,5 +110,15 @@ public final class MundosServerEvents {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         PortalRouter.clear();
+        WorldCatalog.thaw();
+    }
+
+    /**
+     * Congela os seeds antes de qualquer dimensao ser criada. O NeoForge carrega a config SERVER
+     * logo antes de disparar este evento, entao o valor lido aqui e o do arquivo do mundo.
+     */
+    @SubscribeEvent
+    public static void onServerAboutToStart(ServerAboutToStartEvent event) {
+        WorldCatalog.freeze();
     }
 }

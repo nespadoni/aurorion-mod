@@ -118,17 +118,18 @@ public final class PortaisServerEvents {
         ServerLevel level = player.server.getLevel(died);
         if (level == null) return;
 
-        Vec3 pos = RespawnAnchor.findIn(level, died, BlockPos.containing(player.position()));
-        if (pos == null) {
-            // Coluna inteira intransponivel: o construtor de DimensionTransition que recebe a
-            // entidade resolve o spawn da propria dimensao pelo caminho do vanilla. Continua dentro,
-            // que e o que importa.
-            event.setDimensionTransition(new DimensionTransition(level, player, DimensionTransition.DO_NOTHING));
+        RespawnAnchor.Spot spot = RespawnAnchor.find(player.server, level, died, BlockPos.containing(player.position()));
+        if (spot == null) {
+            // Nenhum ponto conferido serviu (nem estacao, nem coluna, nem spawn da dimensao, nem a
+            // estacao de embarque). Antes caia aqui no spawn cru da dimensao, que no Nether e pedra ou
+            // teto de bedrock: um ciclo de morte. Melhor deixar o vanilla mandar para fora.
+            AurorionPortais.LOGGER.warn("Portais: {} morreu em {} e nao ha lugar seguro para renascer la dentro;"
+                    + " declare/conserte a estacao 'arrival' da linha.", player.getGameProfile().getName(), died.location());
             return;
         }
 
         event.setDimensionTransition(new DimensionTransition(
-                level, pos, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+                spot.level(), spot.pos(), Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
     }
 
     @SubscribeEvent

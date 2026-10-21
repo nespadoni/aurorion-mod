@@ -12,9 +12,21 @@ import java.util.List;
  * pode ser assim. Uma regra que so vale para quem instalou o mod nao e regra: o jogador que entra
  * com o cliente limpo continuaria mandando {@code /w} a vontade. Por isso ela mora aqui, onde o
  * servidor recusa o comando para todo mundo igual.
+ *
+ * <p>O alcance da fala mora aqui pelo mesmo motivo — e e o caso mais grave: esconder o chat no
+ * cliente nao impede ninguem de <b>ler</b>, so de ver. Quem decide quem recebe a fala e o servidor
+ * ({@code ProximityChat}). Como o alcance e coisa que a staff ajusta no dia a dia, ele tem comando
+ * ({@code /aurorion fala alcance}); o TOML so guarda o valor entre reinicios.
  */
 public final class TalkServerConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+
+    /** Limites do alcance, compartilhados com o argumento do comando para os dois nunca divergirem. */
+    public static final int MIN_RADIUS = 4;
+    public static final int MAX_RADIUS = 512;
+
+    public static final ModConfigSpec.BooleanValue PROXIMITY_ENABLED;
+    public static final ModConfigSpec.IntValue PROXIMITY_RADIUS;
 
     public static final ModConfigSpec.BooleanValue BLOCK_PRIVATE_MESSAGES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> PRIVATE_MESSAGE_COMMANDS;
@@ -24,6 +36,21 @@ public final class TalkServerConfig {
     public static final ModConfigSpec SPEC;
 
     static {
+        BUILDER.comment("Quem ouve uma fala. Ajuste pelo jogo com /aurorion fala (nivel 2).").push("proximity");
+
+        PROXIMITY_ENABLED = BUILDER
+                .comment("O servidor so entrega a fala (chat e /me) a quem esta na mesma dimensao e dentro",
+                        "do alcance. false volta ao chat global do vanilla — todo mundo le tudo.",
+                        "Comando: /aurorion fala proximidade ligar|desligar")
+                .define("enabled", true);
+
+        PROXIMITY_RADIUS = BUILDER
+                .comment("Alcance da fala, em blocos (distancia em linha reta ate quem fala).",
+                        "32 cobre uma sala ou uma praca pequena: quem esta na cena ouve, quem passa na rua",
+                        "do lado nao. Comando: /aurorion fala alcance <blocos>")
+                .defineInRange("radius", 32, MIN_RADIUS, MAX_RADIUS);
+
+        BUILDER.pop();
         BUILDER.comment("Quem pode falar sem aparecer acima da propria cabeca.").push("privateMessages");
 
         BLOCK_PRIVATE_MESSAGES = BUILDER

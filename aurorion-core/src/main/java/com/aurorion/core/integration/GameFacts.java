@@ -62,12 +62,18 @@ public final class GameFacts {
         void accept(Fact fact);
     }
 
-    /** Quem e a pessoa por tras de um fato, nos termos que podem ser publicados. */
+    /**
+     * Quem e a pessoa por tras de um fato.
+     *
+     * <p>{@link #writeTo} so copia o que pode ser publicado. A casa fica de fora: o site mostra mortes
+     * e Limbo a qualquer visitante, e a casa e spoiler da cerimonia — so a staff ve. {@code house} e a
+     * casa <b>revelada</b> ({@link HouseGate#of}); o fato {@link #HOUSE_CHANGED} (restrito a equipe)
+     * escreve a casa cadastrada no proprio payload, no mod dono das casas.
+     */
     public record Subject(UUID profile, @Nullable UUID character, String characterName, String house) {
-        /** Copia nome do personagem e casa para o payload. */
+        /** Copia o nome do personagem para o payload. A casa nunca. */
         public void writeTo(JsonObject payload) {
             if (!characterName.isEmpty()) payload.addProperty("character_name", characterName);
-            if (!house.isEmpty()) payload.addProperty("house", house);
         }
     }
 
@@ -108,7 +114,8 @@ public final class GameFacts {
     }
 
     /**
-     * O personagem e a casa de um jogador, como devem aparecer em publico.
+     * O personagem e a casa revelada de um jogador. So o personagem aparece em publico (ver
+     * {@link Subject}).
      *
      * <p>Sem personagem nomeado, o nome fica vazio e o site mostra "um viajante": o nick da conta
      * nunca sai daqui, porque revelaria quem esta por tras de um alt. {@code find}, e nao

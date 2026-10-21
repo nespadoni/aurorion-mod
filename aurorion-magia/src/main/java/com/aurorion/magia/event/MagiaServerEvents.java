@@ -25,6 +25,7 @@ import com.aurorion.magia.spell.Impetus;
 import com.aurorion.magia.spell.IronBinding;
 import com.aurorion.magia.spell.LuxFinalisSpell;
 import com.aurorion.magia.spell.PestisSanguineaSpell;
+import com.aurorion.magia.spell.PositionHold;
 import com.aurorion.magia.spell.Possession;
 import com.aurorion.magia.spell.Seals;
 import com.aurorion.magia.spell.SignumMortisSpell;
@@ -61,6 +62,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.CommandEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
@@ -76,12 +78,16 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Todos os pontos em que o servidor diz "nao". Tudo aqui e reacao a evento, disparado por uma acao
@@ -201,6 +207,9 @@ public final class MagiaServerEvents {
         Seals.sendAll(player);
         EffectCleanup.sweep(player);
         Passives.onLogin(player);
+        // Silencio salvo com o jogador: o microfone volta mudo pelo que sobra do efeito.
+        MobEffectInstance silence = player.getEffect(MagiaEffects.SILENCED);
+        if (silence != null) VoiceMute.restore(player.getUUID(), silence.isInfiniteDuration() ? -1 : silence.getDuration());
         // Uma zona de tempo parado que sobrou de um crash (o efeito e salvo com o jogador) nao volta
         // a congelar o salao sozinha quando o dono loga.
         TimeStop.stop(player);
@@ -227,10 +236,13 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         IronBinding.release(event.getEntity().getUUID());
+        // O relogio de parede nao para offline; a entrada volta no login, com o que sobra do efeito.
+        VoiceMute.unmute(event.getEntity().getUUID());
         // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
         TimeStop.stop(event.getEntity());
         // Possessao: quem sai devolve o corpo, e quem tem o corpo tomado e solto.
         Possession.end(event.getEntity());
+        Possession.forget(event.getEntity().getUUID());
         if (event.getEntity() instanceof ServerPlayer player) Possession.release(player);
     }
 
@@ -266,6 +278,8 @@ public final class MagiaServerEvents {
         IronBinding.clear();
         VoiceMute.clear();
         ToggleCooldown.clear();
+        Binding.clear();
+        Possession.clear();
     }
 
     // --- Vox Interdicta -----------------------------------------------------------------------
@@ -282,6 +296,29 @@ public final class MagiaServerEvents {
         if (Possession.isPossessing(event.getPlayer()) && Possession.speak(event.getPlayer(), event.getMessage())) {
             event.setCanceled(true);
         }
+    }
+
+    /**
+     * Os comandos que tambem sao voz. Sem isto, o silenciado so perdia o chat aberto: {@code /msg},
+     * {@code /me} e companhia continuavam falando por ele. Nome ja sem barra e sem {@code minecraft:}.
+     */
+    private static final Set<String> SPEECH_COMMANDS = Set.of("msg", "tell", "w", "me", "teammsg", "tm", "say");
+
+    /**
+     * Silenciado nao fala por comando. So jogador: console e bloco de comando nao tem boca. Olha a raiz
+     * digitada, como o {@code aurorion-talk} e o {@code aurorion-utils}; {@code /execute} ja exige
+     * nivel 2. A recusa vai para o chat: e resposta a uma linha digitada, nao aviso repetido.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onCommand(CommandEvent event) {
+        if (!(event.getParseResults().getContext().getSource().getEntity() instanceof ServerPlayer player)
+                || !player.hasEffect(MagiaEffects.SILENCED)) return;
+        var nodes = event.getParseResults().getContext().getNodes();
+        if (nodes.isEmpty()) return;
+        String root = nodes.get(0).getNode().getName().toLowerCase(Locale.ROOT);
+        if (!SPEECH_COMMANDS.contains(root)) return;
+        event.setCanceled(true);
+        player.sendSystemMessage(Component.translatable("aurorion_magia.sem_voz").withStyle(ChatFormatting.DARK_PURPLE));
     }
 
     // --- Vinculum Carnificis ------------------------------------------------------------------
@@ -422,6 +459,17 @@ public final class MagiaServerEvents {
                 || living.hasEffect(MagiaEffects.POLYMORPH)
                 || living.hasEffect(MagiaEffects.POSSESSED)
                 || living.hasEffect(MagiaEffects.POSSESSING));
+    }
+
+    /**
+     * Pegar item do chao. O possessor anda invisivel e inalvejavel junto do corpo que conduz, e
+     * recolhia sem ninguem ver o que o possuido derrubava (ou o que a Mao Vazia arrancava de alguem).
+     * Vale para todo corpo travado e para quem esta inalvejavel (Poca de Sangue).
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onPickup(ItemEntityPickupEvent.Pre event) {
+        Player player = event.getPlayer();
+        if (bodyLocked(player) || player.hasEffect(MagiaEffects.UNTARGETABLE)) event.setCanPickup(TriState.FALSE);
     }
 
     /** Golpe corpo a corpo de jogador: o corpo travado nao bate, e quem esta na Poca de Sangue tambem nao. */
@@ -641,6 +689,10 @@ public final class MagiaServerEvents {
             entity.setAirSupply(entity.getMaxAirSupply());
         } else if (effect == MagiaEffects.CAGED.get()) {
             WaterCage.release(entity);
+        } else if (effect == MagiaEffects.STASIS.get()) {
+            PositionHold.clear(entity, PositionHold.STASIS);
+        } else if (effect == MagiaEffects.CRUCIATUS.get()) {
+            PositionHold.clear(entity, PositionHold.CRUCIATUS);
         } else if (effect == MagiaEffects.POSSESSING.get()) {
             Possession.end(entity);
         } else if (effect == MagiaEffects.POSSESSED.get() && entity instanceof ServerPlayer player) {

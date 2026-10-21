@@ -53,7 +53,7 @@ public final class HouseBarrier {
      * {@code /area regra <area> casa permitir} abre a porta para todo mundo (util num evento). O
      * reset de personagem ja limpa essas excecoes junto com as demais, de graca.
      */
-    public static final String PASS_RULE = "casa";
+    public static final String PASS_RULE = com.aurorion.areas.rules.ProtectionRule.VISITOR_PASS;
     /** Um aviso a cada dois segundos: menos que isso vira zumbido enquanto a pessoa encosta na parede. */
     private static final int NOTICE_TICKS = 40;
     /** Expulsao no maximo uma vez por segundo, para um ponto ruim nao virar teleporte por tick. */
@@ -103,6 +103,16 @@ public final class HouseBarrier {
 
     /** Roda uma vez por tick para cada jogador sujeito a barreira. */
     static void tick(ServerPlayer player, AreaRuntime.State state, long now) {
+        // Montado num veiculo roteirizado (feixe de abducao): nem barra nem memoriza. Barrar faria o
+        // stopRiding do empurrao soltar a pessoa no meio da subida, de dezenas de blocos de altura; e
+        // memorizar guardaria um ponto no ar como "ultima posicao permitida". A posicao segura antiga
+        // tambem e esquecida: depois do feixe a pessoa esta em outro lugar, e voltar para la seria um
+        // teleporte, nao um passo. Fora de veiculo, isto e uma leitura de campo e nada mais.
+        var vehicle = player.getVehicle();
+        if (vehicle != null && AreaTags.isScriptedVehicle(vehicle)) {
+            state.hasSafeSpot = false;
+            return;
+        }
         AreaRegion blocked = blocking(player, state.rules.houseArea());
         if (blocked == null) {
             remember(player, state);

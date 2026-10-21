@@ -12,6 +12,7 @@
   "commands.aurorion_utils.unfreeze.success": "%s player(s) unfrozen.",
 
   "aurorion_utils.congelado": "You are frozen.",
+  "aurorion_utils.congelado.comando": "You are frozen: only chat commands (/msg, /r, /me) work until staff releases you.",
   "aurorion_utils.descongelado": "You can move again.",
   "effect.aurorion_utils.congelado": "Frozen",
 

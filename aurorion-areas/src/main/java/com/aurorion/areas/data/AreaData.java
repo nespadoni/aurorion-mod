@@ -23,6 +23,13 @@ public final class AreaData extends SavedData {
     private final Map<String, AreaRegion> regions = new HashMap<>();
     private final Map<ResourceLocation, AreaRules> defaults = new HashMap<>();
     private Map<ResourceLocation, AreaIndex> indexes = Map.of();
+    /**
+     * Dimensoes em que alguma protecao de bloco pode negar alguma coisa: tem area de casa, ou alguma
+     * area (ou o padrao da dimensao) nega uma {@link ProtectionRule}. Fluido e pistao perguntam isso a
+     * cada passo de agua do mundo; numa dimensao sem protecao nenhuma a resposta e um
+     * {@code Set#contains} e acabou, sem tocar na arvore.
+     */
+    private Set<ResourceLocation> guarded = Set.of();
     private List<AreaRegion> ordered = List.of();
     private long revision;
     /**
@@ -46,6 +53,7 @@ public final class AreaData extends SavedData {
             data.regions.clear();
             data.defaults.clear();
             data.indexes = Map.of();
+            data.guarded = Set.of();
             data.ordered = List.of();
             AurorionAreas.LOGGER.error("Areas: nao foi possivel ler {}. O arquivo sera preservado e a edicao"
                     + " fica bloqueada ate que ele seja corrigido; nenhuma area esta em vigor.", ACCESS_NAME, error);
@@ -126,7 +134,70 @@ public final class AreaData extends SavedData {
         Map<ResourceLocation, AreaIndex> built = new HashMap<>();
         grouped.forEach((id, values) -> built.put(id, new AreaIndex(values)));
         indexes = Map.copyOf(built);
+        Set<ResourceLocation> protectedDimensions = new HashSet<>();
+        for (AreaRegion region : ordered) {
+            if (region.enabled() && (region.house() != null || deniesProtection(region.rules()))) {
+                protectedDimensions.add(region.dimension());
+            }
+        }
+        defaults.forEach((id, rules) -> { if (deniesProtection(rules)) protectedDimensions.add(id); });
+        guarded = Set.copyOf(protectedDimensions);
         revision++;
+    }
+    private static boolean deniesProtection(AreaRules rules) {
+        for (ProtectionRule rule : ProtectionRule.ALL) if (rules.flag(rule.key()) == Decision.DENY) return true;
+        return false;
+    }
+    /** Ha alguma protecao de bloco nesta dimensao? Falso = tudo liberado, sem consultar mais nada. */
+    public boolean guarded(ResourceLocation dimension) { return guarded.contains(dimension); }
+    /**
+     * Protecao de bloco numa posicao.
+     *
+     * <p>Concorrem duas opinioes, e vence a de maior prioridade (mesmo desempate de sempre):
+     * <ol>
+     *   <li>a area de maior prioridade com valor <b>explicito</b> para a regra (excecoes contam);</li>
+     *   <li>a area de casa de maior prioridade, com sua decisao <b>implicita</b>: membro da casa pode,
+     *       quem nao e nao pode — a nao ser que a propria area de casa diga outra coisa
+     *       explicitamente. Para {@code interagir}, o passe de visitante tambem abre.</li>
+     * </ol>
+     * Sem nenhuma das duas vale o padrao da dimensao, que por omissao libera tudo.
+     *
+     * @param actor quem age, ou {@code null} para as regras de ambiente (explosao de creeper, agua).
+     * @param actorHouse a casa de quem age, ou {@code null} se nao tem.
+     * @param houses ha mod de casas instalado? Sem ele as areas de casa viram areas comuns aqui, pelo
+     *               mesmo motivo da barreira: "todo mundo sem casa" trancaria cada casa ate para a dona.
+     */
+    public Protection protection(ResourceLocation dimension, double x, double y, double z, ProtectionRule rule,
+                                 @Nullable UUID actor, @Nullable ResourceLocation actorHouse, boolean houses) {
+        if (!guarded.contains(dimension)) return Protection.FREE;
+        AreaIndex index = indexes.get(dimension);
+        String key = rule.key();
+        AreaRegion explicit = index == null ? null : index.owner(x, y, z, key, actor);
+        AreaRegion house = houses && index != null ? index.house(x, y, z) : null;
+        AreaRegion by;
+        Decision decision;
+        if (house != null && (explicit == null || house == explicit || house.beats(explicit))) {
+            by = house;
+            decision = houseDecision(house, rule, actor, actorHouse);
+        } else if (explicit != null) {
+            by = explicit;
+            decision = explicit.decision(key, actor);
+        } else {
+            by = null;
+            decision = defaults(dimension).flag(key);
+        }
+        if (decision != Decision.DENY) return Protection.FREE;
+        return by == null ? Protection.WORLD : new Protection(true, by);
+    }
+    private static Decision houseDecision(AreaRegion house, ProtectionRule rule, @Nullable UUID actor,
+                                          @Nullable ResourceLocation actorHouse) {
+        // Quem e da casa tem excecao implicita em toda regra de protecao da propria area de casa.
+        if (actorHouse != null && actorHouse.equals(house.house())) return Decision.ALLOW;
+        Decision explicit = house.decision(rule.key(), actor);
+        if (explicit != Decision.INHERIT) return explicit;
+        if (rule == ProtectionRule.INTERACT && actor != null
+                && house.decision(ProtectionRule.VISITOR_PASS, actor) == Decision.ALLOW) return Decision.ALLOW;
+        return Decision.DENY;
     }
     public void resolve(ResourceLocation dimension, double x, double y, double z, @Nullable UUID actor, ResolvedRules out) {
         out.reset(defaults(dimension), actor);

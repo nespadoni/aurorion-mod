@@ -22,6 +22,13 @@ public final class AreaIndex {
     @Nullable public AreaRegion owner(double x, double y, double z, String key, @Nullable UUID actor) {
         return root == null ? null : root.owner(x, y, z, key, actor, null);
     }
+    /**
+     * A area de casa de maior prioridade nesta posicao — a mesma que {@code ResolvedRules#houseArea}
+     * acharia, mas sem montar a resolucao inteira. Usada nas consultas de protecao por bloco.
+     */
+    @Nullable public AreaRegion house(double x, double y, double z) {
+        return root == null ? null : root.house(x, y, z, null);
+    }
     private static Node build(AreaRegion[] entries, int start, int end) {
         if (end - start == 1) return new Node(entries[start].volume().bounds(), entries[start], null, null);
         Bounds bounds = entries[start].volume().bounds();
@@ -49,6 +56,13 @@ public final class AreaIndex {
                         ? region : best;
             }
             return right.owner(x, y, z, key, actor, left.owner(x, y, z, key, actor, best));
+        }
+        @Nullable AreaRegion house(double x, double y, double z, @Nullable AreaRegion best) {
+            if (!bounds.contains(x, y, z)) return best;
+            if (region != null) {
+                return region.house() != null && region.beats(best) && region.volume().contains(x, y, z) ? region : best;
+            }
+            return right.house(x, y, z, left.house(x, y, z, best));
         }
     }
 }

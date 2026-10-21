@@ -5,6 +5,8 @@ import com.aurorion.utils.config.AbductionConfig;
 import com.aurorion.utils.entity.AbductionBeamEntity;
 import com.aurorion.utils.entity.ModEntities;
 import com.aurorion.utils.sound.ModSounds;
+import com.aurorion.core.level.SafeSpot;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,6 +48,17 @@ public final class AbductionManager {
 
     /** Lista reaproveitada: iteracao por indice nao cria iterator/snapshot em todo tick. */
     private static final List<ActiveAbduction> ACTIVE = new ArrayList<>();
+    /** Queda maxima amortecida apos a chegada (ticks de Queda Lenta), para destino muito alto ou vazio. */
+    private static final int MAX_CUSHION_TICKS = 600;
+    /** Quanto procurar chao acima/abaixo do ponto de partida ao devolver alguem ao solo. */
+    private static final int GROUND_SEARCH = 16;
+
+    /**
+     * Ligado so enquanto o proprio manager tira o alvo do feixe (teleporte, pouso de emergencia).
+     * O {@code FreezeEvents} recusa o desmonte do feixe durante HOLD/ASCEND e a viagem de dimensao de
+     * quem esta congelado; o que o manager faz de proposito tem que passar pelos dois.
+     */
+    public static boolean releasing;
 
     private AbductionManager() {
     }
@@ -55,6 +68,31 @@ public final class AbductionManager {
             if (ACTIVE.get(i).targetId.equals(playerId)) return true;
         }
         return false;
+    }
+
+    /** O alvo ainda esta preso no feixe (HOLD/ASCEND)? Na retracao ele ja chegou e esta livre. */
+    public static boolean isHeld(UUID playerId) {
+        for (int i = 0; i < ACTIVE.size(); i++) {
+            ActiveAbduction abduction = ACTIVE.get(i);
+            if (abduction.targetId.equals(playerId)) return abduction.phase != ActiveAbduction.Phase.RETRACT;
+        }
+        return false;
+    }
+
+    /**
+     * Desconectou no meio da subida: pousa no chao <b>antes</b> do save do jogador. Sem isto o
+     * personagem era gravado no ponto do ar em que o feixe estava (o feixe nao e salvo), e no proximo
+     * login caia dezenas de blocos ate a morte. Tambem cobre o desligamento do servidor, que desconecta
+     * todo mundo pelo mesmo caminho.
+     */
+    public static void onLogout(ServerPlayer player) {
+        for (int i = ACTIVE.size() - 1; i >= 0; i--) {
+            ActiveAbduction abduction = ACTIVE.get(i);
+            if (!abduction.targetId.equals(player.getUUID())) continue;
+            if (abduction.phase != ActiveAbduction.Phase.RETRACT) land(player, abduction, true);
+            abduction.beam.discard();
+            ACTIVE.remove(i);
+        }
     }
 
     /**
@@ -106,6 +144,8 @@ public final class AbductionManager {
         level.addFreshEntity(beam);
 
         target.startRiding(beam, true);
+        // Quem foi pego caindo nao leva a queda de antes para o pouso do outro lado.
+        target.resetFallDistance();
         target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, holdTicks + ascentTicks + 5, 0, false, false));
 
         level.playSound(null, target.getX(), target.getY(), target.getZ(),
@@ -151,7 +191,7 @@ public final class AbductionManager {
 
     private static boolean tickHold(MinecraftServer server, ActiveAbduction abduction) {
         ServerPlayer target = server.getPlayerList().getPlayer(abduction.targetId);
-        if (target == null) {
+        if (target == null || !target.isAlive()) {
             abort(abduction);
             return true;
         }
@@ -166,7 +206,7 @@ public final class AbductionManager {
 
     private static boolean tickAscend(MinecraftServer server, ActiveAbduction abduction) {
         ServerPlayer target = server.getPlayerList().getPlayer(abduction.targetId);
-        if (target == null) {
+        if (target == null || !target.isAlive()) {
             abort(abduction);
             return true;
         }
@@ -195,22 +235,45 @@ public final class AbductionManager {
         return false;
     }
 
-    /** @return true se o teleporte aconteceu e a retracao pode comecar. */
+    /**
+     * @return true se o teleporte aconteceu e a retracao pode comecar.
+     *
+     * <p><b>Teleporta montado, e confere.</b> Antes o alvo era desmontado primeiro e teleportado
+     * depois; se o teleporte nao acontecesse (dimensao descarregada, viagem cancelada por outro mod),
+     * a pessoa ficava solta no topo do feixe e caia ate a morte. O {@code teleportTo} do jogador ja
+     * desmonta por dentro, no mesmo tick — nao existe tick no ar entre as duas coisas. Se a pessoa nao
+     * chegou, volta ao chao de onde saiu.
+     */
     private static boolean completeTeleport(MinecraftServer server, ServerPlayer target, ActiveAbduction abduction) {
-        target.stopRiding();
-
         TeleportSpot destination = abduction.destination;
         ServerLevel destLevel = server.getLevel(destination.dimension());
         if (destLevel == null) {
             AurorionUtils.LOGGER.error("Abducao de {} cancelada: dimensao de destino '{}' nao esta carregada.",
                     target.getGameProfile().getName(), destination.dimension().location());
+            land(target, abduction, false);
             abduction.beam.discard();
             return false;
         }
 
-        target.teleportTo(destLevel, destination.x(), destination.y(), destination.z(),
-                Set.of(), destination.yaw(), destination.pitch());
+        releasing = true;
+        try {
+            target.teleportTo(destLevel, destination.x(), destination.y(), destination.z(),
+                    Set.of(), destination.yaw(), destination.pitch());
+        } finally {
+            releasing = false;
+        }
+        boolean arrived = target.level() == destLevel
+                && target.distanceToSqr(destination.x(), destination.y(), destination.z()) < 4.0;
+        if (!arrived) {
+            AurorionUtils.LOGGER.warn("Abducao de {} cancelada: o teleporte para {} foi recusado; devolvido ao ponto de partida.",
+                    target.getGameProfile().getName(), destination.dimension().location());
+            land(target, abduction, false);
+            abduction.beam.discard();
+            return false;
+        }
         target.setDeltaMovement(Vec3.ZERO);
+        // O destino e a posicao exata de quem chamou — staff voando em criativo poe o alvo no ar.
+        cushion(target, destLevel);
 
         if (abduction.returnTrip) {
             AbductionOriginData.get(server).clear(abduction.targetId);
@@ -222,9 +285,53 @@ public final class AbductionManager {
         return true;
     }
 
-    /** Alvo desconectou no meio de HOLD/ASCEND — nao ha pra onde puxar, so limpa o feixe. */
+    /** Alvo desconectou ou morreu no meio de HOLD/ASCEND — o pouso ja foi feito no logout; so limpa o feixe. */
     private static void abort(ActiveAbduction abduction) {
         abduction.beam.discard();
+    }
+
+    /**
+     * Pouso de emergencia: tira do feixe e poe de pe no chao do ponto de partida.
+     *
+     * <p>O ponto de partida e onde a pessoa estava quando foi pega — normalmente no chao, mas pode ter
+     * sido no ar (pulando, caindo, voando). O {@link SafeSpot} procura o vao mais proximo na mesma
+     * coluna, para cima e para baixo; sem nenhum, fica o ponto original com a queda amortecida.
+     *
+     * @param leaving o jogador esta saindo do servidor: move direto, sem pacote de teleporte, porque
+     *                o que importa e a posicao que o save vai gravar logo em seguida.
+     */
+    private static void land(ServerPlayer target, ActiveAbduction abduction, boolean leaving) {
+        releasing = true;
+        try {
+            if (target.isPassenger()) target.stopRiding();
+        } finally {
+            releasing = false;
+        }
+        // O feixe sobe no lugar: o ponto de partida e sempre nesta dimensao (ver begin).
+        TeleportSpot start = abduction.startSpot;
+        ServerLevel level = target.serverLevel();
+        BlockPos ground = SafeSpot.nearestVertical(level, BlockPos.containing(start.x(), start.y(), start.z()), GROUND_SEARCH);
+        double y = ground != null ? ground.getY() : start.y();
+
+        if (leaving) target.moveTo(start.x(), y, start.z(), start.yaw(), start.pitch());
+        else target.connection.teleport(start.x(), y, start.z(), start.yaw(), start.pitch());
+        target.setDeltaMovement(Vec3.ZERO);
+        target.resetFallDistance();
+        if (!leaving) cushion(target, level);
+    }
+
+    /**
+     * Zera a queda e, se nao ha chao logo abaixo, da Queda Lenta pelo tempo da descida (sem icone nem
+     * particula). Medir a altura evita deixar o efeito pendurado meio minuto em quem chegou de pe.
+     */
+    private static void cushion(ServerPlayer target, ServerLevel level) {
+        target.resetFallDistance();
+        if (!level.noCollision(target, target.getBoundingBox().move(0.0, -0.6, 0.0))) return;
+        BlockPos floor = SafeSpot.scanDown(level, Mth.floor(target.getX()), Mth.floor(target.getZ()), Mth.floor(target.getY()));
+        // Velocidade terminal com Queda Lenta fica perto de 0,5 bloco/tick; meio bloco de folga por tick.
+        int ticks = floor == null ? MAX_CUSHION_TICKS
+                : Mth.clamp((int) Math.ceil((target.getY() - floor.getY()) / 0.4) + 40, 40, MAX_CUSHION_TICKS);
+        target.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, ticks, 0, false, false, false));
     }
 
     /** Solta entidades e referencias ao desligar o servidor integrado/dedicado. */

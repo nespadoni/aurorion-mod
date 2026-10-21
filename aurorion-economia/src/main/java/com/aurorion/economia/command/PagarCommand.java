@@ -41,7 +41,7 @@ public final class PagarCommand {
         ServerPlayer target = EntityArgument.getPlayer(context, "jogador");
         long amount = MoneyArgument.get(context, "quantia");
 
-        Transfer.Result result = Wallet.transfer(payer.server, payer.getUUID(), target.getUUID(), amount);
+        Transfer.Result result = Wallet.transfer(payer.server, payer.getUUID(), target.getUUID(), amount, "pagar");
         if (!result.ok()) {
             context.getSource().sendFailure(failure(result, payer.server, payer));
             return 0;
@@ -61,6 +61,9 @@ public final class PagarCommand {
                     Money.describe(Wallet.balance(server, payer.getUUID())));
             case SAME_ACCOUNT -> Component.translatable("commands.aurorion_economia.pagar.self");
             case TARGET_FULL -> Component.translatable("commands.aurorion_economia.pagar.targetFull");
+            case SENDER_BLOCKED -> Component.translatable("commands.aurorion_economia.pagar.blocked");
+            case STARTER_LOCKED -> Component.translatable("commands.aurorion_economia.pagar.starterLocked",
+                    Money.describe(Wallet.STARTER_BALANCE));
             case INVALID_AMOUNT, OK -> Component.translatable("commands.aurorion_economia.quantiaInvalida");
         };
     }

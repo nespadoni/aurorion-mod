@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,7 +44,9 @@ public final class HouseManager {
         /** Ja tem casa e o servidor nao permite trocar. */
         ALREADY_CHOSEN,
         /** A casa bateu a lotacao declarada no datapack. */
-        FULL
+        FULL,
+        /** Escolheu a casa que ja tinha: nada muda, e por isso nada e anunciado de novo. */
+        UNCHANGED
     }
 
     private HouseManager() {
@@ -54,6 +57,10 @@ public final class HouseManager {
      *
      * <p>Com {@code ceremonyRequired} ligado (o padrao), esta tela e so de leitura: e como o jogador
      * que ja tem casa consulta a propria no altar. Quem vincula gente e a cerimonia.
+     *
+     * <p>O altar so mostra a casa <b>revelada</b>. Um cadastro ainda oculto trava a tela sem marcar
+     * casa nenhuma: o jogador nao pode escolher por cima do que a staff decidiu, nem descobrir o que
+     * foi decidido antes da cerimonia.
      */
     public static void openSelection(ServerPlayer player, BlockPos altar, boolean readOnly) {
         List<House> houses = HouseCatalog.all();
@@ -64,8 +71,9 @@ public final class HouseManager {
         }
 
         HouseData data = HouseData.get(player.server);
-        ResourceLocation current = data.houseOf(player.getUUID());
-        boolean locked = readOnly || (current != null && !EtherealConfig.ALLOW_RECHOOSE.get());
+        ResourceLocation current = data.publicHouseOf(player.getUUID());
+        boolean locked = readOnly || data.isHidden(player.getUUID())
+                || (current != null && !EtherealConfig.ALLOW_RECHOOSE.get());
 
         List<HouseOption> options = new ArrayList<>(houses.size());
         for (House house : houses) {
@@ -94,9 +102,11 @@ public final class HouseManager {
             case NOT_AT_ALTAR -> Component.translatable("aurorion_ethereal.house.error.not_at_altar");
             case ALREADY_CHOSEN -> Component.translatable("aurorion_ethereal.house.error.already_chosen");
             case FULL -> Component.translatable("aurorion_ethereal.house.error.full");
+            case UNCHANGED -> Component.translatable("aurorion_ethereal.house.error.same");
         };
 
-        PacketDistributor.sendToPlayer(player, new HouseChoiceResultPayload(result == Result.OK, message));
+        PacketDistributor.sendToPlayer(player, new HouseChoiceResultPayload(
+                result == Result.OK || result == Result.UNCHANGED, message));
 
         if (result == Result.OK && house != null) {
             announce(player.server, player.getDisplayName(), house);
@@ -125,11 +135,16 @@ public final class HouseManager {
 
         HouseData data = HouseData.get(player.server);
         UUID uuid = player.getUUID();
+        if (data.isHidden(uuid)) {
+            // Cadastro da staff ainda nao revelado: a tela nem abre escolhivel, mas um cliente
+            // adulterado recebe a mesma resposta de uma tela velha, sem saber que ha casa gravada.
+            return Result.NOT_AT_ALTAR;
+        }
         ResourceLocation current = data.houseOf(uuid);
 
         if (current != null) {
             if (current.equals(houseId)) {
-                return Result.OK;
+                return Result.UNCHANGED;
             }
             if (!EtherealConfig.ALLOW_RECHOOSE.get()) {
                 return Result.ALREADY_CHOSEN;
@@ -142,7 +157,8 @@ public final class HouseManager {
             return Result.FULL;
         }
 
-        bind(player.server, uuid, houseId);
+        // Escolha do proprio jogador: nao ha segredo a guardar, entao ja nasce revelada.
+        bind(player.server, uuid, houseId, false);
         return Result.OK;
     }
 
@@ -155,30 +171,53 @@ public final class HouseManager {
      * sem nenhum ponto ter sido dado ou tirado. Deixar esse refresh a cargo de cada chamador seria a
      * mesma armadilha que o {@code SavedDataAccess} do core ja evitou (SDD §3.1).
      *
+     * <p>Placar e tab so sao avisados quando muda a casa <b>publica</b> (a revelada): um cadastro
+     * oculto da staff nao pode repintar o nome de ninguem nem mexer no total de uma casa.
+     *
      * @param house casa nova, ou {@code null} para desvincular.
+     * @param hidden grava o cadastro como oculto ate {@link #reveal}.
      * @return true se algo mudou de fato.
      */
-    public static boolean bind(MinecraftServer server, UUID player, @Nullable ResourceLocation house) {
-        ResourceLocation previous = HouseData.get(server).houseOf(player);
-        if (!HouseData.get(server).setHouse(player, house)) {
+    public static boolean bind(MinecraftServer server, UUID player, @Nullable ResourceLocation house, boolean hidden) {
+        HouseData data = HouseData.get(server);
+        ResourceLocation previous = data.houseOf(player);
+        ResourceLocation publicBefore = data.publicHouseOf(player);
+        boolean moved = data.setHouse(player, house);
+        boolean visibility = house != null && data.setHidden(player, hidden);
+        if (!moved && !visibility) {
             return false;
         }
+        if (moved) publishChange(server, player, previous, house);
+        afterPublicChange(server, player, publicBefore);
+        return true;
+    }
+
+    /** Atalho para a casa ja revelada (escolha propria, API e testes). */
+    public static boolean bind(MinecraftServer server, UUID player, @Nullable ResourceLocation house) {
+        return bind(server, player, house, false);
+    }
+
+    private static void afterPublicChange(MinecraftServer server, UUID player, @Nullable ResourceLocation before) {
+        if (Objects.equals(before, HouseData.get(server).publicHouseOf(player))) return;
         BoardService.refreshHouses(server);
-        publishChange(server, player, previous);
         // Quem mostra algo pela casa (cor na tab) atualiza aqui, em vez de conferir por tick.
         NeoForge.EVENT_BUS.post(new HouseChangedEvent(server, player));
-        return true;
     }
 
     /**
      * Avisa o site da troca de casa. O backend guarda o fato visivel so para a equipe: a casa pode
      * revelar o resultado da cerimonia antes da hora, e quem decide quando publicar e a staff.
+     *
+     * <p>A casa vai escrita aqui, e nao pelo {@code Subject}: o {@code HouseGate} (de onde o Subject
+     * le) so responde a casa revelada, e este fato precisa levar o cadastro mesmo oculto.
      */
-    private static void publishChange(MinecraftServer server, UUID player, @Nullable ResourceLocation previous) {
+    private static void publishChange(MinecraftServer server, UUID player, @Nullable ResourceLocation previous,
+                                      @Nullable ResourceLocation house) {
         if (!GameFacts.installed()) return;
         try {
             JsonObject payload = new JsonObject();
             if (previous != null) payload.addProperty("previous_house", HouseGate.nameOf(previous).getString());
+            if (house != null) payload.addProperty("house", HouseGate.nameOf(house).getString());
             GameFacts.publish(GameFacts.HOUSE_CHANGED, GameFacts.subject(server, player), payload);
         } catch (RuntimeException e) {
             AurorionEthereal.LOGGER.warn("Nao consegui publicar a troca de casa de {}", player, e);
@@ -195,9 +234,47 @@ public final class HouseManager {
 
     // --- Consulta e administracao (comando /casa) ---
 
+    /** A casa cadastrada, revelada ou nao. Regra de servidor e ferramenta de staff; nunca para o jogador. */
     @Nullable
     public static ResourceLocation houseIdOf(MinecraftServer server, UUID player) {
         return HouseData.get(server).houseOf(player);
+    }
+
+    /** A casa que o jogo pode mostrar e usar: {@code null} enquanto o cadastro estiver oculto. */
+    @Nullable
+    public static ResourceLocation publicHouseIdOf(MinecraftServer server, UUID player) {
+        return HouseData.get(server).publicHouseOf(player);
+    }
+
+    public static boolean isHidden(MinecraftServer server, UUID player) {
+        return HouseData.get(server).isHidden(player);
+    }
+
+    /**
+     * Cadastro da staff ({@code /casa definir} e a cerimonia): grava oculto ate a revelacao.
+     * Repetir a casa que a pessoa ja tem nao muda nada — nem esconde de novo uma casa ja revelada.
+     */
+    public static boolean register(MinecraftServer server, UUID player, ResourceLocation house) {
+        if (house.equals(houseIdOf(server, player))) return false;
+        return bind(server, player, house, true);
+    }
+
+    /** Torna publico um cadastro oculto: e o que a cerimonia faz no instante da revelacao. */
+    public static boolean reveal(MinecraftServer server, UUID player) {
+        return setHidden(server, player, false);
+    }
+
+    /** Volta a esconder uma casa (correcao da staff, ou cadastro antigo feito antes desta regra). */
+    public static boolean conceal(MinecraftServer server, UUID player) {
+        return setHidden(server, player, true);
+    }
+
+    private static boolean setHidden(MinecraftServer server, UUID player, boolean hidden) {
+        HouseData data = HouseData.get(server);
+        ResourceLocation before = data.publicHouseOf(player);
+        if (!data.setHidden(player, hidden)) return false;
+        afterPublicChange(server, player, before);
+        return true;
     }
 
     /**
@@ -209,9 +286,12 @@ public final class HouseManager {
         return id == null ? Optional.empty() : Optional.ofNullable(HouseCatalog.get(id));
     }
 
-    /** Atribuicao por admin: ignora ritual, trava de re-escolha e lotacao. */
+    /**
+     * Atribuicao ja revelada: ignora ritual, trava de re-escolha e lotacao. Para o cadastro secreto
+     * da staff use {@link #register}.
+     */
     public static boolean assign(MinecraftServer server, UUID player, ResourceLocation house) {
-        return bind(server, player, house);
+        return bind(server, player, house, false);
     }
 
     public static boolean clear(MinecraftServer server, UUID player) {

@@ -208,6 +208,9 @@ public final class RankingData extends SavedData {
      *
      * <p>Uma passada so pelos jogadores, e nao uma por casa: com 80 jogadores e cinco casas a versao
      * ingenua faria 400 leituras para desenhar um placar que o servidor redesenha a cada morte.
+     *
+     * <p>So conta quem ja foi revelado: com o cadastro oculto somando, o proprio aluno veria o total
+     * de uma casa subir junto com o ponto dele e descobriria a casa antes da cerimonia.
      */
     public Map<ResourceLocation, Integer> houseTotals(HouseData membership, List<House> catalog) {
         Map<ResourceLocation, Integer> totals = new HashMap<>(catalog.size());
@@ -216,7 +219,7 @@ public final class RankingData extends SavedData {
         }
 
         players.forEach((id, ranking) -> {
-            ResourceLocation house = membership.houseOf(id);
+            ResourceLocation house = membership.publicHouseOf(id);
             if (house != null) {
                 totals.computeIfPresent(house, (ignored, total) -> safeAdd(total, ranking.points()));
             }

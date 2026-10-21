@@ -83,6 +83,24 @@ class ServicosRulesTest {
         assertFalse(ServicosRules.purge(aceito, T0 + 10 * ServicosRules.FINISHED_TTL), "em andamento nao some");
     }
 
+    /** Criar e cancelar em sequencia nao pode deixar rastro no save. */
+    @Test
+    void cancellingBeforeAnyoneAcceptsDiscardsTheOrder() {
+        assertTrue(ServicosRules.discardOnCancel(aberto()));
+        assertTrue(ServicosRules.discardOnCancel(direto()));
+        assertFalse(ServicosRules.discardOnCancel(aberto().with(PedidoStatus.ACEITO, MEDICO, T0)),
+                "aceito tem historia: fica como Cancelado");
+    }
+
+    @Test
+    void theDailyQuotaTurnsAtUtcMidnight() {
+        long day = 24L * 60 * 60 * 1000;
+        assertEquals(ServicosRules.dayOf(5 * day), ServicosRules.dayOf(6 * day - 1));
+        assertEquals(ServicosRules.dayOf(5 * day) + 1, ServicosRules.dayOf(6 * day));
+        assertTrue(ServicosRules.MAX_ORDERS_PER_DAY > ServicosRules.MAX_OPEN_ORDERS,
+                "a cota diaria nao pode ser menor que os pedidos abertos simultaneos");
+    }
+
     @Test
     void counterpartIsTheOtherSide() {
         assertEquals(MEDICO, direto().counterpart(CLIENTE));

@@ -12,13 +12,20 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class EtherealBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(AurorionEthereal.MOD_ID);
 
+    /**
+     * Resistencia a explosao de bedrock. Mural e projetor so saem pela mao da staff (o BreakEvent em
+     * EtherealServerEvents barra o resto); uma TNT nao pode ser o atalho. A dureza continua normal
+     * para a staff tirar em sobrevivencia sem precisar de criativo.
+     */
+    private static final float STAFF_ONLY_BLAST_RESISTANCE = 3_600_000.0F;
+
     /** As mesmas propriedades do mod de referencia: ametista, luz 8, sem oclusao. */
     public static final DeferredBlock<AeonicProjectorBlock> AEONIC_PROJECTOR = BLOCKS.registerBlock(
             "aeonic_projector",
             AeonicProjectorBlock::new,
             BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_PURPLE)
-                    .strength(3.0F, 6.0F)
+                    .strength(3.0F, STAFF_ONLY_BLAST_RESISTANCE)
                     .sound(SoundType.AMETHYST)
                     .lightLevel(state -> 8)
                     .noOcclusion());
@@ -28,7 +35,7 @@ public final class EtherealBlocks {
             HouseMuralBlock::new,
             BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_BLACK)
-                    .strength(3.5F, 8.0F)
+                    .strength(3.5F, STAFF_ONLY_BLAST_RESISTANCE)
                     .sound(SoundType.METAL)
                     .noOcclusion());
 

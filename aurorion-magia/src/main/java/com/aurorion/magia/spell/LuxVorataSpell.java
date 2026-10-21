@@ -1,6 +1,7 @@
 package com.aurorion.magia.spell;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.compat.AreasMagic;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
@@ -14,6 +15,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.BlockTags;
@@ -21,7 +23,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -41,13 +42,12 @@ import java.util.Optional;
  * magia devora a luz em tres camadas, e a do meio e a que importa.
  *
  * <ol>
- *   <li><b>Apaga o que tem como apagar.</b> Qualquer bloco no raio que esteja aceso ({@code lit} e
- *       emitindo luz) se apaga: velas, bolos com vela, fogueiras, lampadas e lanternas de mod. Nada e
- *       quebrado nem sai do lugar — acende de novo com isqueiro ou redstone. Fica de fora o que
- *       estiver na tag {@code aurorion_magia:inapagavel} (fornalha e lampada de redstone, por
- *       padrao: apagar o forno do cozinheiro nao e magia de combate). A tag
- *       {@code aurorion_magia:apagavel} continua servindo para forcar blocos que nao usam
- *       {@code lit}.</li>
+ *   <li><b>Apaga o que esta na lista.</b> So os blocos da tag {@code aurorion_magia:apagavel} (velas,
+ *       bolos com vela, fogueiras e fogo, por padrao; lampada de mod entra por datapack) e so onde
+ *       quem conjurou poderia construir — spawn, regra {@code construir} do {@code aurorion-areas},
+ *       casa alheia. Nada e quebrado nem sai do lugar — acende de novo com isqueiro. A tag
+ *       {@code aurorion_magia:inapagavel} continua vencendo a outra. Criatura conjuradora nao mexe
+ *       em bloco.</li>
  *   <li><b>Cega quem esta dentro.</b> Todos no raio, menos quem conjurou e os aliados dele, recebem a
  *       <b>Escuridao</b> do vanilla pelo tempo da zona, mais um instante de Cegueira no baque. E a
  *       escuridao do Warden: a tela fecha em pulsos e o mundo some, com ou sem tocha na mao. E isto
@@ -108,16 +108,17 @@ public final class LuxVorataSpell extends AurorionSpell {
         int radius = radius(spellLevel);
         int duration = darkness(spellLevel);
         BlockPos center = caster.blockPosition();
-        Player player = caster instanceof Player p ? p : null;
         int radiusSqr = radius * radius;
 
-        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-radius, -radius, -radius),
-                center.offset(radius, radius, radius))) {
+        // So jogador mexe em bloco: criatura conjuradora nao tem permissao de construir para conferir.
+        if (caster instanceof ServerPlayer player) for (BlockPos pos : BlockPos.betweenClosed(
+                center.offset(-radius, -radius, -radius), center.offset(radius, radius, radius))) {
             if (pos.distSqr(center) > radiusSqr) continue;
             BlockState state = level.getBlockState(pos);
-            if (!consumable(level, pos, state)) continue;
-            // Protecao de spawn e afins: quem nao pode mexer ali, nao apaga ali.
-            if (player != null && !level.mayInteract(player, pos)) continue;
+            if (!consumable(state)) continue;
+            // Quem nao pode construir ali (spawn, modo aventura, regra construir do aurorion-areas,
+            // casa de outro), nao apaga ali.
+            if (!AreasMagic.mayBuild(level, player, pos)) continue;
             BlockPos at = pos.immutable();
             if (state.is(BlockTags.FIRE)) {
                 level.removeBlock(at, false);
@@ -141,14 +142,18 @@ public final class LuxVorataSpell extends AurorionSpell {
     }
 
     /**
-     * O que a magia devora: fogo no chao, o que a tag manda apagar, e qualquer bloco aceso que ainda
-     * esteja emitindo luz. Nada que esteja na tag {@code inapagavel}.
+     * O que a magia devora: so o que esta na tag {@code apagavel} (velas, bolos com vela, fogueiras e
+     * fogo, por padrao) — fogo sai do chao, o resto apaga pelo {@code lit}. Nada que esteja na tag
+     * {@code inapagavel}.
+     *
+     * <p>Antes valia "qualquer bloco aceso emitindo luz", e isso pegava bloco de maquina de outro mod
+     * que usa {@code lit} como estado de funcionamento: a magia desligava fornalha de mod, gerador e
+     * caldeira de qualquer um. A lista agora e fechada; lampada de mod entra pela tag, por datapack.
      */
-    private static boolean consumable(ServerLevel level, BlockPos pos, BlockState state) {
-        if (state.is(PROTECTED)) return false;
+    private static boolean consumable(BlockState state) {
+        if (!state.is(EXTINGUISHABLE) || state.is(PROTECTED)) return false;
         if (state.is(BlockTags.FIRE)) return true;
-        if (!state.hasProperty(BlockStateProperties.LIT) || !state.getValue(BlockStateProperties.LIT)) return false;
-        return state.is(EXTINGUISHABLE) || state.getLightEmission(level, pos) > 0;
+        return state.hasProperty(BlockStateProperties.LIT) && state.getValue(BlockStateProperties.LIT);
     }
 
     /** 6 blocos no nivel 1, +1 por nivel. */

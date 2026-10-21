@@ -12,6 +12,7 @@
   "commands.aurorion_utils.unfreeze.success": "%s jogador(es) descongelado(s).",
 
   "aurorion_utils.congelado": "Você está congelado.",
+  "aurorion_utils.congelado.comando": "Você está congelado: só dá para conversar (/msg, /r, /me) até a staff soltar você.",
   "aurorion_utils.descongelado": "Você pode se mover de novo.",
   "effect.aurorion_utils.congelado": "Congelado",
 

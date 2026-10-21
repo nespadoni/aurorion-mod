@@ -2,7 +2,10 @@ package com.aurorion.diario.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,13 +34,22 @@ import java.util.function.Consumer;
  *
  * <p>As chaves vêm do cliente, então ficam sempre sob o perfil de quem gravou ({@link #key}).
  * {@link #put} só confirma depois da escrita atômica em disco; um arquivo ilegível nunca é
- * sobrescrito (fica para recuperação manual). Sem dependência do Minecraft: a escrita roda no
+ * sobrescrito (é renomeado e fica para recuperação manual), e um registro ruim vai para quarentena
+ * sem levar os outros junto ({@link #load}). Sem dependência do Minecraft: a escrita roda no
  * {@link Executor} recebido, fora da thread do servidor.
  */
 public final class PendingStore {
     static final int MAX_TOTAL = 300;
     static final int MAX_PER_PROFILE = 25;
     private static final long MAX_FILE_BYTES = 32L * 1024 * 1024;
+    /**
+     * Documento de um rascunho, em caracteres do JSON. O texto do jogo tem ate 10 mil caracteres; mesmo
+     * picotado em trechos de negrito e italico, o documento em blocos cabe aqui.
+     */
+    static final int MAX_DOCUMENT_CHARS = 128 * 1024;
+    /** Soma dos documentos guardados: no pior caso de UTF-8 (3 bytes) ainda abaixo do arquivo maximo. */
+    static final long MAX_TOTAL_DOCUMENT_CHARS = 8L * 1024 * 1024;
+    static final int MAX_FIELD_CHARS = 512;
 
     public record Pending(String draftKey, String operationId, long entryId, int baseVersion,
                           String title, String loreDate, String document,
@@ -96,7 +108,13 @@ public final class PendingStore {
     }
 
     public synchronized CompletableFuture<Boolean> put(Pending pending) {
+        if (!fits(pending)) return CompletableFuture.completedFuture(false);
         String key = key(pending.profile(), pending.draftKey());
+        long total = pending.document().length();
+        for (var entry : byKey.entrySet()) {
+            if (!entry.getKey().equals(key)) total += entry.getValue().document().length();
+        }
+        if (total > MAX_TOTAL_DOCUMENT_CHARS) return CompletableFuture.completedFuture(false);
         if (!byKey.containsKey(key)) {
             long sameProfile = byKey.values().stream().filter(p -> p.profile().equals(pending.profile())).count();
             if (byKey.size() >= MAX_TOTAL || sameProfile >= MAX_PER_PROFILE) return CompletableFuture.completedFuture(false);
@@ -171,21 +189,84 @@ public final class PendingStore {
         return byKey.size();
     }
 
+    /**
+     * Le o arquivo registro a registro.
+     *
+     * <p>Antes, um registro ruim (ou um arquivo grande demais) deixava o arquivo inteiro ilegivel, e
+     * com ele o modo offline do diario de <b>todo mundo</b> desligado ate alguem mexer a mao. Agora so o
+     * que esta ruim sai do caminho: registros invalidos vao para um arquivo de quarentena ao lado
+     * ({@code pendentes.json.rejeitados-<hora>.json}); um arquivo grande demais ou que nem e JSON e
+     * renomeado inteiro ({@code .ilegivel-<hora>}) e o diario recomeca vazio. Nada e apagado: tudo fica
+     * para recuperacao manual. So se nem renomear der certo o arquivo continua no lugar e o modo offline
+     * fica desligado, como antes — sobrescrever o que nao foi lido nunca e uma opcao.
+     */
     private void load() {
         if (!Files.isRegularFile(file)) return;
+        JsonArray items;
         try {
             if (Files.size(file) > MAX_FILE_BYTES) throw new IOException("oversized");
-            List<Pending> items = GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), new TypeToken<List<Pending>>() { }.getType());
-            if (items != null) for (Pending p : items) {
-                if (p == null || p.draftKey() == null || p.profile() == null || p.operationId() == null
-                        || p.characterId() == null || p.characterName() == null || p.document() == null
-                        || p.title() == null || p.loreDate() == null) throw new IOException("invalid_record");
-                byKey.put(key(p.profile(), p.draftKey()), p);
+            JsonElement root = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8));
+            if (!root.isJsonArray()) throw new IOException("not_a_list");
+            items = root.getAsJsonArray();
+        } catch (IOException | RuntimeException e) {
+            setAside(e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage()));
+            return;
+        }
+        JsonArray rejected = new JsonArray();
+        for (JsonElement element : items) {
+            Pending p = parse(element);
+            if (p == null) {
+                rejected.add(element);
+                continue;
             }
+            byKey.put(key(p.profile(), p.draftKey()), p);
+        }
+        if (rejected.isEmpty()) return;
+        Path quarantine = file.resolveSibling(file.getFileName() + ".rejeitados-" + System.currentTimeMillis() + ".json");
+        try {
+            Files.writeString(quarantine, GSON.toJson(rejected), StandardCharsets.UTF_8);
+            warn.accept("Diario: " + rejected.size() + " rascunho(s) guardado(s) invalido(s) separado(s) em " + quarantine.getFileName());
+        } catch (IOException | RuntimeException e) {
+            // Sem a quarentena, regravar o arquivo perderia os registros ruins: preserva tudo e para.
+            byKey.clear();
+            readable = false;
+            warn.accept("Diario: rascunhos invalidos e nao consegui separa-los; arquivo preservado para recuperacao ("
+                    + e.getClass().getSimpleName() + ")");
+        }
+    }
+
+    /** Tira do caminho um arquivo que nao da para ler, sem apagar. */
+    private void setAside(String reason) {
+        Path aside = file.resolveSibling(file.getFileName() + ".ilegivel-" + System.currentTimeMillis());
+        try {
+            Files.move(file, aside);
+            warn.accept("Diario: arquivo de rascunhos ilegivel (" + reason + "); preservado como " + aside.getFileName()
+                    + " e o diario segue com um arquivo novo");
         } catch (IOException | RuntimeException e) {
             readable = false; // Nunca sobrescreve um arquivo que nao conseguimos recuperar inteiro.
-            warn.accept("Diario: arquivo de rascunhos ilegivel; preservado para recuperacao (" + e.getClass().getSimpleName() + ")");
+            warn.accept("Diario: arquivo de rascunhos ilegivel; preservado para recuperacao (" + reason + ")");
         }
+    }
+
+    @Nullable
+    private static Pending parse(JsonElement element) {
+        try {
+            Pending p = element.isJsonObject() ? GSON.fromJson(element, Pending.class) : null;
+            if (p == null || p.draftKey() == null || p.profile() == null || p.operationId() == null
+                    || p.characterId() == null || p.characterName() == null || p.document() == null
+                    || p.title() == null || p.loreDate() == null) return null;
+            if (!fits(p)) return null;
+            return p;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** Teto por registro: um rascunho enorme nao pode crescer o arquivo de todos ate o limite. */
+    static boolean fits(Pending p) {
+        return p.document().length() <= MAX_DOCUMENT_CHARS && p.title().length() <= MAX_FIELD_CHARS
+                && p.loreDate().length() <= MAX_FIELD_CHARS && p.characterName().length() <= MAX_FIELD_CHARS
+                && p.draftKey().length() <= MAX_FIELD_CHARS && p.operationId().length() <= MAX_FIELD_CHARS;
     }
 
     /** Agrupa mudancas enquanto o disco trabalha; serializacao e rede nunca bloqueiam o tick. */

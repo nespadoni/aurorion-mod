@@ -6,7 +6,6 @@ import com.aurorion.core.lives.LivesGate;
 import com.aurorion.integracao.AurorionIntegracao;
 import com.aurorion.integracao.bridge.FactBridge;
 import com.google.gson.JsonObject;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
@@ -82,10 +81,10 @@ public final class DeathFacts {
             if (killer instanceof ServerPlayer other) {
                 // O personagem de quem matou, nunca o nick da conta.
                 killerName = GameFacts.subject(player.server, other.getUUID()).characterName();
-            } else {
-                Component custom = killer.getCustomName();
-                if (custom != null) killerName = custom.getString();
             }
+            // Mob nao tem killer_name, nem com nome customizado: plaquinha de nome e mob de mod com nome
+            // livre virariam texto qualquer, escrito por jogador, na linha do tempo publica do site. O
+            // tipo (killer_type, ex. minecraft:zombie) ja diz o que matou, e o site o traduz.
         }
         return new Capture(DeathId.of(player), Instant.now(),
                 player.level().dimension().location().toString(), damageType, killerType, killerName);

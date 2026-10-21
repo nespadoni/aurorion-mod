@@ -45,11 +45,30 @@ public final class Drowning {
         AurorionSpell.sound(target, SoundEvents.PLAYER_SPLASH_HIGH_SPEED, 0.9f, 0.6f);
     }
 
-    /** O golpe de quem ja esta sem ar. Chamado pelo tick do efeito, meio segundo de intervalo. */
-    public static void suffocate(LivingEntity entity, float damage) {
-        if (!(entity.level() instanceof ServerLevel level)) return;
-        entity.hurt(FriendlyFire.source(source(level, entity), entity), damage);
+    /**
+     * Um pulso do efeito (meio segundo). Primeiro o ar do vanilla baixa; depois que ele zera, o golpe.
+     *
+     * <p>O afogamento so continua enquanto quem conjurou esta no servidor: sem ele, o dano sairia sem
+     * causador, e dano sem causador passa por cima da protecao de PvP das areas. Dono fora (saiu do
+     * jogo, morreu) acaba com o efeito. Vitima parada num lugar sem PvP nao perde ar nem leva golpe
+     * enquanto estiver ali — o efeito so espera.
+     *
+     * @return {@code false} quando o efeito deve sair
+     */
+    public static boolean pulse(LivingEntity entity, int airPerPulse, float damage) {
+        if (!(entity.level() instanceof ServerLevel level)) return true;
+        Entity owner = owner(level, entity);
+        if (owner == null) return false;
+        if (!Hits.pvpAllowedFrom(owner, entity)) return true;
+        int air = entity.getAirSupply();
+        if (air > -20) {
+            entity.setAirSupply(air - airPerPulse);
+            return true;
+        }
+        entity.setAirSupply(-20);
+        entity.hurt(FriendlyFire.source(source(level, owner), entity), damage);
         AurorionSpell.sound(entity, SoundEvents.PLAYER_HURT_DROWN, 0.7f, 0.9f);
+        return true;
     }
 
     /** Bolhas escapando: so cosmetico, e so no cliente de quem esta por perto. */
@@ -61,16 +80,15 @@ public final class Drowning {
         entity.getPersistentData().remove(KEY_OWNER);
     }
 
-    private static DamageSource source(ServerLevel level, LivingEntity entity) {
+    private static DamageSource source(ServerLevel level, Entity owner) {
         return new DamageSource(
-                level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE),
-                owner(level, entity));
+                level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), owner);
     }
 
     @Nullable
     private static Entity owner(ServerLevel level, LivingEntity entity) {
         return entity.getPersistentData().hasUUID(KEY_OWNER)
-                ? level.getEntity(entity.getPersistentData().getUUID(KEY_OWNER))
+                ? Owners.find(level, entity.getPersistentData().getUUID(KEY_OWNER))
                 : null;
     }
 }

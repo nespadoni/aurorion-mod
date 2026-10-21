@@ -18,7 +18,12 @@ public record Attempt(Kind kind, boolean[] resolved, long waitMillis, List<Strin
         /** Falha transitoria: rede, 5xx, 429. O lote fica e volta depois. */
         RETRY,
         /** 401/403: credencial errada. Insistir nao resolve; espera longa e aviso no log. */
-        FORBIDDEN
+        FORBIDDEN,
+        /**
+         * 400/413/422: o backend recusou o lote inteiro pelo conteudo. Reenviar igual nunca passa; a
+         * caixa divide o lote ate isolar o fato que o site nao aceita e o poe em quarentena.
+         */
+        MALFORMED
     }
 
     public static Attempt retry(long waitMillis, String detail) {
@@ -27,5 +32,9 @@ public record Attempt(Kind kind, boolean[] resolved, long waitMillis, List<Strin
 
     public static Attempt forbidden(String detail) {
         return new Attempt(Kind.FORBIDDEN, new boolean[0], 0, List.of(), detail);
+    }
+
+    public static Attempt malformed(String detail) {
+        return new Attempt(Kind.MALFORMED, new boolean[0], 0, List.of(), detail);
     }
 }

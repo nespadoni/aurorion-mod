@@ -14,6 +14,7 @@ import com.aurorion.profissoes.network.NpcActionPayload;
 import com.aurorion.profissoes.network.NpcScreenPayload;
 import com.aurorion.profissoes.npc.NpcCatalog.*;
 import com.aurorion.profissoes.npc.NpcDefinition.ActionType;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -22,7 +23,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -53,6 +56,15 @@ import static com.aurorion.profissoes.npc.NpcDefinition.tierLabel;
  * falhar (comando desconhecido, alvo invalido) devolve o pagamento. Cobrar antes evita o servico de
  * graca quando a acao tem efeito colateral e a remocao falharia depois; no mesmo tick a conferencia
  * e a cobranca nao podem divergir.
+ *
+ * <h2>Pagamento em item</h2>
+ *
+ * <p>So conta item "de fabrica" ({@link #pays}): mesmo tipo <b>e</b> sem componentes alterados. Antes
+ * bastava o tipo, entao uma espada quase quebrada, um item renomeado ou uma variante especial com o
+ * mesmo id pagavam como o item novo. Nos servicos que atuam sobre a mao principal, o slot da mao
+ * nunca entra no pagamento — o item atendido nao pode ser o proprio preco.</p>
+ *
+ * <p>Recargas de servico ficam no {@link NpcStockData} (gravadas), nao em memoria.</p>
  */
 public final class NpcService {
     private static final long SESSION_MILLIS = 5 * 60_000L;
@@ -68,11 +80,13 @@ public final class NpcService {
 
     /** Nome de conta que pode ir cru num comando: o formato da Mojang. */
     private static final Pattern SAFE_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
-    /** Acima disto, os cooldowns vencidos sao varridos antes de gravar mais um. */
-    private static final int COOLDOWN_SWEEP = 4096;
+    /**
+     * Sem acao (andar, clicar, falar) ha mais que isto, o profissional por perto nao bloqueia o NPC:
+     * um medico AFK na praca deixava a cidade inteira sem atendimento.
+     */
+    private static final long AFK_MILLIS = 3 * 60_000L;
 
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
-    private static final Map<String, Long> COOLDOWNS = new HashMap<>();
     private static final Map<UUID, Long> LAST_ACTION = new HashMap<>();
     private static long boot = System.currentTimeMillis();
 
@@ -158,7 +172,7 @@ public final class NpcService {
             int left = remaining(stock, definition, entry);
             String reason = definition.fallbackBlocksTrades() ? blocked : null;
             if (reason == null && left == 0) reason = "Esgotado. " + restockHint(entry);
-            if (reason == null && !canAfford(player, entry.price())) reason = "Você precisa de " + describe(entry.price()) + ".";
+            if (reason == null && !canAfford(player, entry.price(), false)) reason = "Você precisa de " + describe(entry.price()) + ".";
             ItemStack icon = entry.price().item() == null ? ItemStack.EMPTY : new ItemStack(entry.price().item(), Math.min(99, Math.max(1, entry.price().amount())));
             trades.add(new NpcScreenPayload.TradeRow(entry.result().copy(), entry.trade().amount(), icon,
                     clip(describe(entry.price()), 256), left, reason == null, clip(reason == null ? "" : reason, 512)));
@@ -189,20 +203,32 @@ public final class NpcService {
         var service = entry.service();
         String blocked = professionalNearby(player, npc, definition);
         if (blocked != null) return Outcome.fail(blocked);
-        // O resultado e montado antes de cobrar: se o item nao aceita, ninguem paga.
-        ItemStack prepared = ItemStack.EMPTY;
+        boolean hand = usesHand(service.action());
         String engraving = "";
         try {
+            // checkService ja ensaia o resultado (enchanted/brewed): se o item nao aceita, ninguem paga.
             checkService(player, definition, entry, index, now);
+            if (service.action() == ActionType.NAME_TAG) engraving = tagName(text);
+        } catch (Refusal refusal) { return Outcome.fail(refusal.getMessage()); }
+
+        // Cobra e so depois monta o resultado a partir da mao atual. Antes o resultado vinha de uma
+        // copia da mao feita antes da cobranca, e a cobranca podia consumir o proprio item atendido
+        // (o livro pago com o livro que seria encantado): o servico saia com material de graca.
+        ItemStack handBefore = player.getMainHandItem().copy();
+        charge(player, entry.cost(), hand, "npc:" + definition.id() + ":servico");
+        ItemStack prepared = ItemStack.EMPTY;
+        try {
+            if (hand && !ItemStack.matches(handBefore, player.getMainHandItem()))
+                throw new Refusal("O item da mão mudou durante o atendimento.");
             switch (service.action()) {
                 case ENCHANT -> prepared = enchanted(player, entry);
                 case POTION_STRENGTH, POTION_DURATION -> prepared = brewed(player, service.action());
-                case NAME_TAG -> engraving = tagName(text);
                 default -> { }
             }
-        } catch (Refusal refusal) { return Outcome.fail(refusal.getMessage()); }
-
-        charge(player, entry.cost());
+        } catch (Refusal refusal) {
+            refund(player, entry.cost(), "npc:" + definition.id() + ":reembolso");
+            return Outcome.fail(refusal.getMessage() + " O pagamento foi devolvido.");
+        }
         final String engraved = engraving;
         final ItemStack result = prepared;
         boolean done = switch (service.action()) {
@@ -218,19 +244,19 @@ public final class NpcService {
             case NAME_TAG -> { give(player, nameTag(engraved), 1); yield true; }
             case COMMAND -> false;
         };
-        boolean commands = runCommands(player, definition, service.commands());
-        if (service.action() == ActionType.COMMAND) done = commands;
+        int succeeded = runCommands(player, definition, service.commands());
+        // Comando que ja rodou nao se desfaz: com ao menos um sucesso o pagamento fica, e o parcial
+        // vai para o log (runCommands) para a staff corrigir o JSON. So a falha total devolve.
+        if (service.action() == ActionType.COMMAND) done = succeeded > 0;
         if (!done) {
-            refund(player, entry.cost());
+            refund(player, entry.cost(), "npc:" + definition.id() + ":reembolso");
             AurorionProfissoes.LOGGER.warn("NPC {}: servico '{}' falhou para {}; pagamento devolvido.",
                     definition.id(), service.name(), player.getGameProfile().getName());
             return Outcome.fail("O serviço não pôde ser realizado. O pagamento foi devolvido.");
         }
-        if (service.cooldownSeconds() > 0) {
-            // Sem isto o mapa so crescia (jogador x NPC x servico) ate o servidor reiniciar.
-            if (COOLDOWNS.size() >= COOLDOWN_SWEEP) COOLDOWNS.values().removeIf(until -> until <= now);
-            COOLDOWNS.put(cooldownKey(player, definition, index), now + service.cooldownSeconds() * 1000L);
-        }
+        if (service.cooldownSeconds() > 0)
+            NpcStockData.get(player.server).setCooldown(cooldownKey(player, definition, index),
+                    now + service.cooldownSeconds() * 1000L, now);
         player.inventoryMenu.broadcastChanges();
         AurorionProfissoes.LOGGER.info("NPC {}: servico '{}' para {} ({}){}.", definition.id(), service.name(),
                 player.getGameProfile().getName(), describe(entry.cost()), engraved.isEmpty() ? "" : " nome \"" + engraved + "\"");
@@ -241,7 +267,7 @@ public final class NpcService {
     /** Lanca {@link Refusal} com o motivo quando o servico nao pode ser feito agora. */
     private static void checkService(ServerPlayer player, NpcDefinition definition, LoadedService entry, int index, long now) {
         var service = entry.service();
-        long until = COOLDOWNS.getOrDefault(cooldownKey(player, definition, index), 0L);
+        long until = NpcStockData.get(player.server).cooldownUntil(cooldownKey(player, definition, index));
         if (until > now) throw new Refusal("Disponível de novo em " + TimeFormat.duration(until - now).getString() + ".");
         var hand = player.getMainHandItem();
         switch (service.action()) {
@@ -271,7 +297,17 @@ public final class NpcService {
             }
             case COMMAND -> { }
         }
-        if (!canAfford(player, entry.cost())) throw new Refusal("Você precisa de " + describe(entry.cost()) + ".");
+        if (!canAfford(player, entry.cost(), usesHand(service.action())))
+            throw new Refusal("Você precisa de " + describe(entry.cost())
+                    + (usesHand(service.action()) ? " fora da mão principal." : "."));
+    }
+
+    /** Servicos que trabalham sobre o item da mao principal: o pagamento nao pode sair dela. */
+    private static boolean usesHand(ActionType action) {
+        return switch (action) {
+            case REPAIR, FINISH_FOOD, ENCHANT, POTION_STRENGTH, POTION_DURATION -> true;
+            case HEAL, NAME_TAG, COMMAND -> false;
+        };
     }
 
     /**
@@ -364,10 +400,10 @@ public final class NpcService {
      * Roda os comandos como o servidor (nivel 4), mas posicionado no jogador e com ele como
      * executor: {@code @s} e {@code @p} apontam para quem pagou. A saida vai para o log, nao para o chat.
      *
-     * @return se ao menos um comando terminou com sucesso
+     * @return quantos comandos terminaram com sucesso
      */
-    private static boolean runCommands(ServerPlayer player, NpcDefinition definition, List<String> commands) {
-        boolean any = false;
+    private static int runCommands(ServerPlayer player, NpcDefinition definition, List<String> commands) {
+        int succeeded = 0;
         for (String template : commands) {
             String command = expand(template, player, definition);
             boolean[] success = {false};
@@ -382,9 +418,12 @@ public final class NpcService {
                     .withCallback((ok, result) -> { if (ok) success[0] = true; });
             player.server.getCommands().performPrefixedCommand(source, command);
             AurorionProfissoes.LOGGER.info("NPC {}: /{} -> {}", definition.id(), command, success[0] ? "ok" : "falhou");
-            any |= success[0];
+            if (success[0]) succeeded++;
         }
-        return any;
+        if (succeeded > 0 && succeeded < commands.size())
+            AurorionProfissoes.LOGGER.warn("NPC {}: so {} de {} comandos funcionaram para {}; pagamento mantido. Revise o JSON.",
+                    definition.id(), succeeded, commands.size(), player.getGameProfile().getName());
+        return succeeded;
     }
 
     /**
@@ -422,9 +461,9 @@ public final class NpcService {
         }
         var stock = NpcStockData.get(player.server);
         if (remaining(stock, definition, entry) == 0) return Outcome.fail("Esgotado. " + restockHint(entry));
-        if (!canAfford(player, entry.price())) return Outcome.fail("Você precisa de " + describe(entry.price()) + ".");
+        if (!canAfford(player, entry.price(), false)) return Outcome.fail("Você precisa de " + describe(entry.price()) + ".");
 
-        charge(player, entry.price());
+        charge(player, entry.price(), false, "npc:" + definition.id() + ":loja");
         give(player, entry.result(), entry.trade().amount());
         if (entry.trade().limited())
             stock.add(NpcStockData.key(definition.id(), entry.trade().key()), period(entry), 1);
@@ -455,30 +494,61 @@ public final class NpcService {
 
     // --- pagamento -----------------------------------------------------------------------------
 
-    private static boolean canAfford(ServerPlayer player, Price price) {
+    /** @param excludeHand o slot da mao principal nao conta (servico sobre o item da mao) */
+    private static boolean canAfford(ServerPlayer player, Price price, boolean excludeHand) {
         if (player.isCreative() && player.hasPermissions(2)) return true;
-        if (price.item() != null && price.amount() > 0 && countItem(player, price) < price.amount()) return false;
+        if (price.item() != null && price.amount() > 0 && countItem(player, price.item(), excludeHand) < price.amount()) return false;
         return price.money() <= 0 || Wallet.balance(player.server, player.getUUID()) >= price.money();
     }
 
-    private static int countItem(ServerPlayer player, Price price) {
-        return player.getInventory().clearOrCountMatchingItems(stack -> stack.is(price.item()), 0,
-                player.inventoryMenu.getCraftSlots());
+    /** Item que serve de pagamento: o tipo pedido e nenhum componente alterado (dano, nome, encanto...). */
+    static boolean pays(ItemStack stack, Item item) {
+        return !stack.isEmpty() && stack.is(item) && ItemStack.isSameItemSameComponents(stack, item.getDefaultInstance());
+    }
+
+    /** Inventario principal e mao secundaria; armadura vestida e grade de criacao nao pagam. */
+    private static int countItem(ServerPlayer player, Item item, boolean excludeHand) {
+        Inventory inventory = player.getInventory();
+        int count = 0;
+        for (int slot : paymentSlots(inventory, excludeHand)) {
+            ItemStack stack = inventory.getItem(slot);
+            if (pays(stack, item)) count += stack.getCount();
+        }
+        return count;
+    }
+
+    private static int[] paymentSlots(Inventory inventory, boolean excludeHand) {
+        int[] slots = new int[Inventory.INVENTORY_SIZE + 1];
+        int size = 0;
+        for (int slot = 0; slot < Inventory.INVENTORY_SIZE; slot++)
+            if (!excludeHand || slot != inventory.selected) slots[size++] = slot;
+        slots[size++] = Inventory.SLOT_OFFHAND;
+        return java.util.Arrays.copyOf(slots, size);
     }
 
     /** Chamado logo depois de {@link #canAfford}, no mesmo tick. Staff em criativo nao paga. */
-    private static void charge(ServerPlayer player, Price price) {
+    private static void charge(ServerPlayer player, Price price, boolean excludeHand, String origin) {
         if (player.isCreative() && player.hasPermissions(2)) return;
-        if (price.item() != null && price.amount() > 0)
-            player.getInventory().clearOrCountMatchingItems(stack -> stack.is(price.item()), price.amount(),
-                    player.inventoryMenu.getCraftSlots());
-        if (price.money() > 0) Wallet.add(player.server, player.getUUID(), -price.money());
+        if (price.item() != null && price.amount() > 0) {
+            Inventory inventory = player.getInventory();
+            int left = price.amount();
+            for (int slot : paymentSlots(inventory, excludeHand)) {
+                if (left <= 0) break;
+                ItemStack stack = inventory.getItem(slot);
+                if (!pays(stack, price.item())) continue;
+                int take = Math.min(left, stack.getCount());
+                stack.shrink(take);
+                left -= take;
+            }
+            inventory.setChanged();
+        }
+        if (price.money() > 0) Wallet.add(player.server, player.getUUID(), -price.money(), origin);
     }
 
-    private static void refund(ServerPlayer player, Price price) {
+    private static void refund(ServerPlayer player, Price price, String origin) {
         if (player.isCreative() && player.hasPermissions(2)) return;
         if (price.item() != null && price.amount() > 0) give(player, new ItemStack(price.item()), price.amount());
-        if (price.money() > 0) Wallet.add(player.server, player.getUUID(), price.money());
+        if (price.money() > 0) Wallet.add(player.server, player.getUUID(), price.money(), origin);
     }
 
     /** Entrega em pilhas do tamanho maximo do item; o que nao cabe cai no chao, na frente do jogador. */
@@ -507,8 +577,10 @@ public final class NpcService {
     private static @Nullable String professionalNearby(ServerPlayer customer, ProfessionNpcEntity npc, NpcDefinition definition) {
         if (definition.profession() == Profession.NONE || definition.fallbackRadius() == 0 || !ProfessionsConfig.enabled()) return null;
         double radius = definition.fallbackRadius();
+        long now = Util.getMillis();
         for (ServerPlayer other : customer.server.getPlayerList().getPlayers()) {
             if (other == customer || other instanceof FakePlayer || !other.isAlive() || other.isSpectator()) continue;
+            if (now - other.getLastActionTime() > AFK_MILLIS) continue;
             if (ProfessionApi.of(other) != definition.profession()) continue;
             if (radius < 0 || (other.level() == npc.level() && other.distanceToSqr(npc) <= radius * radius))
                 return definition.profession().label() + " disponível por perto: procure "
@@ -531,7 +603,7 @@ public final class NpcService {
     public static void started() { boot = System.currentTimeMillis(); }
 
     public static void clear() {
-        SESSIONS.clear(); COOLDOWNS.clear(); LAST_ACTION.clear();
+        SESSIONS.clear(); LAST_ACTION.clear();
     }
 
     private static String clip(String text, int max) {

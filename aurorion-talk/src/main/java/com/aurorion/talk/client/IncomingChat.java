@@ -22,7 +22,12 @@ public final class IncomingChat {
     }
 
     /**
-     * Chamado imediatamente antes da mensagem entrar no HUD do chat.
+     * Chamado imediatamente antes da mensagem entrar no HUD do chat — so para fala comum
+     * ({@code ChatType.CHAT}); {@code /msg}, {@code /say}, {@code /me} e chat de time nem chegam aqui.
+     *
+     * <p>Sem balao criado, a mensagem fica no HUD por padrao ({@code hideOnlyWhenBalloonShown}): o
+     * servidor so entrega a quem esta no alcance, entao uma fala sem balao e de alguem fora da
+     * distancia de renderizacao (ou a staff espiando de longe) — esconder seria perde-la.
      *
      * @param sender  autor da fala, ou {@code null} se nao deu para identificar
      * @param message texto puro da fala (sem o "&lt;nick&gt;")

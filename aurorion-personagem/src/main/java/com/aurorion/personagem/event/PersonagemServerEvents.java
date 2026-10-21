@@ -21,9 +21,10 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
  * O portao, na pratica.
  *
  * <p>A tela e modal, mas ela e do <b>cliente</b> — e um cliente pode nao ter o mod, ou ter a tela
- * fechada na marra. Por isso a retencao real e feita aqui, com o jogador em espectador e um punhado
- * de vetos curtos. Nenhum deles roda por tick: todos sao eventos de acontecimento, e cada um sai na
- * primeira linha quando o jogador nao esta retido.
+ * fechada na marra. Por isso a retencao real e feita no servidor: aqui, com o jogador em espectador
+ * e um punhado de vetos curtos, e no {@code HeldConnectionMixin}, que recusa movimento, teleporte do
+ * espectador e interacao de quem esta retido. Nenhum deles roda por tick: todos sao eventos de
+ * acontecimento, e cada um sai na primeira linha quando o jogador nao esta retido.
  */
 @EventBusSubscriber(modid = AurorionPersonagem.MOD_ID)
 public final class PersonagemServerEvents {

@@ -68,6 +68,22 @@ class RankingDataTest {
         assertEquals(50, data.houseTotals(membership, CATALOG).get(SYLVARA.id()));
     }
 
+    /** Cadastro oculto nao soma: o total da casa subindo com o ponto do aluno entregaria a casa dele. */
+    @Test
+    void hiddenAssignmentDoesNotReachTheHouseTotal() {
+        RankingData data = new RankingData();
+        HouseData membership = new HouseData();
+
+        UUID player = UUID.randomUUID();
+        membership.setHouse(player, NYX.id());
+        membership.setHidden(player, true);
+        data.adjustPlayerPoints(player, "Aluno", 25);
+
+        assertEquals(0, data.houseTotals(membership, CATALOG).get(NYX.id()));
+        membership.setHidden(player, false);
+        assertEquals(25, data.houseTotals(membership, CATALOG).get(NYX.id()));
+    }
+
     @Test
     void sortsAndLimitsHousesByTotal() {
         RankingData data = new RankingData();

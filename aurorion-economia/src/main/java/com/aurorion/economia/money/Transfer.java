@@ -18,7 +18,14 @@ public final class Transfer {
         /** Pagar a si mesmo nao move nada e so polui o extrato. */
         SAME_ACCOUNT,
         /** O destino passaria do teto. Na pratica so acontece com dinheiro criado por staff. */
-        TARGET_FULL;
+        TARGET_FULL,
+        /**
+         * Quem paga esta no Limbo, morto ou sem nome. O dinheiro morre com o personagem; deixar ele
+         * sair antes seria a fuga mais barata dessa regra.
+         */
+        SENDER_BLOCKED,
+        /** A quantia so cabe usando a bolsa inicial, que ainda nao pode ser repassada. */
+        STARTER_LOCKED;
 
         public boolean ok() {
             return this == OK;

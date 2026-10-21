@@ -24,10 +24,28 @@ public final class AreaTags {
      * proposito: agua parada numa bacia nao e agua tratada. Acrescentar uma e uma linha no datapack.
      */
     public static final TagKey<Block> WATER_TAPS = TagKey.create(Registries.BLOCK, id("water_taps"));
+    /**
+     * Blocos sem inventario que a regra {@code interagir} tambem protege: portas, alcapoes, porteiras,
+     * botoes, alavancas, repetidores... Todo bloco com block entity (bau, fornalha, placa, cama,
+     * estante de livro, mesa de poções) ja entra sem estar aqui.
+     */
+    public static final TagKey<Block> PROTECTED_INTERACTIONS = TagKey.create(Registries.BLOCK, id("protected_interactions"));
+    /**
+     * Veiculos roteirizados pela staff (hoje, o feixe de abducao do {@code aurorion-utils}). Quem esta
+     * montado neles nao e barrado nem tem posicao memorizada pela barreira de casa: o empurrao tiraria
+     * a pessoa do feixe no meio da subida, e a "ultima posicao permitida" seria um ponto no ar.
+     */
+    public static final TagKey<EntityType<?>> SCRIPTED_VEHICLES = TagKey.create(Registries.ENTITY_TYPE, id("scripted_vehicles"));
     /** Includes seats nested inside a tagged flying vehicle, without moving or disabling the NPC/vehicle. */
     public static boolean isFlightMount(net.minecraft.world.entity.Entity entity) {
         for (var current = entity; current != null; current = current.getVehicle())
             if (current.getType().is(FLIGHT_MOUNTS)) return true;
+        return false;
+    }
+    /** Veiculo roteirizado em qualquer nivel da pilha de montaria (ver {@link #SCRIPTED_VEHICLES}). */
+    public static boolean isScriptedVehicle(net.minecraft.world.entity.Entity entity) {
+        for (var current = entity; current != null; current = current.getVehicle())
+            if (current.getType().is(SCRIPTED_VEHICLES)) return true;
         return false;
     }
     private AreaTags() {}

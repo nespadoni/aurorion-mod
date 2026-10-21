@@ -51,9 +51,43 @@ public final class WorldCatalog {
      * Config ainda nao carregada e um estado real e transitorio (classes carregam antes do servidor
      * subir). Avisar uma vez basta; avisar sempre encheria o log de quem so abriu o menu principal.
      */
-    private static boolean warnedNotLoaded;
+    private static volatile boolean warnedNotLoaded;
+
+    /**
+     * Os seeds congelados no {@code ServerAboutToStartEvent} — a config SERVER ja carregou, as
+     * dimensoes ainda nao foram criadas — e soltos quando o servidor para.
+     *
+     * <p>Antes, cada {@code getSeed()} relia a config ao vivo. Editar o TOML com o servidor no ar (o
+     * NeoForge recarrega config de servidor quando o arquivo muda) trocava o seed no meio da sessao e
+     * os chunks gerados dali em diante saiam de outro mapa — exatamente a emenda que a config inteira
+     * existe para impedir. Congelado, um seed novo so vale no proximo boot.
+     *
+     * <p>{@code volatile} porque {@code getSeed()} tambem e chamado das threads de geracao de chunk,
+     * e o cache do {@link DerivedConfig} nao e seguro entre threads. O mapa publicado e imutavel.
+     */
+    @Nullable
+    private static volatile Map<ResourceKey<Level>, Long> frozenSeeds;
 
     private WorldCatalog() {
+    }
+
+    /** Chamado no {@code ServerAboutToStartEvent}. Ver {@link #frozenSeeds}. */
+    public static void freeze() {
+        frozenSeeds = SEEDS.get();
+    }
+
+    /** Chamado quando o servidor para: o proximo mundo (servidor integrado) le a config de novo. */
+    public static void thaw() {
+        frozenSeeds = null;
+    }
+
+    private static Map<ResourceKey<Level>, Long> seeds() {
+        Map<ResourceKey<Level>, Long> frozen = frozenSeeds;
+        if (frozen != null) return frozen;
+        // Fora de uma sessao de servidor (menu, testes) nao ha geracao em paralelo; o cache serve.
+        synchronized (SEEDS) {
+            return SEEDS.get();
+        }
     }
 
     /**
@@ -64,17 +98,17 @@ public final class WorldCatalog {
      */
     @Nullable
     public static Long seedFor(ResourceKey<Level> dimension) {
-        return SEEDS.get().get(dimension);
+        return seeds().get(dimension);
     }
 
     /** Se esta dimensao e gerenciada por este mod (terreno, barreira e portais). */
     public static boolean isManaged(ResourceKey<Level> dimension) {
-        return SEEDS.get().containsKey(dimension);
+        return seeds().containsKey(dimension);
     }
 
     /** Todas as dimensoes declaradas. Usado no boot, para desamarrar e restaurar as barreiras. */
     public static Set<ResourceKey<Level>> managed() {
-        return SEEDS.get().keySet();
+        return seeds().keySet();
     }
 
     /**
@@ -85,7 +119,11 @@ public final class WorldCatalog {
      * pico".
      */
     public static boolean allowsRuntimeGeneration(ResourceKey<Level> dimension) {
-        return RUNTIME_GENERATION.get().contains(dimension);
+        // Esta pode mudar com o servidor no ar (e so uma trava de portal), mas o cache nao e seguro
+        // entre threads; o lock e barato porque a consulta e rara (travessia de portal).
+        synchronized (RUNTIME_GENERATION) {
+            return RUNTIME_GENERATION.get().contains(dimension);
+        }
     }
 
     // --- Leitura da config -----------------------------------------------------------------------

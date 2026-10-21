@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Existe um sistema de casas neste servidor, e em qual casa esta um jogador?
+ * Existe um sistema de casas neste servidor, e em qual casa revelada (publica) esta um jogador?
  *
  * <p>Mesmo desenho do {@link com.aurorion.core.character.CharacterGate}, e pela mesma razao: o core
  * guarda a <b>pergunta</b>, um mod responde, e os outros perguntam sem se conhecerem. Quem responde
@@ -35,7 +35,14 @@ public final class HouseGate {
 
     /** O que o dono das casas precisa saber responder. Tudo aqui e consulta; nada escreve. */
     public interface Houses {
-        /** @return a casa do jogador, ou {@code null} se ele nao tem casa. Aceita jogador offline. */
+        /**
+         * @return a casa <b>revelada (publica)</b> do jogador, ou {@code null} se ele nao tem casa ou se
+         * ela ainda nao foi revelada. Aceita jogador offline.
+         *
+         * <p>O cadastro oculto (antes da cerimonia) nunca sai por aqui: quem pergunta pinta nome na tab,
+         * barra area e monta fato para o site — tudo visivel a outros jogadores. A casa ainda nao
+         * revelada so o mod dono das casas conhece.
+         */
         @Nullable
         ResourceLocation of(MinecraftServer server, UUID player);
 
@@ -81,6 +88,7 @@ public final class HouseGate {
         return houses != null;
     }
 
+    /** A casa revelada (publica) do jogador; {@code null} sem casa, casa oculta ou sem sistema de casas. */
     @Nullable
     public static ResourceLocation of(MinecraftServer server, UUID player) {
         Houses current = houses;
@@ -98,8 +106,8 @@ public final class HouseGate {
     }
 
     /**
-     * A cor da casa do jogador, ou {@code null} quando ele nao tem casa, a casa sumiu do catalogo ou nao
-     * ha sistema de casas. Para pintar um nome, os tres casos sao o mesmo: fica a cor que ja tinha.
+     * A cor da casa revelada do jogador, ou {@code null} quando ele nao tem casa (ou ela ainda e
+     * oculta), a casa sumiu do catalogo ou nao ha sistema de casas. Para pintar um nome, os tres casos sao o mesmo: fica a cor que ja tinha.
      */
     @Nullable
     public static Integer colorOf(MinecraftServer server, UUID player) {

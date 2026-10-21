@@ -122,13 +122,13 @@ public final class HouseMuralPayloads {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
-    public record Target(UUID id, String name, int lives, int maxLives, boolean online) {
+    /** Sem "esta online": a lista cobre todo personagem e nao pode servir de rastreador de conexao. */
+    public record Target(UUID id, String name, int lives, int maxLives) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Target> STREAM_CODEC = StreamCodec.composite(
                 UUIDUtil.STREAM_CODEC, Target::id,
                 ByteBufCodecs.stringUtf8(64), Target::name,
                 ByteBufCodecs.VAR_INT, Target::lives,
                 ByteBufCodecs.VAR_INT, Target::maxLives,
-                ByteBufCodecs.BOOL, Target::online,
                 Target::new);
     }
 

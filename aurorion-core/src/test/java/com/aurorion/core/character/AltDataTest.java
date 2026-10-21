@@ -105,6 +105,56 @@ class AltDataTest {
         assertNull(data.byOwner(owner));
     }
 
+    /** Alt novo nao carrega nada da conta: nem o UUID derivado, nem o nick no nome de perfil. */
+    @Test void unlinkedAltIsNotDerivableFromTheAccount() {
+        AltData data = new AltData();
+        UUID owner = UUID.randomUUID();
+        var random = new java.util.Random(42);
+        String name = AltData.randomProfileName(random);
+        var alt = data.createUnlinked(owner, name, random);
+
+        assertNotEquals(AltData.altIdOf(owner), alt.altId());
+        assertEquals(4, alt.altId().version());
+        assertEquals(2, alt.altId().variant());
+        assertEquals(owner, data.ownerOf(alt.altId()));
+        assertThrows(IllegalArgumentException.class, () -> data.createUnlinked(owner, name, random), "nome repetido");
+        assertThrows(IllegalArgumentException.class, () -> data.createUnlinked(owner, "nome com espaco", random));
+        assertThrows(IllegalStateException.class, () -> data.createUnlinked(alt.altId(), "Outro", random));
+
+        AltData restored = AltData.load(data.save(new CompoundTag(), null), null);
+        assertEquals(alt, restored.find(alt.altId()));
+    }
+
+    @Test void randomProfileNamesAreValidVanillaNames() {
+        var random = new java.util.Random(7);
+        for (int i = 0; i < 5_000; i++) {
+            String name = AltData.randomProfileName(random);
+            assertTrue(AltData.validProfileName(name), name);
+            assertFalse(name.toLowerCase(java.util.Locale.ROOT).endsWith("_alt"), name);
+        }
+    }
+
+    /** O UUID aleatorio nao se recalcula: desvincular aposenta, e recriar devolve o mesmo personagem. */
+    @Test void removedUnlinkedAltCanBeRestoredAfterRestart() {
+        AltData data = new AltData();
+        UUID owner = UUID.randomUUID();
+        var random = new java.util.Random(1);
+        var alt = data.createUnlinked(owner, "Brivaro", random);
+        data.remove(alt.altId());
+        assertFalse(data.isAlt(alt.altId()));
+        assertTrue(data.nameReserved("brivaro"));
+        assertFalse(data.nameTaken("brivaro"));
+
+        AltData restarted = AltData.load(data.save(new CompoundTag(), null), null);
+        assertEquals(1, restarted.retiredOf(owner).size());
+        assertNull(restarted.restoreRetired(UUID.randomUUID()), "aposentado de outra conta nao volta");
+        var back = restarted.restoreRetired(owner);
+        assertEquals(alt.altId(), back.altId());
+        assertEquals("Brivaro", back.altName());
+        assertTrue(restarted.isAlt(alt.altId()));
+        assertTrue(restarted.retiredOf(owner).isEmpty());
+    }
+
     /** Remover solta o vinculo; recriar devolve o mesmo UUID, e com ele o mesmo personagem. */
     @Test void removeKeepsTheSameIdentityForLater() {
         AltData data = new AltData();

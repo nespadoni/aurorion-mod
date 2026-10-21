@@ -209,7 +209,8 @@ public class MagiaProjectileEntity extends Projectile {
     protected boolean canHitEntity(Entity target) {
         if (!(target instanceof LivingEntity living) || !super.canHitEntity(target)) return false;
         Entity owner = getOwner();
-        if (owner == null) return living.isAlive();
+        // Sem dono nao acerta ninguem: o dano sairia sem causador e passaria pela zona segura.
+        if (owner == null) return false;
         if (target == owner || owner.isPassengerOfSameVehicle(target)) return false;
         return !(owner instanceof LivingEntity caster) || Hits.hittable(caster, living);
     }
@@ -240,6 +241,12 @@ public class MagiaProjectileEntity extends Projectile {
 
     /** Um passo no servidor. {@code true} quando o projetil acabou (explodiu, pousou, sumiu). */
     private boolean step(ServerLevel level, Shape shape, Vec3 motion) {
+        // Dono saiu do jogo, morreu ou trocou de dimensao: a magia acaba com ele. A bigorna sem dono
+        // esmagava com dano sem causador, que nenhuma regra de PvP de area confere.
+        if (owner() == null) {
+            discard();
+            return true;
+        }
         Vec3 from = position();
         Vec3 to = from.add(motion);
         switch (shape) {

@@ -142,7 +142,14 @@ public final class HouseTreasury {
         return accepted;
     }
 
-    /** @return quantia sacada para a carteira, ou um dos {@code ERR_*} */
+    /**
+     * Sem regra de quem pode sacar quanto: o teto diario por membro, o alerta a staff e a isencao da
+     * staff moram no mural do aurorion-ethereal ({@code HouseMuralManager}), unico chamador, que sabe
+     * quem e membro e guarda o quanto cada um ja sacou. Quem chamar isto por outro caminho precisa
+     * aplicar o mesmo limite antes.
+     *
+     * @return quantia sacada para a carteira, ou um dos {@code ERR_*}
+     */
     public static long withdrawToWallet(MinecraftServer server, UUID player, ResourceLocation house, long amount) {
         if (amount <= 0 || amount > Money.MAX) return ERR_INVALID;
         WalletData data = WalletData.get(server);

@@ -2,13 +2,16 @@ package com.aurorion.integracao.link;
 
 import com.aurorion.core.integration.GameFacts;
 import com.aurorion.core.character.AltData;
+import com.aurorion.core.rate.ActionCooldown;
 import com.aurorion.integracao.AurorionIntegracao;
 import com.aurorion.integracao.bridge.FactBridge;
 import com.aurorion.integracao.outbox.SiteApi;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -17,10 +20,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,7 +38,11 @@ import java.util.UUID;
 @EventBusSubscriber(modid = AurorionIntegracao.MOD_ID)
 public final class VincularCommand {
     private static final long COOLDOWN_MS = 5_000L;
-    private static final Map<UUID, Long> LAST_TRY = new HashMap<>();
+    /**
+     * Por conta, e nao por perfil: o alt nao ganha uma tentativa a mais. Sair e entrar nao zera (antes
+     * zerava no logout, e reconectar comprava tentativas novas contra o backend).
+     */
+    private static final ActionCooldown TRIES = new ActionCooldown(COOLDOWN_MS);
 
     private VincularCommand() {
     }
@@ -64,20 +69,17 @@ public final class VincularCommand {
             player.sendSystemMessage(error("A integração com o site está desligada neste servidor."));
             return 0;
         }
-        long now = System.currentTimeMillis();
-        Long last = LAST_TRY.get(player.getUUID());
-        if (last != null && now - last < COOLDOWN_MS) {
+        UUID owner = AltData.get(player.server).ownerOf(player.getUUID());
+        UUID account = owner == null ? player.getUUID() : owner;
+        if (!TRIES.acquire(account, Util.getMillis())) {
             player.sendSystemMessage(error("Aguarde alguns segundos antes de tentar de novo."));
             return 0;
         }
-        LAST_TRY.put(player.getUUID(), now);
 
         String code = StringArgumentType.getString(context, "codigo");
         GameFacts.Subject subject = GameFacts.subject(player.server, player.getUUID());
         JsonObject body = new JsonObject();
         body.addProperty("code", code.length() > 32 ? code.substring(0, 32) : code);
-        UUID owner = AltData.get(player.server).ownerOf(player.getUUID());
-        UUID account = owner == null ? player.getUUID() : owner;
         body.addProperty("profile_uuid", account.toString());
         body.addProperty("profile_name", AltData.accountName(player.server, account));
         if (subject.character() != null) {
@@ -99,7 +101,7 @@ public final class VincularCommand {
     private static Component result(SiteApi.Response response) {
         return switch (response.code()) {
             case "linked" -> {
-                String account = response.body() != null && response.body().has("account") ? response.body().get("account").getAsString() : "";
+                String account = accountOf(response);
                 yield Component.literal("✔ Conta vinculada" + (account.isEmpty() ? "" : " a " + account) + ". Agora você pode escrever com /diario.")
                         .withStyle(ChatFormatting.GREEN);
             }
@@ -112,9 +114,20 @@ public final class VincularCommand {
         };
     }
 
+    /**
+     * O nome da conta do site na resposta, so se for texto, sem quebra de linha e curto: vai direto
+     * para o chat do jogador.
+     */
+    private static String accountOf(SiteApi.Response response) {
+        JsonObject body = response.body();
+        if (body == null || !(body.get("account") instanceof JsonPrimitive value) || !value.isString()) return "";
+        String account = value.getAsString().replaceAll("\\p{Cntrl}", "").strip();
+        return account.length() > 64 ? account.substring(0, 64) : account;
+    }
+
     @SubscribeEvent
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        LAST_TRY.remove(event.getEntity().getUUID());
+    public static void onServerStopped(ServerStoppedEvent event) {
+        TRIES.clear();
     }
 
     private static Component info(String text) {

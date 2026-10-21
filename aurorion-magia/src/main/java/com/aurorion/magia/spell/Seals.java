@@ -1,8 +1,11 @@
 package com.aurorion.magia.spell;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.compat.AreasMagic;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -53,6 +56,23 @@ import java.util.UUID;
  *
  * <p>Portas duplas de altura e baus duplos: as duas metades apontam para o mesmo lacre, senao a outra
  * metade abriria o conjunto inteiro.
+ *
+ * <h2>Limites</h2>
+ *
+ * <ul>
+ *   <li><b>So onde se pode construir.</b> Lacrar e contra-selar exigem a permissao de construir no
+ *       bloco ({@link AreasMagic#mayBuild}: spawn, modo aventura, regra {@code construir} do
+ *       {@code aurorion-areas}, casa de outro). Sem isto, qualquer um trancava a porta da casa alheia
+ *       ou o bau da loja. Desfazer o proprio lacre continua valendo em qualquer lugar.</li>
+ *   <li><b>{@value #MAX_PER_OWNER} lacres por pessoa</b> ao mesmo tempo.</li>
+ *   <li><b>Descanso.</b> Lacre que acabou (venceu, foi desfeito ou partido) deixa o bloco
+ *       {@value #REST_TICKS} ticks sem aceitar lacre novo, de ninguem: relacrar no instante em que o
+ *       anterior vence era tranca perpetua.</li>
+ * </ul>
+ *
+ * <p><b>So a mao.</b> O lacre segura clique, quebra e explosao. Funil, cano e qualquer automacao que
+ * puxe item pela capacidade {@code ItemHandler} continuam tirando de um bau lacrado: nao ha evento do
+ * NeoForge para isso, e embrulhar a capacidade de todo bloco do pack custaria em todo tick de funil.
  */
 public final class Seals {
     /** Forca o lacre em blocos que a regra geral nao pega (uma porta que nao e {@code DoorBlock}). */
@@ -60,8 +80,13 @@ public final class Seals {
     /** Nunca lacra, mesmo tendo inventario: bau do Lootr, maquina de linha de producao... */
     public static final TagKey<Block> NOT_SEALABLE = TagKey.create(Registries.BLOCK, AurorionMagia.id("nao_selavel"));
     private static final int MAX_PER_LEVEL = 1024;
+    public static final int MAX_PER_OWNER = 4;
+    /** Dois minutos sem lacre novo no bloco depois que um acaba. */
+    public static final int REST_TICKS = 20 * 120;
 
     private static final Map<ResourceKey<Level>, Long2ObjectMap<Seal>> BY_LEVEL = new HashMap<>();
+    /** Posicao -> tick do jogo ate o qual o bloco descansa. Mesma vida curta dos lacres. */
+    private static final Map<ResourceKey<Level>, Long2LongMap> RESTING = new HashMap<>();
 
     /**
      * @param team  time do dono no momento do lacre (nivel 2+), ou {@code null}: so o dono abre
@@ -73,7 +98,7 @@ public final class Seals {
         }
     }
 
-    public enum Outcome { SEALED, DISPELLED, BROKEN, RESISTED, FULL }
+    public enum Outcome { SEALED, DISPELLED, BROKEN, RESISTED, FULL, DENIED, RESTING, LIMIT }
 
     private Seals() {
     }
@@ -112,6 +137,9 @@ public final class Seals {
         if (seals == null) return null;
         Seal seal = seals.get(pos.asLong());
         if (seal != null && seal.expiresAt() <= level.getGameTime()) {
+            // O descanso conta do vencimento, e nao de quando alguem notou: relacrar logo depois de
+            // vencer cai nele do mesmo jeito.
+            rest(level, pos, seal.expiresAt() + REST_TICKS);
             removeWithPartner(level, seals, pos);
             return null;
         }
@@ -121,11 +149,14 @@ public final class Seals {
     public static Outcome cast(ServerLevel level, LivingEntity caster, BlockPos pos, Direction face, Vec3 mark,
                                int spellLevel, int durationTicks) {
         Seal existing = get(level, pos);
+        if (existing != null && existing.owner().equals(caster.getUUID())) {
+            remove(level, pos, existing, SpellVisualPayload.Kind.SIGILLUM_BREAK);
+            return Outcome.DISPELLED;
+        }
+        // Daqui em diante mexe em bloco que nao e (so) seu: so quem poderia construir ali. Criatura
+        // conjuradora nao lacra.
+        if (!(caster instanceof ServerPlayer player) || !AreasMagic.mayBuild(level, player, pos)) return Outcome.DENIED;
         if (existing != null) {
-            if (existing.owner().equals(caster.getUUID())) {
-                remove(level, pos, existing, SpellVisualPayload.Kind.SIGILLUM_BREAK);
-                return Outcome.DISPELLED;
-            }
             // Contra-selo: quebra quem conjura com nivel igual ou maior que o do lacre.
             if (spellLevel >= existing.level()) {
                 remove(level, pos, existing, SpellVisualPayload.Kind.SIGILLUM_BREAK);
@@ -136,13 +167,15 @@ public final class Seals {
             return Outcome.RESISTED;
         }
 
+        long now = level.getGameTime();
+        if (resting(level, pos, now)) return Outcome.RESTING;
         Long2ObjectMap<Seal> seals = BY_LEVEL.computeIfAbsent(level.dimension(), key -> new Long2ObjectOpenHashMap<>());
         if (seals.size() >= MAX_PER_LEVEL) {
             // Vencidos que ninguem tocou continuam no mapa ate aqui; so no teto vale a varredura.
-            long now = level.getGameTime();
             seals.values().removeIf(seal -> seal.expiresAt() <= now);
             if (seals.size() >= MAX_PER_LEVEL) return Outcome.FULL;
         }
+        if (owned(seals, caster.getUUID(), now) >= MAX_PER_OWNER) return Outcome.LIMIT;
 
         PlayerTeam team = spellLevel >= 2 && caster.getTeam() instanceof PlayerTeam playerTeam ? playerTeam : null;
         Seal seal = new Seal(caster.getUUID(), team == null ? null : team.getName(),
@@ -195,10 +228,41 @@ public final class Seals {
 
     public static void clear() {
         BY_LEVEL.clear();
+        RESTING.clear();
+    }
+
+    /** Lacres vivos de {@code owner} nesta dimensao. Metades de porta e bau duplo sao o mesmo lacre. */
+    private static int owned(Long2ObjectMap<Seal> seals, UUID owner, long now) {
+        Set<Seal> mine = new HashSet<>();
+        for (Seal seal : seals.values()) {
+            if (seal.owner().equals(owner) && seal.expiresAt() > now) mine.add(seal);
+        }
+        return mine.size();
+    }
+
+    private static void rest(ServerLevel level, BlockPos pos, long until) {
+        Long2LongMap resting = RESTING.computeIfAbsent(level.dimension(), key -> new Long2LongOpenHashMap());
+        if (resting.size() >= MAX_PER_LEVEL) {
+            long now = level.getGameTime();
+            resting.long2LongEntrySet().removeIf(entry -> entry.getLongValue() <= now);
+            if (resting.size() >= MAX_PER_LEVEL) return;
+        }
+        resting.put(pos.asLong(), until);
+        BlockPos partner = partner(level, pos);
+        if (partner != null) resting.put(partner.asLong(), until);
+    }
+
+    private static boolean resting(ServerLevel level, BlockPos pos, long now) {
+        Long2LongMap resting = RESTING.get(level.dimension());
+        if (resting == null || !resting.containsKey(pos.asLong())) return false;
+        if (resting.get(pos.asLong()) > now) return true;
+        resting.remove(pos.asLong());
+        return false;
     }
 
     private static void remove(ServerLevel level, BlockPos pos, Seal seal, SpellVisualPayload.Kind visual) {
         Long2ObjectMap<Seal> seals = BY_LEVEL.get(level.dimension());
+        rest(level, pos, level.getGameTime() + REST_TICKS);
         if (seals != null) removeWithPartner(level, seals, pos);
         MagiaNetwork.sendVisualAt(level, null, visual, 16, seal.mark(), seal.face().ordinal());
         AurorionSpell.sound(level, seal.mark(), SoundEvents.AMETHYST_CLUSTER_BREAK, 1.2f, 0.6f);

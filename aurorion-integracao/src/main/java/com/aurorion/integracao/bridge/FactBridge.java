@@ -76,10 +76,10 @@ public final class FactBridge {
         if (!IntegracaoConfig.ENABLED.get()) return;
 
         MinecraftServer server = event.getServer();
-        URI endpoint = endpoint(IntegracaoConfig.URL.get());
+        URI endpoint = endpoint(IntegracaoConfig.URL.get(), IntegracaoConfig.ALLOW_PLAIN_HTTP.get());
         String token = IntegracaoConfig.TOKEN.get().strip();
         if (endpoint == null || token.isEmpty()) {
-            state = "configuração de URL/credencial incompleta";
+            state = "configuração de URL/credencial incompleta ou HTTP sem TLS recusado";
             AurorionIntegracao.LOGGER.warn("Integracao habilitada, mas sem url/token validos em config/aurorion/integracao-startup.toml; nada sera enviado");
             return;
         }
@@ -150,11 +150,15 @@ public final class FactBridge {
     }
 
     /**
-     * Aceita http(s). HTTP puro so faz sentido em rede interna (mesmo host ou rede Docker): avisa,
-     * porque o token viajaria aberto.
+     * Aceita https sempre, e http so para endereco interno (mesmo host, rede privada ou rede Docker).
+     *
+     * <p>Cada requisicao leva o {@code X-Game-Token}, a credencial que publica fatos e fala em nome
+     * de qualquer jogador no diario. Em http para um host da internet ela viaja aberta, e antes isso so
+     * gerava um aviso no log — facil de nao ver. Agora e recusado; quem precisa mesmo (um proxy TLS na
+     * frente, por exemplo) liga {@code permitirHttpExterno} na config STARTUP, e o aviso continua.
      */
     @Nullable
-    static URI endpoint(String raw) {
+    static URI endpoint(String raw, boolean allowPlainHttp) {
         String value = raw == null ? "" : raw.strip();
         if (value.isEmpty()) return null;
         try {
@@ -162,6 +166,11 @@ public final class FactBridge {
             String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
             if (uri.getHost() == null || !(scheme.equals("https") || scheme.equals("http"))) return null;
             if (scheme.equals("http") && !internalHost(uri.getHost())) {
+                if (!allowPlainHttp) {
+                    AurorionIntegracao.LOGGER.error("Integracao recusada: HTTP sem TLS para o host externo {} exporia o token. "
+                            + "Use https, ou ligue integracao.permitirHttpExterno se ha um tunel seguro.", uri.getHost());
+                    return null;
+                }
                 AurorionIntegracao.LOGGER.warn("Integracao usando HTTP sem TLS para {}: o token trafega aberto. Prefira https.", uri.getHost());
             }
             return SiteApi.normalizeBase(uri);
@@ -170,9 +179,37 @@ public final class FactBridge {
         }
     }
 
-    private static boolean internalHost(String host) {
+    /**
+     * Endereco que nao sai da maquina ou da rede interna: loopback, faixas privadas (10/8, 172.16/12,
+     * 192.168/16), IPv6 loopback e local (fc00::/7), e nome de uma parte so ({@code backend}, como a
+     * rede do Docker resolve) ou {@code host.docker.internal}.
+     */
+    static boolean internalHost(String host) {
         String h = host.toLowerCase(Locale.ROOT);
-        return h.equals("localhost") || h.startsWith("127.") || h.equals("[::1]") || !h.contains(".");
+        if (h.startsWith("[") && h.endsWith("]")) {
+            String v6 = h.substring(1, h.length() - 1);
+            return v6.equals("::1") || v6.startsWith("fc") || v6.startsWith("fd");
+        }
+        if (h.equals("localhost") || h.endsWith(".localhost") || h.equals("host.docker.internal")) return true;
+        int[] ip = ipv4(h);
+        if (ip != null) {
+            return ip[0] == 127 || ip[0] == 10 || (ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31)
+                    || (ip[0] == 192 && ip[1] == 168);
+        }
+        return !h.isEmpty() && !h.contains(".");
+    }
+
+    @Nullable
+    private static int[] ipv4(String host) {
+        String[] parts = host.split("\\.", -1);
+        if (parts.length != 4) return null;
+        int[] out = new int[4];
+        for (int i = 0; i < 4; i++) {
+            if (parts[i].isEmpty() || parts[i].length() > 3 || !parts[i].chars().allMatch(Character::isDigit)) return null;
+            out[i] = Integer.parseInt(parts[i]);
+            if (out[i] > 255) return null;
+        }
+        return out;
     }
 
     private static String userAgent() {

@@ -139,6 +139,8 @@ public final class SignumMortisSpell extends AurorionSpell {
         CompoundTag mark = data.getCompound(MARK_KEY);
         data.remove(MARK_KEY);
         if (!mark.hasUUID("By") || !(level.getEntity(mark.getUUID("By")) instanceof LivingEntity attacker)) return;
+        // A marca estoura onde a vitima esta agora: dentro da zona segura, nao estoura.
+        if (!Hits.hittable(attacker, victim)) return;
         float damage = mark.getFloat("Base") + mark.getFloat("Stored") * mark.getFloat("Ratio");
         FriendlyFire.applyDamage(victim, damage, MagiaSpells.SIGNUM_MORTIS.get().getDamageSource(attacker));
         sound(victim, SoundEvents.WITHER_BREAK_BLOCK, 0.8f, 1.4f);

@@ -74,7 +74,8 @@ efeitos e o estado das recuperações, e as setas de página.
   fim dela), o inventário no meio, a hotbar embaixo.
 - **Curios e acessórios:** só os slots ocupados do Curios e do Accessories (normais e cosméticos) e
   slots extras de inventário de outros mods, paginados.
-- **Ender chest:** os 27 slots.
+- **Ender chest:** os 27 slots, só para consulta. O ender chest não cai na morte (o jogador continua
+  com tudo), então nem o `give` nem o clique no criativo entregam item dessa aba — seria uma cópia.
 
 O tooltip de cada item mostra o índice do `give` (`#12 · curios/ring/0`) e se ele é mantido na morte
 ou já foi recuperado. `view <id> [aba]` abre direto na aba 1, 2 ou 3.

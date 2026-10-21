@@ -21,6 +21,8 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,8 +38,8 @@ import java.util.UUID;
  *       quem esta em volta, e o possuido que anda.</li>
  *   <li>O possuido ({@code possuido}) nao age: nao anda por conta propria, nao usa item, nao ataca, nao
  *       conjura. Mas <b>fala</b> — o chat continua dele.</li>
- *   <li>O que quem possui digita no chat sai <b>com o nome do possuido</b>, como fala dele, inclusive no
- *       balao do {@code aurorion-talk}. Os dois falam pela mesma boca. No Voice Chat, a voz de quem
+ *   <li>O que quem possui digita no chat sai <b>com o nome do possuido</b>, como fala dele, para quem
+ *       esta perto do corpo (ver {@link #speak}). Os dois falam pela mesma boca. No Voice Chat, a voz de quem
  *       possui sai do mesmo lugar que a do possuido, porque os dois estao no mesmo ponto.</li>
  * </ul>
  *
@@ -52,6 +54,12 @@ import java.util.UUID;
  */
 public final class Possession {
     private static final String KEY = AurorionMagia.MOD_ID + ":possessao";
+    /** Ate onde a fala pela boca do possuido chega, em blocos. O mesmo padrao do aurorion-talk. */
+    public static final double SPEECH_RADIUS = 32;
+    /** Uma fala por segundo, no maximo. */
+    private static final int SPEECH_INTERVAL = 20;
+    /** Possessor -> tick do servidor da ultima fala. So a thread do servidor mexe aqui. */
+    private static final Map<UUID, Long> LAST_SPEECH = new HashMap<>();
 
     private Possession() {
     }
@@ -95,6 +103,9 @@ public final class Possession {
         ServerPlayer target = target(caster);
         if (target == null || !target.isAlive() || target.level() != caster.level()
                 || !target.hasEffect(MagiaEffects.POSSESSED)) return false;
+        // Reconferido todo tick, na posicao do corpo: levar o possuido para dentro da zona segura (ou
+        // a zona mudar com ele dentro) devolve o corpo ali mesmo. Criativo tambem solta.
+        if (target.isCreative() || target.isSpectator() || !Hits.pvpAllowed(caster, target)) return false;
 
         target.connection.teleport(caster.getX(), caster.getY(), caster.getZ(), caster.getYRot(), caster.getXRot());
         target.setYHeadRot(caster.getYHeadRot());
@@ -148,6 +159,21 @@ public final class Possession {
     /**
      * Chat de quem esta possuindo: sai como fala do possuido. {@code true} se a mensagem foi
      * redirecionada (e a original deve ser cancelada).
+     *
+     * <h3>Por que nao e um broadcast</h3>
+     *
+     * <ul>
+     *   <li><b>Alcance.</b> A fala sai so para quem esta na mesma dimensao e a ate
+     *       {@value #SPEECH_RADIUS} blocos do corpo — o raio padrao da fala por proximidade do
+     *       {@code aurorion-talk}, repetido aqui como constante para nao depender dele. O
+     *       {@code broadcastSystemMessage} de antes passava por fora do chat por proximidade e levava a
+     *       fala do possuido ao servidor inteiro.</li>
+     *   <li><b>Ritmo.</b> Uma fala a cada {@value #SPEECH_INTERVAL} ticks: sai como mensagem de
+     *       sistema, entao o limite de spam do vanilla nao a alcanca.</li>
+     *   <li><b>Rastro.</b> A mensagem leva o nome do possuido, entao o log guarda quem digitou de
+     *       verdade (conta e UUID dos dois). Sem isto, uma ofensa "dita" pelo possuido nao tinha autor
+     *       para a staff.</li>
+     * </ul>
      */
     public static boolean speak(ServerPlayer caster, Component message) {
         ServerPlayer target = target(caster);
@@ -157,9 +183,34 @@ public final class Possession {
             caster.displayClientMessage(Component.translatable("aurorion_magia.sem_voz").withStyle(ChatFormatting.DARK_PURPLE), true);
             return true;
         }
-        target.server.getPlayerList().broadcastSystemMessage(
-                Component.translatable("chat.type.text", target.getDisplayName(), message), false);
+        long now = caster.server.getTickCount();
+        Long last = LAST_SPEECH.get(caster.getUUID());
+        if (last != null && now - last < SPEECH_INTERVAL) {
+            caster.displayClientMessage(Component.translatable("aurorion_magia.possessao_devagar")
+                    .withStyle(ChatFormatting.DARK_PURPLE), true);
+            return true;
+        }
+        LAST_SPEECH.put(caster.getUUID(), now);
+
+        AurorionMagia.LOGGER.info("[Possessao] {} ({}) falou pelo corpo de {} ({}): {}",
+                caster.getGameProfile().getName(), caster.getUUID(),
+                target.getGameProfile().getName(), target.getUUID(), message.getString());
+        Component line = Component.translatable("chat.type.text", target.getDisplayName(), message);
+        double radiusSqr = SPEECH_RADIUS * SPEECH_RADIUS;
+        for (ServerPlayer listener : target.serverLevel().players()) {
+            if (listener == caster || listener.distanceToSqr(target) <= radiusSqr) listener.sendSystemMessage(line);
+        }
         return true;
+    }
+
+    /** O possessor saiu do jogo: o relogio da fala dele nao precisa ficar na memoria. */
+    public static void forget(UUID player) {
+        LAST_SPEECH.remove(player);
+    }
+
+    /** Estado so em memoria. */
+    public static void clear() {
+        LAST_SPEECH.clear();
     }
 
     /** O corpo em que {@code caster} esta, se esta em algum. */
