@@ -52,7 +52,7 @@ public enum Passive {
     ANACHRONIC("olhar_anacronico", false),
     /** <b>Minguantis</b> (Iacy): mais forte quanto mais funda a noite; cura quem fica perto. Sem tecla. */
     WANING_MOON("lua_minguante", false),
-    /** <b>Vazio</b> (Iris): a dimensao de bolso que replica a realidade. */
+    /** <b>Vazio</b> (Iris): um vazio so dela, com criativo la dentro; nada entra nem sai. */
     VOID_POCKET("bolso_do_vazio", false);
 
     private final ResourceLocation id;

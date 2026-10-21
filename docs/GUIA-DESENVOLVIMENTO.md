@@ -371,8 +371,9 @@ em 80 jogadores. Antes e depois de mudança de desempenho, medir com `/spark pro
    - `versions.json`: versões de todos os mods, MC, NeoForge e Java.
    - `SHA256SUMS.txt`: hashes dos jars.
    - `verification.json` (opcional): tamanho e hash por artefato.
-   - Os jars substituídos vão para `build/jars-arquivados/release-<data>/`, para que
-     `build/jars-servidor` fique com **uma versão por mod**.
+   - `build/jars-servidor` fica com **uma versão por mod**: o `jar` de cada módulo apaga sozinho a
+     versão anterior do mesmo mod. Não se guarda cópia de jar antigo em `build/`; o que foi entregue
+     fica registrado em `releases/<data>/` (versões e hashes).
 6. **Distribuição:** os jars de `build/jars-servidor/` vão para a pasta `mods/` do servidor e para a
    **origem do AutoModpack** no servidor. O AutoModpack sincroniza os clientes no próximo login.
    Publicar fora da origem do AutoModpack faz a troca ser revertida na sincronização seguinte.

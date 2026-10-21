@@ -20,8 +20,15 @@ class EconomyFoundationTest {
         assertFalse(data.grantStarter(firstCharacter, account, 40));
         assertEquals(40, data.balance(account));
 
+        // Personagem novo: o CharacterResetEvent zera a carteira antes, e a bolsa chega exata.
+        data.setBalance(account, 0);
         assertTrue(data.grantStarter(UUID.randomUUID(), account, 40));
         assertEquals(40, data.balance(account));
+
+        // Personagem antigo (de antes do registro) ou renomeado: a bolsa soma, nao apaga o saldo.
+        data.setBalance(account, 500);
+        assertTrue(data.grantStarter(UUID.randomUUID(), account, 40));
+        assertEquals(540, data.balance(account));
     }
 
     @Test

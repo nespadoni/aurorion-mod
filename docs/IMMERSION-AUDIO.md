@@ -40,7 +40,8 @@ Conexão JSON-RPC, consulta de ferramentas, buscas e downloads foram realizados 
 
 `tools/epidemic-mcp.ps1` lê a variável do processo/usuário e não imprime o cabeçalho.
 `tools/convert-epidemic-audio.py` reproduz a conversão de `build/epidemic/{air,whisper,chime}.wav`
-usando `imageio-ffmpeg` em `build/audio-tools`. WAVs e URLs temporárias ficam em `build/`,
+usando `imageio-ffmpeg` em `build/audio-tools` (só existe quando se converte áudio; reinstalar com
+`pip install --target build/audio-tools imageio-ffmpeg`). WAVs e URLs temporárias ficam em `build/`,
 ignorado pelo Git. O jogo não acessa Epidemic nem precisa da chave.
 
 Referência: [MCP oficial do Epidemic](https://developers.epidemicsound.com/docs/mcp/).

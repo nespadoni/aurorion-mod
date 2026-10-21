@@ -1,3 +1,25 @@
+# Bolso do Vazio vira um vazio de verdade - 18/10/2026
+
+Magia 0.7.0. A passiva de Iris deixa de ser uma réplica do overworld.
+
+- **Dimensão nova, `aurorion_magia:vazio`:** não gera nada. Cada Iris tem uma célula fixa, e na primeira
+  entrada ganha **um bloco** no chão (`[vazio].blocoInicial`, padrão pedra). O que ela constrói fica.
+- **Criativo para a dona** lá dentro. Na saída ela volta ao modo de antes.
+- **Nada entra, nada sai:**
+  - na porta ficam guardados o inventário (armadura e mão secundária inclusive) e os slots do Curios e do
+    Accessories de todos que entram: Iris, marcados e invasores;
+  - na saída, o que se pegou lá dentro some e o que era da pessoa volta;
+  - se os slots extras não puderem ser lidos, a entrada é recusada, em vez de deixar algo passar.
+- **Bloqueados lá dentro:** baú do ender, cama e âncora de renascimento.
+- **Cair no vazio** devolve a pessoa ao bloco inicial.
+- **Segurança:**
+  - os pertences guardados são gravados na hora da entrada;
+  - morte, logout e crash devolvem tudo;
+  - quem estava no bolso antigo na troca recebe os pertences de volta no login.
+- **Portais:** a viagem do ritual passa pela trava de dimensão sem precisar de `freeDimensions`. A staff
+  em criativo que entrou pelo ritual não usa mais o atalho de staff para sair.
+- A config `espelhaPosicao` saiu. A pasta `dimensions/aurorion_magia/bolso_do_vazio` do mundo fica sem uso.
+
 # Verificação geral do repositório - 18/10/2026
 
 Revisão de todos os módulos, com as chamadas de API conferidas nas fontes do NeoForge 21.1.248 e nos

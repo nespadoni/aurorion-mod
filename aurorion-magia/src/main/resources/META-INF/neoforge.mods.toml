@@ -85,3 +85,12 @@ type = "optional"
 versionRange = "[0.1.0,)"
 ordering = "NONE"
 side = "BOTH"
+
+# Opcional, so para a ordem: a viagem do Bolso do Vazio desfaz o veto de dimensao do portais num listener
+# LOWEST + receiveCanceled, e por isso precisa falar depois dele.
+[[dependencies.${mod_id}]]
+modId = "aurorion_portais"
+type = "optional"
+versionRange = "[0.1.0,)"
+ordering = "AFTER"
+side = "BOTH"

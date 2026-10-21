@@ -23,17 +23,18 @@ import java.util.UUID;
 
 /**
  * O que o bolso de Iris precisa lembrar mesmo depois de um crash: quem esta la dentro, de onde cada um
- * veio, quem ela marcou e onde fica a fenda.
+ * veio, o que cada um deixou guardado na porta ({@code Belongings}), o modo de jogo de antes
+ * ({@code GameMode}, so da dona), quem ela marcou, onde fica a fenda e a celula dela no vazio.
  *
  * <p>Mesmo desenho do {@code SoulRealmData}: a ancora de retorno e do mundo, e nao do NBT do jogador,
- * para sobreviver a morte, ao clone e ao restart — ninguem fica preso numa replica da realidade porque o
+ * para sobreviver a morte, ao clone e ao restart — ninguem fica preso no vazio, nem sem os pertences, porque o
  * servidor caiu.
  *
  * <ul>
  *   <li><b>Ancoras</b>, por pessoa dentro do bolso: dimensao e posicao de volta, o dono do bolso e o
  *       papel ({@code dona}, {@code marcado}, {@code invasor}).</li>
  *   <li><b>Sessoes</b>, por dona: os marcados (ate {@code maximoMarcados}), a fenda, o centro dentro do
- *       bolso, se a barreira caiu e a ancora fixa (com {@code espelhaPosicao = false}).</li>
+ *       bolso, se a barreira caiu e a celula ({@code CellIndex}, {@code CellBuilt}).</li>
  * </ul>
  */
 public final class VoidPocketData extends SavedData {
@@ -46,9 +47,36 @@ public final class VoidPocketData extends SavedData {
 
     private final Map<UUID, CompoundTag> anchors = new HashMap<>();
     private final Map<UUID, CompoundTag> sessions = new HashMap<>();
+    /** Proxima celula do vazio a entregar. Cresce sempre: o bolso de uma Iris antiga nunca e reusado. */
+    private int nextCell;
 
     public static VoidPocketData get(MinecraftServer server) {
         return ACCESS.get(server);
+    }
+
+    /**
+     * Grava ja, com o arquivo trocado de uma vez. Chamado na entrada: os pertences guardados nao podem
+     * depender do proximo autosave — um crash entre a entrada e ele deixaria a pessoa la dentro sem
+     * registro do inventario dela.
+     */
+    public static void flush(MinecraftServer server) {
+        try {
+            ACCESS.flush(server);
+        } catch (java.io.IOException failure) {
+            AurorionMagia.LOGGER.error("Bolso do Vazio: falha ao gravar os pertences guardados", failure);
+        }
+    }
+
+    /** A celula desta dona, criada na primeira vez. {@code [x, z]} do centro, em blocos. */
+    public int[] cell(UUID owner) {
+        CompoundTag session = session(owner);
+        if (!session.contains("CellIndex")) {
+            session.putInt("CellIndex", nextCell++);
+            setDirty();
+        }
+        int index = session.getInt("CellIndex");
+        // 8 por fileira, 1024 blocos entre elas: perto da origem, dentro de qualquer borda de mundo.
+        return new int[]{(index % 8) * 1024, (index / 8) * 1024};
     }
 
     // --- Ancoras ---------------------------------------------------------------------------------
@@ -122,6 +150,7 @@ public final class VoidPocketData extends SavedData {
         VoidPocketData data = new VoidPocketData();
         PlayerMapNbt.read(tag, "Anchors", data.anchors, VoidPocketData::strip);
         PlayerMapNbt.read(tag, "Sessions", data.sessions, VoidPocketData::strip);
+        data.nextCell = Math.max(0, tag.getInt("NextCell"));
         data.anchors.values().removeIf(a -> !a.hasUUID("Owner"));
         return data;
     }
@@ -136,6 +165,7 @@ public final class VoidPocketData extends SavedData {
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         tag.put("Anchors", PlayerMapNbt.write(anchors, VoidPocketData::copyInto));
         tag.put("Sessions", PlayerMapNbt.write(sessions, VoidPocketData::copyInto));
+        tag.putInt("NextCell", nextCell);
         return tag;
     }
 

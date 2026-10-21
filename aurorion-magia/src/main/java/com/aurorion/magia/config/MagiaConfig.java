@@ -43,7 +43,7 @@ public final class MagiaConfig {
     public static final ModConfigSpec.BooleanValue LUNAR_NIGHT_VISION, LUNAR_DAY_PENALTY;
     public static final ModConfigSpec.IntValue POCKET_BRING_RADIUS, POCKET_MAX_GUESTS, POCKET_MEDIUM_SECONDS,
             POCKET_FRAGILE_SECONDS, POCKET_RADIUS;
-    public static final ModConfigSpec.BooleanValue POCKET_MIRRORS;
+    public static final ModConfigSpec.ConfigValue<String> POCKET_START_BLOCK;
     public static final ModConfigSpec.IntValue FLASH_RADIUS;
     public static final ModConfigSpec.BooleanValue FLASH_SPARES_CASTER;
     public static final ModConfigSpec.BooleanValue FLASH_NEEDS_SIGHT;
@@ -249,7 +249,7 @@ public final class MagiaConfig {
                 .define("fraquezaDiurna", false);
         BUILDER.pop();
 
-        BUILDER.comment("Vazio (Iris): a dimensao de bolso que replica a realidade.").push("vazio");
+        BUILDER.comment("Vazio (Iris): um vazio so dela, onde ela tem criativo e nada entra nem sai.").push("vazio");
         POCKET_BRING_RADIUS = BUILDER.comment("Marcados ate esta distancia entram junto com Iris.")
                 .defineInRange("raioLevar", 16, 1, 64);
         POCKET_MAX_GUESTS = BUILDER.comment("Quantos marcados ela pode manter.")
@@ -258,12 +258,12 @@ public final class MagiaConfig {
                 .defineInRange("segundosInvasaoMediana", 12, 1, 600);
         POCKET_FRAGILE_SECONDS = BUILDER.comment("Com 3 ou mais marcados dentro: segundos para invadir.")
                 .defineInRange("segundosInvasaoFacil", 3, 1, 600);
-        POCKET_RADIUS = BUILDER.comment("Quanto se anda dentro do bolso a partir da entrada, em blocos.",
-                        "Tambem e o que limita quanto terreno a replica precisa gerar.")
+        POCKET_RADIUS = BUILDER.comment("Ate onde se anda no vazio a partir do bloco inicial, em blocos: o tamanho",
+                        "da area em que Iris pode construir.")
                 .defineInRange("raioBolso", 64, 16, 512);
-        POCKET_MIRRORS = BUILDER.comment("true: entra no ponto da replica que corresponde a onde Iris esta.",
-                        "false: sempre na mesma ancora (a primeira entrada dela), que so gera terreno uma vez.")
-                .define("espelhaPosicao", true);
+        POCKET_START_BLOCK = BUILDER.comment("O unico bloco que existe no vazio na primeira entrada, para ela comecar a construir.")
+                .define("blocoInicial", "minecraft:stone", value -> value instanceof String text
+                        && net.minecraft.resources.ResourceLocation.tryParse(text) != null);
         BUILDER.pop();
         BUILDER.pop();
 

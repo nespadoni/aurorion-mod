@@ -410,7 +410,7 @@
   "passive.aurorion_magia.lua_minguante": "Waning Moon",
   "passive.aurorion_magia.lua_minguante.guide": "Representative of the Minguantis. Escanor in reverse: at night you grow ever stronger, peaking at midnight (waning moons count as full), and everyone near you is restored.",
   "passive.aurorion_magia.bolso_do_vazio": "Void Pocket",
-  "passive.aurorion_magia.bolso_do_vazio.guide": "Representative of the Void. A pocket dimension of your own, a replica of reality. Key: enter (bringing nearby marked players) or leave. Shift + key while looking at someone: mark them. While you live inside, no one you brought is hurt — but the more marked people inside, the easier the barrier breaks through the rift.",
+  "passive.aurorion_magia.bolso_do_vazio.guide": "Representative of the Void. A void of your own where you have creative mode: at first only one block to build on, and what you build stays. Nothing goes in or out: your belongings (and those of anyone you bring) stay at the door and come back when you leave. Key: enter (bringing nearby marked players) or leave. Shift + key while looking at someone: mark them. While you live inside, no one you brought is hurt — but the more marked people inside, the easier the barrier breaks through the rift.",
   "aurorion_magia.passiva_como_usar": "Tap H to use it, or hold H for the passive wheel (key in Controls).",
   "aurorion_magia.passiva_sem_tecla": "None of your passives responds to this key.",
   "commands.aurorion_magia.passiva_nao_usa": "%s has no key action, or you don't have it.",
@@ -453,8 +453,8 @@
   "aurorion_magia.vazio.voce_marcado": "A void mark closes on you.",
   "aurorion_magia.vazio.indisponivel": "The void pocket is not available on this server.",
   "aurorion_magia.vazio.preso": "Reality won't let you fold it right now.",
-  "aurorion_magia.vazio.levado": "%s folded reality with you inside.",
-  "aurorion_magia.vazio.entrou": "You are in your void pocket. Barrier: %s.",
+  "aurorion_magia.vazio.levado": "%s took you into the void. Your belongings stay at the door and come back when you leave.",
+  "aurorion_magia.vazio.entrou": "You are in your void. What you brought stayed at the door. Barrier: %s.",
   "aurorion_magia.vazio.devolvido": "%s returned to reality. Barrier: %s.",
   "aurorion_magia.vazio.borda": "The pocket ends here.",
   "aurorion_magia.vazio.nao_cede": "The rift won't give.",
@@ -463,5 +463,6 @@
   "aurorion_magia.vazio.fechou": "The pocket closed and returned you to reality.",
   "aurorion_magia.vazio.barreira.0": "stable",
   "aurorion_magia.vazio.barreira.1": "strained",
-  "aurorion_magia.vazio.barreira.2": "fragile"
+  "aurorion_magia.vazio.barreira.2": "fragile",
+  "aurorion_magia.vazio.bloqueado": "That does not work in the void."
 }

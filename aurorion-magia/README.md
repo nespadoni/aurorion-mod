@@ -925,7 +925,7 @@ recarga. Passiva se **recebe uma vez** — o pergaminho é consumido e a marca f
 | Salto Quântico | `salto_quantico` | tecla | Robs: teleporte livre e pedras de teleporte, com energia que se esgota |
 | Olhar Anacrônico | `olhar_anacronico` | tecla | Gretta: uma vez por dia, ver pelos olhos de outra pessoa |
 | Lua Minguante | `lua_minguante` | não | Iacy: cada vez mais forte com a noite; restaura quem está perto |
-| Bolso do Vazio | `bolso_do_vazio` | tecla | Iris: a dimensão de bolso que replica a realidade |
+| Bolso do Vazio | `bolso_do_vazio` | tecla | Iris: um vazio só dela, com criativo lá dentro; nada entra nem sai |
 
 ### Como uma passiva chega a alguém
 
@@ -1118,14 +1118,29 @@ O relógio é o marcador infinito `presenca_lunar`, só nela: um pulso a cada 2 
 
 ### Bolso do Vazio — Iris, representante do Vazio
 
-`aurorion_magia:bolso_do_vazio` é uma dimensão que **replica a realidade**: o mesmo gerador, os mesmos
-biomas e o mesmo seed do overworld (Tectonic e Terralith inclusive) — o relevo de lá é o daqui, só que
-sem gente e sem construção.
+`aurorion_magia:vazio` é um **vazio** só da Iris: não gera nada, nem chão nem terreno.
+
+- **Um bloco para começar.** Na primeira entrada, a célula dela ganha **um bloco** no chão
+  (`[vazio].blocoInicial`, padrão pedra). O que ela construir fica, e é sempre o mesmo lugar.
+- **Criativo.** Lá dentro, a dona tem o **modo criativo**. Os marcados ficam no modo que tinham, e na
+  saída ela volta ao modo de antes.
+- **Nada entra, nada sai.** Na porta ficam guardados, de todo mundo que entra (Iris, marcados e
+  invasores):
+  - o inventário, com armadura e mão secundária;
+  - os slots de acessório do **Curios** e do **Accessories**.
+
+  Na saída, tudo o que se pegou lá dentro (menu criativo inclusive) **some**, e o que era da pessoa
+  volta. Sem isso, um item do criativo sairia no bolso da Iris, ou no de um marcado a quem ela o
+  entregasse.
+- **Lá dentro não funcionam** o baú do ender (é o mesmo de fora: seria a ponte para tirar itens), a cama
+  e a âncora de renascimento (explodiriam a construção). Nenhuma entidade, item jogado inclusive, sai
+  por portal.
+- **Cair no vazio** devolve a pessoa ao bloco inicial, sem morrer.
 
 | Onde | Ação | O que faz |
 |---|---|---|
 | fora | Shift + tecla olhando alguém (6 blocos) | marca ou desmarca. Até 3 (`maximoMarcados`) |
-| fora | tecla | entra no ponto da réplica que corresponde a onde ela está, levando os marcados até 16 blocos |
+| fora | tecla | entra no vazio dela, levando os marcados até 16 blocos |
 | dentro | tecla | sai; todos voltam para onde estavam |
 | dentro | Shift + tecla olhando um marcado | devolve só ele |
 
@@ -1142,15 +1157,23 @@ sem gente e sem construção.
 
   Quem rompe é puxado para dentro, e o bolso **deixa de proteger** todo mundo até Iris sair. Depois de
   rompida, quem vier atrás entra direto.
-- O bolso tem 64 blocos de raio a partir da entrada (`raioBolso`): quem passa é puxado de volta.
-- **Iris morreu, saiu ou deslogou: o bolso fecha** e todos voltam. Quem morre lá dentro volta ao mundo
-  antes de Vidas/Limbo registrarem a morte. Quem deslogou ou caiu num crash lá dentro volta no login.
-- Só se entra e sai por ela: portal, pedra e `/tp` de jogador não abrem a porta (staff em criativo sim).
+- A área de construção tem 64 blocos de raio a partir do bloco inicial (`raioBolso`). Quem passa é
+  puxado de volta.
+- **Iris morreu, saiu ou deslogou: o bolso fecha** e todos voltam, com os pertences de volta.
+  - Quem morre lá dentro volta ao mundo antes de Vidas/Limbo registrarem a morte, e cai o que era dele.
+  - Quem deslogou ou caiu num crash lá dentro volta no login.
+  - A entrada grava os pertences guardados na hora, sem esperar o autosave.
+- Só se entra e sai por ela: portal, pedra e `/tp` de jogador não abrem a porta. A staff em criativo
+  pode entrar para visitar, mas não quem entrou pelo ritual.
+- A viagem do ritual passa pela trava do `aurorion_portais` sem precisar pôr a dimensão em
+  `freeDimensions`, com o mesmo desenho da Porta do Esquecido do Limbo.
 
-> **Terreno gerado na hora.** A réplica é gerada onde Iris entra. Para não pesar no servidor,
-> pré-gere `aurorion_magia:bolso_do_vazio` com o Chunky nas áreas onde ela costuma andar (é o mesmo
-> mapa do overworld, então pode ser a mesma área já pré-gerada lá), ou ponha
-> `espelhaPosicao = false`: o bolso passa a ter sempre a mesma entrada, e o terreno é gerado uma vez só.
+> **Atualização da 0.7.0:** a antiga `aurorion_magia:bolso_do_vazio` (a réplica do overworld) saiu. A
+> pasta dela em `dimensions/aurorion_magia/bolso_do_vazio` fica sem uso e pode ser apagada. Quem
+> estivesse lá dentro na troca recebe os pertences de volta no próximo login.
+>
+> **Limite conhecido:** comandos de outros mods que abrem o baú do ender à distância (por exemplo
+> `/ec`) escapam do bloqueio. Se o pack tiver um, tire a permissão dele dentro do vazio.
 
 ## Integrações opcionais
 

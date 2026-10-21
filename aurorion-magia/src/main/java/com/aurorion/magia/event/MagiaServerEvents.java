@@ -20,6 +20,7 @@ import com.aurorion.magia.spell.ManusAbyssiSpell;
 import com.aurorion.magia.passive.AnachronicSight;
 import com.aurorion.magia.passive.RepresentativeData;
 import com.aurorion.magia.passive.VoidPocket;
+import com.aurorion.magia.passive.VoidPocketData;
 import com.aurorion.magia.passive.WaningMoon;
 import net.minecraft.world.entity.monster.Enemy;
 import com.aurorion.magia.spell.Domains;
@@ -391,13 +392,29 @@ public final class MagiaServerEvents {
         Binding.refuseTeleport((LivingEntity) entity);
     }
 
+    /**
+     * A viagem do proprio Bolso (entrar, sair, devolver) passa por cima da trava de dimensao do
+     * {@code aurorion_portais}, que tranca o vazio por estar fora de {@code freeDimensions}. Mesmo arbitro da
+     * Porta do Esquecido do Limbo e da batalha de intencao: so vale enquanto {@code VoidPocket} teleporta,
+     * de ponta a ponta dentro da chamada; fora dela, o vazio continua trancado para todo o resto.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onPocketTravel(EntityTravelToDimensionEvent event) {
+        if (!VoidPocket.travelling() || event.getEntity().level().isClientSide) return;
+        boolean pocketTrip = event.getDimension().equals(VoidPocket.DIMENSION) || VoidPocket.isInside(event.getEntity());
+        if (pocketTrip && event.isCanceled()) event.setCanceled(false);
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onTravelDimension(EntityTravelToDimensionEvent event) {
         // O bolso de Iris so se entra e se sai por ela: portal, pedra ou /tp de jogador nao abrem a porta.
         Entity traveller = event.getEntity();
+        // A excecao da staff em criativo vale so para quem nao entrou pelo ritual: Iris tem criativo la dentro,
+        // e uma Iris que tambem fosse staff sairia por portal com os itens do menu criativo.
         if (!traveller.level().isClientSide && !VoidPocket.travelling()
                 && (event.getDimension().equals(VoidPocket.DIMENSION) || VoidPocket.isInside(traveller))
-                && !(traveller instanceof ServerPlayer staff && staff.hasPermissions(2) && staff.isCreative())) {
+                && !(traveller instanceof ServerPlayer staff && staff.hasPermissions(2) && staff.isCreative()
+                        && VoidPocketData.get(staff.server).anchor(staff.getUUID()) == null)) {
             event.setCanceled(true);
             return;
         }
@@ -430,6 +447,20 @@ public final class MagiaServerEvents {
                 event.setCanceled(true);
                 event.setCancellationResult(InteractionResult.FAIL);
                 Seals.deny(player, seal);
+                return;
+            }
+        }
+        // No vazio de Iris: o bau do ender e o mesmo de fora (seria a ponte para tirar itens do criativo), e
+        // cama e ancora de renascimento explodem numa dimensao em que nao funcionam — levando a construcao.
+        if (!event.getLevel().isClientSide() && VoidPocket.isInside(event.getEntity())) {
+            var block = event.getLevel().getBlockState(event.getPos()).getBlock();
+            if (block instanceof net.minecraft.world.level.block.EnderChestBlock
+                    || block instanceof net.minecraft.world.level.block.BedBlock
+                    || block instanceof net.minecraft.world.level.block.RespawnAnchorBlock) {
+                event.setCanceled(true);
+                event.setCancellationResult(InteractionResult.FAIL);
+                event.getEntity().displayClientMessage(Component.translatable("aurorion_magia.vazio.bloqueado")
+                        .withStyle(ChatFormatting.DARK_GRAY), true);
                 return;
             }
         }

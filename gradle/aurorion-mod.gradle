@@ -176,6 +176,20 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Vendor' : mod_authors,
         ])
     }
+
+    // Uma versao por mod na pasta: duas versoes do mesmo mod derrubam o servidor no boot, e o pack
+    // sincronizado ja chegou a levar as duas. O prefixo inclui "-neoforge-<mc>-", entao nunca pega
+    // o jar de outro mod.
+    def prefix = "${base.archivesName.get()}-"
+    def outDir = destinationDirectory
+    def built = archiveFileName
+    doLast {
+        outDir.get().asFile.listFiles()?.findAll {
+            it.name.startsWith(prefix) && it.name.endsWith('.jar') && it.name != built.get()
+        }?.each {
+            if (it.delete()) logger.lifecycle("jars-servidor: removido o antigo ${it.name}")
+        }
+    }
 }
 
 // O mundo do gameTest e descartavel por contrato, mas o run reaproveita o mesmo diretorio entre

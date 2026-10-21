@@ -12,7 +12,9 @@ import com.aurorion.magia.spell.SoulRealm;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -28,7 +30,9 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +46,16 @@ import java.util.UUID;
 /**
  * <b>Bolso do Vazio</b> — Iris, representante do Vazio.
  *
- * <p>Iris tem uma dimensao de bolso que replica a realidade: {@code aurorion_magia:bolso_do_vazio} usa o
- * mesmo gerador, os mesmos biomas e o mesmo seed do overworld, entao o terreno la dentro e o daqui —
- * so que vazio de gente e de construcao. Enquanto ela estiver viva, la dentro e seguro: ninguem que ela
- * levou leva dano.
+ * <p>Iris tem um <b>vazio</b> so dela: {@code aurorion_magia:vazio} nao gera nada — nem chao, nem
+ * terreno. Na primeira entrada, a celula dela ganha <b>um bloco</b> ({@code [vazio].blocoInicial}) para
+ * comecar a construir; o que ela construir fica, e e sempre o mesmo lugar. La dentro, a dona tem o
+ * <b>criativo</b>; os marcados ficam no modo que tinham. Enquanto ela estiver viva, la dentro e seguro:
+ * ninguem que ela levou leva dano, e quem cai no vazio volta para o bloco inicial.
+ *
+ * <p><b>Nada entra, nada sai</b> ({@link PocketBelongings}): na porta, o inventario e os slots de
+ * acessorio de cada um ficam guardados; na volta, o que foi pego la dentro some e o que era da pessoa
+ * volta. Bau do ender (uma ponte para fora), cama e ancora de renascimento ficam bloqueados la dentro, e
+ * nenhuma entidade atravessa a dimensao por portal (a trava do {@code MagiaServerEvents}).
  *
  * <h2>Tecla</h2>
  *
@@ -69,14 +79,18 @@ import java.util.UUID;
  * <p>Zero sem Iris no bolso. Com ela dentro, o relogio e o efeito {@code bolso_do_vazio}, uma vez por
  * segundo: uma volta nos membros (ate uns cinco) e uma em {@code level.players()} da dimensao da fenda,
  * so se o chunk da fenda estiver carregado. O dano protegido e uma consulta de mapa por golpe dentro do
- * bolso.
- *
- * <p><b>Terreno:</b> a replica e gerada na hora, onde Iris entra. Pre-gere a dimensao com o Chunky nas
- * areas em que ela costuma andar, ou desligue {@code espelhaPosicao} para que o bolso tenha sempre a
- * mesma entrada.
+ * bolso. Entrar guarda os pertences de cada um e grava o arquivo na hora — uma escrita por entrada.
  */
 public final class VoidPocket {
-    public static final ResourceKey<Level> DIMENSION = ResourceKey.create(Registries.DIMENSION, AurorionMagia.id("bolso_do_vazio"));
+    /**
+     * Dimensao nova, e nao a antiga {@code bolso_do_vazio}: aquela era uma copia do overworld e ja tem
+     * terreno gerado em disco, que apareceria em volta. A pasta antiga fica sem uso no mundo.
+     */
+    public static final ResourceKey<Level> DIMENSION = ResourceKey.create(Registries.DIMENSION, AurorionMagia.id("vazio"));
+    /** Altura do bloco inicial; quem chega fica em cima dele. */
+    private static final int FLOOR_Y = 64;
+    private static final String BELONGINGS = "Belongings";
+    private static final String GAME_MODE = "GameMode";
     private static final double RIFT_RADIUS_SQR = 3 * 3;
     private static final double MARK_RANGE = 6;
 
@@ -161,41 +175,41 @@ public final class VoidPocket {
         }
         VoidPocketData data = VoidPocketData.get(server);
         CompoundTag session = data.session(iris.getUUID());
-        double x = iris.getX(), z = iris.getZ();
-        if (!MagiaConfig.POCKET_MIRRORS.get()) {
-            if (!session.contains("HomeX")) {
-                session.putDouble("HomeX", x);
-                session.putDouble("HomeZ", z);
-            }
-            x = session.getDouble("HomeX");
-            z = session.getDouble("HomeZ");
-        }
-        BlockPos column = BlockPos.containing(x, 0, z);
-        if (!pocket.getWorldBorder().isWithinBounds(column)) {
-            iris.displayClientMessage(Component.translatable("aurorion_magia.vazio.preso")
-                    .withStyle(ChatFormatting.GRAY), true);
-            return;
-        }
-        // A replica e o mesmo terreno: a altura de la e a daqui. Level.getHeight NAO carrega o chunk: sem
-        // ele, devolve o fundo do mundo, e o bolso quase sempre vazio caia na reserva abaixo (gente
-        // enterrada ou no ar). O chunk e carregado (ou gerado) antes — por isso o README pede pregerar.
-        pocket.getChunk(column.getX() >> 4, column.getZ() >> 4);
-        int y = pocket.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
-        if (y <= pocket.getMinBuildHeight() + 1) y = Math.max(pocket.getSeaLevel() + 1, (int) iris.getY());
-        Vec3 center = new Vec3(column.getX() + 0.5, y, column.getZ() + 0.5);
+        // A celula dela: sempre o mesmo lugar, para o que ela construiu estar la na proxima vez.
+        int[] cell = data.cell(iris.getUUID());
+        BlockPos floor = new BlockPos(cell[0], FLOOR_Y - 1, cell[1]);
+        prepareCell(pocket, floor, session);
+        Vec3 center = Vec3.atBottomCenterOf(floor.above());
 
         double bringSqr = MagiaConfig.POCKET_BRING_RADIUS.get() * (double) MagiaConfig.POCKET_BRING_RADIUS.get();
-        List<ServerPlayer> companions = new java.util.ArrayList<>();
+        List<ServerPlayer> candidates = new java.util.ArrayList<>();
         for (UUID id : data.marked(iris.getUUID())) {
             ServerPlayer other = server.getPlayerList().getPlayer(id);
             if (other == null || other.level() != iris.level() || !other.isAlive() || other.isSpectator()
                     || other.distanceToSqr(iris) > bringSqr || Binding.isBound(other) || SoulRealm.active(other)
                     || AnachronicSight.isActive(other) || data.anchor(id) != null) continue;
-            companions.add(other);
+            candidates.add(other);
         }
 
+        // Os pertences de cada um ficam na porta antes de qualquer teleporte (ver PocketBelongings).
+        CompoundTag own = PocketBelongings.stash(iris);
+        if (own == null) {
+            iris.displayClientMessage(Component.translatable("aurorion_magia.vazio.preso")
+                    .withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
         data.remember(iris, iris.getUUID(), VoidPocketData.ROLE_OWNER);
-        for (ServerPlayer companion : companions) data.remember(companion, iris.getUUID(), VoidPocketData.ROLE_GUEST);
+        CompoundTag ownAnchor = data.anchor(iris.getUUID());
+        ownAnchor.put(BELONGINGS, own);
+        ownAnchor.putString(GAME_MODE, iris.gameMode.getGameModeForPlayer().getName());
+        List<ServerPlayer> companions = new java.util.ArrayList<>();
+        for (ServerPlayer candidate : candidates) {
+            CompoundTag theirs = PocketBelongings.stash(candidate);
+            if (theirs == null) continue;
+            data.remember(candidate, iris.getUUID(), VoidPocketData.ROLE_GUEST);
+            data.anchor(candidate.getUUID()).put(BELONGINGS, theirs);
+            companions.add(candidate);
+        }
         session.putBoolean("Inside", true);
         session.putBoolean("Broken", false);
         session.putString("RiftDim", iris.level().dimension().location().toString());
@@ -206,27 +220,32 @@ public final class VoidPocket {
         session.putDouble("CenterY", center.y);
         session.putDouble("CenterZ", center.z);
         data.setDirty();
+        // Os pertences guardados nao esperam o autosave: um crash agora nao pode apaga-los.
+        VoidPocketData.flush(server);
         PRESSURE.remove(iris.getUUID());
         ServerLevel origin = iris.serverLevel();
         Vec3 rift = iris.position();
 
         moveInto(iris, pocket, center);
         if (iris.level() != pocket) {
-            // Outro mod recusou a travessia: nada de metade do grupo do outro lado.
-            data.forget(iris.getUUID());
-            for (ServerPlayer companion : companions) data.forget(companion.getUUID());
+            // Outro mod recusou a travessia: nada de metade do grupo do outro lado, e tudo devolvido.
+            giveBack(iris, ownAnchor);
+            for (ServerPlayer companion : companions) giveBack(companion, data.anchor(companion.getUUID()));
             session.putBoolean("Inside", false);
             iris.sendSystemMessage(Component.translatable("aurorion_magia.vazio.indisponivel"));
             return;
         }
+        // O vazio e dela: la dentro, criativo. Na volta, o modo de antes (ver restore).
+        iris.setGameMode(GameType.CREATIVE);
         iris.addEffect(new MobEffectInstance(MagiaEffects.VOID_POCKET, MobEffectInstance.INFINITE_DURATION, 0,
                 false, false, true));
         int i = 0;
         for (ServerPlayer companion : companions) {
             double angle = (i++) * Math.PI * 2 / Math.max(1, companions.size());
-            moveInto(companion, pocket, center.add(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5));
+            // No ar em volta do bloco inicial, nao no vazio abaixo: quem nao voa cai no bloco ou e trazido de volta.
+            moveInto(companion, pocket, center.add(Math.cos(angle) * 0.6, 0.2, Math.sin(angle) * 0.6));
             if (companion.level() != pocket) {
-                data.forget(companion.getUUID());
+                giveBack(companion, data.anchor(companion.getUUID()));
                 continue;
             }
             companion.sendSystemMessage(Component.translatable("aurorion_magia.vazio.levado", iris.getDisplayName())
@@ -271,6 +290,13 @@ public final class VoidPocket {
             if (member == null || !isInside(member)) continue;
             CompoundTag anchor = data.anchor(id);
             if (anchor != null && VoidPocketData.ROLE_GUEST.equals(anchor.getString("Role"))) guests++;
+            // Embaixo nao ha nada: quem cai volta para o bloco inicial antes de chegar ao fim do mundo.
+            if (member.getY() < member.level().getMinBuildHeight() + 8) {
+                TwilightTeleportCompat.immediateRun(() -> member.connection.teleport(center.x, center.y + 0.2, center.z,
+                        member.getYRot(), member.getXRot()));
+                member.resetFallDistance();
+                continue;
+            }
             double dx = member.getX() - center.x, dz = member.getZ() - center.z;
             if (dx * dx + dz * dz > radius * radius) {
                 double scale = (radius - 2) / Math.sqrt(dx * dx + dz * dz);
@@ -333,9 +359,19 @@ public final class VoidPocket {
         Vec3 center = new Vec3(session.getDouble("CenterX"), session.getDouble("CenterY"), session.getDouble("CenterZ"));
         // O relogio roda dentro do tick de entidades do bolso: trocar alguem de dimensao fica para o fim do tick.
         iris.server.tell(new TickTask(iris.server.getTickCount(), () -> {
-            if (!invader.isAlive() || data.anchor(invader.getUUID()) == null) return;
-            moveInto(invader, pocket, center.add(3, 0, 0));
-            if (invader.level() != pocket) data.forget(invader.getUUID());
+            CompoundTag anchor = data.anchor(invader.getUUID());
+            if (!invader.isAlive() || anchor == null) return;
+            // Invasor tambem entra sem nada: a regra da porta vale para todo mundo.
+            CompoundTag theirs = PocketBelongings.stash(invader);
+            if (theirs == null) {
+                data.forget(invader.getUUID());
+                return;
+            }
+            anchor.put(BELONGINGS, theirs);
+            data.setDirty();
+            VoidPocketData.flush(iris.server);
+            moveInto(invader, pocket, center.add(0, 0.2, 0));
+            if (invader.level() != pocket) giveBack(invader, anchor);
         }));
         if (first) {
             for (UUID id : data.members(iris.getUUID())) {
@@ -427,9 +463,15 @@ public final class VoidPocket {
      * segundo que o mod ja faz por jogador.
      */
     public static void recover(ServerPlayer player) {
-        if (!isInside(player) || !player.isAlive()) return;
+        if (!player.isAlive()) return;
         VoidPocketData data = VoidPocketData.get(player.server);
         CompoundTag anchor = data.anchor(player.getUUID());
+        if (!isInside(player)) {
+            // Fora do vazio com ancora: crash entre a saida e o save, ou alguem que estava no antigo
+            // bolso_do_vazio (que deixou de existir). Os pertences guardados voltam, e a ancora some.
+            if (anchor != null) giveBack(player, anchor);
+            return;
+        }
         if (anchor == null) {
             if (player.hasPermissions(2) && player.isCreative()) return;
             ServerLevel overworld = player.server.overworld();
@@ -454,20 +496,54 @@ public final class VoidPocket {
         // Morto ainda sera clonado pelo vanilla; guardar a ancora deixa o retorno para o renascer.
         if (!player.isAlive() && !dying) return;
         data.forget(player.getUUID());
-        if (!isInside(player)) return;
-        ResourceLocation id = ResourceLocation.tryParse(anchor.getString("Dim"));
-        ServerLevel home = id == null ? null : player.server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
-        Vec3 to = new Vec3(anchor.getDouble("X"), anchor.getDouble("Y"), anchor.getDouble("Z"));
-        if (home == null || home.dimension().equals(DIMENSION) || !Double.isFinite(to.lengthSqr())) {
-            home = player.server.overworld();
-            to = Vec3.atBottomCenterOf(home.getSharedSpawnPos());
+        if (isInside(player)) {
+            ResourceLocation id = ResourceLocation.tryParse(anchor.getString("Dim"));
+            ServerLevel home = id == null ? null : player.server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
+            Vec3 to = new Vec3(anchor.getDouble("X"), anchor.getDouble("Y"), anchor.getDouble("Z"));
+            if (home == null || home.dimension().equals(DIMENSION) || !Double.isFinite(to.lengthSqr())) {
+                home = player.server.overworld();
+                to = Vec3.atBottomCenterOf(home.getSharedSpawnPos());
+            }
+            teleport(player, home, to, anchor.getFloat("Yaw"), anchor.getFloat("Pitch"));
+            // Um veto de outro mod nao pode apagar o unico registro de retorno — nem os pertences: eles so
+            // voltam quando a pessoa sai de verdade.
+            if (isInside(player)) {
+                data.anchorAgain(player.getUUID(), anchor);
+                return;
+            }
+            player.resetFallDistance();
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PORTAL_TRAVEL,
+                    SoundSource.PLAYERS, 0.25F, 1.6F);
         }
-        teleport(player, home, to, anchor.getFloat("Yaw"), anchor.getFloat("Pitch"));
-        // Um veto de outro mod nao pode apagar o unico registro de retorno.
-        if (isInside(player)) data.anchorAgain(player.getUUID(), anchor);
-        player.resetFallDistance();
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PORTAL_TRAVEL,
-                SoundSource.PLAYERS, 0.25F, 1.6F);
+        // Fora do vazio (acabou de sair, ou o crash a deixou fora com a ancora): o de dentro fica la, o seu volta.
+        // Morrendo, isto acontece antes da queda dos itens: cai o que era dela, onde o corpo voltou.
+        giveBack(player, anchor);
+    }
+
+    /** Devolve pertences e modo de jogo, e apaga a ancora. Seguro chamar mais de uma vez. */
+    private static void giveBack(ServerPlayer player, @Nullable CompoundTag anchor) {
+        VoidPocketData data = VoidPocketData.get(player.server);
+        data.forget(player.getUUID());
+        if (anchor == null) return;
+        if (anchor.contains(BELONGINGS, Tag.TAG_COMPOUND)) {
+            PocketBelongings.unstash(player, anchor.getCompound(BELONGINGS));
+            anchor.remove(BELONGINGS);
+        }
+        if (anchor.contains(GAME_MODE, Tag.TAG_STRING)) {
+            player.setGameMode(GameType.byName(anchor.getString(GAME_MODE), GameType.SURVIVAL));
+            anchor.remove(GAME_MODE);
+        }
+    }
+
+    /** Na primeira entrada da dona, o unico bloco do vazio dela. Depois disso, o lugar e dela. */
+    private static void prepareCell(ServerLevel pocket, BlockPos floor, CompoundTag session) {
+        if (session.getBoolean("CellBuilt")) return;
+        ResourceLocation id = ResourceLocation.tryParse(MagiaConfig.POCKET_START_BLOCK.get());
+        Block block = id == null ? Blocks.AIR : BuiltInRegistries.BLOCK.get(id);
+        if (block == Blocks.AIR) block = Blocks.STONE;
+        pocket.getChunk(floor.getX() >> 4, floor.getZ() >> 4);
+        pocket.setBlock(floor, block.defaultBlockState(), Block.UPDATE_ALL);
+        session.putBoolean("CellBuilt", true);
     }
 
     // --- Apoio ------------------------------------------------------------------------------------

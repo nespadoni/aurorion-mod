@@ -410,7 +410,7 @@
   "passive.aurorion_magia.lua_minguante": "Lua Minguante",
   "passive.aurorion_magia.lua_minguante.guide": "Representante do Minguantis. O Escanor ao contrário: à noite você fica cada vez mais forte, no auge à meia-noite (as luas minguantes contam como cheia), e quem fica perto de você recebe restauração.",
   "passive.aurorion_magia.bolso_do_vazio": "Bolso do Vazio",
-  "passive.aurorion_magia.bolso_do_vazio.guide": "Representante do Vazio. Uma dimensão de bolso só sua, réplica da realidade. Tecla: entra (levando os marcados por perto) ou sai. Shift + tecla olhando alguém: marca. Enquanto você estiver viva lá dentro, ninguém que você levou se fere — mas quanto mais marcados lá dentro, mais fácil é romper a barreira pela fenda.",
+  "passive.aurorion_magia.bolso_do_vazio.guide": "Representante do Vazio. Um vazio só seu, onde você tem o criativo: no começo, só um bloco no chão para construir, e o que você constrói fica. Nada entra e nada sai: seus pertences (e os de quem você levar) ficam guardados na porta e voltam na saída. Tecla: entra (levando os marcados por perto) ou sai. Shift + tecla olhando alguém: marca. Enquanto você estiver viva lá dentro, ninguém que você levou se fere — mas quanto mais marcados lá dentro, mais fácil é romper a barreira pela fenda.",
   "aurorion_magia.passiva_como_usar": "Toque H para usar, ou segure H para a roda de passivas (tecla em Controles).",
   "aurorion_magia.passiva_sem_tecla": "Nenhuma passiva sua responde a esta tecla.",
   "commands.aurorion_magia.passiva_nao_usa": "%s não tem ação de tecla, ou você não a tem.",
@@ -453,8 +453,8 @@
   "aurorion_magia.vazio.voce_marcado": "Uma marca do vazio se fecha em você.",
   "aurorion_magia.vazio.indisponivel": "O bolso do vazio não está disponível neste servidor.",
   "aurorion_magia.vazio.preso": "A realidade não deixa você dobrá-la agora.",
-  "aurorion_magia.vazio.levado": "%s dobrou a realidade com você dentro.",
-  "aurorion_magia.vazio.entrou": "Você está no seu bolso do vazio. Barreira: %s.",
+  "aurorion_magia.vazio.levado": "%s levou você para o vazio. Seus pertences ficaram guardados na porta e voltam na saída.",
+  "aurorion_magia.vazio.entrou": "Você está no seu vazio. O que você trouxe ficou na porta. Barreira: %s.",
   "aurorion_magia.vazio.devolvido": "%s voltou à realidade. Barreira: %s.",
   "aurorion_magia.vazio.borda": "O bolso termina aqui.",
   "aurorion_magia.vazio.nao_cede": "A fenda não cede.",
@@ -463,5 +463,6 @@
   "aurorion_magia.vazio.fechou": "O bolso se fechou e devolveu você à realidade.",
   "aurorion_magia.vazio.barreira.0": "estável",
   "aurorion_magia.vazio.barreira.1": "mediana",
-  "aurorion_magia.vazio.barreira.2": "frágil"
+  "aurorion_magia.vazio.barreira.2": "frágil",
+  "aurorion_magia.vazio.bloqueado": "Isso não funciona no vazio."
 }

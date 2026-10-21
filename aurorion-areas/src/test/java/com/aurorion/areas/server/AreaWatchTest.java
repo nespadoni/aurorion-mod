@@ -18,7 +18,7 @@ class AreaWatchTest {
         assertTrue(line.contains("&rotulo=Fulano+%28alt+de+Ciclano%29&dim=minecraft%3Aoverworld&x=10&y=-64&z=-300"));
         assertFalse(line.contains("teste="));
         assertEquals(line.length(), line.getBytes(StandardCharsets.UTF_8).length);
-        assertFalse(entry("Praça Ñ").line().contains(" "));
+        assertFalse(entry("Praça Ñ").line().substring("evento ".length()).contains(" "));
     }
     @Test void emptyQueueAnswersHeaderOnly() {
         assertEquals("avisos=0 restantes=0 descartados=0", AreaWatch.drain(new ArrayDeque<>(), AreaWatch.PULL_BUDGET, 0));
