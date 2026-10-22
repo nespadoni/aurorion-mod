@@ -7,7 +7,9 @@ import com.aurorion.areas.data.AreaData;
 import com.aurorion.areas.region.AreaRegion;
 import com.aurorion.areas.rules.Decision;
 import com.aurorion.core.character.AltData;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +19,9 @@ import java.util.*;
 
 /**
  * Aviso de entrada para o Discord: a staff marca a area com {@code /area aviso <id> true} e cada
- * entrada vira uma linha numa fila que o bot puxa por RCON ({@code /area avisos puxar}).
+ * entrada vira uma linha numa fila que o bot puxa por RCON ({@code /area avisos puxar}). A mesma
+ * entrada vai na hora para o chat de quem tem OP online ({@link StaffAlert#watched}), entao o aviso
+ * no jogo nao depende do bot estar no ar.
  *
  * <h2>Por que fila, e nao envio</h2>
  *
@@ -98,7 +102,8 @@ public final class AreaWatch {
             if (!region.dimension().equals(dimension) || !region.volume().contains(player.getX(), player.getY(), player.getZ())) continue;
             if (now == null) now = new HashSet<>(4);
             now.add(region.id());
-            if (!silent && (before == null || !before.contains(region.id()))) entered(player, region);
+            if (before != null && before.contains(region.id())) continue;
+            if (silent) bypassNotice(player, region); else entered(player, region);
         }
         if (now == null) INSIDE.remove(id); else INSIDE.put(id, now);
     }
@@ -112,9 +117,20 @@ public final class AreaWatch {
         LAST.put(key, now);
         if (LAST.size() > 4096) LAST.values().removeIf(at -> now - at >= cooldown);
         BlockPos pos = player.blockPosition();
-        offer(new Entry(now, player.getGameProfile().getName(), player.getUUID(),
+        Entry entry = new Entry(now, player.getGameProfile().getName(), player.getUUID(),
                 AltData.staffLabel(player.server, player.getGameProfile()), region.id(), region.name(),
-                region.dimension(), pos.getX(), pos.getY(), pos.getZ(), false));
+                region.dimension(), pos.getX(), pos.getY(), pos.getZ(), false);
+        offer(entry);
+        StaffAlert.watched(player.server, entry);
+    }
+
+    /**
+     * Sem isto, a staff testa o aviso em criativo, nada acontece e parece defeito. Barra de acao, e
+     * nao chat: quem voa por cima de varias areas vigiadas nao enche o historico.
+     */
+    private static void bypassNotice(ServerPlayer player, AreaRegion region) {
+        player.displayClientMessage(Component.literal("Área vigiada " + region.name()
+                + ": criativo/espectador não dispara o aviso.").withStyle(ChatFormatting.GRAY), true);
     }
 
     static void offer(Entry entry) {
@@ -126,8 +142,10 @@ public final class AreaWatch {
 
     /** Evento falso para conferir a ponte com o bot sem precisar andar ate a area. */
     public static void test(MinecraftServer server, String player, UUID uuid, ResourceLocation dimension, BlockPos pos) {
-        offer(new Entry(System.currentTimeMillis(), player, uuid, player, "teste", "Teste do aviso",
-                dimension, pos.getX(), pos.getY(), pos.getZ(), true));
+        Entry entry = new Entry(System.currentTimeMillis(), player, uuid, player, "teste", "Teste do aviso",
+                dimension, pos.getX(), pos.getY(), pos.getZ(), true);
+        offer(entry);
+        StaffAlert.watched(server, entry);
     }
 
     /**

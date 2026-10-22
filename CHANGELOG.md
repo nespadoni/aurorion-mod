@@ -1,3 +1,16 @@
+# Aviso de área no chat da staff e permissão de entrada - 22/10/2026
+
+Áreas 0.6.6. O `/area aviso <id> true` só colocava a entrada na fila do bot; no jogo não aparecia nada.
+
+- **Chat da staff:** toda entrada numa área vigiada (e o `/area avisos teste`) sai na hora para quem tem
+  OP online, com o prefixo `[Áreas]`. Não depende do bot.
+- **Criativo/espectador:** continua sem disparar o aviso, mas agora mostra na barra de ação
+  `Área vigiada ...: criativo/espectador não dispara o aviso.` — antes o teste em criativo parecia defeito.
+- **Permissão de entrada em qualquer área (`/area entrada`):** a parede da barreira de casa, decidida
+  por pessoa. `fechar` + `permitir <jogador>` faz lista de convidados; `negar <jogador>` barra alguém
+  numa área aberta. `/area entrada <id>` mostra o estado e as listas. Criativo/espectador passam.
+  Regra nativa nova `entrar`; exceção nova `negar:<regra>`, que nega qualquer regra a uma pessoa só.
+
 # Bolso do Vazio vira um vazio de verdade - 18/10/2026
 
 Magia 0.7.0. A passiva de Iris deixa de ser uma réplica do overworld.

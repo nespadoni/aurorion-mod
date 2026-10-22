@@ -102,10 +102,11 @@ public final class AreaRuntime {
         long now = player.serverLevel().getGameTime();
         boolean enabled = AreasConfig.ENABLED.get();
         boolean active = enabled && !AreaApi.bypass(player) && player.isAlive();
-        // A barreira de casa tem bypass proprio (modo de jogo, nao permissao), entao ela nao pode
-        // depender do 'active' acima — um administrador em sobrevivencia bate na parede como todo
-        // mundo, e um administrador em criativo passa mesmo com o creativeStaffBypass desligado.
-        if (enabled && AreasConfig.HOUSE_BARRIER.get() && player.isAlive() && !HouseBarrier.bypass(player)) {
+        // A barreira (casa e regra 'entrar') tem bypass proprio (modo de jogo, nao permissao), entao
+        // ela nao pode depender do 'active' acima — um administrador em sobrevivencia bate na parede
+        // como todo mundo, e um administrador em criativo passa mesmo com o creativeStaffBypass
+        // desligado. O houseBarrier da config desliga so a parte da casa, dentro do HouseBarrier.
+        if (enabled && player.isAlive() && !HouseBarrier.bypass(player)) {
             HouseBarrier.tick(player, s, now);
         }
         boolean flight = active && !s.rules.allows(AreaRule.FLIGHT);

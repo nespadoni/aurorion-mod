@@ -108,17 +108,19 @@ Limites: 512 áreas; 32 formas por área (partes + recortes); 128 vértices por 
 | `/area ambiente <id> <perfil>\|nenhum\|herdar` | Define, remove ou herda ambiente |
 | `/area monstros <id> vida\|dano <fator>` | Define fator de 0,1 a 20, ou -1 para herdar |
 | `/area casa <id> <casa>\|nenhum` | Vincula a área a uma casa, ou remove o vínculo |
-| `/area excecao <id> <jogador> <regra> true\|false` | Concede ou remove autorização individual |
+| `/area excecao <id> <jogador> <regra> true\|false` | Concede ou remove autorização individual (`negar:<regra>` nega só para ele) |
+| `/area entrada <id> fechar\|abrir\|herdar` | Fecha ou abre a área (ver "Permissão de entrada") |
+| `/area entrada <id> permitir\|negar\|remover <jogador>` | Libera, barra ou devolve à regra uma pessoa |
 | `/area ativar <id> true\|false` | Liga/desliga a área preservando sua definição |
 | `/area nome <id> <nome>` | Define o nome descritivo |
 | `/area mundo <perfil>\|herdar` | Define/limpa o padrão da dimensão atual |
 | `/area aqui [jogador]` | Mostra regras efetivas, área de origem e sobreposições |
 
-Regras nativas: `voo`, `magia`, `monstros`, `dano_monstros`, `pvp`, mais duas de **concessão**:
+Regras nativas: `voo`, `magia`, `monstros`, `dano_monstros`, `pvp`, `entrar`, mais duas de **concessão**:
 `casa` (passe de visitante de uma área de casa) e `agua_pura` / `agua_pura_pia` (água tratada).
 Ver abaixo.
 
-**Proibição e concessão são leituras opostas do mesmo cadastro.** As cinco nativas são proibições:
+**Proibição e concessão são leituras opostas do mesmo cadastro.** As seis nativas são proibições:
 valem no mapa inteiro até alguém negar. `agua_pura` é uma concessão: **não existe em lugar nenhum
 até alguém permitir**. Por isso não adianta deixá-la em `herdar` e esperar que funcione — sem um
 `permitir` explícito, a resposta é não.
@@ -205,6 +207,39 @@ Isso acontece no máximo uma vez por segundo.
 Sem o `aurorion_ethereal` no pack, **a barreira não barra ninguém** e o motivo aparece uma vez no log
 — o contrário (todo mundo sem casa, logo todo mundo barrado) muraria o mapa inteiro por um jar
 faltando. O vínculo continua gravado e volta a valer quando o mod voltar.
+
+## Permissão de entrada (qualquer área)
+
+A mesma parede da casa, mas para **qualquer área** e decidida por pessoa, sem casa nenhuma:
+
+```mcfunction
+/area entrada salao_guilda fechar                  # só passa quem for permitido
+/area entrada salao_guilda permitir Fulano         # Fulano entra
+/area entrada salao_guilda negar Ciclano           # Ciclano fica de fora, mesmo com a área aberta
+/area entrada salao_guilda remover Fulano          # Fulano volta a seguir a regra da área
+/area entrada salao_guilda abrir                   # todo mundo entra, menos os negados
+/area entrada salao_guilda herdar                  # tira o valor local (segue a área de fora)
+/area entrada salao_guilda                         # mostra se está aberta/fechada e as duas listas
+```
+
+Os dois modos de uso:
+
+- **Lista de convidados:** `fechar` e `permitir` quem pode entrar.
+- **Lista de barrados:** deixe aberta e `negar` quem não pode entrar.
+
+Por baixo é a regra nativa `entrar` mais as exceções de personagem: `permitir` grava a exceção
+`entrar`, e `negar` grava `negar:entrar`. Se as duas existirem para a mesma pessoa, **negar vence**
+(o comando nunca deixa as duas juntas). O prefixo `negar:` serve para qualquer regra, não só a
+entrada — `/area excecao escola Fulano negar:magia true` tira a magia só do Fulano.
+
+- Comporta-se exatamente como a barreira de casa: parede, empurrão para fora de quem apareceu dentro,
+  aviso na barra de ação (`Você não tem permissão para entrar em <nome>.`).
+- **Criativo e espectador passam sempre**, com ou sem OP; sobrevivência é barrada, com ou sem OP.
+- Prioridade vale como nas outras regras: uma sala `abrir` dentro de um prédio `fechar` fica aberta.
+- Fechar pelo padrão da dimensão (`/area mundo`) **não** levanta parede: sem área, não há limite.
+- `/area perfil` preserva a entrada da área, a não ser que o perfil defina `entrar` por conta própria.
+- O reset de personagem do Aurorion remove as permissões e os bloqueios da pessoa.
+- `houseBarrier = false` na config desliga só a barreira de casa; a entrada continua valendo.
 
 ## Floresta Negra e exterior
 
@@ -458,7 +493,10 @@ evento t=1760000000000&area=cofre_guilda&nome=Cofre+da+Guilda&jogador=Fulano&uui
 
 - A marca vale para a **área**, não para a regra resolvida: uma sala vigiada dentro de uma área de
   prioridade maior continua avisando. Áreas sobrepostas marcadas avisam cada uma.
-- Staff em criativo ou espectador (o mesmo bypass das regras) não dispara o aviso.
+- Toda entrada (e o `/area avisos teste`) também sai na hora no chat de quem tem OP online, com o
+  prefixo `[Áreas]` — o aviso no jogo não depende do bot.
+- Staff em criativo ou espectador (o mesmo bypass das regras) não dispara o aviso; em vez disso
+  recebe na barra de ação `Área vigiada ...: criativo/espectador não dispara o aviso.`
 - `entryAlertCooldownSeconds` (padrão 60) é o silêncio entre dois avisos do mesmo jogador na mesma
   área — quem anda na borda não vira uma mensagem por passo. Relogar lá dentro respeita o mesmo
   silêncio.

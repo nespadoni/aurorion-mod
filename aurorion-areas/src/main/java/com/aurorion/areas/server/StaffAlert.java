@@ -6,6 +6,7 @@ import com.aurorion.core.text.TimeFormat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -69,14 +70,32 @@ final class StaffAlert {
                 .append(Component.literal(".").withStyle(ChatFormatting.GOLD)));
     }
 
+    /**
+     * Entrada numa area marcada com {@code /area aviso}: a mesma entrada que vai para a fila do
+     * Discord, para quem esta online nao depender do bot. Sem log aqui — o {@link AreaWatch} ja
+     * registra cada entrada.
+     */
+    static void watched(MinecraftServer server, AreaWatch.Entry entry) {
+        toStaff(server, Component.literal(entry.label()).withStyle(ChatFormatting.WHITE)
+                .append(Component.literal(entry.test() ? " testou o aviso de " : " entrou na área vigiada ").withStyle(ChatFormatting.RED))
+                .append(Component.literal(entry.name()).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(" — " + entry.dimension() + " " + entry.x() + " " + entry.y() + " " + entry.z())
+                        .withStyle(ChatFormatting.DARK_GRAY)));
+    }
+
     private static void send(ServerPlayer about, Component message) {
+        Component line = toStaff(about.server, message);
+        AurorionAreas.LOGGER.info("Aviso de area: {}", line.getString());
+    }
+
+    private static Component toStaff(MinecraftServer server, Component message) {
         Component line = PREFIX.copy().append(message);
-        for (ServerPlayer staff : about.server.getPlayerList().getPlayers()) {
+        for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
             if (staff.hasPermissions(OP_PERMISSION_LEVEL)) {
                 staff.sendSystemMessage(line);
             }
         }
-        AurorionAreas.LOGGER.info("Aviso de area: {}", line.getString());
+        return line;
     }
 
     /**

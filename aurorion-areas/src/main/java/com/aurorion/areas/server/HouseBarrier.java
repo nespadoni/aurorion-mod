@@ -1,11 +1,14 @@
 package com.aurorion.areas.server;
 
 import com.aurorion.areas.AurorionAreas;
+import com.aurorion.areas.config.AreasConfig;
 import com.aurorion.areas.geometry.AreaShape;
 import com.aurorion.areas.geometry.Bounds;
 import com.aurorion.areas.geometry.Point2;
 import com.aurorion.areas.region.AreaRegion;
+import com.aurorion.areas.rules.AreaRule;
 import com.aurorion.areas.rules.Decision;
+import com.aurorion.areas.rules.ResolvedRules;
 import com.aurorion.core.house.HouseGate;
 import com.aurorion.core.level.SafeSpot;
 import net.minecraft.ChatFormatting;
@@ -22,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A parede invisivel das areas de casa: quem nao e da casa nao atravessa o limite dela.
+ *
+ * <p>A mesma parede vale para qualquer area com a regra {@code entrar} negada ({@code /area entrada}):
+ * ali quem passa e decidido pela regra e pelas excecoes do personagem, e nao pela casa.
  *
  * <p><b>Nao e uma prisao nem um congelamento.</b> O jogador continua andando, pulando e voltando
  * para tras a vontade — o que ele nao consegue e terminar um tick <em>dentro</em> de uma casa que
@@ -80,10 +86,20 @@ public final class HouseBarrier {
     }
 
     /**
-     * @return a casa que barra este jogador nesta posicao, ou {@code null} se ele pode estar aqui.
+     * @return a area que barra este jogador nesta posicao, ou {@code null} se ele pode estar aqui.
+     *         Casa primeiro; depois a regra {@code entrar}, que ja veio resolvida com prioridade e
+     *         excecoes do personagem. Negada so pelo padrao da dimensao (sem area dona), nao barra:
+     *         parede precisa de um limite para existir.
      */
     @Nullable
-    static AreaRegion blocking(ServerPlayer player, @Nullable AreaRegion houseArea) {
+    static AreaRegion blocking(ServerPlayer player, ResolvedRules rules) {
+        AreaRegion house = AreasConfig.HOUSE_BARRIER.get() ? houseBlocking(player, rules.houseArea()) : null;
+        if (house != null) return house;
+        return rules.allows(AreaRule.ENTRY) ? null : rules.owner(AreaRule.ENTRY);
+    }
+
+    @Nullable
+    private static AreaRegion houseBlocking(ServerPlayer player, @Nullable AreaRegion houseArea) {
         if (houseArea == null) return null;
         if (!HouseGate.installed()) {
             // Sem mod de casas, "todo mundo sem casa" barraria todo mundo de toda casa. Melhor nao
@@ -103,7 +119,7 @@ public final class HouseBarrier {
 
     /** Roda uma vez por tick para cada jogador sujeito a barreira. */
     static void tick(ServerPlayer player, AreaRuntime.State state, long now) {
-        AreaRegion blocked = blocking(player, state.rules.houseArea());
+        AreaRegion blocked = blocking(player, state.rules);
         if (blocked == null) {
             remember(player, state);
             return;
@@ -203,6 +219,16 @@ public final class HouseBarrier {
     private static void notice(ServerPlayer player, AreaRuntime.State state, AreaRegion area, long now) {
         if (now < state.barrierNoticeAt) return;
         state.barrierNoticeAt = now + NOTICE_TICKS;
+        player.playNotifySound(SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, .35F, .6F);
+        // Casa que tambem fechou a entrada: quem e da casa bate na regra, nao na casa, e a frase
+        // "a barreira da sua casa nao deixa voce passar" seria mentira.
+        if (!AreasConfig.HOUSE_BARRIER.get() || houseBlocking(player, state.rules.houseArea()) != area) {
+            player.displayClientMessage(Component.literal("Você não tem permissão para entrar em ")
+                    .withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(area.name()).withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal(".").withStyle(ChatFormatting.GRAY)), true);
+            return;
+        }
         var message = Component.literal("A barreira da ").withStyle(ChatFormatting.GRAY)
                 .append(HouseGate.nameOf(area.house()))
                 .append(Component.literal(" não deixa você passar.").withStyle(ChatFormatting.GRAY));
@@ -210,6 +236,5 @@ public final class HouseBarrier {
         // pessoa fique procurando o que fez de errado.
         if (HouseGate.of(player.server, player.getUUID()) == null) message.append(HOUSELESS);
         player.displayClientMessage(message, true);
-        player.playNotifySound(SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, .35F, .6F);
     }
 }

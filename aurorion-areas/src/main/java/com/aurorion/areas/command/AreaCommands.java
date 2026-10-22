@@ -64,6 +64,7 @@ public final class AreaCommands {
                         /area monstros <id> vida|dano <fator> | excecao <id> <jogador> <regra> true|false
                         /area nome <id> <nome> | ativar <id> true|false | mundo <perfil>|herdar
                         /area casa <id> <casa>|nenhum | aviso <id> true|false | avisos [puxar|teste]
+                        /area entrada <id> [fechar|abrir|herdar | permitir|negar|remover <jogador>]
                         /area aqui [jogador] | ver <id> | listar | visualizar [id] | remover <id>
                         """));
         root.then(literal("selecao").executes(run(c -> start(c.getSource().getPlayerOrException()))));
@@ -118,6 +119,11 @@ public final class AreaCommands {
             // O aviso e escolha da staff para aquela area, nao conteudo de perfil: trocar o perfil
             // nao pode desligar o Discord em silencio.
             if (AreaWatch.watches(region)) rules = rules.withFlag(AreaWatch.RULE, Decision.ALLOW);
+            // Mesma coisa para a entrada fechada: trocar o perfil nao pode abrir a porta sem aviso.
+            // Um perfil que defina 'entrar' por conta propria vence.
+            Decision entry = region.rules().flag(AreaRule.ENTRY.key());
+            if (entry != Decision.INHERIT && rules.flag(AreaRule.ENTRY.key()) == Decision.INHERIT)
+                rules = rules.withFlag(AreaRule.ENTRY.key(), entry);
             return update(c, region.withRules(rules), "Regras substituídas pelo perfil selecionado.");
         })))));
         root.then(literal("regra").then(area().then(ruleArgument().then(argument("decisao", StringArgumentType.word())
@@ -133,8 +139,9 @@ public final class AreaCommands {
             boolean on = BoolArgumentType.getBool(c, "ligado");
             var rules = region.rules().withFlag(AreaWatch.RULE, on ? Decision.ALLOW : Decision.INHERIT);
             return update(c, region.withRules(rules), on
-                    ? "Aviso de entrada no Discord LIGADO. Staff em criativo/espectador não dispara o aviso."
-                    : "Aviso de entrada no Discord desligado.");
+                    ? "Aviso de entrada LIGADO (Discord e chat da staff online). Staff em criativo/espectador"
+                            + " não dispara o aviso; teste em sobrevivência ou com /area avisos teste."
+                    : "Aviso de entrada desligado.");
         })))));
         // Sem audit no puxar: o bot chama a cada poucos segundos e afogaria o log de administracao.
         root.then(literal("avisos").executes(run(c -> {
@@ -172,6 +179,11 @@ public final class AreaCommands {
                             DoubleArgumentType.getDouble(c, "fator"))), "Força dos próximos monstros atualizada.");
                 }))));
         root.then(literal("monstros").then(strength));
+        root.then(literal("entrada").then(area().executes(run(c -> entryStatus(c.getSource(), region(c))))
+                .then(literal("fechar").executes(run(c -> entryRule(c, Decision.DENY))))
+                .then(literal("abrir").executes(run(c -> entryRule(c, Decision.ALLOW))))
+                .then(literal("herdar").executes(run(c -> entryRule(c, Decision.INHERIT))))
+                .then(entryPlayer("permitir")).then(entryPlayer("negar")).then(entryPlayer("remover"))));
         root.then(literal("excecao").then(area()
                 .then(argument("jogador", GameProfileArgument.gameProfile()).then(ruleArgument()
                         .then(argument("liberar", BoolArgumentType.bool()).executes(run(AreaCommands::exception)))))));
@@ -286,6 +298,63 @@ public final class AreaCommands {
         boolean allow = BoolArgumentType.getBool(c, "liberar");
         for (var profile : players) region = region.withException(profile.getId(), key, allow);
         return update(c, region, "Exceção " + (allow ? "concedida" : "removida") + " para " + players.size() + " personagem(ns).");
+    }
+    /**
+     * Atalho de staff para a regra {@code entrar}, no mesmo espirito do passe de visitante da casa:
+     * {@code permitir} e a excecao {@code entrar}, {@code negar} e a excecao {@code negar:entrar}. As
+     * duas se excluem, para a lista nunca dizer "permitido e negado" ao mesmo tempo.
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> entryPlayer(String action) {
+        return literal(action).then(argument("jogador", GameProfileArgument.gameProfile()).executes(run(c -> {
+            var region = region(c);
+            var players = GameProfileArgument.getGameProfiles(c, "jogador");
+            String allow = AreaRule.ENTRY.key(), deny = AreaRegion.DENY_PREFIX + allow;
+            for (var profile : players) {
+                region = region.withException(profile.getId(), allow, action.equals("permitir"))
+                        .withException(profile.getId(), deny, action.equals("negar"));
+            }
+            String names = String.join(", ", players.stream().map(com.mojang.authlib.GameProfile::getName).sorted().toList());
+            String done = switch (action) {
+                case "permitir" -> names + " pode entrar mesmo com a área fechada.";
+                case "negar" -> names + " fica barrado mesmo com a área aberta.";
+                default -> names + " volta a seguir a regra da área.";
+            };
+            return update(c, region, done + (action.equals("permitir") ? entryHint(region) : "")) + bypassNotice(c);
+        })));
+    }
+    private static String entryRule(CommandContext<CommandSourceStack> c, Decision decision) {
+        var region = region(c);
+        region = region.withRules(region.rules().withFlag(AreaRule.ENTRY.key(), decision));
+        String done = switch (decision) {
+            case DENY -> "Entrada FECHADA: só passa quem estiver em /area entrada " + region.id() + " permitir <jogador>.";
+            case ALLOW -> "Entrada ABERTA: só fica de fora quem estiver em /area entrada " + region.id() + " negar <jogador>.";
+            case INHERIT -> "Entrada segue a área de fora (ou fica aberta, se não houver).";
+        };
+        return update(c, region, done + " Criativo e espectador passam sempre.") + bypassNotice(c);
+    }
+    /** Permitir alguem numa area que ninguem fechou nao muda nada; o aviso evita o "nao funcionou". */
+    private static String entryHint(AreaRegion region) {
+        return region.rules().flag(AreaRule.ENTRY.key()) == Decision.DENY ? ""
+                : "\nObs.: a entrada desta área não está fechada; use /area entrada " + region.id()
+                        + " fechar para só os permitidos passarem.";
+    }
+    private static String entryStatus(CommandSourceStack source, AreaRegion region) {
+        var server = source.getServer();
+        String allow = AreaRule.ENTRY.key(), deny = AreaRegion.DENY_PREFIX + allow;
+        List<String> allowed = new ArrayList<>(), denied = new ArrayList<>();
+        region.exceptions().forEach((uuid, keys) -> {
+            String name = com.aurorion.core.character.AltData.accountName(server, uuid);
+            if (keys.contains(deny)) denied.add(name); else if (keys.contains(allow)) allowed.add(name);
+        });
+        allowed.sort(String.CASE_INSENSITIVE_ORDER); denied.sort(String.CASE_INSENSITIVE_ORDER);
+        String state = switch (region.rules().flag(allow)) {
+            case DENY -> "FECHADA";
+            case ALLOW -> "ABERTA";
+            case INHERIT -> "herdada (aberta, salvo área de fora fechada)";
+        };
+        return region.id() + " — entrada " + state
+                + "\nPermitidos (" + allowed.size() + "): " + (allowed.isEmpty() ? "ninguém" : String.join(", ", allowed))
+                + "\nNegados (" + denied.size() + "): " + (denied.isEmpty() ? "ninguém" : String.join(", ", denied));
     }
     private static String update(CommandContext<CommandSourceStack> c, AreaRegion region, String message) {
         data(c).put(region); audit(c); return region.id() + ": " + message;

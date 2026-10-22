@@ -45,6 +45,30 @@ class AreaPolicyTest {
         assertFalse(data.allows(WORLD, 0, 50, 0, ALICE, "voo"));
         data.clearCharacter(ALICE); // Reset is idempotent.
     }
+    @Test void entryCanBeClosedWithGuestsOrOpenWithBannedCharacters() {
+        String deny = AreaRegion.DENY_PREFIX + "entrar";
+        var data = new AreaData();
+        data.put(region("salao", 10, 100, rules("entrar", Decision.DENY)).withException(ALICE, "entrar", true));
+        var out = new ResolvedRules();
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertTrue(out.allows(AreaRule.ENTRY));
+        data.resolve(WORLD, 0, 50, 0, BOB, out);
+        assertFalse(out.allows(AreaRule.ENTRY));
+        assertEquals("salao", out.owner(AreaRule.ENTRY).id());
+
+        data.delete("salao");
+        data.put(region("praca", 10, 100, AreaRules.INHERIT).withException(BOB, deny, true));
+        data.resolve(WORLD, 0, 50, 0, BOB, out);
+        assertFalse(out.allows(AreaRule.ENTRY));
+        assertEquals("praca", out.owner(AreaRule.ENTRY).id());
+        data.resolve(WORLD, 0, 50, 0, ALICE, out);
+        assertTrue(out.allows(AreaRule.ENTRY));
+        // Negar vence permitir na mesma area; o reset de personagem limpa os dois.
+        data.put(data.require("praca").withException(BOB, "entrar", true));
+        assertFalse(data.allows(WORLD, 0, 50, 0, BOB, "entrar"));
+        data.clearCharacter(BOB);
+        assertTrue(data.allows(WORLD, 0, 50, 0, BOB, "entrar"));
+    }
     @Test void exceptionDoesNotOverrideAHigherPriorityExplicitRule() {
         var data = new AreaData();
         data.put(region("school", 10, 100, rules("voo", Decision.DENY)).withException(ALICE, "voo", true));

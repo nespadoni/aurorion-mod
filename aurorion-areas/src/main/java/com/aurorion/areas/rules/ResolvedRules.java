@@ -11,7 +11,7 @@ import java.util.UUID;
 public final class ResolvedRules {
     private final boolean[] allowed = new boolean[AreaRule.ALL.length];
     /**
-     * Cinco regras + ambiente + vida + dano + casa dona. Um vetor so para o {@code reset} continuar
+     * Seis regras + ambiente + vida + dano + casa dona. Um vetor so para o {@code reset} continuar
      * sendo um {@code Arrays.fill} unico por tick, em vez de um campo por assunto.
      */
     private final AreaRegion[] owners = new AreaRegion[AreaRule.ALL.length + 4];
