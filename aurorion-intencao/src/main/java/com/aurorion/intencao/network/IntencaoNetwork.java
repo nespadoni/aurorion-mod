@@ -2,6 +2,7 @@ package com.aurorion.intencao.network;
 
 import com.aurorion.intencao.AurorionIntencao;
 import com.aurorion.intencao.client.ClientIntencao;
+import com.aurorion.intencao.combat.DuelManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +20,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 @EventBusSubscriber(modid = AurorionIntencao.MOD_ID)
 public final class IntencaoNetwork {
     /** Bump quando mudar o formato de um payload ou a ordem de um enum que vai na rede. */
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "5";
 
     private IntencaoNetwork() {
     }
@@ -29,7 +30,16 @@ public final class IntencaoNetwork {
         // Sem optional(): as entidades ja tornam o mod obrigatorio no cliente.
         event.registrar(PROTOCOL_VERSION)
                 .playToClient(ScenePayload.TYPE, ScenePayload.STREAM_CODEC, IntencaoNetwork::handleScene)
-                .playToClient(WorldPayload.TYPE, WorldPayload.STREAM_CODEC, IntencaoNetwork::handleWorld);
+                .playToClient(WorldPayload.TYPE, WorldPayload.STREAM_CODEC, IntencaoNetwork::handleWorld)
+                // Duelo com a ficha: estado, vez e reacao para o cliente; a escolha e o clique de volta.
+                .playToClient(DuelPayloads.State.TYPE, DuelPayloads.State.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToClient(DuelPayloads.Prompt.TYPE, DuelPayloads.Prompt.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToClient(DuelPayloads.React.TYPE, DuelPayloads.React.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToClient(DuelPayloads.Invite.TYPE, DuelPayloads.Invite.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToClient(DuelPayloads.Arena.TYPE, DuelPayloads.Arena.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToClient(DuelPayloads.Result.TYPE, DuelPayloads.Result.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToClient(DuelPayloads.Bolt.TYPE, DuelPayloads.Bolt.STREAM_CODEC, IntencaoNetwork::handleDuel)
+                .playToServer(DuelPayloads.Input.TYPE, DuelPayloads.Input.STREAM_CODEC, DuelManager::handleInput);
     }
 
     public static void sendScene(ServerPlayer player, ScenePayload payload) {
@@ -56,6 +66,11 @@ public final class IntencaoNetwork {
     private static void handleScene(ScenePayload payload, IPayloadContext context) {
         if (FMLEnvironment.dist != Dist.CLIENT) return;
         context.enqueueWork(() -> ClientIntencao.accept(payload));
+    }
+
+    private static void handleDuel(net.minecraft.network.protocol.common.custom.CustomPacketPayload payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        context.enqueueWork(() -> com.aurorion.intencao.client.ClientDuel.accept(payload));
     }
 
     private static void handleWorld(WorldPayload payload, IPayloadContext context) {

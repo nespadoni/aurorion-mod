@@ -493,7 +493,7 @@ public final class Plane {
     }
 
     /** Nome do personagem quando ha um; senao o nome exibido. O nick da conta so como ultimo recurso. */
-    private static String nameOf(MinecraftServer server, ServerPlayer player) {
+    public static String nameOf(MinecraftServer server, ServerPlayer player) {
         CharacterData.Character character = CharacterData.get(server).find(player.getUUID());
         String name = character != null && character.named() ? character.fullName() : player.getDisplayName().getString();
         // O nome exibido inclui prefixo/sufixo de time e pode ser trocado por outros mods: sem teto, um nome

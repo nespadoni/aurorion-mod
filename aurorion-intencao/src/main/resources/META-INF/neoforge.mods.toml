@@ -26,9 +26,10 @@ side = "BOTH"
 
 # TwilightTeleportCompat entrou no core em 0.6.6.
 [[dependencies.${mod_id}]]
+# 0.6.8: CharacterSheet, CharacterSpells, CharacterFinale e SheetCheck (duelo com a ficha).
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.6.6,)"
+versionRange = "[0.6.9,)"
 ordering = "AFTER"
 side = "BOTH"
 
@@ -40,3 +41,11 @@ type = "optional"
 versionRange = "[0.1.0,)"
 ordering = "AFTER"
 side = "BOTH"
+
+# O duelo se joga pelo menu do personagem: convite, escolha da vez e resultado. Só o cliente precisa dele.
+[[dependencies.${mod_id}]]
+modId = "aurorion_menu"
+type = "required"
+versionRange = "[0.1.0,)"
+ordering = "NONE"
+side = "CLIENT"

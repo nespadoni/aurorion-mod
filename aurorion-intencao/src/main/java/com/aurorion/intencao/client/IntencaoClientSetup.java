@@ -21,6 +21,14 @@ public final class IntencaoClientSetup {
         // fechando nao podem deixar a hotbar desenhada por cima.
         event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS, IntencaoLayers.Fog.ID, new IntencaoLayers.Fog());
         event.registerAboveAll(IntencaoLayers.Scene.ID, new IntencaoLayers.Scene());
+        // O HUD do duelo com a ficha: barras, vez e o anel da reacao.
+        event.registerAboveAll(DuelHud.ID, new DuelHud());
+    }
+
+    @SubscribeEvent
+    public static void onSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        // Duelo e Ações no menu do personagem (aurorion-menu), pelo registro do core.
+        DuelSections.register();
     }
 
     @SubscribeEvent
