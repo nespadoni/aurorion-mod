@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -55,6 +56,8 @@ public final class PhoneNumberSaveQueue {
     private static final AtomicReference<Snapshot> PENDING = new AtomicReference<>();
     /** O que foi entregue por ultimo a thread de IO. {@code null} = nao sabemos o que esta no disco. */
     private static volatile Snapshot lastQueued;
+    /** Impressao do diretorio que gerou {@link #lastQueued}; so vale junto com ele. */
+    private static volatile long lastFingerprint;
     private static ExecutorService io;
 
     private PhoneNumberSaveQueue() {
@@ -66,8 +69,14 @@ public final class PhoneNumberSaveQueue {
      * mapas aqui e seguro.
      */
     public static void save(MinecraftServer server, Map<UUID, String> uuidToNumber, Map<UUID, String> uuidToName) {
+        // Atalho antes da foto: o telefone chama save() varias vezes por login sem mudar nada, e a foto
+        // ordena todas as contas e codifica cada nome. A impressao e uma passada sem alocar.
+        long fingerprint = fingerprint(uuidToNumber, uuidToName);
+        Snapshot last = lastQueued;
+        if (last != null && fingerprint == lastFingerprint) return;
         Snapshot snapshot = new Snapshot(storeFile(server), PhoneNumberDirectory.entries(uuidToNumber, uuidToName));
-        if (snapshot.equals(lastQueued)) return;
+        lastFingerprint = fingerprint;
+        if (snapshot.equals(last)) return;
         lastQueued = snapshot;
         PENDING.set(snapshot);
         executor().execute(PhoneNumberSaveQueue::writePending);
@@ -158,6 +167,25 @@ public final class PhoneNumberSaveQueue {
         } catch (AtomicMoveNotSupportedException e) {
             Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    /**
+     * Soma de um hash de 64 bits por conta (uuid, numero, nome): nao depende da ordem do mapa e muda
+     * quando qualquer conta muda. Inclui o tamanho para que remover e incluir nao se anulem.
+     */
+    static long fingerprint(Map<UUID, String> uuidToNumber, Map<UUID, String> uuidToName) {
+        long sum = uuidToNumber.size();
+        for (Map.Entry<UUID, String> entry : uuidToNumber.entrySet()) {
+            UUID id = entry.getKey();
+            long h = id.getMostSignificantBits() * 31 + id.getLeastSignificantBits();
+            h = h * 0x9E3779B97F4A7C15L + Objects.hashCode(entry.getValue());
+            h = h * 0x9E3779B97F4A7C15L + Objects.hashCode(uuidToName.get(id));
+            h ^= h >>> 31;
+            h *= 0x94D049BB133111EBL;
+            h ^= h >>> 29;
+            sum += h;
+        }
+        return sum;
     }
 
     /** O mesmo caminho do {@code getStoreFile} do telefone. */

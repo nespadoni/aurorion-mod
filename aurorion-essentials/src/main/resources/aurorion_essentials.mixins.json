@@ -10,6 +10,7 @@
     "JoinLeaveMessageMixin",
     "LeaveMessageMixin",
     "AdvancementAnnounceMixin",
+    "AdvancementLoadMixin",
     "DeathMessageMixin",
     "PlayerListSaveInvoker",
     "WhisperCommandMixin"

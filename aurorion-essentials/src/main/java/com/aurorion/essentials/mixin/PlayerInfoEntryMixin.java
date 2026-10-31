@@ -1,5 +1,6 @@
 package com.aurorion.essentials.mixin;
 
+import com.aurorion.essentials.tab.HiddenSpectators;
 import com.aurorion.essentials.tab.TabNames;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.network.chat.Component;
@@ -32,5 +33,15 @@ public abstract class PlayerInfoEntryMixin {
         ClientboundPlayerInfoUpdatePacket.Entry self = (ClientboundPlayerInfoUpdatePacket.Entry) (Object) this;
         GameProfile profile = self.profile();
         return TabNames.decorate(self.profileId(), profile == null ? null : profile.getName(), displayName);
+    }
+
+    /** Espectador fora da tab ({@link HiddenSpectators}). Unico boolean do construtor: o {@code listed}. */
+    @ModifyVariable(
+            method = "<init>(Ljava/util/UUID;Lcom/mojang/authlib/GameProfile;ZILnet/minecraft/world/level/GameType;"
+                    + "Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/RemoteChatSession$Data;)V",
+            at = @At("LOAD"), argsOnly = true)
+    private boolean aurorion_essentials$hideSpectator(boolean listed) {
+        ClientboundPlayerInfoUpdatePacket.Entry self = (ClientboundPlayerInfoUpdatePacket.Entry) (Object) this;
+        return HiddenSpectators.listed(self.profileId(), listed);
     }
 }

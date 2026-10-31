@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
@@ -88,6 +89,30 @@ class PhoneNumberDirectoryTest {
         reversed.put(bella, "123456");
         reversed.put(carlin, "654321");
         assertEquals(first, PhoneNumberDirectory.entries(reversed, uuidToName));
+    }
+
+    /**
+     * O atalho do {@code save()} pula a foto quando a impressao nao muda. Se ela nao mudasse junto com um
+     * nome ou numero, a mudanca nunca chegaria ao disco.
+     */
+    @Test
+    void impressaoMudaComQualquerContaENaoComAOrdem() {
+        register(carlin, "Carlin", "654321");
+        register(bella, "Bella", "123456");
+        long base = PhoneNumberSaveQueue.fingerprint(uuidToNumber, uuidToName);
+
+        Map<UUID, String> reversed = new java.util.LinkedHashMap<>();
+        reversed.put(bella, "123456");
+        reversed.put(carlin, "654321");
+        assertEquals(base, PhoneNumberSaveQueue.fingerprint(reversed, uuidToName));
+
+        uuidToName.put(bella, "Bella Nova");
+        assertNotEquals(base, PhoneNumberSaveQueue.fingerprint(uuidToNumber, uuidToName));
+        uuidToName.put(bella, "Bella");
+        uuidToNumber.put(carlin, "654322");
+        assertNotEquals(base, PhoneNumberSaveQueue.fingerprint(uuidToNumber, uuidToName));
+        uuidToNumber.remove(carlin);
+        assertNotEquals(base, PhoneNumberSaveQueue.fingerprint(uuidToNumber, uuidToName));
     }
 
     @Test

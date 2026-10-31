@@ -30,7 +30,7 @@ public final class DiagnosticoCommand {
                             var report = ServerDiagnostics.snapshot();
                             source.sendSystemMessage(Component.literal("Diagnóstico Aurorion — filas do servidor")
                                     .withStyle(ChatFormatting.GOLD));
-                            for (String section : java.util.List.of("Integração", "Diário")) {
+                            for (String section : java.util.List.of("Integração", "Diário", "Ficha")) {
                                 source.sendSystemMessage(Component.literal(section).withStyle(ChatFormatting.YELLOW));
                                 var lines = report.getOrDefault(section,
                                         java.util.List.of("Módulo não instalado ou ainda não iniciado."));
