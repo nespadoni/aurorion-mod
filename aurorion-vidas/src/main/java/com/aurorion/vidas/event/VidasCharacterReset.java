@@ -26,6 +26,7 @@ public final class VidasCharacterReset {
     @SubscribeEvent
     public static void onReset(CharacterResetEvent event) {
         LivesData.get(event.server()).setLives(event.account(), LivesConfig.MAX_LIVES.get());
+        if (event.player() != null) LastStand.reset(event.player());
     }
 
     /** O HUD so pode mostrar o numero novo depois que a identidade existe. */

@@ -127,3 +127,13 @@ command/   VidasCommand
 ```
 
 Decisões de design e por quê: [SDD §9](../SDD.md).
+
+## Último fôlego (0.3.0)
+
+Num golpe que mataria, um teste de **Fortitude** da ficha (o derivado que o site calcula, lido pelo
+`CharacterSheet` do core; sem ficha, `ultimoFolego.bonusSemFicha`) contra `ultimoFolego.cd` (18) deixa a
+pessoa de pé com 1 de vida, Resistência III por 3 s e lentidão. Não cobra vida, porque a morte não
+aconteceu. Uma vez a cada `ultimoFolego.horas` (24 h reais); o carimbo fica na parte do NBT que o NeoForge
+copia na morte. O 1 natural sempre falha e o 20 sempre salva. Dano que ignora invulnerabilidade (`/kill`,
+vazio) não tem salvação. Roda em prioridade alta, antes da cobrança de vida e do PlayerRevive.
+

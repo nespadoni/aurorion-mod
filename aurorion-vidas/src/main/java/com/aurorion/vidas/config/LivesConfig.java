@@ -18,6 +18,8 @@ public final class LivesConfig {
     public static final ModConfigSpec.BooleanValue IGNORE_CREATIVE;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_EXILE;
     public static final ModConfigSpec.BooleanValue ANNOUNCE_LIFE_LOSS;
+    public static final ModConfigSpec.BooleanValue LAST_STAND;
+    public static final ModConfigSpec.IntValue LAST_STAND_DC, LAST_STAND_HOURS, LAST_STAND_DEFAULT_BONUS;
 
     public static final ModConfigSpec SPEC;
 
@@ -79,6 +81,14 @@ public final class LivesConfig {
                 )
                 .define("announceLifeLoss", false);
 
+        BUILDER.pop();
+        BUILDER.comment("Ultimo folego: num golpe fatal, um teste de Fortitude da ficha (aurorion-ficha) deixa a pessoa",
+                "com 1 de vida. Nao cobra vida, porque a morte nao aconteceu.").push("ultimoFolego");
+        LAST_STAND = BUILDER.comment("Liga o ultimo folego.").define("habilitado", true);
+        LAST_STAND_DC = BUILDER.comment("CD do teste (d20 + Fortitude). O 1 natural sempre falha; o 20 sempre salva.")
+                .defineInRange("cd", 18, 0, 40);
+        LAST_STAND_HOURS = BUILDER.comment("Horas reais entre um ultimo folego e outro.").defineInRange("horas", 24, 1, 720);
+        LAST_STAND_DEFAULT_BONUS = BUILDER.comment("Fortitude de quem nao tem ficha lida.").defineInRange("bonusSemFicha", 2, -10, 30);
         BUILDER.pop();
 
         SPEC = BUILDER.build();
