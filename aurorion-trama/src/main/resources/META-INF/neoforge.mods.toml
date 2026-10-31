@@ -23,10 +23,12 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
+# 0.6.8: SkillTreeGate e SkillTreeChangedEvent (os nos da Trama para a magia).
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.6.2,)"
+# 0.6.7: CharacterAbilities (a Trama na aba Habilidades da ficha).
+versionRange = "[0.6.8,)"
 ordering = "AFTER"
 side = "BOTH"
 

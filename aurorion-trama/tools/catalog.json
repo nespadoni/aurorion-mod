@@ -4246,5 +4246,155 @@
       "MEL": 1,
       "KBR": 1
     }
+  },
+  {
+    "id": "AR1",
+    "source_id": "AR1",
+    "name": "Despertar Arcano I",
+    "kind": "Arcano",
+    "required": 0,
+    "description": "O primeiro fio da magia: lançar magias comuns e incomuns, forjar pergaminhos e fabricar itens arcanos. Liberado por um professor.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "AR2",
+    "source_id": "AR2",
+    "name": "Despertar Arcano II",
+    "kind": "Arcano",
+    "required": 0,
+    "description": "A magia inteira das escolas: raras, épicas e lendárias. Liberado por um professor.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "AR3",
+    "source_id": "AR3",
+    "name": "Despertar Arcano III",
+    "kind": "Arcano",
+    "required": 0,
+    "description": "O que as escolas proíbem. Liberado por um professor.",
+    "implementation": "D",
+    "source_parents": "-",
+    "parents": []
+  },
+  {
+    "id": "ES_FIRE",
+    "source_id": "ES_FIRE",
+    "name": "Especialista: Fogo",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Fogo: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_ICE",
+    "source_id": "ES_ICE",
+    "name": "Especialista: Gelo",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Gelo: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_LIGHTNING",
+    "source_id": "ES_LIGHTNING",
+    "name": "Especialista: Raio",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Raio: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_HOLY",
+    "source_id": "ES_HOLY",
+    "name": "Especialista: Sagrado",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Sagrado: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_ENDER",
+    "source_id": "ES_ENDER",
+    "name": "Especialista: Ender",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Ender: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_BLOOD",
+    "source_id": "ES_BLOOD",
+    "name": "Especialista: Sangue",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Sangue: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_EVOCATION",
+    "source_id": "ES_EVOCATION",
+    "name": "Especialista: Evocação",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Evocação: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_NATURE",
+    "source_id": "ES_NATURE",
+    "name": "Especialista: Natureza",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Natureza: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
+  },
+  {
+    "id": "ES_ELDRITCH",
+    "source_id": "ES_ELDRITCH",
+    "name": "Especialista: Abissal",
+    "kind": "Especialidade",
+    "required": 0,
+    "description": "Sua escola é Abissal: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec.",
+    "implementation": "D",
+    "source_parents": "AR1",
+    "parents": [
+      "AR1"
+    ]
   }
 ]

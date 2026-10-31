@@ -19,6 +19,8 @@ public final class ProgressData extends SavedData {
         public int dailyPracticeXp, earned = ProgressRules.INITIAL_POINTS;
         public boolean eraseCategory = true;
         public final Set<String> biomes = new HashSet<>(), advancements = new HashSet<>();
+        /** Nos concedidos pela staff (professor), reaplicados a cada sync e depois do respec. Morrem com o personagem. */
+        public final Set<String> granted = new HashSet<>();
         public Entry(UUID character) { this.character = character; }
     }
     private final Map<UUID, Entry> players = new HashMap<>();
@@ -43,6 +45,7 @@ public final class ProgressData extends SavedData {
             entry.combatUntil = Math.max(0, e.getLong("CombatUntil"));
             entry.eraseCategory = e.getBoolean("EraseCategory");
             readStrings(e, "Biomes", entry.biomes); readStrings(e, "Advancements", entry.advancements);
+            readStrings(e, "Granted", entry.granted);
             return entry;
         });
         return data;
@@ -63,6 +66,7 @@ public final class ProgressData extends SavedData {
             e.putLong("CombatUntil", entry.combatUntil);
             e.putBoolean("EraseCategory", entry.eraseCategory);
             e.put("Biomes", strings(entry.biomes)); e.put("Advancements", strings(entry.advancements));
+            e.put("Granted", strings(entry.granted));
         }));
         return tag;
     }

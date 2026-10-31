@@ -7315,5 +7315,329 @@
     "size": 1.15,
     "cost": 1,
     "required_spent_points": 16
+  },
+  "AR1": {
+    "title": {
+      "text": "Despertar Arcano I",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "O primeiro fio da magia: lançar magias comuns e incomuns, forjar pergaminhos e fabricar itens arcanos. Liberado por um professor."
+    },
+    "extra_description": {
+      "text": "AR1 · Liberado por um professor (staff), sem custo de pontos."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:lapis_lazuli"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "AR2": {
+    "title": {
+      "text": "Despertar Arcano II",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "A magia inteira das escolas: raras, épicas e lendárias. Liberado por um professor."
+    },
+    "extra_description": {
+      "text": "AR2 · Liberado por um professor (staff), sem custo de pontos."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:lapis_lazuli"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "AR3": {
+    "title": {
+      "text": "Despertar Arcano III",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "O que as escolas proíbem. Liberado por um professor."
+    },
+    "extra_description": {
+      "text": "AR3 · Liberado por um professor (staff), sem custo de pontos."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:lapis_lazuli"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "size": 1.4,
+    "cost": 0,
+    "required_spent_points": 0
+  },
+  "ES_FIRE": {
+    "title": {
+      "text": "Especialista: Fogo",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Fogo: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_FIRE · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blaze_powder"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_ICE": {
+    "title": {
+      "text": "Especialista: Gelo",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Gelo: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_ICE · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:blue_ice"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_LIGHTNING": {
+    "title": {
+      "text": "Especialista: Raio",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Raio: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_LIGHTNING · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:lightning_rod"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_HOLY": {
+    "title": {
+      "text": "Especialista: Sagrado",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Sagrado: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_HOLY · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:golden_apple"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_ENDER": {
+    "title": {
+      "text": "Especialista: Ender",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Ender: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_ENDER · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:ender_eye"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_BLOOD": {
+    "title": {
+      "text": "Especialista: Sangue",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Sangue: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_BLOOD · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:redstone"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_EVOCATION": {
+    "title": {
+      "text": "Especialista: Evocação",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Evocação: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_EVOCATION · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:totem_of_undying"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_NATURE": {
+    "title": {
+      "text": "Especialista: Natureza",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Natureza: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_NATURE · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:moss_block"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
+  },
+  "ES_ELDRITCH": {
+    "title": {
+      "text": "Especialista: Abissal",
+      "color": "#9fc8ff"
+    },
+    "description": {
+      "text": "Sua escola é Abissal: teste com vantagem e bônus, menos mana, menos recarga e mais dano ou cura nas magias dela. Só uma especialidade por vez; trocar é com /trama respec."
+    },
+    "extra_description": {
+      "text": "ES_ELDRITCH · Especialidade · Exige o Despertar Arcano I. Só uma especialidade."
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "minecraft:sculk"
+      }
+    },
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "size": 1.15,
+    "cost": 1,
+    "required_spent_points": 0
   }
 }

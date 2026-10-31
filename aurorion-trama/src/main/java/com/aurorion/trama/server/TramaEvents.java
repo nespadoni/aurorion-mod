@@ -6,7 +6,13 @@ import com.aurorion.core.house.HouseGate;
 import com.aurorion.trama.AurorionTrama;
 import com.aurorion.trama.progression.ProgressData;
 import com.aurorion.trama.skill.Rating;
+import com.aurorion.trama.skill.SkillCatalog;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.neoforged.bus.api.*;
@@ -24,6 +30,10 @@ import net.neoforged.neoforge.event.tick.*;
 public final class TramaEvents {
     private static final net.minecraft.resources.ResourceLocation BBR_MODIFIER =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("aurorion_trama","bbr");
+    /** Despertar Arcano primeiro (o uso do professor), depois o resto do catalogo. */
+    private static final SuggestionProvider<CommandSourceStack> NODE_SUGGESTIONS = (c, b) ->
+            SharedSuggestionProvider.suggest(java.util.stream.Stream.concat(SkillCatalog.staffOnlyIds().stream(),
+                    SkillCatalog.ids().stream().filter(id -> !SkillCatalog.staffOnly(id)).sorted()), b);
     private TramaEvents() {}
     @SubscribeEvent public static void started(ServerStartedEvent event) {
         if (!HouseGate.installed()) AurorionTrama.LOGGER.warn("Trama suspensa: nenhum provedor de Casas instalado. Instale Aurorion Ethereal.");
@@ -34,7 +44,22 @@ public final class TramaEvents {
         event.getDispatcher().register(Commands.literal("trama")
                 .executes(c -> TramaRuntime.open(c.getSource().getPlayerOrException()))
                 .then(Commands.literal("progresso").executes(c -> TramaRuntime.progress(c.getSource().getPlayerOrException())))
-                .then(Commands.literal("respec").executes(c -> TramaRuntime.respec(c.getSource().getPlayerOrException()))));
+                .then(Commands.literal("respec").executes(c -> TramaRuntime.respec(c.getSource().getPlayerOrException())))
+                .then(Commands.literal("no").requires(s -> s.hasPermission(2))
+                        .then(Commands.literal("conceder").then(Commands.argument("alvos", GameProfileArgument.gameProfile())
+                                .then(Commands.argument("no", StringArgumentType.word()).suggests(NODE_SUGGESTIONS)
+                                        .executes(c -> TramaRuntime.grant(c.getSource(), GameProfileArgument.getGameProfiles(c,"alvos"),
+                                                StringArgumentType.getString(c,"no"), true)))))
+                        .then(Commands.literal("remover").then(Commands.argument("alvos", GameProfileArgument.gameProfile())
+                                .then(Commands.argument("no", StringArgumentType.word()).suggests(NODE_SUGGESTIONS)
+                                        .executes(c -> TramaRuntime.grant(c.getSource(), GameProfileArgument.getGameProfiles(c,"alvos"),
+                                                StringArgumentType.getString(c,"no"), false)))))
+                        .then(Commands.literal("ver").then(Commands.argument("alvo", GameProfileArgument.gameProfile())
+                                .executes(c -> {
+                                    int total = 0;
+                                    for (var profile : GameProfileArgument.getGameProfiles(c,"alvo")) total += TramaRuntime.granted(c.getSource(), profile);
+                                    return total;
+                                })))));
     }
     @SubscribeEvent public static void tick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer p) TramaRuntime.tick(p);

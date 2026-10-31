@@ -24,8 +24,19 @@ TRAVEL = {c: c + ("X" if c in "AV" else "T") for c in ORDER}
 BRIDGES = {"BIS": ("IT2", "ST1"), "BSN": ("ST4", "NT3"),
            "BNA": ("NT4", "AX1"), "BAV": ("AX3", "VX1"),
            "BVI": ("VX2", "IT5")}
+# Despertar Arcano: only staff (professors) grant these, by /trama no conceder. No incoming
+# connection, so no player can buy them; the server force-unlocks the granted ones on sync.
+ARCANE = ["AR1", "AR2", "AR3"]
+ARCANE_COLOR, ARCANE_ITEM = "#9fc8ff", "minecraft:lapis_lazuli"
+# One magic specialty per character: bought with Trama points after AR1, mutually exclusive.
+SPECIALTIES = {"ES_FIRE": "minecraft:blaze_powder", "ES_ICE": "minecraft:blue_ice",
+               "ES_LIGHTNING": "minecraft:lightning_rod", "ES_HOLY": "minecraft:golden_apple",
+               "ES_ENDER": "minecraft:ender_eye", "ES_BLOOD": "minecraft:redstone",
+               "ES_EVOCATION": "minecraft:totem_of_undying", "ES_NATURE": "minecraft:moss_block",
+               "ES_ELDRITCH": "minecraft:sculk"}
 PRINCIPLES = [["IE9", "IO9"], ["SA9", "SG9"], ["NC9", "NV9"],
-              ["VP9", "VA9"], ["AT9", "AV9"], [f"C{i}" for i in range(16, 21)]]
+              ["VP9", "VA9"], ["AT9", "AV9"], [f"C{i}" for i in range(16, 21)],
+              list(SPECIALTIES)]
 
 
 def write(path, data):
@@ -40,7 +51,7 @@ def radial(angle, radius, tangent=0):
 def generate():
     nodes = json.loads(SOURCE.read_text(encoding="utf-8"))
     by_id = {n["id"]: n for n in nodes}
-    assert len(nodes) == len(by_id) == 271
+    assert len(nodes) == len(by_id) == 283
     for n in nodes:
         # The original extraction omitted the five central Fios. NO4 is conditional
         # on the correct tool and is handled by BreakSpeed, not a static attribute.
@@ -77,11 +88,22 @@ def generate():
     for ident, parent in central_parents.items():
         x, y = positions[parent]
         positions[ident] = (round(x * .53), round(y * .53))
+    # Arcane arc in the empty gap between Aetheris and Venthra, beyond the bridge.
+    gap = (angles["A"] + angles["V"]) / 2
+    for ident, radius in zip(ARCANE, (880, 800, 720)):
+        positions[ident] = radial(gap, radius)
+    for k, ident in enumerate(SPECIALTIES):
+        positions[ident] = radial(gap, 1000, (k - 4) * 50)
 
     for n in nodes:
         ident, kind = n["id"], n["kind"]
         c = ident[1] if ident.startswith("B") else ident[0]
-        color, item = HOUSES[c][1:] if c != "C" else ("#dfd5b0", "minecraft:echo_shard")
+        if kind == "Arcano":
+            color, item = ARCANE_COLOR, ARCANE_ITEM
+        elif kind == "Especialidade":
+            color, item = ARCANE_COLOR, SPECIALTIES[ident]
+        else:
+            color, item = HOUSES[c][1:] if c != "C" else ("#dfd5b0", "minecraft:echo_shard")
         origin = kind == "Início"
         requirement = n["required"]
         if ident == "C00":
@@ -92,11 +114,13 @@ def generate():
         definitions[ident] = {
             "title": {"text": n["name"], "color": color},
             "description": {"text": desc},
-            "extra_description": {"text": f"{ident} · {kind} · Formação: {requirement} pontos gastos. Bônus sujeitos aos limites da Trama."},
+            "extra_description": {"text": f"{ident} · Liberado por um professor (staff), sem custo de pontos." if kind == "Arcano"
+                                  else f"{ident} · {kind} · Exige o Despertar Arcano I. Só uma especialidade." if kind == "Especialidade"
+                                  else f"{ident} · {kind} · Formação: {requirement} pontos gastos. Bônus sujeitos aos limites da Trama."},
             "icon": {"type": "item", "data": {"item": item}},
-            "frame": {"type": "advancement", "data": {"frame": "challenge" if kind == "Princípio" else "goal" if kind in ("Maestria", "Início", "Nexo") else "task"}},
-            "size": 1.4 if kind in ("Princípio", "Início", "Nexo") else 1.15 if kind in ("Maestria", "Notável") else .8,
-            "cost": 0 if origin or ident == "C00" else 1,
+            "frame": {"type": "advancement", "data": {"frame": "challenge" if kind in ("Princípio", "Arcano") else "goal" if kind in ("Maestria", "Início", "Nexo", "Especialidade") else "task"}},
+            "size": 1.4 if kind in ("Princípio", "Início", "Nexo", "Arcano") else 1.15 if kind in ("Maestria", "Notável", "Especialidade") else .8,
+            "cost": 0 if origin or ident == "C00" or kind == "Arcano" else 1,
             "required_spent_points": requirement,
         }
         x, y = positions[ident]
@@ -105,8 +129,9 @@ def generate():
         if not ident.startswith("B"):
             for parent in n["parents"]:
                 assert parent in by_id and parent != ident, (ident, parent)
-                # Do not let another house's travel path unlock its origin in reverse.
-                (directed if parent.endswith("00") else normal).append([parent, ident])
+                # Do not let another house's travel path unlock its origin in reverse, nor a
+                # specialty open the staff-only Despertar Arcano.
+                (directed if parent.endswith("00") or parent in ARCANE else normal).append([parent, ident])
     for prefix, (left, right) in BRIDGES.items():
         normal.append([left, prefix + "1"])
         normal.extend([[prefix + str(i), prefix + str(i + 1)] for i in range(1, 8)])
@@ -119,6 +144,7 @@ def generate():
     origins = {c + "00" for c in ORDER}
     assert all(a not in origins and b not in origins for a, b in normal)
     assert all(b not in origins for a, b in directed)
+    assert all(b not in ARCANE for a, b in normal + directed) and all(a not in ARCANE for a, b in normal)
     assert len(set(positions.values())) == len(nodes), "Overlapping node coordinates"
     for prefix in BRIDGES:
         bridge = {prefix + str(i) for i in range(1, 9)}

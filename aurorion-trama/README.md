@@ -1,6 +1,6 @@
 # Aurorion Trama do Eco
 
-Árvore passiva de 271 nós, integrada às cinco Casas do `aurorion-ethereal` pelo
+Árvore passiva de 283 nós (271 da formação, mais os 3 do Despertar Arcano e as 9 especialidades de magia), integrada às cinco Casas do `aurorion-ethereal` pelo
 `HouseGate` do core. O mod usa a tela e o grafo do Pufferfish's Skills 0.19.x,
 com progressão e cálculo dos efeitos no servidor. Instale os dois mods no
 cliente e no servidor; o Ethereal fornece a Casa. Sem Casa reconhecida, a
@@ -65,12 +65,31 @@ a quantidade de mobs mortos não aumenta a recompensa.
 
 - `/trama`: abre a árvore na interface do Pufferfish.
 - `/trama progresso`: mostra pontos, tempo ativo e os dois requisitos que faltam.
-- `/trama respec`: devolve todos os pontos gastos e recoloca a origem da Casa.
+- `/trama respec`: devolve todos os pontos gastos e recoloca a origem da Casa (e os nós concedidos por professor).
   Primeiro uso gratuito; seguintes têm intervalo padrão de 24 horas. Todos os
   usos exigem 15 segundos fora de combate. Reconectar não limpa essa restrição.
 
 Os comandos são de consulta/escolha do próprio jogador. A distribuição é
 automática; a staff não precisa executar comandos de pontos para cada pessoa.
+
+## Despertar Arcano e especialidade (0.2.0)
+
+Doze nós que decidem a magia (o `aurorion-magia` pergunta pelo `SkillTreeGate` do core, sem
+importar a Trama):
+
+- **`AR1`, `AR2`, `AR3` — Despertar Arcano I, II, III.** Só um professor libera:
+  `/trama no conceder <jogadores> AR1` (permissão 2; aceita jogador offline, vale no próximo login).
+  Nenhum jogador compra: não têm conexão de entrada e custam 0. O sync força exatamente o que a staff
+  concedeu, então `/trama no remover` tira também offline. I libera magias comuns e incomuns,
+  pergaminhos e itens arcanos; II, as raras, épicas e lendárias; III, as proibidas.
+- **`ES_FIRE` … `ES_ELDRITCH` — uma especialidade por personagem.** Ligadas só a partir do `AR1`
+  (conexão de mão única), custam 1 ponto da Trama e são exclusivas entre si. A própria pessoa escolhe;
+  trocar é `/trama respec`.
+- O respec devolve os pontos e a especialidade, mas **mantém** o que o professor concedeu (a lista
+  fica em `ProgressData.Entry.granted`). Personagem novo começa sem nada.
+- `/trama no ver <jogador>` lista o que a staff concedeu.
+- Toda mudança de nó (compra, perda, respec, concessão, entrada na Trama) posta
+  `SkillTreeChangedEvent` no tick seguinte, uma vez por jogador.
 
 ## Casas e personagens
 

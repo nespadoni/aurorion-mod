@@ -5,7 +5,11 @@ import com.aurorion.core.house.HouseGate;
 import com.aurorion.trama.config.TramaConfig;
 import com.aurorion.trama.progression.*;
 import com.aurorion.trama.skill.*;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.TickTask;
+import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.puffish.skillsmod.api.*;
@@ -18,14 +22,35 @@ public final class TramaRuntime {
     private static final Map<String,String> ORIGINS = Map.of("ignivar","I00","sylvara","S00","nyx","N00","venthra","V00","aetheris","A00");
     private static final Map<UUID,TramaState> STATES = new HashMap<>();
     private static final Set<UUID> LOGIN_PENDING = new HashSet<>();
+    /** Ultimo sync de quem esta fora da Trama, e por que estava fora (ver idleSync). */
+    private static final Map<UUID,Idle> IDLE = new HashMap<>();
+    /** Quem ja tem um SkillTreeChangedEvent marcado para o proximo tick (ver changed). */
+    private static final Set<UUID> CHANGE_PENDING = new HashSet<>();
     /** Rede de seguranca para mudancas feitas direto no Pufferfish (comando de admin), que nao disparam evento. */
     private static final int FULL_SYNC_TICKS = 200;
     private TramaRuntime() {}
-    public static void invalidate(UUID account) { var state = STATES.get(account); if (state != null) { state.dirty = true; state.unsynced = true; } }
-    public static void forget(UUID account) { STATES.remove(account); }
+    public static void invalidate(UUID account) { IDLE.remove(account); var state = STATES.get(account); if (state != null) { state.dirty = true; state.unsynced = true; } }
+    public static void forget(UUID account) { STATES.remove(account); IDLE.remove(account); }
     public static void login(ServerPlayer p) { forget(p.getUUID()); LOGIN_PENDING.add(p.getUUID()); }
     public static void logout(UUID account) { forget(account); LOGIN_PENDING.remove(account); }
-    public static void clear() { STATES.clear(); LOGIN_PENDING.clear(); }
+    public static void clear() { STATES.clear(); LOGIN_PENDING.clear(); IDLE.clear(); CHANGE_PENDING.clear(); }
+    /** Resposta do SkillTreeGate: o no esta na build de quem esta dentro da Trama agora. So memoria. */
+    public static boolean has(ServerPlayer p, String node) { return eligible(p) && state(p).build.has(node); }
+    /**
+     * Os nos de alguem mudaram: o SkillTreeChangedEvent sai no tick seguinte, uma vez so por jogador. Nao
+     * na hora: o Pufferfish chama os callbacks de unlock/lock no meio da propria mudanca, e quem ouve o
+     * evento pergunta a build de novo.
+     */
+    public static void changed(ServerPlayer p) {
+        UUID id = p.getUUID();
+        if (!CHANGE_PENDING.add(id)) return;
+        var server = p.server;
+        server.tell(new TickTask(server.getTickCount(), () -> {
+            CHANGE_PENDING.remove(id);
+            var online = server.getPlayerList().getPlayer(id);
+            if (online != null) NeoForge.EVENT_BUS.post(new SkillTreeChangedEvent(online));
+        }));
+    }
     static long now(ServerPlayer p) { return p.server.overworld().getGameTime(); }
     public static boolean eligible(ServerPlayer p) {
         return !LOGIN_PENDING.contains(p.getUUID()) && TramaConfig.ENABLED.get() && p.isAlive() && !p.isSpectator() && !p.isCreative()
@@ -81,6 +106,12 @@ public final class TramaRuntime {
             if (id.equals(root) && skill.getState(p) != Skill.State.UNLOCKED) skill.unlock(p);
             else if (!id.equals(root) && skill.getState(p) == Skill.State.UNLOCKED) skill.lock(p);
         });
+        // Despertar Arcano: exatamente o que a staff concedeu. Ninguem compra; tirar vale tambem offline.
+        for (String id : SkillCatalog.staffOnlyIds()) c.getSkill(id).ifPresent(skill -> {
+            boolean granted = entry.granted.contains(id);
+            if (granted && skill.getState(p) != Skill.State.UNLOCKED) skill.unlock(p);
+            else if (!granted && skill.getState(p) == Skill.State.UNLOCKED) skill.lock(p);
+        });
         reconcile(p,c,entry);
         return true;
     }
@@ -112,6 +143,23 @@ public final class TramaRuntime {
         }
         return true;
     }
+    /**
+     * O sync de quem esta fora da Trama (staff no criativo, sem Casa, morto, sem nome). Antes rodava
+     * inteiro a cada segundo; agora so quando o motivo de estar fora muda, ou a cada FULL_SYNC_TICKS
+     * como a mesma rede de seguranca do caminho elegivel.
+     */
+    private static void idleSync(ServerPlayer p) {
+        long tick = p.server.getTickCount();
+        int reason = Objects.hash(p.gameMode.getGameModeForPlayer(), p.isAlive(), TramaConfig.ENABLED.get(), origin(p),
+                CharacterData.get(p.server).isDead(p.getUUID()), CharacterData.get(p.server).needsName(p.getUUID()),
+                CharacterGate.deferred(p));
+        Idle last = IDLE.get(p.getUUID());
+        if (last != null && last.reason == reason && tick - last.at < FULL_SYNC_TICKS && tick >= last.at) return;
+        sync(p);
+        // Depois do sync: os ramos de fora dele chamam invalidate, que limpa esta entrada.
+        IDLE.put(p.getUUID(), new Idle(reason, tick));
+    }
+    private record Idle(int reason, long at) {}
     private static void reconcile(ServerPlayer p, Category c, ProgressData.Entry entry) {
         int earned = ProgressRules.earned(entry.experience,entry.activeSeconds,TramaConfig.XP_FIRST.get(),
                 TramaConfig.XP_INCREMENT.get(),TramaConfig.MINUTES_FIRST.get(),TramaConfig.MINUTES_INCREMENT.get());
@@ -153,11 +201,14 @@ public final class TramaRuntime {
         if (!eligible(p)) {
             TramaAttributes.apply(p,null);
             if (previous != null) previous.activity.clear();
-            sync(p);
+            idleSync(p);
             return;
         }
+        boolean wasIdle = IDLE.remove(p.getUUID()) != null;
         if (!quietSync(p,previous)) return;
         if (login) backfill(p);
+        // Entrou na Trama agora (login, saiu do criativo, ganhou Casa): a build passa a valer para quem pergunta.
+        if (login || wasIdle) changed(p);
         var s = state(p);
         String dimension = p.level().dimension().location().toString();
         if (!s.dimension.equals(dimension)) { s.dimension = dimension; s.activity.clear(); }
@@ -213,7 +264,7 @@ public final class TramaRuntime {
     }
     /** Reconcile lifecycle changes and apply the resulting build immediately. */
     public static void refresh(ServerPlayer p) {
-        invalidate(p.getUUID()); sync(p); backfill(p);
+        invalidate(p.getUUID()); sync(p); backfill(p); changed(p);
         if (eligible(p)) {
             var s = state(p); TramaAttributes.apply(p,s.effects(context(p,s)));
         } else TramaAttributes.apply(p,null);
@@ -238,7 +289,7 @@ public final class TramaRuntime {
     }
     public static void reset(ServerPlayer p) {
         SkillsAPI.getCategory(CATEGORY).ifPresent(c -> c.erase(p));
-        TramaAttributes.apply(p,null); forget(p.getUUID());
+        TramaAttributes.apply(p,null); forget(p.getUUID()); changed(p);
     }
     public static int respec(ServerPlayer p) {
         if (!eligible(p) || !sync(p)) { p.sendSystemMessage(Component.literal("Receba sua Casa para usar a Trama.")); return 0; }
@@ -251,8 +302,46 @@ public final class TramaRuntime {
         }
         SkillsAPI.getCategory(CATEGORY).orElseThrow().resetSkills(p);
         entry.lastRespec = time; ProgressData.get(p.server).setDirty();
-        forget(p.getUUID()); sync(p); TramaAttributes.apply(p,state(p).build.effects(context(p,state(p))));
-        p.sendSystemMessage(Component.literal("Trama reorganizada. Seus pontos e sua formação foram preservados.")); return 1;
+        forget(p.getUUID()); sync(p); TramaAttributes.apply(p,state(p).build.effects(context(p,state(p)))); changed(p);
+        p.sendSystemMessage(Component.literal("Trama reorganizada. Seus pontos, sua formação e o que um professor liberou foram preservados.")); return 1;
+    }
+    /**
+     * {@code /trama no conceder|remover}: o professor libera (ou tira) um no. Grava no progresso da conta,
+     * que vale offline e morre com o personagem; com a pessoa online, o sync aplica na hora.
+     */
+    public static int grant(CommandSourceStack source, Collection<GameProfile> targets, String node, boolean add) {
+        if (!SkillCatalog.contains(node)) { source.sendFailure(Component.literal("Nó desconhecido: "+node)); return 0; }
+        var name = SkillCatalog.node(node).name();
+        int done = 0;
+        for (GameProfile profile : targets) {
+            UUID account = profile.getId();
+            var online = source.getServer().getPlayerList().getPlayer(account);
+            var character = CharacterData.get(source.getServer()).find(account);
+            if (character == null) { source.sendFailure(Component.literal(profile.getName()+" ainda não tem personagem.")); continue; }
+            var data = ProgressData.get(source.getServer());
+            var entry = online != null ? entry(online) : data.find(account);
+            if (entry == null || !entry.character.equals(character.id())) entry = data.replace(account, character.id());
+            boolean changed = add ? entry.granted.add(node) : entry.granted.remove(node);
+            if (!changed) { source.sendFailure(Component.literal(profile.getName()+(add ? " já tem " : " não tem ")+name+".")); continue; }
+            data.setDirty(); done++;
+            if (online != null) {
+                invalidate(account); sync(online); changed(online);
+                online.sendSystemMessage(Component.literal(add ? "Trama: você despertou — "+name+"." : "Trama: "+name+" foi retirado por um professor."));
+            }
+            String who = profile.getName();
+            boolean offline = online == null;
+            source.sendSuccess(() -> Component.literal((add ? "Concedido " : "Retirado ")+name+" ("+node+") "+(add ? "a " : "de ")+who
+                    +(offline ? " (offline: vale no próximo login)." : ".")), true);
+        }
+        return done;
+    }
+    public static int granted(CommandSourceStack source, GameProfile profile) {
+        var entry = ProgressData.get(source.getServer()).find(profile.getId());
+        var nodes = entry == null ? List.<String>of() : entry.granted.stream().sorted().toList();
+        source.sendSuccess(() -> Component.literal(nodes.isEmpty() ? profile.getName()+" não tem nó concedido pela staff."
+                : profile.getName()+": "+nodes.stream().map(id -> SkillCatalog.node(id) == null ? id : SkillCatalog.node(id).name()+" ("+id+")")
+                .collect(Collectors.joining(", "))), false);
+        return nodes.size();
     }
     public static int open(ServerPlayer p) {
         if (!eligible(p) || !sync(p)) { p.sendSystemMessage(Component.literal("Receba sua Casa para abrir a Trama.")); return 0; }

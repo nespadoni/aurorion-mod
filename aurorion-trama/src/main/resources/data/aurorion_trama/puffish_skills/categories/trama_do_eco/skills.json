@@ -1624,5 +1624,77 @@
     "y": -194,
     "definition": "BVI8",
     "root": false
+  },
+  "AR1": {
+    "x": 517,
+    "y": -712,
+    "definition": "AR1",
+    "root": false
+  },
+  "AR2": {
+    "x": 470,
+    "y": -647,
+    "definition": "AR2",
+    "root": false
+  },
+  "AR3": {
+    "x": 423,
+    "y": -582,
+    "definition": "AR3",
+    "root": false
+  },
+  "ES_FIRE": {
+    "x": 426,
+    "y": -927,
+    "definition": "ES_FIRE",
+    "root": false
+  },
+  "ES_ICE": {
+    "x": 466,
+    "y": -897,
+    "definition": "ES_ICE",
+    "root": false
+  },
+  "ES_LIGHTNING": {
+    "x": 507,
+    "y": -868,
+    "definition": "ES_LIGHTNING",
+    "root": false
+  },
+  "ES_HOLY": {
+    "x": 547,
+    "y": -838,
+    "definition": "ES_HOLY",
+    "root": false
+  },
+  "ES_ENDER": {
+    "x": 588,
+    "y": -809,
+    "definition": "ES_ENDER",
+    "root": false
+  },
+  "ES_BLOOD": {
+    "x": 628,
+    "y": -780,
+    "definition": "ES_BLOOD",
+    "root": false
+  },
+  "ES_EVOCATION": {
+    "x": 669,
+    "y": -750,
+    "definition": "ES_EVOCATION",
+    "root": false
+  },
+  "ES_NATURE": {
+    "x": 709,
+    "y": -721,
+    "definition": "ES_NATURE",
+    "root": false
+  },
+  "ES_ELDRITCH": {
+    "x": 750,
+    "y": -691,
+    "definition": "ES_ELDRITCH",
+    "root": false
   }
 }
