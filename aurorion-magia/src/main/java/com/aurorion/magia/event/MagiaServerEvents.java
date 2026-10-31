@@ -7,6 +7,7 @@ import com.aurorion.magia.compat.FrozenLink;
 import com.aurorion.magia.compat.VoiceMute;
 import com.aurorion.magia.network.MagiaNetwork;
 import com.aurorion.magia.network.SpellVisualPayload;
+import com.aurorion.magia.node.Nodes;
 import com.aurorion.magia.effect.EffectCleanup;
 import com.aurorion.magia.passive.DreadAura;
 import com.aurorion.magia.passive.HealingTouch;
@@ -43,7 +44,10 @@ import com.aurorion.magia.spell.TimeStop;
 import com.aurorion.magia.spell.ToggleCooldown;
 import com.aurorion.magia.spell.ControlSpells;
 import com.aurorion.magia.spell.WaterCage;
+import com.aurorion.magia.config.MagiaConfig;
+import com.aurorion.magia.unlock.ArcaneProfile;
 import com.aurorion.magia.unlock.SpellAccess;
+import com.aurorion.magia.unlock.SpellCheck;
 import com.aurorion.magia.unlock.SpellUnlockData;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
 import io.redspace.ironsspellbooks.api.events.SpellCooldownAddedEvent;
@@ -168,6 +172,11 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.anacronico.fora_do_corpo").withStyle(ChatFormatting.GOLD));
             return;
         }
+        // Falha critica no teste da ficha: o fio ainda nao voltou a mao.
+        if (player.hasEffect(MagiaEffects.EXHAUSTED)) {
+            deny(event, player, Component.translatable("aurorion_magia.exausto").withStyle(ChatFormatting.GRAY));
+            return;
+        }
 
         AbstractSpell spell = SpellRegistry.getSpell(event.getSpellId());
         // Dentro do corpo de outro, a unica magia que responde e a que devolve o corpo.
@@ -175,10 +184,17 @@ public final class MagiaServerEvents {
             deny(event, player, Component.translatable("aurorion_magia.dentro_de_outro").withStyle(ChatFormatting.DARK_PURPLE));
             return;
         }
-        if (!SpellAccess.canCast(player, spell)) {
-            deny(event, player, Component.translatable("aurorion_magia.nao_liberada",
-                    spell.getDisplayName(player)).withStyle(ChatFormatting.RED));
+        int level = event.getSpellLevel();
+        if (!SpellAccess.canCast(player, spell, level)) {
+            int tier = SpellAccess.missingTier(player, spell, level);
+            deny(event, player, tier > 0
+                    ? Component.translatable("aurorion_magia.no_insuficiente", spell.getDisplayName(player),
+                            SpellAccess.roman(tier)).withStyle(ChatFormatting.RED)
+                    : Component.translatable("aurorion_magia.nao_liberada", spell.getDisplayName(player)).withStyle(ChatFormatting.RED));
+            return;
         }
+        // O teste da ficha. Falhou: o custo ja foi cobrado e a mensagem ja saiu; so nao deixa conjurar.
+        if (spell != null && !SpellCheck.attempt(player, spell, level, event.getCastSource())) event.setCanceled(true);
     }
 
     /**
@@ -189,12 +205,20 @@ public final class MagiaServerEvents {
     public static void onCooldown(SpellCooldownAddedEvent.Pre event) {
         if (ToggleCooldown.consume(event.getEntity(), event.getSpell())) {
             event.setCanceled(true);
+            // Ligou: a proxima conjuracao desta magia desliga, e desligar nao passa pelo teste da ficha.
+            if (event.getEntity() instanceof ServerPlayer player) SpellCheck.toggledOn(player, event.getSpell());
+            return;
         } else if (event.getSpell() == MagiaSpells.MANUS_ABYSSI.get()) {
             // 140 / 110 / 80 s: o evento do Iron's nao traz o nivel, entao a magia o guardou na conjuracao.
             event.setEffectiveCooldown(ManusAbyssiSpell.cooldownFor(event.getEntity(), event.getEffectiveCooldown()));
         } else if (event.getSpell() == MagiaSpells.DOLIUM_ARDENS.get() && event.getEffectiveCooldown() <= 0) {
             // Multiplicadores de arma/atributos tambem podem zerar a recarga depois do config.
             event.setEffectiveCooldown(event.getSpell().getSpellCooldown());
+        }
+        // Especialista: recarga menor nas magias da propria escola.
+        if (event.getEntity() instanceof ServerPlayer player && ArcaneProfile.isSpecialty(player, event.getSpell().getSchoolType())) {
+            int less = MagiaConfig.SPECIALIST_COOLDOWN.get();
+            if (less > 0) event.setEffectiveCooldown(Math.round(event.getEffectiveCooldown() * (100 - less) / 100f));
         }
     }
 
@@ -208,11 +232,14 @@ public final class MagiaServerEvents {
     public static void onInscribe(InscribeSpellEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         AbstractSpell spell = event.getSpellData().getSpell();
-        if (SpellAccess.canCast(player, spell)) return;
+        int level = event.getSpellData().getLevel();
+        if (SpellAccess.canCast(player, spell, level)) return;
 
         event.setCanceled(true);
-        player.displayClientMessage(Component.translatable("aurorion_magia.inscricao_negada",
-                spell.getDisplayName(player)).withStyle(ChatFormatting.RED), true);
+        int tier = SpellAccess.missingTier(player, spell, level);
+        player.displayClientMessage((tier > 0
+                ? Component.translatable("aurorion_magia.no_insuficiente.inscricao", spell.getDisplayName(player), SpellAccess.roman(tier))
+                : Component.translatable("aurorion_magia.inscricao_negada", spell.getDisplayName(player))).withStyle(ChatFormatting.RED), true);
     }
 
     // --- Entrada, dimensao e personagem -------------------------------------------------------
@@ -230,8 +257,10 @@ public final class MagiaServerEvents {
         player.removeEffect(MagiaEffects.DOMAIN_EXPANSION);
         player.removeEffect(MagiaEffects.INFINITE_VOID);
         InfiniteVoidEffect.release(player);
-        SpellAccess.reconcile(player);
+        // Despertar Arcano e especialidade (a Trama manda o SkillTreeChangedEvent de novo quando entrar).
+        ArcaneProfile.refresh(player);
         Seals.sendAll(player);
+        Nodes.syncTo(player);
         EffectCleanup.sweep(player);
         ControlSpells.syncVoice(player, null);
         ControlSpells.sendVisualsTo(player, player);
@@ -274,6 +303,8 @@ public final class MagiaServerEvents {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         ToggleCooldown.forget(event.getEntity().getUUID());
+        ArcaneProfile.forget(event.getEntity().getUUID());
+        SpellCheck.forget(event.getEntity().getUUID());
         VoiceMute.unmute(event.getEntity().getUUID());
         IronBinding.release(event.getEntity().getUUID());
         // O tempo parado e de quem esta ali para segura-lo: sair do jogo o devolve a todos.
@@ -343,7 +374,7 @@ public final class MagiaServerEvents {
             SoulRealm.end(player);
             Domains.stop(player);
             player.getPersistentData().remove("aurorion_magia:ultima_colheita");
-            SpellAccess.reconcile(player);
+            ArcaneProfile.refresh(player);
             Passives.onLogin(player);
         }
     }
@@ -355,6 +386,8 @@ public final class MagiaServerEvents {
         IronBinding.clear();
         VoiceMute.clear();
         ToggleCooldown.clear();
+        ArcaneProfile.clear();
+        SpellCheck.clear();
     }
 
     // --- Vox Interdicta -----------------------------------------------------------------------

@@ -1,6 +1,7 @@
 package com.aurorion.magia.registry;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.spoils.SpoilsInfo;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -26,6 +27,13 @@ public final class MagiaComponents {
             COMPONENTS.register("passiva", id -> DataComponentType.<ResourceLocation>builder()
                     .persistent(ResourceLocation.CODEC)
                     .networkSynchronized(ResourceLocation.STREAM_CODEC)
+                    .build());
+
+    /** De quem sao os pertences numa mochila do Spoliatio. O conteudo vai no {@code CONTAINER} vanilla. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<SpoilsInfo>> SPOILS =
+            COMPONENTS.register("espolios", id -> DataComponentType.<SpoilsInfo>builder()
+                    .persistent(SpoilsInfo.CODEC)
+                    .networkSynchronized(SpoilsInfo.STREAM_CODEC)
                     .build());
 
     private MagiaComponents() {

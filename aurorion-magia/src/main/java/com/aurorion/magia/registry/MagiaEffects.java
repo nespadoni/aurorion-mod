@@ -288,6 +288,15 @@ public final class MagiaEffects {
     public static final DeferredHolder<MobEffect, MobEffect> VOID_POCKET = EFFECTS.register("bolso_do_vazio",
             () -> new ClockEffect(MobEffectCategory.BENEFICIAL, 0x1A1030, 20, VoidPocket::tick));
 
+    /**
+     * Falha critica no teste da ficha: o fio partiu na mao. Lento e sem conjurar ate passar; a tontura
+     * e uma Nausea curta, a parte.
+     */
+    public static final DeferredHolder<MobEffect, MobEffect> EXHAUSTED = EFFECTS.register("exausto",
+            () -> new MagiaEffect(MobEffectCategory.HARMFUL, 0x5A6080)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, AurorionMagia.id("exausto_speed"),
+                            -0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
     private MagiaEffects() {
     }
 }

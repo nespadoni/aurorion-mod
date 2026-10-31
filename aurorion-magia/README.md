@@ -1,5 +1,10 @@
 # Aurorion Magia
 
+Novidades da **0.10.0**: a ficha e a Trama decidem a magia. **Despertar Arcano** (nós da Trama que só
+um professor concede) libera as magias por nível; **teste da ficha** a cada conjuração, com falha de
+custo cheio, falha crítica (Exausto) e acerto crítico (um nível a mais); **especialidade** de escola
+escolhida na Trama. Ver "Despertar Arcano, teste e especialidade" abaixo.
+
 Novidades da **0.7.0**: Clarão (granada de luz), Garra do Abismo (a ultimate do Malzahar) e as quatro passivas dos representantes dos elementos — Salto Quântico (Robs), Olhar Anacrônico (Gretta), Lua Minguante (Iacy) e Bolso do Vazio (Iris), com uma tecla de passiva. Ver "Clarão", "Garra do Abismo" e "Representantes dos elementos" abaixo.
 
 Novidades da **0.6.0**: Reino das Almas, Vazio Infinito, Santuário Malevolente, duas novas passivas e efeitos ampliados da Lux/Genki Dama. [Detalhes, comandos e validação](../docs/dominios-almas-ultimates-2026-10-08.md).
@@ -21,6 +26,65 @@ idiomas; por isso a descrição (`.guide`) não repete mais o latim no começo.
 
 Versões de referência (jars em `mod-servidor-referencia/`): Iron's Spells `1.21.1-3.16.3`, Iron's
 Restrictions `1.21.1-5.2.0`, Emotecraft `2.4.12`, Simple Voice Chat `1.21.1-2.6.24`.
+
+## Despertar Arcano, teste e especialidade (0.10.0)
+
+Com o `aurorion-trama` no pack e `liberacao.modo = "no"` (padrão), quem decide o que cada um conjura
+são os nós do **Despertar Arcano** — e eles **só um professor concede**:
+
+```
+/trama no conceder <jogadores> AR1     # Despertar I: comuns e incomuns, pergaminhos, oficina arcana
+/trama no conceder <jogadores> AR2     # Despertar II: raras, épicas e lendárias
+/trama no conceder <jogadores> AR3     # Despertar III: proibidas
+/trama no remover  <jogadores> AR2
+/trama no ver <jogador>
+```
+
+- O nível exigido sai da **raridade do nível conjurado** (`nos.raridadeNivel2`, padrão `RARE`):
+  uma Bola de Fogo nível 1 (comum) pede o I; a mesma no nível em que vira rara pede o II.
+- A liberação antiga (`/aurorion spells unlock`) continua valendo como **exceção**, nos dois modos.
+- Sem a Trama no pack, ou com `modo = "aula"`, tudo volta a ser como antes (só a liberação por aula).
+- O espelho do Iron's Restrictions (`learnedSpells`) passa a seguir o Despertar: aparece no livro o que
+  o nível alcança ao menos no nível mínimo da magia.
+- A **oficina arcana** (mesa de inscrição, forja de pergaminhos, bigorna arcana, caldeirão do
+  alquimista — tag `aurorion_magia:oficina_arcana`) não abre sem o Despertar I. Inscrever no livro
+  respeita o nível da raridade.
+
+### Teste da ficha
+
+A cada conjuração de jogador (livro, pergaminho, arma imbuída; não `/cast` nem mob): **d20 + bônus de
+magia** contra a CD da raridade conjurada. O bônus vem do retrato da ficha (`aurorion-ficha`,
+`retrato.magiaAtributo` + `retrato.magiaPericia`: **Vitral + Astros & Mistos**); sem ficha lida,
+`teste.bonusSemFicha` (4).
+
+| Resultado | Quando | O que acontece |
+|---|---|---|
+| Acerto crítico | 20 natural, ou total ≥ CD + 10 | A magia sai com `teste.niveisNoCritico` (1) nível a mais: dano, duração, alcance e quantidade crescem com o nível em toda magia |
+| Sucesso | total ≥ CD | Normal |
+| Falha | total < CD | A magia não sai e o **custo é cheio**: mana e recarga; o pergaminho se perde |
+| Falha crítica | 1 natural (CD ≥ `cdMinimaNatural`), ou total ≤ CD − 10 | Como a falha, mais **Exausto** (10 s, lento, sem conjurar) e 3 s de tontura |
+
+CDs padrão: comum 8, incomum 10, rara 13, épica 16, lendária 19; proibida +3. Não testa em criativo nem a conjuração
+que **desliga** uma magia de ligar e desligar, nem recast do Iron's. Os efeitos de falha e crítico são
+partículas e sons vanilla (nenhum pacote novo; o cliente não precisa de atualização para vê-los).
+
+### Especialidade
+
+Na Trama, depois do Despertar I, a pessoa compra **uma** especialidade (`ES_FIRE` … `ES_ELDRITCH`,
+exclusivas entre si; trocar é `/trama respec`). Na escola dela:
+
+- teste com **vantagem** (dois d20, fica o maior) e +`especialista.bonusTeste` (2);
+- `especialista.manaMenos` (15%) menos mana, `especialista.recargaMenos` (20%) menos recarga;
+- +`especialista.poderEscola` (20%) no atributo de poder da escola do Iron's — dano, cura e o que escala
+  com poder, em todas as magias da escola.
+
+A aba Habilidades da ficha mostra o Despertar, a especialidade e a chance de falhar por raridade.
+
+### Custo
+
+Por tentativa de conjuração: três buscas em hash (retrato da ficha, perfil arcano, liberações) e um ou
+dois números aleatórios. O perfil arcano só é recalculado no login, no `SkillTreeChangedEvent` da Trama
+e no reset de personagem. Nada por tick.
 
 ## Liberação de magias
 
@@ -1306,6 +1370,10 @@ O `aurorion-areas` usa as mesmas duas peças na névoa da Floresta Negra.
 `dreadSparesAllies` e `healingTouchHealsHostiles`. (`dreadDarkens` saiu: a aura não cega mais.)
 A seção `[aliados]` tem `magiasIgnoramTime`; a `[destruicao]` tem `esferaQuebraBlocos`,
 `limiarJustica`, `limiarProfundezas` e `alcanceBomba`.
+Desde a 0.10.0: `[liberacao].modo` (`no`/`aula`), `[nos]` (`nivel1`–`nivel3`, `raridadeNivel2`,
+`especialidades`), `[teste]` (`habilitado`, as CDs por raridade, `cdProibida`, `cdMinimaNatural`,
+`bonusSemFicha`, `niveisNoCritico`, `segundosExausto`, `segundosTonto`) e `[especialista]`
+(`bonusTeste`, `manaMenos`, `recargaMenos`, `poderEscola`). Ver "Despertar Arcano, teste e especialidade".
 
 ### Magia entre aliados — `magiasIgnoramTime`
 
@@ -1334,6 +1402,7 @@ Tags de datapack (`data/aurorion_magia/tags/`):
 | `block/nao_selavel` | Lacre Profano: nunca lacra, mesmo tendo inventário |
 | `block/apagavel` | Devorar Luz: força o apagamento em bloco que não usa `lit` |
 | `block/inapagavel` | Devorar Luz: nunca apaga (fornalha, lâmpada de redstone…) |
+| `block/oficina_arcana` | Blocos que exigem o Despertar Arcano I para abrir (mesa de inscrição, forja, bigorna arcana, caldeirão) |
 
 ## Build
 

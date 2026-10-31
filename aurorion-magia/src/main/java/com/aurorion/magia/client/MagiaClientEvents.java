@@ -81,6 +81,7 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             ClientSpellVisuals.tick();
+            NodeClient.tick();
             AnachronicCamera.tick();
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
@@ -148,6 +149,7 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onRenderLevel(RenderLevelStageEvent event) {
             SigilRenderer.render(event);
+            NodeRenderer.render(event);
         }
 
         /**
@@ -204,7 +206,7 @@ public final class MagiaClientEvents {
                     || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN || ShaderPacks.inUse()) return;
             Vec3 camera = event.getCamera().getPosition();
             // So o Devorar Luz fecha o ar. O medo nao: quem esta na aura tem que ver a cena.
-            float weight = ClientSpellVisuals.darkness(camera);
+            float weight = Math.max(ClientSpellVisuals.darkness(camera), NodeClient.darkness(camera));
             if (weight < .001F) return;
             float far = event.getFarPlaneDistance();
             float distance = far + (Math.min(far, DARK_FOG_DISTANCE) - far) * weight;
@@ -221,7 +223,8 @@ public final class MagiaClientEvents {
         @SubscribeEvent
         public static void onFogColor(ViewportEvent.ComputeFogColor event) {
             if (event.getCamera().getFluidInCamera() != FogType.NONE || ShaderPacks.inUse()) return;
-            float darkness = ClientSpellVisuals.darkness(event.getCamera().getPosition()) * .9F;
+            Vec3 camera = event.getCamera().getPosition();
+            float darkness = Math.max(ClientSpellVisuals.darkness(camera), NodeClient.darkness(camera)) * .9F;
             if (darkness < .001F) return;
             event.setRed(event.getRed() * (1 - darkness) + .02F * darkness);
             event.setGreen(event.getGreen() * (1 - darkness));
@@ -345,6 +348,7 @@ public final class MagiaClientEvents {
             MagiaSoundscape.clear();
             ClientSpellVisuals.clear();
             FogLayer.clear();
+            NodeClient.clear();
             PolymorphRender.clear();
         }
     }

@@ -20,6 +20,7 @@ import com.aurorion.magia.spell.FerrumLigatumSpell;
 import com.aurorion.magia.spell.FurorVenatorisSpell;
 import com.aurorion.magia.spell.FulgorCaecansSpell;
 import com.aurorion.magia.spell.ManusAbyssiSpell;
+import com.aurorion.magia.spell.SpoliatioSpell;
 import com.aurorion.magia.spell.GenuaFlecteSpell;
 import com.aurorion.magia.spell.ImperiumMentisSpell;
 import com.aurorion.magia.spell.ImpetusVentiSpell;
@@ -214,6 +215,10 @@ public final class MagiaSpells {
             SPELLS.register("fulgor_caecans", FulgorCaecansSpell::new);
     public static final DeferredHolder<AbstractSpell, ManusAbyssiSpell> MANUS_ABYSSI =
             SPELLS.register("manus_abyssi", ManusAbyssiSpell::new);
+
+    // --- Sequestro -------------------------------------------------------------------------------
+    public static final DeferredHolder<AbstractSpell, SpoliatioSpell> SPOLIATIO =
+            SPELLS.register("spoliatio", SpoliatioSpell::new);
 
     private MagiaSpells() {
     }

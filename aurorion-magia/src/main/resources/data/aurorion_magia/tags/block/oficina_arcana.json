@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "irons_spellbooks:inscription_table", "required": false },
+    { "id": "irons_spellbooks:scroll_forge", "required": false },
+    { "id": "irons_spellbooks:arcane_anvil", "required": false },
+    { "id": "irons_spellbooks:alchemist_cauldron", "required": false }
+  ]
+}

@@ -45,6 +45,8 @@ public final class FogLayer implements LayeredDraw.Layer {
 
     /** Suavizacao: a nevoa fecha e abre em rampa, e nao de um quadro para o outro. */
     private static float darkness;
+    /** A sombra nas bordas do No 2, com a mesma rampa. */
+    private static float mind;
 
     @Override
     public void render(GuiGraphics graphics, DeltaTracker delta) {
@@ -53,8 +55,14 @@ public final class FogLayer implements LayeredDraw.Layer {
         if (player == null || minecraft.level == null) return;
 
         Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
-        float toDarkness = ClientSpellVisuals.darkness(camera);
-        if (!minecraft.isPaused()) darkness += (toDarkness - darkness) * .08F;
+        float toMind = NodeClient.darkness(camera);
+        float toDarkness = Math.max(ClientSpellVisuals.darkness(camera), toMind);
+        if (!minecraft.isPaused()) {
+            darkness += (toDarkness - darkness) * .08F;
+            mind += (toMind - mind) * .05F;
+        }
+        // O No 2 fecha a mente pelas bordas com ou sem shader: a neblina e o ar, isto e o que a pessoa sente.
+        if (mind > .004F) ScreenFog.draw(graphics, 0x000000, mind * .5F);
         if (!ShaderPacks.inUse()) return;
 
         // Sem shader este peso vira neblina de verdade em MagiaClientEvents; com shader, aqui.
@@ -64,5 +72,6 @@ public final class FogLayer implements LayeredDraw.Layer {
     /** Sair do mundo com a tela meio fechada nao pode deixar a proxima entrada escura. */
     static void clear() {
         darkness = 0;
+        mind = 0;
     }
 }

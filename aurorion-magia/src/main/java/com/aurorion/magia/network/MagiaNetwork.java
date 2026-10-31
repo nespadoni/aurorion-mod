@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 @EventBusSubscriber(modid = AurorionMagia.MOD_ID)
 public final class MagiaNetwork {
     /** Versao do protocolo. Bump quando mudar o formato de algum payload ou a ordem dos Kind. */
-    private static final String PROTOCOL_VERSION = "11";
+    private static final String PROTOCOL_VERSION = "12";
 
     private MagiaNetwork() {
     }
@@ -45,7 +45,13 @@ public final class MagiaNetwork {
                             }
                         }))
                 .playToClient(PassiveMenuPayloads.Menu.TYPE, PassiveMenuPayloads.Menu.STREAM_CODEC,
-                        MagiaNetwork::handleMenu);
+                        MagiaNetwork::handleMenu)
+                .playToClient(NodePayload.TYPE, NodePayload.STREAM_CODEC, MagiaNetwork::handleNodes);
+    }
+
+    private static void handleNodes(NodePayload payload, IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) return;
+        context.enqueueWork(() -> com.aurorion.magia.client.NodeClient.accept(payload));
     }
 
     private static void handleMenu(PassiveMenuPayloads.Menu payload, IPayloadContext context) {

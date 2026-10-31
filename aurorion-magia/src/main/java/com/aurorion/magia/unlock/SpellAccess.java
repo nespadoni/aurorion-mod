@@ -1,7 +1,9 @@
 package com.aurorion.magia.unlock;
 
 import com.aurorion.magia.config.MagiaConfig;
+import com.aurorion.magia.mixin.SyncedSpellDataAccessor;
 import com.aurorion.magia.spell.AurorionSpell;
+import io.redspace.ironsspellbooks.api.magic.LearnedSpellData;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
@@ -42,14 +44,41 @@ public final class SpellAccess {
     private SpellAccess() {
     }
 
-    /** Custo: duas buscas em hash. Chamado a cada tentativa de conjuracao. */
+    /** No menor nivel da magia: o espelho do Iron's e a canalizacao que perdeu a liberacao. */
     public static boolean canCast(ServerPlayer player, @Nullable AbstractSpell spell) {
+        return spell == null || canCast(player, spell, spell.getMinLevel());
+    }
+
+    /**
+     * Custo: tres buscas em hash. Chamado a cada tentativa de conjuracao.
+     *
+     * <p>No modo {@code no} (padrao, com a Trama no pack) decide o Despertar Arcano que o professor
+     * concedeu: o nivel exigido sai da raridade do nivel conjurado ({@link ArcaneProfile#requiredTier}).
+     * A liberacao da staff por {@code /aurorion spells unlock} continua valendo como excecao, nos dois modos.
+     */
+    public static boolean canCast(ServerPlayer player, @Nullable AbstractSpell spell, int level) {
         if (spell == null || spell == SpellRegistry.none()) return true;
         if (bypasses(player)) return true;
         if (granted(grantsOf(player), spell)) return true;
+        if (ArcaneProfile.nodeMode()) return ArcaneProfile.of(player).tier() >= ArcaneProfile.requiredTier(spell, level);
         // Aprendido por fora (manuscrito, eldritch) nunca vale para magia proibida.
         return !MagiaConfig.AUTHORITATIVE.get() && !isForbidden(spell)
                 && MagicData.getPlayerMagicData(player).getSyncedData().isSpellLearned(spell);
+    }
+
+    /** O Despertar que falta para esta conjuracao, ou 0 quando o motivo nao e o no (modo aula). */
+    public static int missingTier(ServerPlayer player, AbstractSpell spell, int level) {
+        if (!ArcaneProfile.nodeMode()) return 0;
+        int required = ArcaneProfile.requiredTier(spell, level);
+        return ArcaneProfile.of(player).tier() >= required ? 0 : required;
+    }
+
+    public static String roman(int tier) {
+        return switch (tier) {
+            case 1 -> "I";
+            case 2 -> "II";
+            default -> "III";
+        };
     }
 
     /**
@@ -76,15 +105,15 @@ public final class SpellAccess {
      * Faz o "aprendido" do Iron's refletir a lista oficial. Roda no login, depois de cada comando e no
      * reset de personagem — nunca em tick.
      *
-     * <p>O custo e uma passada pelo registro de magias (~150 entradas no pack) e no maximo dois
-     * pacotes de sincronizacao, e so quando algo mudou: o caso comum, login sem mudanca, nao envia
-     * nada.
+     * <p>O custo e uma passada pelo registro de magias (~150 entradas no pack) e no maximo um pacote
+     * de sincronizacao, e so quando algo mudou: o caso comum, login sem mudanca, nao envia nada.
      */
     public static void reconcile(ServerPlayer player) {
         MagicData magic = MagicData.getPlayerMagicData(player);
         SyncedSpellData synced = magic.getSyncedData();
         SpellGrants grants = grantsOf(player);
         boolean everything = bypasses(player);
+        int tier = ArcaneProfile.nodeMode() ? ArcaneProfile.of(player).tier() : -1;
 
         List<AbstractSpell> official = new ArrayList<>();
         boolean missing = false;
@@ -92,7 +121,9 @@ public final class SpellAccess {
 
         for (AbstractSpell spell : SpellRegistry.REGISTRY) {
             if (spell == SpellRegistry.none()) continue;
-            boolean allowed = everything || granted(grants, spell);
+            // No modo do Despertar, "aprendida" e a magia que o nivel alcanca ao menos no nivel minimo dela.
+            boolean allowed = everything || granted(grants, spell)
+                    || tier >= 0 && tier >= ArcaneProfile.requiredTier(spell, spell.getMinLevel());
             boolean learned = synced.isSpellLearned(spell);
             if (allowed) {
                 official.add(spell);
@@ -102,14 +133,16 @@ public final class SpellAccess {
             }
         }
 
-        // O Iron's nao tem "esquecer uma": so esquecer todas. E o mesmo caminho que o comando
-        // forgetSpell do Restrictions evita usando mixin; aqui o custo e aceitavel porque nao e tick.
-        if (stray && MagiaConfig.AUTHORITATIVE.get()) {
-            synced.forgetAllSpells();
-            missing = !official.isEmpty();
-        }
-        if (missing) {
-            for (AbstractSpell spell : official) synced.learnSpell(spell, false);
+        // Nunca forgetAllSpells/learnSpell aqui: o forgetAllSpells ja sincroniza, e o pacote dele ainda
+        // esta na fila do Netty quando o learnSpell mexe no mesmo set — o CME derrubava quem estava
+        // perto no login. Monta o conjunto novo a parte e troca de uma vez (ver SyncedSpellDataAccessor).
+        boolean purge = stray && (MagiaConfig.AUTHORITATIVE.get() || tier >= 0);
+        if (purge || missing) {
+            SyncedSpellDataAccessor access = (SyncedSpellDataAccessor) synced;
+            LearnedSpellData next = new LearnedSpellData();
+            if (!purge) next.learnedSpells.addAll(access.aurorion_magia$learned().learnedSpells);
+            for (AbstractSpell spell : official) next.learnedSpells.add(spell.getSpellResource());
+            access.aurorion_magia$setLearned(next);
             synced.doSync();
         }
 

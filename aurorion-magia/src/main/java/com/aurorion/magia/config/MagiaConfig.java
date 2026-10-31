@@ -12,6 +12,17 @@ public final class MagiaConfig {
     public static final ModConfigSpec.BooleanValue STAFF_BYPASS;
     public static final ModConfigSpec.BooleanValue AUTHORITATIVE;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> FORBIDDEN_SPELLS;
+    public static final ModConfigSpec.ConfigValue<String> UNLOCK_MODE;
+
+    public static final ModConfigSpec.ConfigValue<String> NODE_TIER1, NODE_TIER2, NODE_TIER3, TIER2_RARITY;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> SPECIALTY_NODES;
+
+    public static final ModConfigSpec.BooleanValue TEST_ENABLED;
+    public static final ModConfigSpec.IntValue DC_COMMON, DC_UNCOMMON, DC_RARE, DC_EPIC, DC_LEGENDARY, DC_FORBIDDEN,
+            NATURAL_MIN_DC, DEFAULT_BONUS, CRIT_LEVELS, EXHAUST_SECONDS, DIZZY_SECONDS;
+
+    public static final ModConfigSpec.IntValue SPECIALIST_BONUS, SPECIALIST_MANA, SPECIALIST_COOLDOWN;
+    public static final ModConfigSpec.DoubleValue SPECIALIST_POWER;
     public static final ModConfigSpec.IntValue DOMINATION_RADIUS;
 
     public static final ModConfigSpec.IntValue DREAD_RADIUS;
@@ -76,6 +87,76 @@ public final class MagiaConfig {
                         "Ids completos, ex.: [\"irons_spellbooks:black_hole\"]")
                 .defineListAllowEmpty("forbiddenSpells", List.of(), () -> "irons_spellbooks:black_hole",
                         value -> value instanceof String id && ResourceLocation.tryParse(id) != null);
+
+        UNLOCK_MODE = BUILDER
+                .comment(
+                        "Quem decide o que cada um conjura.",
+                        "no (padrao): os nos do Despertar Arcano na Trama, que so um professor concede",
+                        "  (/trama no conceder <jogador> AR1). I: magias comuns e incomuns; II: raras, epicas e",
+                        "  lendarias; III: proibidas. O /aurorion spells unlock continua valendo como excecao.",
+                        "aula: so o /aurorion spells unlock, como antes da Trama.",
+                        "Sem o aurorion-trama no pack, vale 'aula' automaticamente.")
+                .define("modo", "no", value -> "no".equals(value) || "aula".equals(value));
+
+        BUILDER.pop();
+        BUILDER.comment("Nos da Trama que a magia le (aurorion-trama).").push("nos");
+
+        NODE_TIER1 = BUILDER.comment("Despertar Arcano I.").define("nivel1", "AR1", MagiaConfig::nodeId);
+        NODE_TIER2 = BUILDER.comment("Despertar Arcano II.").define("nivel2", "AR2", MagiaConfig::nodeId);
+        NODE_TIER3 = BUILDER.comment("Despertar Arcano III (proibidas).").define("nivel3", "AR3", MagiaConfig::nodeId);
+        TIER2_RARITY = BUILDER
+                .comment("A partir desta raridade (do nivel conjurado) a magia exige o Despertar II.",
+                        "COMMON, UNCOMMON, RARE, EPIC ou LEGENDARY.")
+                .define("raridadeNivel2", "RARE", value -> value instanceof String text
+                        && List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY").contains(text));
+        SPECIALTY_NODES = BUILDER
+                .comment("Especialidade: escola=no. So vale com o Despertar I.")
+                .defineListAllowEmpty("especialidades", List.of(
+                                "irons_spellbooks:fire=ES_FIRE", "irons_spellbooks:ice=ES_ICE",
+                                "irons_spellbooks:lightning=ES_LIGHTNING", "irons_spellbooks:holy=ES_HOLY",
+                                "irons_spellbooks:ender=ES_ENDER", "irons_spellbooks:blood=ES_BLOOD",
+                                "irons_spellbooks:evocation=ES_EVOCATION", "irons_spellbooks:nature=ES_NATURE",
+                                "irons_spellbooks:eldritch=ES_ELDRITCH"),
+                        () -> "irons_spellbooks:fire=ES_FIRE",
+                        value -> value instanceof String text && text.matches("[a-z0-9_.-]+:[a-z0-9_/.-]+=[A-Za-z0-9_]+"));
+
+        BUILDER.pop();
+        BUILDER.comment(
+                "Teste da ficha a cada conjuracao: d20 + Vitral + Astros & Mistos (ou o que a ficha configurar)",
+                "contra a CD da raridade conjurada. Falha: a magia nao sai e o custo e cheio (mana e recarga; o",
+                "pergaminho se perde). Falha critica: alem disso, Exausto. Critico: a magia sai com nivel a mais.").push("teste");
+
+        TEST_ENABLED = BUILDER.comment("Desligado, toda conjuracao liberada sai, como antes.").define("habilitado", true);
+        DC_COMMON = BUILDER.comment("CD das magias comuns.").defineInRange("cdComum", 8, 0, 40);
+        DC_UNCOMMON = BUILDER.comment("CD das incomuns.").defineInRange("cdIncomum", 10, 0, 40);
+        DC_RARE = BUILDER.comment("CD das raras.").defineInRange("cdRara", 13, 0, 40);
+        DC_EPIC = BUILDER.comment("CD das epicas.").defineInRange("cdEpica", 16, 0, 40);
+        DC_LEGENDARY = BUILDER.comment("CD das lendarias.").defineInRange("cdLendaria", 19, 0, 40);
+        DC_FORBIDDEN = BUILDER.comment("Somado a CD de uma magia proibida.").defineInRange("cdProibida", 3, 0, 20);
+        NATURAL_MIN_DC = BUILDER.comment("O 1 natural so e falha critica com CD a partir desta.")
+                .defineInRange("cdMinimaNatural", 8, 0, 40);
+        DEFAULT_BONUS = BUILDER
+                .comment("Bonus de quem nao tem ficha lida (sem integracao, ficha antiga, recem-chegado).")
+                .defineInRange("bonusSemFicha", 4, -10, 30);
+        CRIT_LEVELS = BUILDER
+                .comment("Niveis a mais no acerto critico (dano, duracao, alcance e quantidade crescem com o nivel).",
+                        "O teto e o nivel maximo da magia mais estes niveis.")
+                .defineInRange("niveisNoCritico", 1, 0, 5);
+        EXHAUST_SECONDS = BUILDER.comment("Exausto depois da falha critica: lento e sem conjurar.")
+                .defineInRange("segundosExausto", 10, 0, 120);
+        DIZZY_SECONDS = BUILDER.comment("Tontura (nausea) da falha critica.").defineInRange("segundosTonto", 3, 0, 30);
+
+        BUILDER.pop();
+        BUILDER.comment("Especialista: a escola da especialidade escolhida na Trama.").push("especialista");
+
+        SPECIALIST_BONUS = BUILDER.comment("Bonus no teste (alem da vantagem: rola dois d20 e fica com o maior).")
+                .defineInRange("bonusTeste", 2, 0, 20);
+        SPECIALIST_MANA = BUILDER.comment("Mana a menos, em %.").defineInRange("manaMenos", 15, 0, 90);
+        SPECIALIST_COOLDOWN = BUILDER.comment("Recarga a menos, em %.").defineInRange("recargaMenos", 20, 0, 90);
+        SPECIALIST_POWER = BUILDER
+                .comment("Poder da escola a mais (o atributo do Iron's: dano, cura e efeitos que escalam com poder).",
+                        "0.2 = +20%.")
+                .defineInRange("poderEscola", 0.2, 0.0, 2.0);
 
         BUILDER.pop();
         BUILDER.comment("Magia entre aliados.").push("aliados");
@@ -279,5 +360,9 @@ public final class MagiaConfig {
     }
 
     private MagiaConfig() {
+    }
+
+    private static boolean nodeId(Object value) {
+        return value instanceof String text && text.matches("[A-Za-z0-9_]{1,32}");
     }
 }

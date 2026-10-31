@@ -6,6 +6,9 @@ issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
 [[mixins]]
 config = "aurorion_magia.mixins.json"
 
+[[mixins]]
+config = "aurorion_magia.restrictions.mixins.json"
+
 [[mods]]
 modId = "${mod_id}"
 version = "${mod_version}"
@@ -29,10 +32,12 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
+# 0.6.7: CharacterAbilities (magias e passivas na aba Habilidades da ficha).
+# 0.6.8: CharacterSheet, SkillTreeGate e SheetCheck (teste do lancamento, Despertar Arcano).
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.6.6,)"
+versionRange = "[0.6.8,)"
 ordering = "AFTER"
 side = "BOTH"
 
