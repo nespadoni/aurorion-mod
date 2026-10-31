@@ -100,7 +100,11 @@ public final class VincularCommand {
         return switch (response.code()) {
             case "linked" -> {
                 String account = response.body() != null && response.body().has("account") ? response.body().get("account").getAsString() : "";
-                yield Component.literal("✔ Conta vinculada" + (account.isEmpty() ? "" : " a " + account) + ". Agora você pode escrever com /diario.")
+                String next = net.neoforged.fml.ModList.get().isLoaded("aurorion_ficha")
+                        // Sem tecla fixa: o servidor não sabe qual tecla o jogador configurou para a ficha.
+                        ? "Agora o diário (/diario) e a ficha (/ficha ou a tecla da ficha) já reconhecem você."
+                        : "Agora você pode escrever com /diario.";
+                yield Component.literal("✔ Conta vinculada" + (account.isEmpty() ? "" : " a " + account) + ". " + next)
                         .withStyle(ChatFormatting.GREEN);
             }
             case "invalid_code" -> error("Código inválido ou vencido. Gere outro no site, em Perfil → Diário.");

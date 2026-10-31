@@ -1,0 +1,54 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/netospadoni/aurorion-mod/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+# AltData (dono do alt), GameFacts.subject (personagem da sessão) e ServerDiagnostics moram no core.
+# 0.6.4 é a primeira versão publicada com o ServerDiagnostics (entrou depois do 0.6.3); 0.6.7 traz o
+# CharacterAbilities (a aba Habilidades).
+# 0.6.8: CharacterSheet (o retrato da ficha para os testes de magia e oficio).
+[[dependencies.${mod_id}]]
+modId = "aurorion_core"
+type = "required"
+versionRange = "[0.6.9,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# O transporte (credencial, endereço do site, cliente HTTP) é da integração; a ficha só a usa.
+# Só o servidor fala com o site, mas no singleplayer o servidor integrado roda no cliente: por isso
+# a dependência vale dos dois lados. A integração sem config é inofensiva no cliente.
+[[dependencies.${mod_id}]]
+modId = "aurorion_integracao"
+type = "required"
+versionRange = "[0.2.0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# As telas são HTML/CSS do TesseraUI. Só o cliente desenha; o servidor nunca carrega classe dele.
+[[dependencies.${mod_id}]]
+modId = "tesseraui"
+type = "required"
+versionRange = "[1.1,)"
+ordering = "AFTER"
+side = "CLIENT"

@@ -1,0 +1,958 @@
+/* Ficha do Aurorion — o mesmo tema "arquivo cósmico" do diário: violeta profundo, dourado e
+   marfim, com a cor de cada recurso e de cada Elemento como destaque.
+
+   O que o TesseraUI 1.1 faz de verdade com cada elemento (conferido no TesseraTemplateRenderer):
+   - <col>/<row>/<div> (painel): background, border (e por lado), border-radius, padding, gap,
+     justify-content, align-items, opacity, animation; no :hover, background, border-color,
+     opacity e color (a cor passa para os labels de dentro).
+   - NADA de "transition" aqui: no 1.1, um painel com transition desenha fundo e borda
+     interpolando entre dois zeros até o mouse passar por ele pela primeira vez — some a moldura
+     de quem nunca levou hover (células, selos, botões, cartões), e cada remontagem sorteia de
+     novo quais aparecem. O hover troca na hora; o "pressionado" é o clarão do Java.
+   - Um <col> com vários <label> não empilha na altura do texto (sobra ~4px por linha): texto
+     de várias linhas é um painel por linha, posicionado pelo Java.
+   - <label>: só texto — color, font-size/weight/family, text-align, text-transform. NÃO pinta
+     background, borda nem padding: selo com fundo é um <row> com o label dentro.
+   - <button>: um retângulo chapado — background, color, fonte e, no :hover, só background. Sem
+     borda, sem cantos, sem transição; "transparent" vira o cinza padrão dele. Por isso a ficha faz
+     os botões como <row onclick> (classes .b-*); <button> fica para a mesa do mestre.
+   - Herdam do pai para o filho: color, font-size, font-family, font-weight (não text-transform:
+     o Java já manda o texto em caixa alta onde precisa).
+   Os tamanhos de fonte são em px do Tessera: 7px é a fonte do Minecraft em escala 1. Barras, d20,
+   números grandes e retratos são desenhados pelo Java por cima destas molduras. */
+
+:root {
+    --bg: rgba(14,7,28,0.95);
+    --bg-soft: rgba(25,13,47,0.94);
+    --bg-deep: rgba(8,4,18,0.9);
+    --bg-hover: rgba(58,31,104,0.95);
+    --line: rgba(139,92,246,0.35);
+    --line-soft: rgba(139,92,246,0.18);
+    --gold: #d7a857;
+    --gold-hi: #ffe9a7;
+    --ink: #f3ead8;
+    --soft: #bfb3d6;
+    --faint: #8c8098;
+    --violet: #8b5cf6;
+    --violet-hi: #c59aff;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --crit: #ffd76a;
+}
+
+/* ── Moldura e cabeçalho ────────────────────────────────────────────────── */
+
+/* A animação de entrada vai numa classe à parte, usada só na primeira montagem: os painéis são
+   refeitos a cada mudança e a borda piscaria de novo a cada clique. */
+.frame {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+}
+
+.frame-in {
+    animation: chegar 380ms ease-out 1;
+}
+
+.frame-gm {
+    background: var(--bg);
+    border: 1px solid rgba(215,168,87,0.45);
+    border-radius: 7px;
+    animation: chegarmesa 380ms ease-out 1;
+}
+
+/* A mesa termina na própria borda dourada (com "chegar" ela acabaria violeta). */
+@keyframes chegarmesa {
+    from { border-color: rgba(255,233,167,0.95); }
+    to { border-color: rgba(215,168,87,0.45); }
+}
+
+@keyframes chegar {
+    from { border-color: rgba(255,233,167,0.95); }
+    to { border-color: rgba(139,92,246,0.35); }
+}
+
+.cell {
+    padding: 0;
+}
+
+.portrait {
+    background: var(--bg-deep);
+    border: 1px solid var(--gold);
+    border-radius: 5px;
+}
+
+.kicker {
+    color: var(--violet-hi);
+    font-size: 5px;
+    text-transform: uppercase;
+}
+
+.kicker-gold {
+    color: var(--gold);
+    font-size: 5px;
+    text-transform: uppercase;
+}
+
+.name {
+    color: var(--gold-hi);
+    font-family: default;
+    font-size: 10px;
+}
+
+.subtitle {
+    color: var(--soft);
+    font-size: 6px;
+}
+
+/* ── Selos (um <row> por selo; o texto vem em caixa alta do Java) ─────────── */
+
+.chip, .chip-gold, .chip-ok, .chip-warn, .chip-bad, .chip-cyan, .chip-faint,
+.el-martirio, .el-anacronico, .el-quantico, .el-esoterico, .el-minguantis, .el-vazio,
+.el-determinacao, .el-rancor, .el-abissal, .el-solaris, .el-chaos, .el-neutro {
+    font-size: 5px;
+    border-radius: 4px;
+    padding: 0 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.chip { color: #c4b5fd; background: rgba(139,92,246,0.18); }
+.chip-gold { color: var(--gold-hi); background: rgba(215,168,87,0.18); }
+.chip-ok { color: var(--ok); background: rgba(74,222,128,0.14); border: 1px solid rgba(74,222,128,0.4); }
+.chip-warn { color: var(--warn); background: rgba(251,191,36,0.14); }
+.chip-bad { color: var(--bad); background: rgba(248,113,113,0.14); }
+.chip-cyan { color: #67e8f9; background: rgba(34,211,238,0.12); }
+.chip-faint { color: var(--faint); background: rgba(140,128,152,0.14); }
+
+/* Selo com tooltip (condições, "+N"): clareia no hover para dizer "passe o mouse". */
+.chip:hover, .chip-gold:hover, .chip-warn:hover, .chip-bad:hover, .chip-cyan:hover, .chip-faint:hover {
+    background: rgba(255,233,167,0.12);
+}
+
+/* Elementos: a cor da Marca. */
+.el-martirio { color: #ff6b6b; background: rgba(192,57,43,0.22); }
+.el-anacronico { color: #e9c46a; background: rgba(201,162,39,0.2); }
+.el-quantico { color: #7dd3fc; background: rgba(79,195,247,0.18); }
+.el-esoterico { color: #d8b4fe; background: rgba(155,89,182,0.24); }
+.el-minguantis { color: #dbe4f3; background: rgba(163,184,216,0.2); }
+.el-vazio { color: #b8b8d0; background: rgba(107,107,138,0.26); }
+.el-determinacao { color: #fdba74; background: rgba(243,156,18,0.2); }
+.el-rancor { color: #fb7185; background: rgba(142,27,58,0.3); }
+.el-abissal { color: #67e8f9; background: rgba(31,111,139,0.3); }
+.el-solaris { color: #ffd27a; background: rgba(255,179,71,0.2); }
+.el-chaos { color: #f0abfc; background: rgba(224,86,253,0.2); }
+.el-neutro { color: var(--soft); background: rgba(139,92,246,0.14); }
+
+/* ── Botões da ficha (<row onclick> com um label) ───────────────────────── */
+
+/* Base de todos: centrado, cantos, fundo, borda e cor trocam no hover. O "pressionado" é um
+   clarão rápido desenhado pelo Java; o desabilitado é a classe -off, sem onclick e com o motivo
+   no tooltip. */
+.b, .b-gold, .b-danger, .b-confirm, .b-off, .b-gm, .b-icon, .b-tab, .b-tab-on,
+.b-toggle, .b-toggle-on, .b-mini, .b-mini-on, .b-page, .b-preset, .b-preset-on {
+    border-radius: 4px;
+    align-items: center;
+    justify-content: center;
+    font-size: 6px;
+}
+
+.b {
+    background: var(--bg-soft);
+    color: var(--soft);
+    border: 1px solid var(--line);
+}
+
+.b:hover {
+    background: var(--bg-hover);
+    color: var(--ink);
+    border-color: var(--gold);
+}
+
+.b-gold {
+    background: var(--gold);
+    color: #1a0b2e;
+    font-weight: bold;
+    border: 1px solid var(--gold);
+}
+
+.b-gold:hover {
+    background: var(--gold-hi);
+    border-color: #fff4d6;
+}
+
+.b-danger {
+    background: rgba(248,113,113,0.12);
+    color: var(--bad);
+    border: 1px solid rgba(248,113,113,0.45);
+}
+
+.b-danger:hover {
+    background: rgba(248,113,113,0.26);
+    color: #ffd0d0;
+    border-color: var(--bad);
+}
+
+/* Segundo clique de uma ação que pede confirmação. O clarão (.confirm-in) só na montagem em que
+   ela armou: as remontagens seguintes não o refazem. */
+.b-confirm {
+    background: rgba(248,113,113,0.32);
+    color: #fff1f1;
+    border: 1px solid var(--bad);
+}
+
+.confirm-in {
+    animation: confirmar 260ms ease-out 1;
+}
+
+@keyframes confirmar {
+    from { background: rgba(248,113,113,0.6); }
+    to { background: rgba(248,113,113,0.32); }
+}
+
+.b-off {
+    background: rgba(25,13,47,0.6);
+    color: var(--faint);
+    border: 1px solid var(--line-soft);
+}
+
+.b-gm {
+    background: rgba(215,168,87,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(215,168,87,0.5);
+}
+
+.b-gm:hover {
+    background: rgba(215,168,87,0.28);
+    color: var(--gold-hi);
+    border-color: var(--gold-hi);
+}
+
+.b-icon {
+    font-size: 8px;
+    color: var(--faint);
+    border: 1px solid rgba(139,92,246,0.01);
+}
+
+.b-icon:hover {
+    background: var(--bg-hover);
+    color: var(--gold-hi);
+    border-color: var(--line);
+}
+
+/* Abas, uma linguagem só: a ativa é texto dourado sobre o sublinhado dourado que desliza (Java);
+   pílula violeta sutil só no hover das outras. A ativa não tem fundo nem borda. */
+.b-tab, .b-tab-on {
+    font-size: 7px;
+}
+
+.b-tab {
+    color: var(--soft);
+}
+
+.b-tab:hover {
+    background: rgba(139,92,246,0.14);
+    color: var(--ink);
+}
+
+.b-tab-on {
+    color: var(--gold-hi);
+}
+
+.b-toggle {
+    background: var(--bg-soft);
+    color: var(--soft);
+    border: 1px solid var(--line);
+}
+
+.b-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--ink);
+    border-color: var(--violet-hi);
+}
+
+.b-toggle-on {
+    background: rgba(139,92,246,0.34);
+    color: var(--gold-hi);
+    border: 1px solid var(--violet-hi);
+}
+
+.b-toggle-on:hover {
+    background: rgba(139,92,246,0.46);
+}
+
+.b-mini, .b-mini-on, .b-preset, .b-preset-on {
+    border-radius: 3px;
+}
+
+.b-mini, .b-preset {
+    background: var(--bg-soft);
+    color: var(--soft);
+    border: 1px solid var(--line-soft);
+}
+
+.b-mini:hover, .b-preset:hover {
+    background: var(--bg-hover);
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+.b-mini-on, .b-preset-on {
+    background: rgba(215,168,87,0.22);
+    color: var(--gold-hi);
+    border: 1px solid var(--gold);
+}
+
+.b-page {
+    font-size: 7px;
+    background: var(--bg-soft);
+    color: var(--soft);
+    border: 1px solid var(--line-soft);
+}
+
+.b-page:hover {
+    background: var(--bg-hover);
+    color: var(--ink);
+    border-color: var(--gold);
+}
+
+/* ── Seções ─────────────────────────────────────────────────────────────── */
+
+.panel {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-soft);
+    border-radius: 5px;
+}
+
+.panel-warn {
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.45);
+    border-radius: 5px;
+}
+
+.panel-bad {
+    background: rgba(248,113,113,0.07);
+    border: 1px solid rgba(248,113,113,0.45);
+    border-radius: 5px;
+}
+
+/* Passo do "como vincular": número num círculo dourado (o número é desenhado pelo Java). */
+.step {
+    background: rgba(215,168,87,0.16);
+    border: 1px solid var(--gold);
+    border-radius: 5px;
+}
+
+.step-done {
+    background: rgba(74,222,128,0.16);
+    border: 1px solid var(--ok);
+    border-radius: 5px;
+}
+
+.section {
+    color: var(--gold);
+    font-size: 5px;
+    text-transform: uppercase;
+}
+
+.line {
+    color: var(--ink);
+    font-size: 6px;
+}
+
+.line-soft {
+    color: var(--soft);
+    font-size: 6px;
+}
+
+.line-faint {
+    color: var(--faint);
+    font-size: 6px;
+}
+
+.line-warn {
+    color: var(--warn);
+    font-size: 6px;
+}
+
+.line-bad {
+    color: var(--bad);
+    font-size: 6px;
+}
+
+.line-gold {
+    color: var(--gold-hi);
+    font-size: 7px;
+}
+
+.hint {
+    color: var(--faint);
+    font-size: 6px;
+}
+
+/* ── Barras de recurso (a moldura que recebe o hover; a barra é do Java) ─── */
+
+.res {
+    border-radius: 3px;
+    border: 1px solid rgba(139,92,246,0.01);
+}
+
+.res:hover {
+    background: rgba(139,92,246,0.1);
+    border-color: var(--line-soft);
+}
+
+/* ── Números de combate e atributos ─────────────────────────────────────── */
+
+/* Bloco de número (Defesa, RD…): só a moldura; número e rótulo são desenhados pelo Java, centrados
+   pela altura que o bloco tiver. O hover diz "tem explicação no tooltip". */
+.stat {
+    background: var(--bg-deep);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+}
+
+.stat:hover {
+    background: rgba(26,14,50,0.95);
+    border-color: var(--line);
+}
+
+/* Atributo: clicável, abre o teste. O número é desenhado por cima. */
+.attr, .attr-off {
+    border-radius: 5px;
+}
+
+.attr {
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+}
+
+.attr:hover {
+    background: var(--bg-hover);
+    border-color: var(--gold);
+}
+
+.attr-off {
+    background: var(--bg-deep);
+    border: 1px solid var(--line-soft);
+}
+
+/* ── Perícias ───────────────────────────────────────────────────────────── */
+
+/* Linhas clicáveis: a row inteira recebe o clique e o hover; o texto é um label dentro dela. */
+.group, .group-off {
+    border-radius: 3px;
+    padding: 0 4px;
+    align-items: center;
+}
+
+.group {
+    background: rgba(215,168,87,0.1);
+    color: var(--gold);
+}
+
+.group:hover {
+    background: rgba(215,168,87,0.26);
+    color: var(--gold-hi);
+}
+
+.group-off {
+    background: rgba(215,168,87,0.08);
+    color: var(--gold);
+}
+
+.group-t {
+    font-size: 5px;
+    text-transform: uppercase;
+}
+
+.skill, .skill-off {
+    border-radius: 3px;
+    padding: 0 4px;
+    align-items: center;
+    color: var(--ink);
+}
+
+.skill {
+    border: 1px solid rgba(139,92,246,0.01);
+}
+
+.skill:hover {
+    background: rgba(139,92,246,0.22);
+    border-color: var(--line);
+    color: var(--gold-hi);
+}
+
+.skill-t {
+    font-size: 6px;
+}
+
+/* Filtro digitado na aba Perícias. */
+.filter {
+    background: rgba(6,3,14,0.9);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 0 4px;
+    align-items: center;
+    color: var(--gold-hi);
+    font-size: 6px;
+}
+
+/* ── Técnicas ───────────────────────────────────────────────────────────── */
+
+/* Equipada: cartão âmbar com borda dourada. Não equipada: o mesmo cartão, mais apagado. */
+.ability, .ability-on {
+    border-radius: 5px;
+}
+
+.ability {
+    background: rgba(20,11,38,0.85);
+    border: 1px solid var(--line-soft);
+}
+
+.ability:hover {
+    border-color: var(--line);
+    background: rgba(42,22,78,0.95);
+}
+
+.ability-on {
+    background: rgba(42,26,18,0.9);
+    border: 1px solid rgba(215,168,87,0.6);
+}
+
+.ability-on:hover {
+    border-color: var(--gold-hi);
+}
+
+.ab-name {
+    color: var(--gold-hi);
+    font-size: 7px;
+}
+
+.ab-name-off {
+    color: var(--ink);
+    font-size: 7px;
+}
+
+.ab-desc {
+    color: var(--soft);
+    font-size: 6px;
+}
+
+.ab-desc-off {
+    color: var(--faint);
+    font-size: 6px;
+}
+
+/* ── Habilidades (o que o jogo já liberou: magias, profissão, Marca…) ───── */
+
+/* Cartão de habilidade: o ícone do item (Java) num nicho escuro à esquerda, nome, selo de estado
+   e a segunda linha (nível/detalhe ou a barra de progresso, do Java). */
+.hab, .hab-on, .hab-off {
+    border-radius: 4px;
+}
+
+.hab {
+    background: rgba(25,13,47,0.9);
+    border: 1px solid var(--line-soft);
+}
+
+.hab:hover {
+    background: rgba(42,22,78,0.95);
+    border-color: var(--line);
+}
+
+/* Ativa agora: verde discreto, como o "EM USO" do Vínculo. */
+.hab-on {
+    background: rgba(16,36,26,0.9);
+    border: 1px solid rgba(74,222,128,0.45);
+}
+
+.hab-on:hover {
+    border-color: var(--ok);
+}
+
+/* Bloqueada: apagada, borda quase sumindo; o motivo vai na segunda linha e no tooltip. */
+.hab-off {
+    background: rgba(14,8,26,0.7);
+    border: 1px solid rgba(139,92,246,0.1);
+}
+
+.hab-off:hover {
+    border-color: var(--line-soft);
+}
+
+.slot {
+    background: rgba(6,3,14,0.9);
+    border: 1px solid rgba(139,92,246,0.22);
+    border-radius: 3px;
+}
+
+.hab-name {
+    color: var(--ink);
+    font-size: 7px;
+}
+
+.hab-name-off {
+    color: var(--faint);
+    font-size: 7px;
+}
+
+/* ── Vínculo ────────────────────────────────────────────────────────────── */
+
+.cand, .cand-on {
+    border-radius: 5px;
+}
+
+.cand {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-soft);
+}
+
+.cand:hover {
+    border-color: var(--line);
+    background: rgba(42,22,78,0.95);
+}
+
+.cand-on {
+    background: rgba(20,44,30,0.9);
+    border: 1px solid rgba(74,222,128,0.55);
+}
+
+.monogram {
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+}
+
+.monogram-npc {
+    background: rgba(31,22,8,0.9);
+    border: 1px solid rgba(215,168,87,0.55);
+    border-radius: 4px;
+}
+
+.mono-t {
+    color: var(--gold-hi);
+    font-family: default;
+    font-size: 10px;
+    text-align: center;
+}
+
+.use-on {
+    border-radius: 4px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(74,222,128,0.14);
+    border: 1px solid rgba(74,222,128,0.4);
+    color: var(--ok);
+    font-size: 6px;
+}
+
+/* ── Rodapé, situação e paginação ───────────────────────────────────────── */
+
+.status-ok, .status-erro, .status-info, .status-espera {
+    font-size: 6px;
+    text-align: left;
+}
+
+.status-ok { color: var(--ok); }
+.status-erro { color: var(--bad); }
+.status-info { color: var(--faint); }
+.status-espera { color: var(--warn); }
+
+.pager {
+    gap: 3px;
+    align-items: center;
+}
+
+.page-label { color: var(--faint); font-size: 6px; }
+
+/* ── Diálogo de rolagem ─────────────────────────────────────────────────── */
+
+.modal {
+    background: rgba(16,8,32,0.98);
+    border: 1px solid var(--gold);
+    border-radius: 7px;
+}
+
+/* Só na primeira montagem do diálogo (ver .frame-in). */
+.modal-in {
+    animation: abrir 260ms ease-out 1;
+}
+
+@keyframes abrir {
+    from { border-color: var(--gold-hi); background: rgba(40,22,72,0.98); }
+    to { border-color: var(--gold); background: rgba(16,8,32,0.98); }
+}
+
+.result {
+    background: var(--bg-deep);
+    border: 1px solid var(--line-soft);
+    border-radius: 5px;
+}
+
+.result-ok {
+    background: rgba(12,32,20,0.92);
+    border: 1px solid rgba(74,222,128,0.55);
+    border-radius: 5px;
+}
+
+.result-bad {
+    background: rgba(36,10,14,0.92);
+    border: 1px solid rgba(248,113,113,0.55);
+    border-radius: 5px;
+}
+
+/* Crítico: a borda pulsa algumas vezes e assenta (não fica animando enquanto o diálogo estiver
+   aberto). O pulso (.crit-in) só na primeira montagem depois de o dado pousar. */
+.result-crit {
+    background: rgba(40,30,6,0.92);
+    border: 1px solid var(--crit);
+    border-radius: 5px;
+}
+
+.crit-in {
+    animation: brilho 700ms ease-in-out 6 alternate;
+}
+
+@keyframes brilho {
+    from { border-color: rgba(255,215,106,1); }
+    to { border-color: rgba(255,215,106,0.35); }
+}
+
+.field-label {
+    color: var(--faint);
+    font-size: 5px;
+    text-transform: uppercase;
+}
+
+.input {
+    flex: 1;
+    background: rgba(6,3,14,0.9);
+    color: var(--gold-hi);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 7px;
+}
+
+.input:focus {
+    border-color: var(--gold);
+}
+
+/* Caixa da CD (o número é desenhado pelo Java; a classe -on é a caixa "com foco"). */
+.dc, .dc-on {
+    background: rgba(6,3,14,0.9);
+    border-radius: 4px;
+}
+
+.dc {
+    border: 1px solid var(--line);
+}
+
+.dc:hover {
+    border-color: var(--violet-hi);
+}
+
+.dc-on {
+    border: 1px solid var(--gold);
+}
+
+/* ── Mesa do mestre ─────────────────────────────────────────────────────── */
+
+/* Os botões da mesa são <row onclick> com as classes .b-* lá de cima (o <button> do Tessera 1.1
+   não tem borda nem cantos). Aqui: a moldura parada, as linhas de jogador, o botão de pedir, o
+   cartão do pedido e as respostas. Cores rgba sem espaço: o "border" do Tessera separa por espaço. */
+
+/* A mesa se remonta a cada mudança: a borda dourada só pisca na primeira montagem (.frame-gm). */
+.frame-gm-still {
+    background: var(--bg);
+    border: 1px solid rgba(215,168,87,0.45);
+    border-radius: 7px;
+}
+
+/* Jogador na mesa: o rosto (desenhado pelo Java) ocupa os 18px da esquerda. */
+.pick, .pick-on, .pick-off {
+    border-radius: 4px;
+    padding: 0 3px 0 18px;
+    align-items: center;
+}
+
+.pick {
+    background: rgba(8,4,18,0.35);
+    border: 1px solid var(--line-soft);
+}
+
+.pick:hover {
+    background: rgba(139,92,246,0.16);
+    border-color: var(--line);
+}
+
+.pick-on {
+    background: rgba(215,168,87,0.16);
+    border: 1px solid var(--gold);
+}
+
+.pick-on:hover {
+    background: rgba(215,168,87,0.26);
+}
+
+/* Saiu do servidor: apagado, sem clique (o motivo vai no tooltip). */
+.pick-off {
+    background: rgba(8,4,18,0.2);
+    border: 1px solid rgba(139,92,246,0.08);
+    opacity: 0.7;
+}
+
+/* Botão de pedir: linha inteira, texto centrado. */
+.send, .send-off, .send-wait, .send-done {
+    border-radius: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.send {
+    background: var(--gold);
+    border: 1px solid var(--gold);
+}
+
+.send:hover {
+    background: var(--gold-hi);
+    border-color: #fff4d6;
+}
+
+.send-off {
+    background: rgba(25,13,47,0.6);
+    border: 1px solid var(--line-soft);
+}
+
+/* Enviando: pulso curto enquanto o servidor não confirma (some em segundos). */
+.send-wait {
+    background: rgba(215,168,87,0.14);
+    border: 1px solid rgba(215,168,87,0.5);
+    animation: mesapulso 700ms ease-in-out infinite alternate;
+}
+
+.send-done {
+    background: rgba(74,222,128,0.16);
+    border: 1px solid rgba(74,222,128,0.6);
+}
+
+/* O clarão do "enviado" só na montagem em que o pedido foi confirmado. */
+.done-in {
+    animation: mesaenviado 420ms ease-out 1;
+}
+
+.send-t, .send-t-off, .send-t-wait, .send-t-done {
+    font-size: 6px;
+    text-transform: uppercase;
+}
+
+.send-t { color: #1a0b2e; font-weight: bold; }
+.send-t-off { color: var(--faint); }
+.send-t-wait { color: var(--gold); }
+.send-t-done { color: var(--ok); font-weight: bold; }
+
+@keyframes mesapulso {
+    from { opacity: 1; }
+    to { opacity: 0.6; }
+}
+
+@keyframes mesaenviado {
+    from { background: rgba(74,222,128,0.45); }
+    to { background: rgba(74,222,128,0.16); }
+}
+
+/* Aba com novidade (respostas chegando com o teste à mostra): pisca duas vezes e para (.m-new-in);
+   cada resposta nova pisca de novo, as outras remontagens não. */
+.m-new {
+    border-radius: 3px;
+    align-items: center;
+    justify-content: center;
+    font-size: 6px;
+    background: rgba(74,222,128,0.14);
+    color: var(--ok);
+    border: 1px solid rgba(74,222,128,0.55);
+}
+
+.m-new-in {
+    animation: mesanovo 450ms ease-in-out 4 alternate;
+}
+
+.m-new:hover {
+    background: rgba(74,222,128,0.26);
+}
+
+@keyframes mesanovo {
+    from { background: rgba(74,222,128,0.14); }
+    to { background: rgba(74,222,128,0.4); }
+}
+
+/* "Pedido para você" no cabeçalho: outro mestre pediu um teste e a mesa cobre o HUD. */
+.m-ask {
+    border-radius: 6px;
+    align-items: center;
+    justify-content: center;
+    font-size: 5px;
+    background: rgba(251,191,36,0.14);
+    color: var(--warn);
+    border: 1px solid rgba(251,191,36,0.5);
+}
+
+/* O clarão do aviso só quando o pedido chega, não a cada remontagem da mesa. */
+.ask-in {
+    animation: mesaaviso 500ms ease-out 1;
+}
+
+.m-ask:hover {
+    background: rgba(251,191,36,0.28);
+    color: #fff1c2;
+}
+
+@keyframes mesaaviso {
+    from { border-color: rgba(255,233,167,1); }
+    to { border-color: rgba(251,191,36,0.5); }
+}
+
+/* Campo da CD com valor inválido. */
+.input-bad {
+    flex: 1;
+    background: rgba(30,6,10,0.9);
+    color: var(--bad);
+    border: 1px solid var(--bad);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 7px;
+}
+
+/* Atalhos no rodapé. */
+.keys {
+    color: rgba(140,128,152,0.75);
+    font-size: 5px;
+}
+
+/* Cartão do pedido atual (texto, barra e prazo são do Java). */
+.round {
+    background: rgba(28,16,52,0.92);
+    border: 1px solid rgba(215,168,87,0.5);
+    border-radius: 5px;
+}
+
+.round-done {
+    background: rgba(14,30,22,0.9);
+    border: 1px solid rgba(74,222,128,0.45);
+    border-radius: 5px;
+}
+
+/* Respostas: a faixa colorida à esquerda e o brilho de chegada são do Java; a borda diz o resultado. */
+.answer, .answer-ok, .answer-bad, .answer-crit, .answer-wait {
+    background: var(--bg-deep);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+}
+
+.answer-ok { border-color: rgba(74,222,128,0.45); }
+.answer-bad { border-color: rgba(248,113,113,0.45); }
+.answer-crit { border-color: rgba(255,215,106,0.75); background: rgba(40,30,6,0.85); }
+.answer-wait { background: rgba(8,4,18,0.55); border-color: rgba(139,92,246,0.12); }

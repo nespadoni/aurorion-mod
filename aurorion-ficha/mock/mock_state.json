@@ -1,0 +1,1493 @@
+{
+ "schema": 3,
+ "settings": {
+  "down": "off",
+  "latency_ms": 0,
+  "link_mode": "qualquer",
+  "fixed_code": "AURO-2026",
+  "link_target": "auto",
+  "auto_link": false,
+  "token": "",
+  "persist": true
+ },
+ "seq": {
+  "user": 3,
+  "sheet": 47,
+  "npc": 16,
+  "rpg": 1202,
+  "diary": 0
+ },
+ "users": {
+  "1": {
+   "id": 1,
+   "name": "Você (mock)",
+   "discord_tag": "voce.mock",
+   "role": "staff",
+   "sheet_state": "completa"
+  },
+  "2": {
+   "id": 2,
+   "name": "Outra pessoa (mock)",
+   "discord_tag": "outra.pessoa",
+   "role": "staff",
+   "sheet_state": "completa"
+  },
+  "3": {
+   "id": 3,
+   "name": "Conta de Dev2",
+   "discord_tag": "dev2",
+   "role": "staff",
+   "sheet_state": "completa"
+  }
+ },
+ "sheets": {
+  "41": {
+   "id": 41,
+   "user_id": 1,
+   "is_active": true,
+   "kind": "completa",
+   "nome": "Kaelen Rubraluz",
+   "photo": "/uploads/retratos/kaelen.svg",
+   "level": "entidade",
+   "lore": {
+    "idade": 24,
+    "origem": "Vaelor, distrito das forjas",
+    "alinhamento": "Leal à própria palavra, implacável com quem a quebra.",
+    "personalidade": "Calado, teimoso e protetor. Paga as dívidas em sangue — o próprio, de preferência.",
+    "descricao_fisica": "Alto, cicatrizes rituais nos antebraços, olhos cor de brasa."
+   },
+   "mech": {
+    "soul": 4,
+    "legacy_level": "entidade",
+    "element": "martirio",
+    "grade": 2,
+    "build": {
+     "soul": 4,
+     "attributes": {
+      "for": 3,
+      "des": 2,
+      "vig": 3,
+      "sab": 2,
+      "int": 1,
+      "vit": 2
+     },
+     "skills": {
+      "atletismo": 2,
+      "corpo_a_corpo": 3,
+      "acrobacia": 1,
+      "furtividade": 1,
+      "pontaria": 0,
+      "resistencia": 2,
+      "astros_e_mistos": 1,
+      "historia": 1,
+      "ciencia": 0,
+      "natureza": 1,
+      "medicina": 1,
+      "criacao": 0,
+      "investigacao": 1,
+      "linguistica": 0,
+      "psicologia": 1,
+      "tecnologia": 0,
+      "diplomacia": 1,
+      "enganacao": 0,
+      "intimidacao": 2,
+      "procurar": 1,
+      "intencao": 1,
+      "vontade": 2
+     },
+     "mark": {
+      "element": "martirio",
+      "grade": 2,
+      "extras": {
+       "for": 1,
+       "vig": 1
+      }
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 1,
+      "rd": 2
+     },
+     "uses_pe": true
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 280,
+     "stamina": 61,
+     "sanidade": 52,
+     "pe": 3,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [
+      "sangramento"
+     ],
+     "charges_used": 1,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Banquete Rubro",
+      "short_description": "Converte o sangue derramado em vigor: cura parte do dano causado.",
+      "element": "martírio",
+      "rarity": 4,
+      "ability_level": 2,
+      "equipped": true
+     },
+     {
+      "name": "Lâmina Votiva",
+      "short_description": "Corte que cobra Vida do próprio usuário para ignorar a RD do alvo.",
+      "element": "martirio",
+      "rarity": 3,
+      "ability_level": 1,
+      "equipped": true
+     },
+     {
+      "name": "Guarda de Ferro",
+      "short_description": "Postura defensiva: +2 de Defesa até o próximo turno.",
+      "element": "",
+      "rarity": 1,
+      "ability_level": 1,
+      "equipped": false
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "42": {
+   "id": 42,
+   "user_id": 1,
+   "is_active": false,
+   "kind": "antiga",
+   "nome": "Corvo de Cinza",
+   "photo": "/uploads/retratos/corvo.svg",
+   "level": "anomalia",
+   "lore": {
+    "idade": 0,
+    "origem": "Ninguém sabe; apareceu depois do Grande Incêndio.",
+    "alinhamento": "Caótico",
+    "personalidade": "Fala por enigmas.",
+    "descricao_fisica": "Manto cinza e máscara de bico."
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "anomalia",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": null,
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Voo de Cinzas",
+      "short_description": "Técnica da ficha antiga, ainda sem mecânica v0.3.",
+      "element": "vazio",
+      "rarity": 2,
+      "ability_level": 0,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "43": {
+   "id": 43,
+   "user_id": 1,
+   "is_active": false,
+   "kind": "aguardando",
+   "nome": "Íris Solmar",
+   "photo": "/uploads/retratos/iris.svg",
+   "level": "desperta",
+   "lore": {
+    "idade": 19,
+    "origem": "Mosteiro do Sol Poente",
+    "alinhamento": "Bondosa",
+    "personalidade": "Curiosa e impaciente.",
+    "descricao_fisica": "Sardas e um colar de âmbar."
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "desperta",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": {
+     "status": "submitted",
+     "build": {
+      "soul": 3,
+      "attributes": {
+       "for": 1,
+       "des": 3,
+       "vig": 2,
+       "sab": 3,
+       "int": 2,
+       "vit": 2
+      },
+      "skills": {
+       "atletismo": 0,
+       "corpo_a_corpo": 0,
+       "acrobacia": 2,
+       "furtividade": 3,
+       "pontaria": 2,
+       "resistencia": 0,
+       "astros_e_mistos": 2,
+       "historia": 1,
+       "ciencia": 0,
+       "natureza": 0,
+       "medicina": 2,
+       "criacao": 0,
+       "investigacao": 2,
+       "linguistica": 1,
+       "psicologia": 0,
+       "tecnologia": 0,
+       "diplomacia": 1,
+       "enganacao": 1,
+       "intimidacao": 0,
+       "procurar": 2,
+       "intencao": 1,
+       "vontade": 1
+      },
+      "mark": {
+       "element": "solaris",
+       "grade": 1,
+       "extras": {
+        "sab": 1
+       }
+      },
+      "grants": {
+       "vida_bonus": 0
+      },
+      "equipment": {
+       "defense": 0,
+       "rd": 0
+      },
+      "uses_pe": true
+     }
+    },
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Fogo Vivo",
+      "short_description": "Chama que expulsa o medo de um aliado.",
+      "element": "solaris",
+      "rarity": 3,
+      "ability_level": 1,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "44": {
+   "id": 44,
+   "user_id": 2,
+   "is_active": true,
+   "kind": "completa",
+   "nome": "Selene Arcanjo",
+   "photo": "/uploads/retratos/selene.svg",
+   "level": "entidade",
+   "lore": {
+    "idade": 31,
+    "origem": "Torre de Ilmar",
+    "alinhamento": "Neutra",
+    "personalidade": "Calculista.",
+    "descricao_fisica": "Cabelos prateados."
+   },
+   "mech": {
+    "soul": 3,
+    "legacy_level": "entidade",
+    "element": "solaris",
+    "grade": 1,
+    "build": {
+     "soul": 3,
+     "attributes": {
+      "for": 1,
+      "des": 3,
+      "vig": 2,
+      "sab": 3,
+      "int": 2,
+      "vit": 2
+     },
+     "skills": {
+      "atletismo": 0,
+      "corpo_a_corpo": 0,
+      "acrobacia": 2,
+      "furtividade": 3,
+      "pontaria": 2,
+      "resistencia": 0,
+      "astros_e_mistos": 2,
+      "historia": 1,
+      "ciencia": 0,
+      "natureza": 0,
+      "medicina": 2,
+      "criacao": 0,
+      "investigacao": 2,
+      "linguistica": 1,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 1,
+      "enganacao": 1,
+      "intimidacao": 0,
+      "procurar": 2,
+      "intencao": 1,
+      "vontade": 1
+     },
+     "mark": {
+      "element": "solaris",
+      "grade": 1,
+      "extras": {
+       "sab": 1
+      }
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 0,
+      "rd": 0
+     },
+     "uses_pe": true
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 250,
+     "stamina": 72,
+     "sanidade": 80,
+     "pe": 5,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  },
+  "45": {
+   "id": 45,
+   "user_id": 3,
+   "is_active": true,
+   "kind": "completa",
+   "nome": "Kaelen Rubraluz",
+   "photo": "/uploads/retratos/kaelen.svg",
+   "level": "entidade",
+   "lore": {
+    "idade": 24,
+    "origem": "Vaelor, distrito das forjas",
+    "alinhamento": "Leal à própria palavra, implacável com quem a quebra.",
+    "personalidade": "Calado, teimoso e protetor. Paga as dívidas em sangue — o próprio, de preferência.",
+    "descricao_fisica": "Alto, cicatrizes rituais nos antebraços, olhos cor de brasa."
+   },
+   "mech": {
+    "soul": 4,
+    "legacy_level": "entidade",
+    "element": "martirio",
+    "grade": 2,
+    "build": {
+     "soul": 4,
+     "attributes": {
+      "for": 3,
+      "des": 2,
+      "vig": 3,
+      "sab": 2,
+      "int": 1,
+      "vit": 2
+     },
+     "skills": {
+      "atletismo": 2,
+      "corpo_a_corpo": 3,
+      "acrobacia": 1,
+      "furtividade": 1,
+      "pontaria": 0,
+      "resistencia": 2,
+      "astros_e_mistos": 1,
+      "historia": 1,
+      "ciencia": 0,
+      "natureza": 1,
+      "medicina": 1,
+      "criacao": 0,
+      "investigacao": 1,
+      "linguistica": 0,
+      "psicologia": 1,
+      "tecnologia": 0,
+      "diplomacia": 1,
+      "enganacao": 0,
+      "intimidacao": 2,
+      "procurar": 1,
+      "intencao": 1,
+      "vontade": 2
+     },
+     "mark": {
+      "element": "martirio",
+      "grade": 2,
+      "extras": {
+       "for": 1,
+       "vig": 1
+      }
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 1,
+      "rd": 2
+     },
+     "uses_pe": true
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 280,
+     "stamina": 61,
+     "sanidade": 52,
+     "pe": 3,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [
+      "sangramento"
+     ],
+     "charges_used": 1,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Banquete Rubro",
+      "short_description": "Converte o sangue derramado em vigor: cura parte do dano causado.",
+      "element": "martírio",
+      "rarity": 4,
+      "ability_level": 2,
+      "equipped": true
+     },
+     {
+      "name": "Lâmina Votiva",
+      "short_description": "Corte que cobra Vida do próprio usuário para ignorar a RD do alvo.",
+      "element": "martirio",
+      "rarity": 3,
+      "ability_level": 1,
+      "equipped": true
+     },
+     {
+      "name": "Guarda de Ferro",
+      "short_description": "Postura defensiva: +2 de Defesa até o próximo turno.",
+      "element": "",
+      "rarity": 1,
+      "ability_level": 1,
+      "equipped": false
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "46": {
+   "id": 46,
+   "user_id": 3,
+   "is_active": false,
+   "kind": "antiga",
+   "nome": "Corvo de Cinza",
+   "photo": "/uploads/retratos/corvo.svg",
+   "level": "anomalia",
+   "lore": {
+    "idade": 0,
+    "origem": "Ninguém sabe; apareceu depois do Grande Incêndio.",
+    "alinhamento": "Caótico",
+    "personalidade": "Fala por enigmas.",
+    "descricao_fisica": "Manto cinza e máscara de bico."
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "anomalia",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": null,
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Voo de Cinzas",
+      "short_description": "Técnica da ficha antiga, ainda sem mecânica v0.3.",
+      "element": "vazio",
+      "rarity": 2,
+      "ability_level": 0,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "47": {
+   "id": 47,
+   "user_id": 3,
+   "is_active": false,
+   "kind": "aguardando",
+   "nome": "Íris Solmar",
+   "photo": "/uploads/retratos/iris.svg",
+   "level": "desperta",
+   "lore": {
+    "idade": 19,
+    "origem": "Mosteiro do Sol Poente",
+    "alinhamento": "Bondosa",
+    "personalidade": "Curiosa e impaciente.",
+    "descricao_fisica": "Sardas e um colar de âmbar."
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "desperta",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": {
+     "status": "submitted",
+     "build": {
+      "soul": 3,
+      "attributes": {
+       "for": 1,
+       "des": 3,
+       "vig": 2,
+       "sab": 3,
+       "int": 2,
+       "vit": 2
+      },
+      "skills": {
+       "atletismo": 0,
+       "corpo_a_corpo": 0,
+       "acrobacia": 2,
+       "furtividade": 3,
+       "pontaria": 2,
+       "resistencia": 0,
+       "astros_e_mistos": 2,
+       "historia": 1,
+       "ciencia": 0,
+       "natureza": 0,
+       "medicina": 2,
+       "criacao": 0,
+       "investigacao": 2,
+       "linguistica": 1,
+       "psicologia": 0,
+       "tecnologia": 0,
+       "diplomacia": 1,
+       "enganacao": 1,
+       "intimidacao": 0,
+       "procurar": 2,
+       "intencao": 1,
+       "vontade": 1
+      },
+      "mark": {
+       "element": "solaris",
+       "grade": 1,
+       "extras": {
+        "sab": 1
+       }
+      },
+      "grants": {
+       "vida_bonus": 0
+      },
+      "equipment": {
+       "defense": 0,
+       "rd": 0
+      },
+      "uses_pe": true
+     }
+    },
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Fogo Vivo",
+      "short_description": "Chama que expulsa o medo de um aliado.",
+      "element": "solaris",
+      "rarity": 3,
+      "ability_level": 1,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  }
+ },
+ "npcs": {
+  "7": {
+   "id": 7,
+   "name": "Bram Ferrolho",
+   "title": "Ferreiro de Vaelor",
+   "photo": "/uploads/retratos/bramferrolho.svg",
+   "status": "ativo",
+   "linked_user_id": 1,
+   "level": "comum",
+   "lore": {
+    "idade": 47,
+    "origem": "Vaelor",
+    "alinhamento": "Honesto",
+    "personalidade": "Rabugento e generoso.",
+    "descricao_fisica": "Barba chamuscada."
+   },
+   "mech": {
+    "soul": 5,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": {
+     "soul": 5,
+     "attributes": {
+      "for": 4,
+      "des": 1,
+      "vig": 3,
+      "sab": 2,
+      "int": 2,
+      "vit": 1
+     },
+     "skills": {
+      "atletismo": 2,
+      "corpo_a_corpo": 2,
+      "acrobacia": 0,
+      "furtividade": 0,
+      "pontaria": 0,
+      "resistencia": 2,
+      "astros_e_mistos": 0,
+      "historia": 0,
+      "ciencia": 0,
+      "natureza": 0,
+      "medicina": 0,
+      "criacao": 4,
+      "investigacao": 0,
+      "linguistica": 0,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 0,
+      "enganacao": 0,
+      "intimidacao": 1,
+      "procurar": 0,
+      "intencao": 0,
+      "vontade": 0
+     },
+     "mark": {
+      "element": "",
+      "grade": 0,
+      "extras": {}
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 1,
+      "rd": 3
+     },
+     "uses_pe": false
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 416,
+     "stamina": 79,
+     "sanidade": 65,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Martelo Rubro",
+      "short_description": "Golpe que aquece o metal do alvo.",
+      "element": "martírio",
+      "rarity": 2,
+      "ability_level": 1,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "8": {
+   "id": 8,
+   "name": "Sombra de Ilmar",
+   "title": "Espiã da Coroa",
+   "photo": "/uploads/retratos/sombradeilma.svg",
+   "status": "ativo",
+   "linked_user_id": 1,
+   "level": "comum",
+   "lore": {
+    "idade": 0,
+    "origem": "Ilmar",
+    "alinhamento": "",
+    "personalidade": "Nunca diz o nome verdadeiro.",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": null,
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  },
+  "9": {
+   "id": 9,
+   "name": "Capitã Mirela",
+   "title": "Guarda da Coroa",
+   "photo": "/uploads/retratos/capitamirela.svg",
+   "status": "ativo",
+   "linked_user_id": 2,
+   "level": "comum",
+   "lore": {
+    "idade": 0,
+    "origem": "",
+    "alinhamento": "",
+    "personalidade": "",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 6,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": {
+     "soul": 6,
+     "attributes": {
+      "for": 3,
+      "des": 3,
+      "vig": 3,
+      "sab": 2,
+      "int": 2,
+      "vit": 3
+     },
+     "skills": {
+      "atletismo": 0,
+      "corpo_a_corpo": 3,
+      "acrobacia": 0,
+      "furtividade": 0,
+      "pontaria": 0,
+      "resistencia": 0,
+      "astros_e_mistos": 0,
+      "historia": 0,
+      "ciencia": 0,
+      "natureza": 0,
+      "medicina": 0,
+      "criacao": 0,
+      "investigacao": 0,
+      "linguistica": 0,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 2,
+      "enganacao": 0,
+      "intimidacao": 3,
+      "procurar": 0,
+      "intencao": 0,
+      "vontade": 0
+     },
+     "mark": {
+      "element": "",
+      "grade": 0,
+      "extras": {}
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 2,
+      "rd": 3
+     },
+     "uses_pe": false
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 500,
+     "stamina": 86,
+     "sanidade": 75,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  },
+  "10": {
+   "id": 10,
+   "name": "Guarda Tomás",
+   "title": "Sentinela da Muralha",
+   "photo": "/uploads/retratos/guardatomas.svg",
+   "status": "ativo",
+   "linked_user_id": null,
+   "level": "comum",
+   "lore": {
+    "idade": 0,
+    "origem": "",
+    "alinhamento": "",
+    "personalidade": "",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 2,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": {
+     "soul": 2,
+     "attributes": {
+      "for": 3,
+      "des": 2,
+      "vig": 3,
+      "sab": 1,
+      "int": 1,
+      "vit": 1
+     },
+     "skills": {
+      "atletismo": 2,
+      "corpo_a_corpo": 2,
+      "acrobacia": 0,
+      "furtividade": 0,
+      "pontaria": 0,
+      "resistencia": 0,
+      "astros_e_mistos": 0,
+      "historia": 0,
+      "ciencia": 0,
+      "natureza": 0,
+      "medicina": 0,
+      "criacao": 0,
+      "investigacao": 0,
+      "linguistica": 0,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 0,
+      "enganacao": 0,
+      "intimidacao": 0,
+      "procurar": 1,
+      "intencao": 0,
+      "vontade": 0
+     },
+     "mark": {
+      "element": "",
+      "grade": 0,
+      "extras": {}
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 2,
+      "rd": 2
+     },
+     "uses_pe": false
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 176,
+     "stamina": 72,
+     "sanidade": 60,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  },
+  "11": {
+   "id": 11,
+   "name": "Rosalind Vinhedo",
+   "title": "Taverneira do Cálice Partido",
+   "photo": "/uploads/retratos/rosalindvinh.svg",
+   "status": "ativo",
+   "linked_user_id": null,
+   "level": "comum",
+   "lore": {
+    "idade": 52,
+    "origem": "Vaelor",
+    "alinhamento": "",
+    "personalidade": "Fala alto e sabe de tudo.",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": null,
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Rodada da Casa",
+      "short_description": "Todos na taverna recuperam o fôlego.",
+      "element": "",
+      "rarity": 1,
+      "ability_level": 1,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "12": {
+   "id": 12,
+   "name": "Arauto do Vazio",
+   "title": "Cultista sem rosto",
+   "photo": "/uploads/retratos/arautodovazi.svg",
+   "status": "ativo",
+   "linked_user_id": null,
+   "level": "lenda",
+   "lore": {
+    "idade": 0,
+    "origem": "",
+    "alinhamento": "",
+    "personalidade": "",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 8,
+    "legacy_level": "lenda",
+    "element": "vazio",
+    "grade": 3,
+    "build": {
+     "soul": 8,
+     "attributes": {
+      "for": 2,
+      "des": 4,
+      "vig": 3,
+      "sab": 3,
+      "int": 3,
+      "vit": 4
+     },
+     "skills": {
+      "atletismo": 0,
+      "corpo_a_corpo": 0,
+      "acrobacia": 0,
+      "furtividade": 4,
+      "pontaria": 0,
+      "resistencia": 0,
+      "astros_e_mistos": 3,
+      "historia": 0,
+      "ciencia": 0,
+      "natureza": 0,
+      "medicina": 0,
+      "criacao": 0,
+      "investigacao": 0,
+      "linguistica": 0,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 0,
+      "enganacao": 4,
+      "intimidacao": 0,
+      "procurar": 0,
+      "intencao": 0,
+      "vontade": 3
+     },
+     "mark": {
+      "element": "vazio",
+      "grade": 3,
+      "extras": {
+       "des": 1,
+       "vit": 2
+      }
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 0,
+      "rd": 0
+     },
+     "uses_pe": true
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 720,
+     "stamina": 96,
+     "sanidade": 95,
+     "pe": 6,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Presença Ausente",
+      "short_description": "Some da percepção de todos até agir.",
+      "element": "vazio",
+      "rarity": 5,
+      "ability_level": 3,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "13": {
+   "id": 13,
+   "name": "Velho Tobias",
+   "title": "Eremita das Colinas",
+   "photo": "/uploads/retratos/velhotobias.svg",
+   "status": "ativo",
+   "linked_user_id": null,
+   "level": "comum",
+   "lore": {
+    "idade": 0,
+    "origem": "",
+    "alinhamento": "",
+    "personalidade": "",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 3,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": {
+     "soul": 3,
+     "attributes": {
+      "for": 1,
+      "des": 1,
+      "vig": 2,
+      "sab": 4,
+      "int": 3,
+      "vit": 3
+     },
+     "skills": {
+      "atletismo": 0,
+      "corpo_a_corpo": 0,
+      "acrobacia": 0,
+      "furtividade": 0,
+      "pontaria": 0,
+      "resistencia": 0,
+      "astros_e_mistos": 2,
+      "historia": 2,
+      "ciencia": 0,
+      "natureza": 3,
+      "medicina": 3,
+      "criacao": 0,
+      "investigacao": 0,
+      "linguistica": 0,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 0,
+      "enganacao": 0,
+      "intimidacao": 0,
+      "procurar": 0,
+      "intencao": 0,
+      "vontade": 0
+     },
+     "mark": {
+      "element": "",
+      "grade": 0,
+      "extras": {}
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 0,
+      "rd": 0
+     },
+     "uses_pe": false
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 250,
+     "stamina": 68,
+     "sanidade": 85,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  },
+  "14": {
+   "id": 14,
+   "name": "Lorde Caído",
+   "title": "Antigo regente",
+   "photo": "/uploads/retratos/lordecaido.svg",
+   "status": "arquivado",
+   "linked_user_id": null,
+   "level": "lenda",
+   "lore": {
+    "idade": 0,
+    "origem": "",
+    "alinhamento": "",
+    "personalidade": "",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "lenda",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": null,
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  },
+  "15": {
+   "id": 15,
+   "name": "Bram Ferrolho",
+   "title": "Ferreiro de Vaelor",
+   "photo": "/uploads/retratos/bramferrolho.svg",
+   "status": "ativo",
+   "linked_user_id": 3,
+   "level": "comum",
+   "lore": {
+    "idade": 47,
+    "origem": "Vaelor",
+    "alinhamento": "Honesto",
+    "personalidade": "Rabugento e generoso.",
+    "descricao_fisica": "Barba chamuscada."
+   },
+   "mech": {
+    "soul": 5,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": {
+     "soul": 5,
+     "attributes": {
+      "for": 4,
+      "des": 1,
+      "vig": 3,
+      "sab": 2,
+      "int": 2,
+      "vit": 1
+     },
+     "skills": {
+      "atletismo": 2,
+      "corpo_a_corpo": 2,
+      "acrobacia": 0,
+      "furtividade": 0,
+      "pontaria": 0,
+      "resistencia": 2,
+      "astros_e_mistos": 0,
+      "historia": 0,
+      "ciencia": 0,
+      "natureza": 0,
+      "medicina": 0,
+      "criacao": 4,
+      "investigacao": 0,
+      "linguistica": 0,
+      "psicologia": 0,
+      "tecnologia": 0,
+      "diplomacia": 0,
+      "enganacao": 0,
+      "intimidacao": 1,
+      "procurar": 0,
+      "intencao": 0,
+      "vontade": 0
+     },
+     "mark": {
+      "element": "",
+      "grade": 0,
+      "extras": {}
+     },
+     "grants": {
+      "vida_bonus": 0
+     },
+     "equipment": {
+      "defense": 1,
+      "rd": 3
+     },
+     "uses_pe": false
+    },
+    "draft": null,
+    "resources": {
+     "initialized": true,
+     "needs_review": false,
+     "vida": 416,
+     "stamina": 79,
+     "sanidade": 65,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [
+     {
+      "name": "Martelo Rubro",
+      "short_description": "Golpe que aquece o metal do alvo.",
+      "element": "martírio",
+      "rarity": 2,
+      "ability_level": 1,
+      "equipped": true
+     }
+    ],
+    "progression_pending": false
+   }
+  },
+  "16": {
+   "id": 16,
+   "name": "Sombra de Ilmar",
+   "title": "Espiã da Coroa",
+   "photo": "/uploads/retratos/sombradeilma.svg",
+   "status": "ativo",
+   "linked_user_id": 3,
+   "level": "comum",
+   "lore": {
+    "idade": 0,
+    "origem": "Ilmar",
+    "alinhamento": "",
+    "personalidade": "Nunca diz o nome verdadeiro.",
+    "descricao_fisica": ""
+   },
+   "mech": {
+    "soul": 0,
+    "legacy_level": "comum",
+    "element": "",
+    "grade": 0,
+    "build": null,
+    "draft": null,
+    "resources": {
+     "initialized": false,
+     "needs_review": false,
+     "vida": 0,
+     "stamina": 0,
+     "sanidade": 0,
+     "pe": 0,
+     "temp_hp": 0,
+     "vital": "consciente",
+     "exhaustion": 0,
+     "conditions": [],
+     "charges_used": 0,
+     "death_successes": 0,
+     "death_failures": 0,
+     "ultimate_available": true
+    },
+    "abilities": [],
+    "progression_pending": false
+   }
+  }
+ },
+ "rpg": {
+  "1201": {
+   "id": 1201,
+   "subject_type": "sheet",
+   "subject_id": 41,
+   "name": "Kaelen Rubraluz"
+  },
+  "1202": {
+   "id": 1202,
+   "subject_type": "sheet",
+   "subject_id": 45,
+   "name": "Kaelen Rubraluz"
+  }
+ },
+ "rpg_index": {
+  "sheet:41": 1201,
+  "sheet:45": 1202
+ },
+ "links": {
+  "2a717c8f-118e-3474-bc2d-d61b924015ff": {
+   "user_id": 1,
+   "profile_name": "Dev1",
+   "linked_at": "2026-10-31T09:52:35-04:00"
+  },
+  "21cc3e25-481e-3cfa-8770-c5693a3e93a4": {
+   "user_id": 3,
+   "profile_name": "Dev2",
+   "linked_at": "2026-10-31T11:14:31-04:00"
+  }
+ },
+ "profiles": {
+  "2a717c8f-118e-3474-bc2d-d61b924015ff": {
+   "uuid": "2a717c8f-118e-3474-bc2d-d61b924015ff",
+   "name": "Dev1",
+   "account": "2a717c8f-118e-3474-bc2d-d61b924015ff",
+   "first_seen": "2026-10-31T09:52:35-04:00",
+   "last_seen": "2026-10-31T11:14:02-04:00",
+   "last_route": "/rpg/sheet",
+   "character": "Neto Spadoni"
+  },
+  "21cc3e25-481e-3cfa-8770-c5693a3e93a4": {
+   "uuid": "21cc3e25-481e-3cfa-8770-c5693a3e93a4",
+   "name": "Dev2",
+   "account": "21cc3e25-481e-3cfa-8770-c5693a3e93a4",
+   "first_seen": "2026-10-31T11:02:26-04:00",
+   "last_seen": "2026-10-31T11:14:16-04:00",
+   "last_route": "/rpg/sheet",
+   "character": "Teste Teste"
+  }
+ },
+ "game_chars": {
+  "bd11a5fa-22f8-44c6-a86a-675ef6e77ad0": {
+   "profile": "2a717c8f-118e-3474-bc2d-d61b924015ff",
+   "user_id": 1,
+   "name": "Neto Spadoni",
+   "first_seen": "2026-10-31T09:52:35-04:00",
+   "last_seen": "2026-10-31T11:14:02-04:00"
+  }
+ },
+ "bindings": {},
+ "diary": {},
+ "events_seen": [],
+ "counters": {
+  "calls": 33,
+  "events": 0,
+  "events_duplicate": 0,
+  "rolls": 7
+ }
+}
