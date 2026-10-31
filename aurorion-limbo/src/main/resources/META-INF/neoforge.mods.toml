@@ -29,9 +29,10 @@ side = "BOTH"
 
 # Biblioteca compartilhada do ecossistema.
 [[dependencies.${mod_id}]]
+# 0.6.8: CharacterFinale (morte definitiva pedida pelo duelo ate a morte).
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.6.6,)"
+versionRange = "[0.6.8,)"
 ordering = "AFTER"
 side = "BOTH"
 

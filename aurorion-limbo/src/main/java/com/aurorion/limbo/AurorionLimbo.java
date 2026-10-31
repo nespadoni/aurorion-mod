@@ -65,6 +65,8 @@ public class AurorionLimbo {
         // Conteudo do resgate: um item e uma entidade temporaria, mais o Oraculo. Ele deixou de ser
         // so uma tag quando ganhou corpo e skin proprios — modelo e textura nao cabem num dado. A tag
         // continua valendo para mobs marcados pela staff; ver OracleEntity.isOracle.
+        // A morte definitiva com a cena de fim, para quem precisar sem passar pelo Limbo (duelo ate a morte).
+        com.aurorion.core.character.CharacterFinale.provide(com.aurorion.limbo.finale.FinaleManager::expire);
         LimboItems.ITEMS.register(modEventBus);
         LimboEntities.ENTITIES.register(modEventBus);
         LimboSounds.SOUNDS.register(modEventBus);
