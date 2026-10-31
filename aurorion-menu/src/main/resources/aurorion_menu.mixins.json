@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.aurorion.menu.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "AdvancementToastAccessor",
+    "EntityRenderDispatcherAccessor",
+    "PlayerModelMixin",
+    "PlayerRendererMixin",
+    "ToastComponentMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
