@@ -1,4 +1,17 @@
 {
   "message.aurorion_profissoes.enchant.third_option_requires_arcanist": "A terceira opção da mesa exige a profissão de Arcanista.",
-  "entity.aurorion_profissoes.npc": "NPC de Ofício"
+  "entity.aurorion_profissoes.npc": "NPC de Ofício",
+  "item.aurorion_profissoes.peca_arruinada": "Peça Arruinada",
+  "aurorion_profissoes.oficio.falha": "A peça se perdeu: os materiais viraram uma Peça Arruinada.",
+  "aurorion_profissoes.oficio.falha_critica": "Desastre na bancada! Os materiais se perderam.",
+  "aurorion_profissoes.oficio.critico": "Obra-prima!",
+  "aurorion_profissoes.oficio.obra_prima": "Obra-prima de %s",
+  "aurorion_profissoes.oficio.obra_prima_anonima": "Obra-prima",
+  "aurorion_profissoes.oficio.sem_no": "%s exige o nó %s da Trama (Despertar Arcano). Só um professor libera.",
+  "aurorion_profissoes.oficio.reforja_falhou": "A reforja não pegou: os materiais se gastaram e o item voltou como estava.",
+  "aurorion_profissoes.oficio.aumento_falhou": "O afixo não subiu: o custo foi pago em vão.",
+  "aurorion_profissoes.encanto.critico": "Os astros ajudaram: a lápis não se gastou.",
+  "aurorion_profissoes.encanto.falha_critica": "O encanto se desfez: a lápis e os níveis se perderam.",
+  "aurorion_profissoes.pesca.escapou": "O peixe escapou no último puxão.",
+  "aurorion_profissoes.pesca.dobro": "Que fisgada! Veio mais um."
 }

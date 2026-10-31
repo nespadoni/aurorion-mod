@@ -10,7 +10,11 @@
     "EnchantmentMenuMixin",
     "BrewingStandMixin",
     "CampfireMixin",
-    "EnchantmentRepairMixin"
+    "EnchantmentRepairMixin",
+    "craft.ResultSlotMixin",
+    "craft.CraftingQuickMoveMixin",
+    "craft.FurnaceMixin",
+    "craft.BrewingCraftMixin"
   ],
   "client": [
     "EnchantmentScreenMixin"

@@ -388,6 +388,82 @@ Limites: 16 serviços, 32 ofertas e 16 falas por NPC. Erros no arquivo aparecem 
 (`npcs[1].trades[0].price_amount`) em `/npc recarregar`, `/npc listar` e no log; só o pedaço
 quebrado é ignorado.
 
+## Teste de ofício: fabricar pode falhar (0.6.0)
+
+Toda peça fabricada passa por um teste da ficha: **d20 + bônus da perícia Criação** (o bônus de teste
+completo, como o site rola: Sabedoria + treino + Marca; vem do retrato da ficha do `aurorion-ficha`)
+contra a **CD do item**. Sem ficha lida, `oficio.bonusSemFicha` (3).
+
+| Resultado | O que acontece |
+|---|---|
+| Sucesso | A peça sai normal |
+| Falha / falha crítica | Os ingredientes se gastam e sai uma **Peça Arruinada** (`aurorion_profissoes:peca_arruinada`) |
+| Crítico (só em item de CD ≥ `oficio.obraPrimaCd`, 10) | **Obra-prima**: o item não empilhável ganha a linha "Obra-prima de &lt;personagem&gt;"; o empilhável sai com um a mais |
+
+O 1 natural só derruba com CD ≥ `oficio.cdMinimaNatural` (8): tábua e graveto nunca falham.
+
+**A CD de cada item** vem de datapack, `data/<ns>/aurorion/oficio/*.json`:
+
+```json
+{ "items": ["minecraft:diamond_sword"], "tags": ["c:tools"], "mods": ["irons_spellbooks"],
+  "cd": 13, "no": "AR1", "profissao": "arcanista", "prioridade": 0 }
+```
+
+Item exato ganha de tag, que ganha de mod; empate fica com a maior `prioridade`. Sem regra, a heurística:
+equipamento (tem durabilidade) 12, comida 8, poção 8, o resto **2**, mais a raridade (incomum +2, raro
++4, épico +7). O jar traz `arcano.json`: tudo do Iron's Spells é CD 13, do arcanista e **exige o nó
+`AR1`** (Despertar Arcano I, que só um professor concede na Trama). Sem o nó, a peça nem sai da bancada.
+
+**Profissão no próprio domínio rola com vantagem** (dois d20, fica o maior): ferreiro em equipamento,
+cozinheiro em comida, médico em poção, arcanista no que a regra marcar. A staff em criativo não testa.
+
+### Onde vale
+
+| Onde | Quem é a mão |
+|---|---|
+| Bancada 3x3, inventário 2x2, todo slot de mod que herda `ResultSlot` (clique) | O jogador |
+| Shift-click da bancada e do 2x2 | O jogador; uma decisão por peça, e a falha para o lote |
+| Mesa de ferraria (clique e shift-click) | O jogador |
+| Fornalha, defumador, alto-forno e fornalhas que herdam `AbstractFurnaceBlockEntity` | **Quem colocou** (gravado no bloco; vale offline). CD + `oficio.cdFornalha` (4). Sem dono, bônus de máquina. Na falha a entrada se perde e nada sai |
+| Create: prensa, misturador, mó, triturador, serra, ventilador, deployer (`ProcessingRecipe.rollResults`), crafter mecânico, montagem sequencial | **Quem montou a máquina, com Criação + Tecnologia**; sem dono (ou fora do tick da máquina: contraption em movimento, aplicação manual), `oficio.bonusMaquina` (3) |
+| Suporte de poções | Quem colocou; o frasco que falha vira poção mundana do mesmo tipo |
+| Farmer's Delight: panela (falha = nada sai), fogão e frigideira no bloco (falha = Peça Arruinada) | Quem colocou |
+| Farmer's Delight: tábua de corte e frigideira na mão | O jogador |
+| Let's Do (Farm & Charm, Candlelight): panela, torrador, fogão, frigideira, caldeirão grande (falha = nada sai) | Quem abriu o menu por último; senão, quem colocou |
+| Oritech: toda máquina de receita (falha = nenhuma saída) | Quem colocou, com Criação + Tecnologia |
+| Apotheosis (do arcanista, que rola com vantagem): reforjar (falha = materiais e XP perdidos, o item volta sem mudança), lapidar (falha = gemas perdidas, Peça Arruinada), aumentar afixo (falha = custo pago, o afixo não sobe). Desmontar fica de fora | O jogador |
+| Cooking for Blockheads: livro de receitas da cozinha, por prato | O jogador |
+| Malum (altar de espíritos), Mystical Agriculture (altares de infusão e despertar): falha = Peça Arruinada no lugar do resultado | Quem colocou |
+| Sophisticated (crafting), Iron's (forja de pergaminhos, bigorna arcana), Cataclysm (bigorna de fusão), LSO (costura), Refurbished (bancada) | O jogador (só o clique) |
+
+**Máquinas de tecnologia** (Create, Oritech) testam com a ficha de quem as montou somando o treino da
+perícia **Tecnologia** (`oficio.periciaTecnologia`) à Criação: quem entende de engrenagem monta máquina que
+erra menos. O Create não diz ao `rollResults` qual máquina trabalha, então cada `SmartBlockEntity` se marca no
+começo do próprio tick (`craft/compat/MachineContext`, uma escrita de campo, sem alocação) e o fim dos ticks
+de bloco do mundo limpa. Máquina sem dono usa o bônus fixo: material barato nunca falha nela, obra de CD
+alta falha muito. Os outros mods do pack ganham um adaptador cada; o levantamento das máquinas e dos métodos está em
+[OFICIO-ADAPTADORES.md](OFICIO-ADAPTADORES.md).
+
+A aba Habilidades da ficha mostra a chance de a peça se perder por faixa de CD.
+
+**Custo:** por peça, um `HashMap.get` do retrato da ficha, um `IdentityHashMap.get` da CD (refeita no
+`/reload`) e um ou dois números aleatórios. Nada por tick.
+
+## Outros testes da ficha (0.6.0)
+
+Mesma regra (d20 + bônus da perícia na ficha contra a CD; sem ficha, `oficio.bonusSemFicha`), seção
+`[pericias]` do config:
+
+| Onde | Perícia | O que acontece |
+|---|---|---|
+| Médico cura outra pessoa (Shift+G) | Medicina, CD `curaCd` 10 | Crítico: cura tudo e dá Regeneração. Sucesso: como antes. Falha: cura metade do que falta e não trata os ferimentos. Falha crítica: um quarto |
+| Médico trata um membro pela tela | Medicina, CD `tratarMembroCd` 12 | Na falha o medkit/tônico se gasta e o membro não sara |
+| Cozinheiro faz comida (Quality Food) | Criação, CD `cozinhaCd` 10 | Qualidade: crítico `chefQualityLevel` + 2, falha − 1, falha crítica − 2 (mínimo 1) |
+| NPCs de ofício | Diplomacia / Intimidação | Desconto no preço em dinheiro: `descontoPorPonto` (2%) por ponto de bônus, até `descontoMaximo` (20%). Se a Intimidação render mais, o desconto vem na ameaça: cada compra testa Intimidação (CD `intimidacaoCd` 12) e a falha crítica ofende o NPC por `segundosOfendido` (120 s). A tela já mostra o preço com o desconto |
+| Mesa de encantamentos | Astros & Mistos (`encantamentoPericia`), CD `encantamentoCd` 8 (+3 e +6 nas outras opções); arcanista com vantagem | Crítico: a lápis volta. Falha crítica: lápis e níveis se gastam e o item sai sem encanto |
+| Arrombar (Locks Reforged) | Furtividade (`arrombarPericia`), CD `arrombarCd` 12, a cada pino errado | Desgaste da gazua: crítico 0, sucesso metade, falha crítica o dobro. Quando o erro zeraria o progresso, um sucesso o segura |
+| Pescar (vanilla, Aquaculture, Starcatcher) | Natureza (`pescaPericia`), CD `pescaCd` 10, a cada peixe | Crítico: um peixe a mais. Falha crítica: o peixe escapa |
+
 ## Configuração e extensão
 
 Config nativa em `config/aurorion/profissoes-server.toml`:
@@ -404,6 +480,15 @@ Config nativa em `config/aurorion/profissoes-server.toml`:
 | `amateurFoodDecayMultiplier` | 2.0 |
 | `fixFoodSpoilThaw` | `true` |
 | `receitasExclusivas` | as 6 receitas de gema, soquete e sigilo do Apotheosis (`apotheosis:socketing=arcanista`, …) |
+| `oficio.habilitado` | `true` |
+| `oficio.cdMinimaNatural` | 8 |
+| `oficio.obraPrimaCd` | 10 |
+| `oficio.bonusSemFicha` | 3 |
+| `oficio.cdFornalha` | 4 |
+| `oficio.donoDaFornalha` | `true` |
+| `oficio.bonusMaquina` | 3 |
+| `oficio.modsComDono` | `create`, `createaddition`, `farmersdelight`, `oritech`, `farm_and_charm`, `candlelight`, `malum`, `mysticalagriculture`: blocos desses mods gravam quem os colocou |
+| `oficio.periciaTecnologia` | `tecnologia`: somada à Criação nas máquinas do Create e do Oritech |
 
 `ProfessionApi` consulta o ofício. `ServiceEvent.Validate` permite vetar um atendimento antes
 do consumo; `ServiceEvent.Completed` informa sua conclusão com identificador único.

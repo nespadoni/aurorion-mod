@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "package": "com.aurorion.profissoes.mixin.create",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ProcessingRecipeMixin",
+    "RecipeGridHandlerMixin",
+    "SequencedAssemblyMixin",
+    "SmartBlockEntityMixin",
+    "LevelTickMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

@@ -1,4 +1,17 @@
 {
   "message.aurorion_profissoes.enchant.third_option_requires_arcanist": "The third enchanting-table option requires the Arcanist profession.",
-  "entity.aurorion_profissoes.npc": "Profession NPC"
+  "entity.aurorion_profissoes.npc": "Profession NPC",
+  "item.aurorion_profissoes.peca_arruinada": "Ruined Piece",
+  "aurorion_profissoes.oficio.falha": "The piece was lost: the materials became a Ruined Piece.",
+  "aurorion_profissoes.oficio.falha_critica": "Disaster at the bench! The materials were lost.",
+  "aurorion_profissoes.oficio.critico": "Masterpiece!",
+  "aurorion_profissoes.oficio.obra_prima": "Masterpiece by %s",
+  "aurorion_profissoes.oficio.obra_prima_anonima": "Masterpiece",
+  "aurorion_profissoes.oficio.sem_no": "%s needs the Trama node %s (Arcane Awakening). Only a professor can grant it.",
+  "aurorion_profissoes.oficio.reforja_falhou": "The reforge did not take: the materials were spent and the item came back unchanged.",
+  "aurorion_profissoes.oficio.aumento_falhou": "The affix did not rise: the cost was paid for nothing.",
+  "aurorion_profissoes.encanto.critico": "The stars helped: the lapis was not spent.",
+  "aurorion_profissoes.encanto.falha_critica": "The enchantment unravelled: the lapis and the levels were lost.",
+  "aurorion_profissoes.pesca.escapou": "The fish slipped away at the last pull.",
+  "aurorion_profissoes.pesca.dobro": "What a catch! Another one came along."
 }

@@ -1,0 +1,21 @@
+{
+  "required": false,
+  "package": "com.aurorion.profissoes.mixin.compat",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ResultTakeMixin",
+    "FarmersDelightPotMixin",
+    "FarmersDelightCookingMixin",
+    "FarmersDelightHandMixin",
+    "LetsDoMixin",
+    "OritechMixin",
+    "CookingForBlockheadsMixin",
+    "MagicAltarsMixin",
+    "ApotheosisMixin",
+    "LocksMixin",
+    "StarcatcherMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

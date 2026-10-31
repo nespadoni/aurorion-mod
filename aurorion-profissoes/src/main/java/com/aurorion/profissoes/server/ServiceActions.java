@@ -1,5 +1,6 @@
 package com.aurorion.profissoes.server;
 
+import com.aurorion.economia.server.ChargeManager;
 import com.aurorion.profissoes.api.ProfessionApi;
 import com.aurorion.profissoes.compat.*;
 import com.aurorion.profissoes.config.ProfessionsConfig;
@@ -119,8 +120,15 @@ public final class ServiceActions {
         return new Plan(action, title(action), detail, result, materials, levels, null, honey);
     }
     public static void execute(Plan plan, ServerPlayer professional, ServerPlayer customer) {
-        if (plan.wound != null) LsoCompat.treat(customer, plan.wound);
-        else {
+        if (plan.wound != null) {
+            // Teste de Medicina: na falha o material se gasta (abaixo) e o membro não sara.
+            if (SkillCheck.roll(professional, DoctorHealing.MEDICINE, ProfessionsConfig.TREAT_DC.get()).success()) {
+                LsoCompat.treat(customer, plan.wound);
+            } else {
+                ChargeManager.status(professional, "Tratamento falhou", "O curativo não pegou; o material se perdeu.", false);
+                ChargeManager.status(customer, "Tratamento falhou", "O tratamento não fez efeito.", false);
+            }
+        } else {
             if (plan.honey) FoodCompat.finish(plan.result, true, customer.level());
             customer.setItemInHand(InteractionHand.MAIN_HAND, plan.result);
         }

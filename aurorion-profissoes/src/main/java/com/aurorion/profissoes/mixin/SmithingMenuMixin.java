@@ -1,6 +1,8 @@
 package com.aurorion.profissoes.mixin;
 
+import com.aurorion.profissoes.craft.CraftRoll;
 import com.aurorion.profissoes.server.ExclusiveUse;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
@@ -23,6 +25,9 @@ import org.spongepowered.asm.mixin.injection.callback.*;
  * O shift-click do resultado repete quickMoveStack em loop sem consultar mayPickup de novo; com
  * mods que mantêm a receita selecionada (Polymorph, mochilas), um resultado antigo podia ser
  * retirado depois de os insumos acabarem. Cada retirada revalida a receita com os insumos atuais.
+ *
+ * Teste de ofício (0.6.0): cada peça da mesa passa pelo teste da ficha. No clique, o {@code onTake}
+ * testa com a peça já na mão; no shift-click, o teste vem antes de mover (ver {@link CraftRoll#quickMove}).
  */
 @Mixin(SmithingMenu.class)
 public abstract class SmithingMenuMixin extends ItemCombinerMenu {
@@ -37,9 +42,25 @@ public abstract class SmithingMenuMixin extends ItemCombinerMenu {
     private void aurorion$take(Player player, boolean hasStack, CallbackInfoReturnable<Boolean> cir) {
         if (!ExclusiveUse.maySmith(player, selectedRecipe)) cir.setReturnValue(false);
     }
+    @Inject(method = "onTake", at = @At("HEAD"))
+    private void aurorion$craftCheck(Player player, ItemStack stack, CallbackInfo ci) {
+        if (player instanceof ServerPlayer serverPlayer) CraftRoll.take(serverPlayer, stack);
+    }
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         if (index == getResultSlot() && !mayPickup(player, slots.get(index).hasItem())) return ItemStack.EMPTY;
-        return super.quickMoveStack(player, index);
+        if (index != getResultSlot() || !(player instanceof ServerPlayer serverPlayer) || !slots.get(index).hasItem()) {
+            return super.quickMoveStack(player, index);
+        }
+        ItemStack result = slots.get(index).getItem();
+        ItemStack answer = CraftRoll.quickMove(serverPlayer, result, () -> onTake(player, result.copy()));
+        if (answer != null) return answer;
+        ItemStack moved = ItemStack.EMPTY;
+        try {
+            moved = super.quickMoveStack(player, index);
+            return moved;
+        } finally {
+            CraftRoll.finishQuickMove(serverPlayer, !moved.isEmpty());
+        }
     }
 }

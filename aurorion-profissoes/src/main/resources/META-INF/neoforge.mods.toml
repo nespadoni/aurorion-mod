@@ -23,10 +23,12 @@ versionRange = "${neo_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
+# 0.6.7: CharacterAbilities (a profissao na aba Habilidades da ficha).
+# 0.6.8: CharacterSheet, SkillTreeGate e SheetCheck (teste de fabricacao).
 [[dependencies.${mod_id}]]
 modId = "aurorion_core"
 type = "required"
-versionRange = "[0.1.0,)"
+versionRange = "[0.6.8,)"
 ordering = "AFTER"
 side = "BOTH"
 
@@ -60,3 +62,13 @@ requiredMods = ["quality_food"]
 [[mixins]]
 config = "aurorion_profissoes.spoil.mixins.json"
 requiredMods = ["foodspoil"]
+
+# Teste de oficio nas maquinas do Create (processamento e crafter mecanico).
+[[mixins]]
+config = "aurorion_profissoes.create.mixins.json"
+requiredMods = ["create"]
+
+# Teste de oficio nas estacoes de outros mods em que o jogador retira o resultado (alvos @Pseudo: mod
+# ausente so deixa o alvo dele sem efeito).
+[[mixins]]
+config = "aurorion_profissoes.compat.mixins.json"

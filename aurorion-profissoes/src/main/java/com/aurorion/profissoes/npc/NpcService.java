@@ -137,6 +137,8 @@ public final class NpcService {
         var definition = loaded.definition();
         long now = System.currentTimeMillis();
         String blocked = professionalNearby(player, npc, definition);
+        if (blocked == null) blocked = NpcHaggle.offended(player, definition.id(), now);
+        var haggle = NpcHaggle.of(player);
 
         var services = new ArrayList<NpcScreenPayload.ServiceRow>();
         for (int i = 0; i < loaded.services().size() && i < NpcScreenPayload.MAX_ROWS; i++) {
@@ -148,7 +150,8 @@ public final class NpcService {
             }
             String input = entry.service().action() == ActionType.NAME_TAG ? "Nome gravado na etiqueta" : "";
             services.add(new NpcScreenPayload.ServiceRow(clip(entry.service().name(), 128), clip(entry.service().description(), 512),
-                    clip(describe(entry.cost()), 256), reason == null, clip(reason == null ? "" : reason, 512), input));
+                    clip(describe(NpcHaggle.apply(entry.cost(), haggle)) + NpcHaggle.label(haggle), 256), reason == null,
+                    clip(reason == null ? "" : reason, 512), input));
         }
 
         var trades = new ArrayList<NpcScreenPayload.TradeRow>();
@@ -156,12 +159,13 @@ public final class NpcService {
         for (int i = 0; i < loaded.trades().size() && i < NpcScreenPayload.MAX_ROWS; i++) {
             var entry = loaded.trades().get(i);
             int left = remaining(stock, definition, entry);
-            String reason = definition.fallbackBlocksTrades() ? blocked : null;
+            String reason = definition.fallbackBlocksTrades() ? blocked : NpcHaggle.offended(player, definition.id(), now);
+            var price = NpcHaggle.apply(entry.price(), haggle);
             if (reason == null && left == 0) reason = "Esgotado. " + restockHint(entry);
-            if (reason == null && !canAfford(player, entry.price())) reason = "Você precisa de " + describe(entry.price()) + ".";
+            if (reason == null && !canAfford(player, price)) reason = "Você precisa de " + describe(price) + ".";
             ItemStack icon = entry.price().item() == null ? ItemStack.EMPTY : new ItemStack(entry.price().item(), Math.min(99, Math.max(1, entry.price().amount())));
             trades.add(new NpcScreenPayload.TradeRow(entry.result().copy(), entry.trade().amount(), icon,
-                    clip(describe(entry.price()), 256), left, reason == null, clip(reason == null ? "" : reason, 512)));
+                    clip(describe(price) + NpcHaggle.label(haggle), 256), left, reason == null, clip(reason == null ? "" : reason, 512)));
         }
 
         String eyebrow = !definition.title().isEmpty() ? definition.title()
@@ -188,7 +192,10 @@ public final class NpcService {
         var entry = loaded.services().get(index);
         var service = entry.service();
         String blocked = professionalNearby(player, npc, definition);
+        if (blocked == null) blocked = NpcHaggle.offended(player, definition.id(), now);
         if (blocked != null) return Outcome.fail(blocked);
+        var haggle = NpcHaggle.of(player);
+        var cost = NpcHaggle.apply(entry.cost(), haggle);
         // O resultado e montado antes de cobrar: se o item nao aceita, ninguem paga.
         ItemStack prepared = ItemStack.EMPTY;
         String engraving = "";
@@ -201,8 +208,10 @@ public final class NpcService {
                 default -> { }
             }
         } catch (Refusal refusal) { return Outcome.fail(refusal.getMessage()); }
+        if (!NpcHaggle.pressure(player, definition.id(), haggle, now))
+            return Outcome.fail("A ameaça saiu pela culatra: o NPC se ofendeu e não vai atender você por um tempo.");
 
-        charge(player, entry.cost());
+        charge(player, cost);
         final String engraved = engraving;
         final ItemStack result = prepared;
         boolean done = switch (service.action()) {
@@ -221,7 +230,7 @@ public final class NpcService {
         boolean commands = runCommands(player, definition, service.commands());
         if (service.action() == ActionType.COMMAND) done = commands;
         if (!done) {
-            refund(player, entry.cost());
+            refund(player, cost);
             AurorionProfissoes.LOGGER.warn("NPC {}: servico '{}' falhou para {}; pagamento devolvido.",
                     definition.id(), service.name(), player.getGameProfile().getName());
             return Outcome.fail("O serviço não pôde ser realizado. O pagamento foi devolvido.");
@@ -233,7 +242,7 @@ public final class NpcService {
         }
         player.inventoryMenu.broadcastChanges();
         AurorionProfissoes.LOGGER.info("NPC {}: servico '{}' para {} ({}){}.", definition.id(), service.name(),
-                player.getGameProfile().getName(), describe(entry.cost()), engraved.isEmpty() ? "" : " nome \"" + engraved + "\"");
+                player.getGameProfile().getName(), describe(cost), engraved.isEmpty() ? "" : " nome \"" + engraved + "\"");
         if (service.action() == ActionType.NAME_TAG) return Outcome.ok("Etiqueta gravada: “" + engraved + "”.");
         return Outcome.ok("Serviço realizado: " + service.name() + ".");
     }
@@ -271,7 +280,8 @@ public final class NpcService {
             }
             case COMMAND -> { }
         }
-        if (!canAfford(player, entry.cost())) throw new Refusal("Você precisa de " + describe(entry.cost()) + ".");
+        var cost = NpcHaggle.apply(entry.cost(), NpcHaggle.of(player));
+        if (!canAfford(player, cost)) throw new Refusal("Você precisa de " + describe(cost) + ".");
     }
 
     /**
@@ -420,18 +430,25 @@ public final class NpcService {
             String blocked = professionalNearby(player, npc, definition);
             if (blocked != null) return Outcome.fail(blocked);
         }
+        long now = System.currentTimeMillis();
+        String offended = NpcHaggle.offended(player, definition.id(), now);
+        if (offended != null) return Outcome.fail(offended);
         var stock = NpcStockData.get(player.server);
+        var haggle = NpcHaggle.of(player);
+        var price = NpcHaggle.apply(entry.price(), haggle);
         if (remaining(stock, definition, entry) == 0) return Outcome.fail("Esgotado. " + restockHint(entry));
-        if (!canAfford(player, entry.price())) return Outcome.fail("Você precisa de " + describe(entry.price()) + ".");
+        if (!canAfford(player, price)) return Outcome.fail("Você precisa de " + describe(price) + ".");
+        if (!NpcHaggle.pressure(player, definition.id(), haggle, now))
+            return Outcome.fail("A ameaça saiu pela culatra: o NPC se ofendeu e não vai vender para você por um tempo.");
 
-        charge(player, entry.price());
+        charge(player, price);
         give(player, entry.result(), entry.trade().amount());
         if (entry.trade().limited())
             stock.add(NpcStockData.key(definition.id(), entry.trade().key()), period(entry), 1);
         player.inventoryMenu.broadcastChanges();
         String name = entry.result().getHoverName().getString();
         AurorionProfissoes.LOGGER.info("NPC {}: {} comprou {}x {} ({}).", definition.id(),
-                player.getGameProfile().getName(), entry.trade().amount(), name, describe(entry.price()));
+                player.getGameProfile().getName(), entry.trade().amount(), name, describe(price));
         return Outcome.ok("Você comprou " + entry.trade().amount() + "× " + name + ".");
     }
 

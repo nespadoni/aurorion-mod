@@ -47,10 +47,34 @@ public final class FoodCompat {
         if (!ProfessionsConfig.enabled() || !isFood(stack) || player != null && player.level().isClientSide()) return;
         var server = ServerLifecycleHooks.getCurrentServer();
         if (player == null && (server == null || !server.isSameThread())) return;
-        finish(stack, player != null && (ProfessionApi.has(player, Profession.CHEF) || ProfessionApi.staff(player)),
-                player == null ? server.overworld() : player.level());
+        boolean chef = player != null && (ProfessionApi.has(player, Profession.CHEF) || ProfessionApi.staff(player));
+        finish(stack, chef, player == null ? server.overworld() : player.level(), chefQuality(player, chef));
     }
+
+    /**
+     * Nível de qualidade do prato do cozinheiro, pela Criação da ficha: crítico +2, sucesso o do config, falha
+     * −1 e falha crítica −2 (mínimo 1). Staff em criativo e quem não é cozinheiro não testam.
+     */
+    private static int chefQuality(Player player, boolean chef) {
+        int base = ProfessionsConfig.CHEF_QUALITY.get();
+        if (!chef || !(player instanceof net.minecraft.server.level.ServerPlayer cook) || ProfessionApi.staff(player)) return base;
+        var outcome = com.aurorion.core.character.SheetCheck.roll(cook.getRandom(),
+                com.aurorion.profissoes.craft.CraftRoll.bonus(cook.server, cook.getUUID()), ProfessionsConfig.COOK_DC.get(), false,
+                ProfessionsConfig.CRAFT_NATURAL_MIN_DC.get());
+        int level = switch (outcome) {
+            case CRIT -> base + 2;
+            case SUCCESS -> base;
+            case FAIL -> base - 1;
+            case CRIT_FAIL -> base - 2;
+        };
+        return Math.max(1, Math.min(10, level));
+    }
+
     public static void finish(ItemStack stack, boolean chef, Level level) {
+        finish(stack, chef, level, ProfessionsConfig.CHEF_QUALITY.get());
+    }
+
+    public static void finish(ItemStack stack, boolean chef, Level level, int qualityLevel) {
         init();
         // Fixar o frescor ANTES de trocar a taxa evita rejuvenescimento retroativo.
         if (freshness != null) {
@@ -61,7 +85,7 @@ public final class FoodCompat {
         }
         if (qualityComponent != null) {
             try {
-                Object quality = chef ? randomQuality.invoke(null, stack, ProfessionsConfig.CHEF_QUALITY.get()) : null;
+                Object quality = chef ? randomQuality.invoke(null, stack, qualityLevel) : null;
                 // Sem qualidade e sem o componente, nunca Quality.NONE gravado: a copia que volta do
                 // disco/rede vira o xadrez roxo e preto no slot (ver QualityNone).
                 if (QualityNone.isNone(quality)) stack.remove(qualityComponent);
