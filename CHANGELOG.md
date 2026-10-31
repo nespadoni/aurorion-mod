@@ -1,3 +1,322 @@
+# Comunicado da UF - 31/10/2026
+
+**A ficha ganhou vida no jogo.** Seus atributos e perícias agora decidem se a magia sai, se a peça fica
+pronta e quem vence um duelo. E tudo isso cabe num menu novo, que aparece na sua frente. Isto é só o
+começo.
+
+## Menu do personagem
+
+- **Para abrir**, faça o gesto: com as duas mãos vazias, segure o botão direito e puxe a mira para baixo,
+  rápido. Também abre com um toque na tecla da ficha.
+- **Ele aparece flutuando na sua frente**, no mundo, em primeira ou em terceira pessoa. Você pode andar
+  e olhar em volta, e o painel acompanha.
+  - Aponte com a mira e clique com o esquerdo para escolher.
+  - O direito volta um passo, e Esc fecha.
+- **Perfil:** o seu personagem de corpo inteiro, com a armadura e o que você segura, e a sua ficha
+  completa: vida, stamina, sanidade, P.E., condições, combate e atributos. Clique num atributo para
+  rolar o teste.
+- **Interações:** meditar, e o que dá para fazer com quem está perto (por enquanto, desafiar para duelo).
+- **Quem está perto vê você usando:** o braço faz o gesto e aparece um painel holográfico borrado na sua
+  frente. Ninguém lê o que está no seu.
+- **Avisos na sua frente:** conquistas e avisos da ficha chegam num cartão flutuante com o seu
+  personagem.
+
+## Meditar
+
+- Sente-se e recupere vida devagar. Funciona no chão, fora de combate e longe de monstros.
+- Andar, atacar ou levar dano quebra a concentração.
+
+## Magia com a ficha
+
+- **Toda magia agora tem um teste:** Vitral + Astros & Mistos.
+  - **Falhou:** a magia não sai e o custo é cobrado inteiro.
+  - **Falha crítica:** você fica **Exausto** e tonto.
+  - **Acerto crítico:** a magia sai mais forte.
+- **Despertar Arcano I, II e III:** só um professor concede, e eles liberam as magias.
+
+| Nó | Libera |
+|---|---|
+| Despertar I | magias comuns e incomuns |
+| Despertar II | magias raras, épicas e lendárias |
+| Despertar III | magias proibidas |
+
+- **Especialidade de magia:** depois do Despertar I, cada um escolhe **uma** das 9 escolas na Trama.
+  - Na sua escola você ganha vantagem e bônus no teste, a magia fica mais barata e mais rápida, e o poder
+    aumenta.
+  - Trocar de escola só pelo respec.
+
+## Fabricar com a ficha
+
+- **Tudo o que se fabrica tem um teste de Criação:** bancada, fornalha, mesas e oficinas dos mods,
+  inclusive as do Apotheosis.
+  - Falhou: os ingredientes se perdem e sai uma **Peça Arruinada**.
+  - Crítico num item difícil: **obra-prima**, com a sua assinatura ou uma peça a mais.
+- **Máquinas do Create e do Oritech** usam a ficha de quem as colocou, com Criação e **Tecnologia**.
+- Sua profissão dá vantagem no que é dela.
+
+## A ficha em outras partes do jogo
+
+- **Medicina** decide a cura do médico.
+- **A comida do chef** sai com qualidade.
+- **Diplomacia e Intimidação** baixam o preço com os NPCs.
+- **Astros & Mistos** decide a mesa de encantamento: o crítico devolve o lápis, a falha crítica perde o
+  encanto.
+- **Furtividade** ajuda a abrir fechaduras.
+- **Natureza** ajuda na pesca.
+- **Último fôlego:** num golpe que seria fatal, um teste de Fortitude pode deixar você com 1 de vida, uma
+  vez por dia.
+
+## Duelos
+
+- **Desafie alguém pelo menu**, em Interações ou em Duelo, ou com `/duelo`. Quem recebe vê um convite no
+  meio da tela e responde apontando: ○ aceita, × recusa. Os dois escolhem juntos até que vida vai a luta:
+
+| Limite | Como acaba |
+|---|---|
+| Primeiro sangue | no primeiro dano |
+| Porcentagem | quando a vida chega à marca combinada |
+| **Até a morte** | quem zerar a vida da ficha perde o personagem para sempre |
+
+- **Uma arena se forma:** uma parede de luz cerca os duelistas, ninguém foge do campo, e quem está perto
+  assiste.
+- **Contagem regressiva** com os dois nomes, VS e "LUTEM!".
+- **A luta é por turnos e usa a sua ficha:** atacar, defender, técnicas equipadas e magias do seu
+  Despertar.
+- **Reação:** quando um golpe vem, um anel fecha no instante do impacto. Clique esquerdo apara, direito
+  esquiva.
+  - Clicar no tempo certo dá bônus, mas quem decide é o dado.
+  - Aparar sem parar cansa a guarda.
+  - O aparo perfeito pode virar um contra-ataque.
+- **O dano segue o sistema novo do RPG**, escalado pela sua Alma. Críticos caem com raio.
+- **No fim**, um cartão mostra vitória ou derrota, o dano causado e recebido, golpes, defesas, críticos e
+  o XP ganho.
+- **Regras justas:**
+  - desistir nunca mata;
+  - cair a conexão ou reiniciar o servidor não mata ninguém;
+  - um convite por vez, e ninguém troca os termos;
+  - XP só de duelo lutado de verdade;
+  - durante o duelo o mundo continua perigoso.
+
+## Isto é só o começo
+
+O menu vai receber muito mais nas próximas atualizações:
+
+- o resto da ficha, com perícias, técnicas, história, vínculo e rolagem de dados;
+- a mesa do mestre;
+- a sua Casa;
+- a carteira;
+- conquistas;
+- **missões**.
+
+Os duelos também vão ganhar ainda mais efeitos para quem assiste. Encontrou um bug ou tem uma ideia?
+Fale com a staff.
+
+# Menu do personagem vira mod próprio (fase 1 de 5) - 31/10/2026
+
+Core 0.7.0, Menu 0.1.0 (novo), Ficha 0.3.0 e Intenção 0.3.0, junto com Trama 0.2.0, Magia 0.10.0,
+Profissões 0.6.0, Vidas 0.3.0 e Limbo 0.4.8. Ficha e Intenção exigem `aurorion_core [0.6.9,)`. Compilado com
+`gradlew buildAll` em 31/10/2026, com os testes de todos os módulos passando. O menu em estilo de MMO deixa de ser do duelo e vira o centro do personagem. As próximas fases
+trazem o resto da ficha, a mesa do mestre, a Casa, a carteira, as conquistas e as missões, e no fim o
+`/ficha` fica só para admin.
+
+- **Core 0.6.9:**
+  - `CharacterMenu`: registro de seções e interações no cliente, com host opcional no padrão dos gates.
+  - O desenho do menu sai do intencao e vem para cá: `MenuUi`, as texturas lisas (agora com o painel
+    holográfico borrado), a fonte Rajdhani e o gerador.
+  - `EmotecraftBridge` toca emotes por reflexão.
+- **Menu 0.1.0 (`aurorion-menu`, novo):**
+  - **Painel no mundo, não uma tela:** flutua na frente da pessoa, em primeira e em terceira pessoa, e
+    segue quando ela anda ou vira a cabeça. Aponta-se com a mira. Clique esquerdo escolhe, direito volta,
+    a rodinha rola, Enter confirma e Esc fecha. A câmera fica livre.
+  - Abre e fecha pelo gesto da mão ou por um toque na tecla da ficha. A tecla própria vem sem atribuição,
+    porque Y colide com Cataclysm e hazentouvelib.
+  - **Avisos na frente da pessoa:** cartão branco no estilo de resultado, com o personagem ao lado.
+    Conquistas do vanilla e avisos da ficha vão para ele (`CharacterMenu.notice`).
+  - Quem está perto vê o braço fazer o gesto e um painel holográfico borrado na frente da pessoa.
+  - **Interações:** Meditar e as ações sobre jogadores próximos.
+  - **Meditar:** o emote do Emotecraft do servidor, ou uma pose sentada sem ele; recupera vida devagar
+    fora de combate e para ao andar, apanhar ou atacar.
+- **Ficha:** a seção **Perfil** no menu, com a vitrine do personagem (corpo inteiro, armadura e mãos) e o
+  conteúdo da antiga aba Ficha: recursos, vital, condições
+  com explicação, combate e atributos clicáveis para rolar. Usa o mesmo pacote de abrir. A tela antiga
+  continua para o resto.
+- **Verificação geral (cinco revisões, uma simulação de 20 mil duelos por cenário) e correções:**
+  - Duelo, segurança:
+    - um convite por vez;
+    - desistir nunca mata;
+    - `fugaMata` desligado por padrão;
+    - reinício do servidor encerra os duelos sem matar;
+    - nada de imortalidade (dano do mundo vale, máximo de 30 rodadas);
+    - XP só de duelo lutado, com intervalo por dupla;
+    - tempo da reação conferido pela chegada do pacote;
+    - montaria não escapa do campo;
+    - intervalo entre desafios.
+  - Duelo, regra: o crítico de ataque é só o 20 natural (§07); a regra genérica de teste dava 15–20% de
+    crítico.
+  - Duelo, efeitos e placar:
+    - raio de efeito desenhado no cliente, só para a plateia;
+    - golpes e críticos contam só quando entram;
+    - Defender sempre aparece no registro;
+    - a saída de um terceiro não tira a vez de quem age.
+    - Protocolo de rede 5.
+  - Menu, lógica:
+    - Ações aparece com o menu já aberto;
+    - a coluna não duplica (atualização no próximo quadro);
+    - fechar o menu devolve o convite para a frente da pessoa, com o prazo que restava;
+    - Ações some com o duelo pausado;
+    - clicar em item desativado não fecha colunas;
+    - desistir pelo comando.
+  - Menu, render:
+    - erro de desenho não derruba o jogo nem deixa sombra, luz ou recorte presos;
+    - F1 esconde e desliga o painel;
+    - a mão em primeira pessoa não entorta;
+    - o clique volta a prender o mouse depois de alt-tab;
+    - o `MenuUi` devolve o blend padrão;
+    - as texturas saem da memória de vídeo ao fechar;
+    - a presença de quem sai de vista é esquecida;
+    - a profundidade da tela do menu não depende de quantas camadas de HUD há.
+  - Menu, opções e compatibilidade:
+    - o gesto exige as duas mãos vazias e a mira no ar;
+    - `gesto` e `conquistasNoCartao` na config do cliente;
+    - meditar com limite de pedidos e quebrando só com dano de verdade;
+    - presença desligada não vaza a flag do menu.
+  - Ficha: a ficha pedida pelo menu não abre a tela antiga se o menu fechou antes de ela chegar.
+  - Testes novos: `attackCritsOnlyOnNatural20` e `clientTimingIsCheckedAgainstArrival`.
+- **Intenção, dano do duelo pelo RPG v0.3:** `piso((d12 + MO) × E)`, com E = Vida de referência da alma ÷ 150.
+  - Pacotes: básico 3d12; técnicas H1 4d12, H2 5d12, H3 6d12, H4 8d12, H5 12d12; magias pela raridade.
+  - Crítico dobra os dados (MO uma vez, depois E).
+  - Ordem do dano conforme o §10.
+  - Um duelo resolve em 4–6 rodadas.
+  - A ficha passa a guardar a alma no retrato.
+  - Teste novo: `DuelScaleTest`, com os exemplos do próprio documento (76, 70, 250).
+- **Intenção, duelo para live e plateia:**
+  - Arena desenhada no cliente: parede de luz, anel, faíscas e raios de efeito na abertura, nos críticos
+    e na derrota. Ficou mais leve: o servidor parou de mandar 32 pacotes de partícula por jogador a cada
+    meio segundo.
+  - Contagem com faixas de cinema, VS, número saltando, anel e "LUTEM!".
+  - Resultado num cartão no meio da visão, com o placar e o XP do vanilla (`xpVitoria`, `xpDerrota`).
+  - Desafio, começo e fim saem do chat (que fica só para quem joga sem o mod). Protocolo de rede 4.
+- **Intenção, reação no duelo vira teste:** clicar no tempo certo não basta mais para anular o golpe.
+  - A reação é d20 + Corpo a corpo (aparo) ou Acrobacia (esquiva) contra o total do ataque como CD.
+  - O tempo dá +5 (perfeito) ou +2 (na janela).
+  - Aparo bem-sucedido corta metade do dano. O contra-ataque só vem passando por 10 ou mais no instante
+    perfeito. Esquiva é tudo ou nada.
+  - Cada defesa seguida dá −2 na próxima (guarda cansada); Defender no turno zera.
+  - Tudo configurável em `[duelo]`. Teste novo: `DuelReactionTest`.
+- **Intenção, convite de duelo na frente da pessoa:** cartão no meio da visão; aponta e clica em ○ ou ×,
+  com a barra do prazo. Some sozinho se o duelo começar por outro caminho (`CharacterMenu.dismissPrompt`).
+- **Intenção:** o menu próprio e a tecla Y saem. O duelo registra **Ações** (só na sua vez), **Duelo** e
+  "Desafiar para duelo" em Interações, e o convite vira a janela ○/× do host. O HUD usa o `MenuUi` do core.
+- **Verificação:** compilado com `javac` contra os jars do NeoForge do cache (core, menu, ficha,
+  intencao), sem Gradle e sem rodar o jogo. `CharacterMenuTest` e `SheetCheckTest` passaram fora do
+  Gradle.
+
+# A ficha decide magia e ofício: teste, Despertar Arcano, especialidade - 30/10/2026
+
+Core 0.6.8, Ficha 0.2.0, Trama 0.2.0, Magia 0.10.0, Profissões 0.6.0, Vidas 0.3.0, Intenção 0.2.0 e Limbo
+0.4.8 (ainda não publicadas). A ficha do
+site deixa de só mostrar: atributos e perícias decidem se a magia sai e se a peça fica pronta.
+
+- **Core 0.6.8:** contratos novos, todos no padrão do `LivesGate`.
+  - `CharacterSheet`: o retrato da ficha, lido de memória.
+  - `SkillTreeGate` e `SkillTreeChangedEvent`: os nós da Trama, sem importar a Trama.
+  - `SheetCheck`: a regra única do teste, d20 + bônus contra CD, com crítico, falha crítica e vantagem.
+  - Os quatro mods passam a exigir `aurorion_core [0.6.8,)`.
+- **Ficha 0.2.0, retrato dos testes:** SavedData `aurorion_ficha_stats`.
+  - Atualiza a cada leitura `ok` do site, numa leitura no login de todos (`retrato.lerNoLogin`) e numa
+    releitura a cada 30 min com a pessoa online.
+  - Bônus de magia: Vitral + Astros & Mistos. Bônus de ofício: o bônus de teste de Criação.
+  - Ficha sem construção aprovada não entra; quem pergunta usa o próprio bônus padrão.
+- **Trama 0.2.0:** 283 nós.
+  - **Despertar Arcano I, II e III** (`AR1`–`AR3`): só um professor libera, com
+    `/trama no conceder|remover|ver`. Vale offline, o respec mantém e o reset de personagem apaga.
+  - **9 especialidades de magia** (`ES_*`): compradas com ponto da Trama depois do AR1, exclusivas entre
+    si; trocar é pelo respec.
+- **Magia 0.10.0:**
+  - **Liberação pelo nó** (`liberacao.modo = "no"`): I = comuns/incomuns, II = raras/épicas/lendárias,
+    III = proibidas. A liberação por aula vira exceção. Sem a Trama, volta sozinho ao modo aula.
+  - **Teste a cada conjuração**:
+    - falha: a magia não sai e o custo é cheio (mana e recarga; o pergaminho se perde);
+    - falha crítica: também Exausto (efeito novo, lento e sem conjurar) e tontura;
+    - acerto crítico: a magia sai com +1 nível, o que vale para toda magia.
+  - **Especialista**: vantagem e +2 no teste, −15% de mana, −20% de recarga, +20% de poder da escola.
+  - A oficina arcana (mesa de inscrição, forja, bigorna arcana, caldeirão) exige o Despertar I.
+  - A ficha mostra o Despertar, a especialidade e a chance de falhar por raridade.
+- **Profissões 0.6.0, teste de ofício:**
+  - d20 + Criação contra a CD do item: datapack `aurorion/oficio`, ou a heurística (equipamento 12,
+    comida 8, o resto 2, mais a raridade).
+  - Falha: os ingredientes se perdem e sai a **Peça Arruinada** (item novo).
+  - Crítico em CD alta: **obra-prima**, com a assinatura do personagem ou uma peça a mais.
+  - Vantagem no domínio da profissão.
+  - Itens do Iron's exigem o Despertar I.
+  - Onde vale:
+    - bancada e 2x2, com clique e shift-click;
+    - mesa de ferraria;
+    - fornalhas: usa a ficha de quem colocou, mesmo offline;
+    - Create: processamento, crafter mecânico e montagem sequencial, com a ficha de quem montou a máquina
+      (Criação + **Tecnologia**); sem dono, bônus de máquina;
+    - suporte de poções: o frasco que falha vira poção mundana;
+    - Farmer's Delight: panela, fogão, frigideira (bloco e mão), tábua de corte;
+    - Let's Do (Farm & Charm, Candlelight): panelas, torrador e fogão, com a ficha de quem abriu o menu;
+    - Oritech: toda máquina de receita, também com Criação + Tecnologia;
+    - Apotheosis (vantagem do arcanista): reforja que falha devolve o item original, lapidação perde as
+      gemas, aumento de afixo paga o custo sem subir;
+    - Cooking for Blockheads: a cozinha, por prato;
+    - Malum (altar de espíritos) e Mystical Agriculture (altares de infusão e despertar);
+    - estações com `onTake` próprio: Sophisticated, Iron's, Cataclysm, LSO e Refurbished.
+  - Máquinas dos mods em `oficio.modsComDono` gravam quem as colocou e usam a ficha dessa pessoa.
+  - **Outros testes da ficha:**
+    - médico: a cura testa Medicina (crítico dá Regeneração; falha cura só parte) e o tratamento de membro
+      pode falhar;
+    - cozinheiro: a qualidade do prato varia com a Criação;
+    - NPCs de ofício: Diplomacia dá desconto; Intimidação, se render mais, arrisca ofender o NPC;
+    - mesa de encantamentos: Astros & Mistos (crítico devolve a lápis, falha crítica perde o encanto);
+    - Locks Reforged: Furtividade reduz o desgaste da gazua e segura o progresso;
+    - pesca (vanilla, Aquaculture, Starcatcher): Natureza dá peixe a mais ou deixa escapar.
+  - Levantamento das máquinas de todos os mods do pack em `aurorion-profissoes/OFICIO-ADAPTADORES.md`,
+    com o que ainda falta (Productive Bees, Refurbished, Create Additions, Vinery e outros).
+- **Intenção 0.2.0, duelo com a ficha (`/duelo`):** combate por turnos feito pelo jogo, no estilo de MMO.
+  - Desafio com o limite de vida escolhido pelos dois (primeiro sangue, porcentagem ou até a morte).
+  - Campo de não fuga e aviso para quem está perto.
+  - Ataque, defesa, técnicas da ficha e magias do Despertar.
+  - Reação cronometrada: clique esquerdo apara, direito esquiva; aparo perfeito contra-ataca.
+  - No duelo até a morte, quem zera a vida da ficha perde o personagem, com a cena de fim do Limbo direto.
+  - `/intencao combate` leva o mesmo motor para dentro da batalha de intenção.
+  - **Menu do personagem em estilo de MMO**, liso e nas cores Aurorion. Abre com o gesto (mão vazia,
+    botão direito, puxar para baixo) ou a tecla Y. Tem Perfil, Duelo (desafiar quem está perto com o
+    limite), Ações (a sua vez) e janelas de confirmação/convite com ○ e ×. O HUD usa o mesmo desenho.
+    Arte original gerada por `tools/generate_ui.py`, com a fonte Rajdhani (OFL).
+- **Core 0.6.8 (mais):** técnicas equipadas no retrato da ficha; `CharacterSpells` (a magia oferece as do
+  livro equipado) e `CharacterFinale` (o Limbo encerra um personagem). Limbo 0.4.8 responde o fim.
+- **Vidas 0.3.0, último fôlego:** num golpe fatal, um teste de Fortitude da ficha deixa a pessoa com 1 de vida,
+  uma vez por dia, sem cobrar vida.
+- Compilado com `javac` contra os jars do NeoForge do cache, sem Gradle e sem rodar o jogo. Testes
+  unitários novos passaram fora do Gradle: `SheetCheckTest`, `SkillCatalogTest` e `CraftDifficultyTest`.
+
+# Aba Habilidades da ficha com os dados do jogo - 30/10/2026
+
+Core 0.6.7, Profissões 0.5.4; Magia 0.9.0, Trama 0.1.3 e Ficha 0.1.0 (ainda não publicadas). A aba
+Habilidades da ficha (tecla K) mostra o que o personagem tem **dentro do jogo**, sem comando.
+
+- **Core 0.6.7 — `character/CharacterAbilities`:** contrato novo. Cada mod dono do dado registra um
+  provedor na construção; a ficha consulta quando uma View é montada (abrir, atualizar, vincular,
+  espiar). Nada por tick, só leitura de memória, tetos de 8 grupos × 64 itens. Provedor que lança fica
+  de fora daquela abertura e vai uma vez para o log. Ninguém exige ninguém: sem a ficha, os provedores
+  não rodam; sem um mod, o grupo dele não aparece.
+- **Grupos:**
+  - *Magias* (Magia): escolas liberadas (com quantas magias entregam), magias soltas, proibidas
+    marcadas, staff com `staffBypass`; sem liberação, um aviso de que magia se aprende em aula.
+  - *Passivas* (Magia): cada passiva, ligada/desligada, de tecla ou sempre ativa.
+  - *Profissão* (Profissões): a profissão e o que ela libera, com os números do config em uso.
+  - *Trama do Eco* (Trama): pontos conquistados, barra até o próximo ponto (XP e tempo), nós comprados;
+    os Fios somados numa linha.
+  - *Personagem* (pela própria ficha, com `HouseGate` e `LivesGate`): Casa e vidas restantes.
+- Nomes e descrições de magia e passiva vão com a chave de tradução: o cliente mostra em português,
+  mesmo com o servidor dedicado só conhecendo o `en_us`.
+- Com a ficha aberta, o `atualizar` manda a View de novo quando as habilidades mudaram, mesmo com a
+  ficha do site igual.
+- **Faixas do core:** Ficha, Magia, Profissões e Trama passam a exigir `aurorion_core` `[0.6.7,)`.
+
 # Aviso de área no chat da staff e permissão de entrada - 22/10/2026
 
 Áreas 0.6.6. O `/area aviso <id> true` só colocava a entrada na fila do bot; no jogo não aparecia nada.
