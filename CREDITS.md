@@ -41,6 +41,18 @@ O `aurorion-profissoes` também distribui a fonte sem alterações em
 `assets/aurorion_profissoes/font/cinzel.ttf`, acompanhada de `OFL-Cinzel.txt` na mesma pasta.
 A cópia da licença deste módulo veio do [repositório oficial da Cinzel](https://github.com/NDISCOVER/Cinzel/blob/master/OFL.txt).
 
+## Rajdhani (fonte do menu do personagem, `aurorion-core`)
+
+`assets/aurorion_core/font/rajdhani_semibold.ttf` é a [Rajdhani](https://github.com/google/fonts/tree/main/ofl/rajdhani)
+SemiBold, **Copyright (c) 2014, Indian Type Foundry**, licenciada sob a **SIL Open Font License 1.1**.
+O arquivo entra no jar sem modificação (baixado do repositório oficial do Google Fonts), e a licença
+completa viaja junto em `assets/aurorion_core/font/OFL-Rajdhani.txt`.
+
+A interface em estilo de menu de MMO (ícones, círculos, cartões, barras e o painel holográfico em
+`assets/aurorion_core/textures/gui/menu/`, usada pelo `aurorion-menu`, pela ficha e pelo duelo) é desenho
+original do projeto, gerado por `aurorion-core/tools/generate_ui.py`. Nenhuma arte ou código de mods ou repositórios de terceiros
+foi copiado; eles serviram só de referência visual.
+
 ### O que a OFL exige de nós
 
 - Manter o aviso de copyright e a cópia da licença junto do arquivo da fonte — é por isso que o

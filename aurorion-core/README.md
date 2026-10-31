@@ -49,10 +49,33 @@ sem que os dois se conheçam:
 |---|---|---|
 | [`character/CharacterGate`](src/main/java/com/aurorion/core/character/CharacterGate.java) | `aurorion-personagem` | `aurorion-limbo` |
 | [`house/HouseGate`](src/main/java/com/aurorion/core/house/HouseGate.java), [`HouseChangedEvent`](src/main/java/com/aurorion/core/house/HouseChangedEvent.java) | `aurorion-ethereal` | `aurorion-areas`, `aurorion-essentials` (cor da casa na tab) |
+| [`character/CharacterAbilities`](src/main/java/com/aurorion/core/character/CharacterAbilities.java) (0.6.7) | `aurorion-magia` (magias, passivas), `aurorion-profissoes`, `aurorion-trama` — cada um registra um provedor | `aurorion-ficha` (aba Habilidades) |
+| [`character/CharacterSheet`](src/main/java/com/aurorion/core/character/CharacterSheet.java) (0.6.8) | `aurorion-ficha` (retrato da ficha do site, em memória e em SavedData) | `aurorion-magia` (teste do lançamento), `aurorion-profissoes` (teste de fabricação) |
+| [`character/CharacterSpells`](src/main/java/com/aurorion/core/character/CharacterSpells.java) (0.6.8) | `aurorion-magia` (magias do livro equipado, com o teste) | `aurorion-intencao` (magia como ação do duelo) |
+| [`character/CharacterFinale`](src/main/java/com/aurorion/core/character/CharacterFinale.java) (0.6.8) | `aurorion-limbo` (morte definitiva com a cena de fim) | `aurorion-intencao` (duelo até a morte) |
+| [`character/SkillTreeGate`](src/main/java/com/aurorion/core/character/SkillTreeGate.java), [`SkillTreeChangedEvent`](src/main/java/com/aurorion/core/character/SkillTreeChangedEvent.java) (0.6.8) | `aurorion-trama` | `aurorion-magia` (Despertar Arcano e especialidade), `aurorion-profissoes` (item que exige nó) |
+| [`client/menu/CharacterMenu`](src/main/java/com/aurorion/core/client/menu/CharacterMenu.java) (0.6.9, só cliente) | `aurorion-menu` (o host: o painel no mundo, o gesto, a janela ○/×, o cartão de aviso) | `aurorion-ficha` (Perfil), `aurorion-intencao` (Duelo, Ações, "Desafiar para duelo") — cada um registra seções e interações |
 
 A alternativa seria um mod importar o outro — o que torna um obrigatório para o outro, contra a
 [SDD §3](../SDD.md) — ou alcançá-lo por reflexão, como se faz com mod de terceiro. Entre dois mods
 nossos, um contrato tipado e conferido pelo compilador ganha das duas opções.
+
+O desenho do menu, [`client/menu/MenuUi`](src/main/java/com/aurorion/core/client/menu/MenuUi.java)
+(0.6.9), também mora aqui: formas lisas em alta resolução (`textures/gui/menu/`, geradas por
+`tools/generate_ui.py`), a fonte Rajdhani (`aurorion_core:menu`, OFL) e a paleta marfim, violeta e dourado.
+Ficha, intenção e o host desenham com ele, e não com três cópias. Junto vêm
+[`compat/EmotecraftBridge`](src/main/java/com/aurorion/core/compat/EmotecraftBridge.java) (toca um emote
+do Emotecraft por reflexão, sem exigir o mod) e `client/IrisShadowPass` (pular o passe de sombra do Iris).
+
+[`character/SheetCheck`](src/main/java/com/aurorion/core/character/SheetCheck.java) (0.6.8) é a
+regra do teste da ficha (d20 + bônus contra CD, crítico, falha crítica, vantagem). Entrou como
+utilidade porque magia e profissões aplicam a mesma regra — duas cópias de uma regra de jogo são
+duas chances de o servidor ter dois "d20" diferentes.
+
+**Para a batalha de intenção com ficha (futuro):** o `Stats` já carrega os derivados da ficha
+(`vida_max`, `pe_max`, `stamina_max`, `defesa`, `rd`, `iniciativa`, `fortitude`), e o
+`SheetCheck.roll` aceita um modificador situacional. Turno, reação e combo devem partir desses dois
+pontos, não de um contrato novo.
 
 O teste de entrada continua sendo o mesmo: **o que acontece se quem usar esquecer da parte dele?**
 Se ninguém chamar `HouseGate.provide`, `installed()` responde `false` e quem pergunta trata isso como
@@ -98,7 +121,8 @@ segura de qualquer lugar — a escrita continua sendo só no reload, na thread d
 ## Estrutura
 
 ```
-character/ CharacterGate, CharacterData, ... — contrato do criador de personagens
+character/ CharacterGate, CharacterData, ... — contrato do criador de personagens;
+           CharacterAbilities — o que o personagem tem no jogo, de vários mods, para a ficha
 compat/    TwilightTeleportCompat
 config/    DerivedConfig
 data/      SavedDataAccess, PlayerMapNbt
