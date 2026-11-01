@@ -44,6 +44,8 @@ public final class NodeClient {
         int ending = -1;
         /** A abertura ja tocou (ou o no ja estava ligado quando este cliente chegou). */
         boolean opened;
+        /** Ultimo raio do No 2 que ja trovejou; por cena, para dois Nos 2 nao calarem um ao outro. */
+        long lastBolt = Long.MIN_VALUE;
 
         Scene(NodePayload.Entry entry, long now) {
             index = entry.index();
@@ -81,7 +83,8 @@ public final class NodeClient {
         }
     }
 
-    private static final List<Scene> scenes = new ArrayList<>(3);
+    /** O mesmo no pode estar em varios lugares: varios professores liberando ao mesmo tempo. */
+    private static final List<Scene> scenes = new ArrayList<>();
 
     private NodeClient() {
     }
@@ -90,9 +93,17 @@ public final class NodeClient {
         ClientLevel level = Minecraft.getInstance().level;
         long now = level == null ? 0 : level.getGameTime();
         for (Scene scene : scenes) {
-            boolean kept = false;
-            for (NodePayload.Entry entry : payload.nodes()) kept |= entry.index() == scene.index && scene.same(entry);
-            if (!kept && scene.ending < 0) scene.ending = FADE;
+            NodePayload.Entry match = null;
+            for (NodePayload.Entry entry : payload.nodes()) {
+                if (entry.index() == scene.index && scene.same(entry)) match = entry;
+            }
+            if (match == null) {
+                if (scene.ending < 0) scene.ending = FADE;
+            } else if (match.age() < OPENING && now - match.age() > scene.start + 20) {
+                // Religado no mesmo ponto: a abertura toca de novo.
+                scene.start = now - match.age();
+                scene.opened = match.age() > 10;
+            }
         }
         for (NodePayload.Entry entry : payload.nodes()) {
             boolean present = false;
@@ -120,8 +131,9 @@ public final class NodeClient {
                 continue;
             }
             if (paused || !level.dimension().location().equals(scene.dimension)) continue;
-            NodeAmbience.tick(minecraft, level, player, scene);
+            NodeAmbience.tick(minecraft, level, scene);
         }
+        if (!paused) NodeAmbience.haunt(minecraft, level, player);
     }
 
     /**

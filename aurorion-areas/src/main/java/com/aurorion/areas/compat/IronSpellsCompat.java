@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
 
 /** Optional bridge: no Iron's classes appear in signatures or class loading on servers without it. */
 public final class IronSpellsCompat {
-    private static Method spellId, magicData, isCasting, castingId, cancelCast;
+    private static Method spellId, magicData, isCasting, castingId, cancelCast, resetCastData;
     private static boolean reportedFailure;
     private IronSpellsCompat() {}
     public static void register() {
@@ -29,6 +29,7 @@ public final class IronSpellsCompat {
             magicData = data.getMethod("getPlayerMagicData", LivingEntity.class);
             isCasting = data.getMethod("isCasting");
             castingId = data.getMethod("getCastingSpellId");
+            resetCastData = data.getMethod("resetAdditionalCastData");
             cancelCast = Class.forName("io.redspace.ironsspellbooks.api.util.Utils")
                     .getMethod("serverSideCancelCast", ServerPlayer.class);
             AurorionAreas.LOGGER.info("Areas: Iron's Spells PreCast integration registered.");
@@ -46,6 +47,9 @@ public final class IronSpellsCompat {
                 if (magicDenied || isFlightSpell((String) spellId.invoke(event))) {
                     ((ICancellableEvent) event).setCanceled(true);
                     AreaRuntime.denyNotice(player, magicDenied ? AreaRule.MAGIC : AreaRule.FLIGHT);
+                    // A mira do Iron's ja gravou o alvo antes deste evento; cancelado, ele nao limpa,
+                    // e o dado vazava para a proxima magia (Blood/Frost Step derrubavam o servidor).
+                    if (resetCastData != null) resetCastData.invoke(magicData.invoke(null, player));
                 }
             } catch (ReflectiveOperationException exception) {
                 ((ICancellableEvent) event).setCanceled(true);

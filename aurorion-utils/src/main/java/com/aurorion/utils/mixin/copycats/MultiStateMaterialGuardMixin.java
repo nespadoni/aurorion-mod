@@ -32,7 +32,9 @@ import org.spongepowered.asm.mixin.Shadow;
         "com.copycatsplus.copycats.content.copycat.cogwheel.CopycatCogWheelBlockEntity"
 }, remap = false)
 public abstract class MultiStateMaterialGuardMixin {
-    @Shadow
+    // Mixin com mais de um alvo: o remap=false da classe nao vale para o @Shadow; sem o dele o Mixin
+    // recusa a classe inteira ("Found a remappable @Shadow") e a protecao some sem crash nenhum.
+    @Shadow(remap = false)
     public abstract MaterialItemStorage getMaterialItemStorage();
 
     public BlockState getMaterial() {

@@ -27,13 +27,13 @@ final class NodeAmbience {
     /** Perto o bastante para as particulas valerem; alem disso, so a geometria do renderer aparece. */
     private static final double NEAR = 56;
 
+    /** De quem olha, nao de cada no: dois medos sobrepostos nao dobram as vozes. Ver {@link #haunt}. */
     private static int whisperDelay, heartDelay, figureDelay;
-    private static long lastBolt = Long.MIN_VALUE;
 
     private NodeAmbience() {
     }
 
-    static void tick(Minecraft minecraft, ClientLevel level, LocalPlayer player, NodeClient.Scene scene) {
+    static void tick(Minecraft minecraft, ClientLevel level, NodeClient.Scene scene) {
         Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
         double distanceSqr = scene.distanceSqr(camera);
         if (distanceSqr > scene.reach * scene.reach || scene.fade(level, 0) < .05F) return;
@@ -45,7 +45,7 @@ final class NodeAmbience {
         if (opening) scene.opened = true;
         switch (scene.index) {
             case 1 -> fire(minecraft, level, scene, life, random, status, near, opening);
-            case 2 -> fear(minecraft, level, player, camera, scene, life, random, status, near, opening);
+            case 2 -> fear(minecraft, level, camera, scene, life, random, status, near, opening);
             default -> expanse(minecraft, level, scene, life, random, status, near, opening);
         }
     }
@@ -105,28 +105,13 @@ final class NodeAmbience {
 
     // --- No 2: o medo ---------------------------------------------------------------------------
 
-    private static void fear(Minecraft minecraft, ClientLevel level, LocalPlayer player, Vec3 camera, NodeClient.Scene s,
+    private static void fear(Minecraft minecraft, ClientLevel level, Vec3 camera, NodeClient.Scene s,
                              long life, RandomSource random, ParticleStatus status, boolean near, boolean opening) {
         if (opening) {
             sound(level, s.x, s.y + 1, s.z, SoundEvents.SCULK_SHRIEKER_SHRIEK, 2F, .55F);
             sound(level, s.x, s.y + 1, s.z, SoundEvents.AMBIENT_CAVE.value(), 2F, .6F);
         }
         bolt(minecraft, level, camera, s, life, random, status);
-
-        float mind = NodeClient.mind(level, s, camera);
-        if (mind > 0) {
-            whisper(level, camera, random, mind);
-            if (mind > .35F && --heartDelay <= 0) {
-                player.playSound(SoundEvents.WARDEN_HEARTBEAT, .25F + .4F * mind, .8F);
-                heartDelay = mind > .7F ? 18 : 28;
-            }
-            if (status != ParticleStatus.MINIMAL && --figureDelay <= 0) {
-                figure(level, player, s, random);
-                figureDelay = 40 + random.nextInt(50);
-            }
-        } else {
-            whisperDelay = Math.min(whisperDelay, 40);
-        }
 
         if (!near || status == ParticleStatus.MINIMAL) return;
         // A poça respira fumaça; das rachaduras sobem almas.
@@ -149,8 +134,8 @@ final class NodeAmbience {
     private static void bolt(Minecraft minecraft, ClientLevel level, Vec3 camera, NodeClient.Scene s, long life,
                              RandomSource random, ParticleStatus status) {
         long n = NodeClient.activeBolt(s, life);
-        if (n == Long.MIN_VALUE || n == lastBolt) return;
-        lastBolt = n;
+        if (n == Long.MIN_VALUE || n == s.lastBolt) return;
+        s.lastBolt = n;
         float angle = NodeClient.boltAngle(s, n);
         float distance = NodeClient.boltDistance(s, n);
         double x = s.x + Mth.cos(angle) * distance, z = s.z + Mth.sin(angle) * distance;
@@ -164,6 +149,38 @@ final class NodeAmbience {
         }
         for (int i = 0; i < 6; i++) {
             far(minecraft, ParticleTypes.LARGE_SMOKE, x, s.y + .3, z, (random.nextDouble() - .5) * .05, .06, (random.nextDouble() - .5) * .05);
+        }
+    }
+
+    /**
+     * O medo dentro da cabeca de quem olha — vozes, coracao, vultos —, uma vez por tick e pelo No 2 mais
+     * forte em volta. Com varios Nos 2 ligados, rodar isto por cena dobrava o ritmo, e um No 2 distante
+     * zerava a espera das vozes a cada tick.
+     */
+    static void haunt(Minecraft minecraft, ClientLevel level, LocalPlayer player) {
+        Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
+        NodeClient.Scene strongest = null;
+        float mind = 0;
+        for (NodeClient.Scene scene : NodeClient.scenes()) {
+            float closeness = NodeClient.mind(level, scene, camera);
+            if (closeness > mind) {
+                mind = closeness;
+                strongest = scene;
+            }
+        }
+        if (strongest == null) {
+            whisperDelay = Math.min(whisperDelay, 40);
+            return;
+        }
+        RandomSource random = level.random;
+        whisper(level, camera, random, mind);
+        if (mind > .35F && --heartDelay <= 0) {
+            player.playSound(SoundEvents.WARDEN_HEARTBEAT, .25F + .4F * mind, .8F);
+            heartDelay = mind > .7F ? 18 : 28;
+        }
+        if (minecraft.options.particles().get() != ParticleStatus.MINIMAL && --figureDelay <= 0) {
+            figure(level, player, strongest, random);
+            figureDelay = 40 + random.nextInt(50);
         }
     }
 
@@ -286,6 +303,5 @@ final class NodeAmbience {
         whisperDelay = 0;
         heartDelay = 0;
         figureDelay = 0;
-        lastBolt = Long.MIN_VALUE;
     }
 }

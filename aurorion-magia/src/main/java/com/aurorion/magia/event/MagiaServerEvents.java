@@ -52,6 +52,7 @@ import com.aurorion.magia.unlock.SpellUnlockData;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
 import io.redspace.ironsspellbooks.api.events.SpellCooldownAddedEvent;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
+import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastSource;
@@ -225,6 +226,20 @@ public final class MagiaServerEvents {
     private static void deny(SpellPreCastEvent event, ServerPlayer player, Component message) {
         event.setCanceled(true);
         player.displayClientMessage(message, true);
+    }
+
+    /**
+     * O Iron's roda o {@code checkPreCastConditions} (a mira grava o alvo no {@code additionalCastData})
+     * antes de disparar este evento e, se alguem cancela, sai sem limpar. O dado fica para a proxima
+     * conjuracao: o Blood Step e o Frost Step fazem cast cego para {@code TeleportData} e o
+     * {@code TargetEntityCastData} que sobrou derrubava o servidor. Este evento so dispara quando o
+     * jogador nao esta conjurando, entao nao ha conjuracao viva cujo dado se perca.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onPreCastDenied(SpellPreCastEvent event) {
+        if (event.isCanceled() && event.getEntity() instanceof ServerPlayer player) {
+            MagicData.getPlayerMagicData(player).resetAdditionalCastData();
+        }
     }
 
     /** "Equipar": gravar no livro uma magia que o personagem nao aprendeu em aula. */

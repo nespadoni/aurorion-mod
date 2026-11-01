@@ -1,6 +1,7 @@
 package com.aurorion.magia.network;
 
 import com.aurorion.magia.AurorionMagia;
+import com.aurorion.magia.node.Node;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -9,7 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 /**
- * O estado inteiro dos nos, de todas as dimensoes — no maximo tres entradas. Vai no login e quando a
+ * O estado inteiro dos nos, de todas as dimensoes — no maximo {@link Node#MAX_ACTIVE} entradas, o mesmo
+ * no podendo aparecer em varios lugares. Vai no login e quando a
  * staff liga ou desliga um; o cliente filtra pela dimensao em que esta e desenha o resto sozinho. Nenhum
  * vertice, particula ou som trafega.
  */
@@ -33,7 +35,7 @@ public record NodePayload(List<Entry> nodes) implements CustomPacketPayload {
                 }
             },
             buf -> {
-                int size = Math.min(buf.readVarInt(), 16);
+                int size = Math.min(buf.readVarInt(), Node.MAX_ACTIVE);
                 Entry[] entries = new Entry[size];
                 for (int i = 0; i < size; i++) {
                     entries[i] = new Entry(buf.readVarInt(), buf.readResourceLocation(),
